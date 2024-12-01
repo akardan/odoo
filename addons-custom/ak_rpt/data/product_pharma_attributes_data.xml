@@ -1,0 +1,275 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+        <!-- Price Decree Reason Data Import -->
+        <record id="price_decree_reason_0" model="price.decree.reason">
+            <field name="code">0</field>
+            <field name="name">Iskontodan Muaf Degil</field>
+        </record>
+        <record id="price_decree_reason_1" model="price.decree.reason">
+            <field name="code">1</field>
+            <field name="name">Kan Urunu (Biyoteknolojik Olanlar Dahil)</field>
+        </record>
+        <record id="price_decree_reason_2" model="price.decree.reason">
+            <field name="code">2</field>
+            <field name="name">Enteral Beslenme Urunleri ve Tibbi Mamalar</field>
+        </record>
+        <record id="price_decree_reason_3" model="price.decree.reason">
+            <field name="code">3</field>
+            <field name="name">Depocu Fiyati 31,62 TL'nin Altinda Olanlar</field>
+        </record>
+        <record id="price_decree_reason_4" model="price.decree.reason">
+            <field name="code">4</field>
+            <field name="name">Fiyat Korumali Olup, Depocu Fiyati 60,51 TL ve Altinda Olanlar</field>
+        </record>
+        <record id="price_decree_reason_5" model="price.decree.reason">
+            <field name="code">5</field>
+            <field name="name">Guncel Kura Gore Ithalati Yapilan Kan Urunleri</field>
+        </record>
+        <record id="price_decree_reason_6" model="price.decree.reason">
+            <field name="code">6</field>
+            <field name="name">Geri Odemesi Olmayan Urunler</field>
+        </record>
+        <record id="price_decree_reason_7" model="price.decree.reason">
+            <field name="code">7</field>
+            <field name="name">Biyoteknolojik</field>
+        </record>
+        <record id="price_decree_reason_8" model="price.decree.reason">
+            <field name="code">8</field>
+            <field name="name">Biyobenzer</field>
+        </record>
+        <record id="price_decree_reason_9" model="price.decree.reason">
+            <field name="code">9</field>
+            <field name="name">Depocu Fiyati 31,62 TL'nin Altinda Olan Enteral Beslenme Urunleri (Eski Kod 2-3)</field>
+        </record>
+        <record id="price_decree_reason_10" model="price.decree.reason">
+            <field name="code">10</field>
+            <field name="name">Depocu Fiyati 31,62 TL'nin Altinda Olan Biyoteknolojik Urunler (Eski Kod 3-7)</field>
+        </record>
+        <record id="price_decree_reason_11" model="price.decree.reason">
+            <field name="code">11</field>
+            <field name="name">Depocu Fiyati 31,62 TL'nin Altinda Olan Biyobenzer Urunler (Eski Kod 3-8)</field>
+        </record>
+        <record id="price_decree_reason_12" model="price.decree.reason">
+            <field name="code">12</field>
+            <field name="name">Geri Odemesiz Enteral Beslenme Urunu ve Tibbi Mama (Eski Kod 2-6)</field>
+        </record>
+        <record id="price_decree_reason_13" model="price.decree.reason">
+            <field name="code">13</field>
+            <field name="name">Geri Odemesiz Biyoteknolojik Urun (Eski Kod 6-7)</field>
+        </record>
+        <record id="price_decree_reason_14" model="price.decree.reason">
+            <field name="code">14</field>
+            <field name="name">Geri Odemesiz Biyobenzer Urun (Eski Kod 6-8)</field>
+        </record>
+        <record id="price_decree_reason_15" model="price.decree.reason">
+            <field name="code">15</field>
+            <field name="name">Kan Urunu (Biyobenzer Urun Olanlar)</field>
+        </record>
+        <record id="price_decree_reason_16" model="price.decree.reason">
+            <field name="code">16</field>
+            <field name="name">Geri Odemesiz Kan Urunu</field>
+        </record>
+
+        <!-- Data Import for Equivalent Status -->
+        <record id="equivalent_status_data" model="equivalent.status">
+            <field name="code">1</field>
+            <field name="name">BİREBİR ES URUN VE ES URUNU VAR</field>
+        </record>
+        <record id="equivalent_status_data_2" model="equivalent.status">
+            <field name="code">2</field>
+            <field name="name">BİREBİR ES URUN VE ES URUNU YOK</field>
+        </record>
+        <record id="equivalent_status_data_3" model="equivalent.status">
+            <field name="code">3</field>
+            <field name="name">BİREBİR ES URUN VE ES URUNU VAR AMA PAZARDA DEGIL</field>
+        </record>
+        <record id="equivalent_status_data_4" model="equivalent.status">
+            <field name="code">4</field>
+            <field name="name">CO-MARKETING URUNU VAR</field>
+        </record>
+        <record id="equivalent_status_data_5" model="equivalent.status">
+            <field name="code">5</field>
+            <field name="name">ORANLANMIS ESDEGERI</field>
+        </record>
+        <record id="equivalent_status_data_6" model="equivalent.status">
+            <field name="code">6</field>
+            <field name="name">BİREBİR ES URUNU VE ES URUNU OLMAYAN CO-MARKETING REFERANS URUN (ESKI KOD 2-4 OLAN)</field>
+        </record>
+        <record id="equivalent_status_data_7" model="equivalent.status">
+            <field name="code">7</field>
+            <field name="name">BİREBİR ES URUNU VE ES URUNU OLAN CO-MARKETING URUN (ESKI KOD 1-4 OLAN)</field>
+        </record>
+        <record id="equivalent_status_data_8" model="equivalent.status">
+            <field name="code">8</field>
+            <field name="name">BİREBİR ES URUNU VE ES URUNU VAR AMA PAZARDA OLMAYAN CO-MARKETING URUN (ESKI KOD 3-4 OLAN)</field>
+        </record>
+
+        <!-- Data Import for Reference Status -->
+        <record id="reference_status_data_1" model="reference.status">
+            <field name="code">1</field>
+            <field name="name">VAR</field>
+        </record>
+        <record id="reference_status_data_2" model="reference.status">
+            <field name="code">2</field>
+            <field name="name">YOK</field>
+        </record>
+        <record id="reference_status_data_3" model="reference.status">
+            <field name="code">3</field>
+            <field name="name">YOK (IMALATCI KARTI)</field>
+        </record>
+        <record id="reference_status_data_4" model="reference.status">
+            <field name="code">4</field>
+            <field name="name">ITHAL (KENDI REFERANSINI SUNAN)</field>
+        </record>
+        <record id="reference_status_data_5" model="reference.status">
+            <field name="code">5</field>
+            <field name="name">KAYNAK URUN OLARAK ALINAMAYAN URUN</field>
+        </record>
+
+        <!-- Data Import for FDK - AGÖK Status -->
+        <record id="fdk_agok_status_data_1" model="fdk.agok.status">
+            <field name="code">1</field>
+            <field name="name">FDK'DA FİYAT ARTIŞI ALAN ÜRÜNLER</field>
+        </record>
+        <record id="fdk_agok_status_data_2" model="fdk.agok.status">
+            <field name="code">2</field>
+            <field name="name">İLERİ TARİHTE FDK'DA TEKRAR DEĞERLENDİRİLECEK ÜRÜN</field>
+        </record>
+        <record id="fdk_agok_status_data_3" model="fdk.agok.status">
+            <field name="code">3</field>
+            <field name="name">10 Temmuz 2015 TARİHLİ FIYAT KARARNAMESI ONCESI FDK ARTISI ALAN</field>
+        </record>
+        <record id="fdk_agok_status_data_4" model="fdk.agok.status">
+            <field name="code">4</field>
+            <field name="name">AGÖKTE GÖRÜŞÜLEN ÜRÜN</field>
+        </record>
+
+        <!-- Data Import for Sales Price Type -->
+        <record id="sales_price_type_data_1" model="sales.price.type">
+            <field name="code">1</field>
+            <field name="name">Hospital Products</field>
+        </record>
+        <record id="sales_price_type_data_2" model="sales.price.type">
+            <field name="code">2</field>
+            <field name="name">Dual Priced Products</field>
+        </record>
+        <record id="sales_price_type_data_3" model="sales.price.type">
+            <field name="code">3</field>
+            <field name="name">Products Subject to Current Exchange Rate</field>
+        </record>
+        <record id="sales_price_type_data_4" model="sales.price.type">
+            <field name="code">4</field>
+            <field name="name">Hospital Product Subject to Current Exchange Rate</field>
+        </record>
+        <record id="sales_price_type_data_0" model="sales.price.type">
+            <field name="code">0</field>
+            <field name="name">Other</field>
+        </record>
+
+        <!-- Data Import for Inhaler Product Group -->
+        <record id="inhaler_product_group_a" model="inhaler.product.group">
+            <field name="code">A</field>
+            <field name="name">KURU TOZ INHALERLER</field>
+        </record>
+        <record id="inhaler_product_group_a1" model="inhaler.product.group">
+            <field name="code">A-1</field>
+            <field name="name">KAPSULLER</field>
+            <field name="parent_id" ref="inhaler_product_group_a"/>
+        </record>
+        <record id="inhaler_product_group_a2" model="inhaler.product.group">
+            <field name="code">A-2</field>
+            <field name="name">BLISTER ICEREN CIHAZLAR</field>
+            <field name="parent_id" ref="inhaler_product_group_a"/>
+        </record>
+        <record id="inhaler_product_group_a3" model="inhaler.product.group">
+            <field name="code">A-3</field>
+            <field name="name">TOZ YUKLU CIHAZLAR</field>
+            <field name="parent_id" ref="inhaler_product_group_a"/>
+        </record>
+        <record id="inhaler_product_group_b" model="inhaler.product.group">
+            <field name="code">B</field>
+            <field name="name">OLCULU DOZ INHALERLER</field>
+        </record>
+        <record id="inhaler_product_group_b1" model="inhaler.product.group">
+            <field name="code">B-1</field>
+            <field name="name">BASINCLI OLCULU DOZ INHALER</field>
+            <field name="parent_id" ref="inhaler_product_group_b"/>
+        </record>
+        <record id="inhaler_product_group_b2" model="inhaler.product.group">
+            <field name="code">B-2</field>
+            <field name="name">SOFT MIST INHALER (RESPIMAT)</field>
+            <field name="parent_id" ref="inhaler_product_group_b"/>
+        </record>
+        <record id="inhaler_product_group_c" model="inhaler.product.group">
+            <field name="code">C</field>
+            <field name="name">SOLUSYON (NEBUL)</field>
+        </record>
+
+        <!-- Data Import for Inhaler Resistance Group -->
+        <record id="inhaler_resistance_group_0" model="inhaler.resistance.group">
+            <field name="code">0</field>
+            <field name="name">DIRENCI OLMAYAN CIHAZ</field>
+        </record>
+        <record id="inhaler_resistance_group_1" model="inhaler.resistance.group">
+            <field name="code">1</field>
+            <field name="name">DUSUK IC DIRENCLI CIHAZ</field>
+        </record>
+        <record id="inhaler_resistance_group_2" model="inhaler.resistance.group">
+            <field name="code">2</field>
+            <field name="name">ORTA IC DIRENCLI CIHAZ</field>
+        </record>
+        <record id="inhaler_resistance_group_3" model="inhaler.resistance.group">
+            <field name="code">3</field>
+            <field name="name">YUKSEK IC DIRENCLI CIHAZ</field>
+        </record>
+
+        <!-- Data Import for Inhaler Device Code -->
+        <record id="inhaler_device_code_kp1" model="inhaler.device.code">
+            <field name="code">KP-1</field>
+            <field name="name">FIX KAPSUL ICEREN URUN</field>
+        </record>
+        <record id="inhaler_device_code_kp2" model="inhaler.device.code">
+            <field name="code">KP-2</field>
+            <field name="name">AYRI KAPSUL ICEREN URUN</field>
+        </record>
+        <record id="inhaler_device_code_bl1" model="inhaler.device.code">
+            <field name="code">BL 1</field>
+            <field name="name">DISCUS/DISCAIR</field>
+        </record>
+        <record id="inhaler_device_code_bl2" model="inhaler.device.code">
+            <field name="code">BL-2</field>
+            <field name="name">SANOHALER</field>
+        </record>
+        <record id="inhaler_device_code_bl3" model="inhaler.device.code">
+            <field name="code">BL-3</field>
+            <field name="name">ELLIPTA</field>
+        </record>
+        <record id="inhaler_device_code_tz1" model="inhaler.device.code">
+            <field name="code">TZ-1</field>
+            <field name="name">TURBUHALER</field>
+        </record>
+        <record id="inhaler_device_code_tz2" model="inhaler.device.code">
+            <field name="code">TZ-2</field>
+            <field name="name">EASYHALER</field>
+        </record>
+        <record id="inhaler_device_code_tz3" model="inhaler.device.code">
+            <field name="code">TZ-3</field>
+            <field name="name">NEXTHALER</field>
+        </record>
+        <record id="inhaler_device_code_ae1" model="inhaler.device.code">
+            <field name="code">AE-1</field>
+            <field name="name">AEROSOL</field>
+        </record>
+        <record id="inhaler_device_code_ae2" model="inhaler.device.code">
+            <field name="code">AE-2</field>
+            <field name="name">RESPIMAT</field>
+        </record>
+        <record id="inhaler_device_code_nb" model="inhaler.device.code">
+            <field name="code">NB</field>
+            <field name="name">NEBULLER</field>
+        </record>
+
+    </data>
+    
+</odoo>

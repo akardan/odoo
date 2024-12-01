@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+
+        <!-- Module Specific Category -->
+        <record id="module_category_price_tracking" model="ir.module.category">
+            <field name="name">Reference Price Tracking</field>
+            <field name="description">Category for managing reference price tracking related features</field>
+            <field name="sequence">10</field>
+        </record>
+
+        <!-- Security Groups -->
+        <record id="group_price_tracking_manager" model="res.groups">
+            <field name="name">Price Tracking Manager</field>
+            <field name="category_id" ref="ak_rpt.module_category_price_tracking"/>
+        </record>
+
+        <record id="group_price_tracking_user" model="res.groups">
+            <field name="name">Price Tracking User</field>
+            <field name="category_id" ref="ak_rpt.module_category_price_tracking"/>
+        </record>
+
+    </data>
+</odoo>

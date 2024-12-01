@@ -1,0 +1,411 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Menu Item to access Pharma Attributes -->
+    <menuitem id="menu_product_pharma_attributes" name="Pharma Attributes"
+            parent="stock.menu_stock_config_settings"
+            sequence="10"/>
+
+    <!-- Tree View for product.atc -->
+    <record id="view_product_atc_tree" model="ir.ui.view">
+        <field name="name">product.atc.tree</field>
+        <field name="model">product.atc</field>
+        <field name="arch" type="xml">
+            <list string="ATC Codes" default_order="code asc">
+                <field name="code"/>
+                <field name="name"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Form View for product.atc -->
+    <record id="view_product_atc_form" model="ir.ui.view">
+        <field name="name">product.atc.form</field>
+        <field name="model">product.atc</field>
+        <field name="arch" type="xml">
+            <form string="ATC Code">
+                <sheet>
+                    <group>
+                        <field name="code"/>
+                        <field name="name"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action to open the ATC Code views -->
+    <record id="action_product_atc" model="ir.actions.act_window">
+        <field name="name">ATC Codes</field>
+        <field name="res_model">product.atc</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create the first ATC Code
+            </p>
+        </field>
+    </record>
+
+    <!-- Menu Item to access ATC Codes -->
+    <menuitem id="menu_product_atc_main" name="ATC Codes"
+              parent="menu_product_pharma_attributes"
+              action="action_product_atc" sequence="10"
+              groups="ak_rpt.group_price_tracking_manager"/>
+
+    <!-- List View for Price Decree Reason -->
+    <record id="view_price_decree_reason_tree" model="ir.ui.view">
+        <field name="name">price.decree.reason.tree</field>
+        <field name="model">price.decree.reason</field>
+        <field name="arch" type="xml">
+            <list default_order="code asc">
+                <field name="code"/>
+                <field name="name"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Form View for Price Decree Reason -->
+    <record id="view_price_decree_reason_form" model="ir.ui.view">
+        <field name="name">price.decree.reason.form</field>
+        <field name="model">price.decree.reason</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <field name="code"/>
+                        <field name="name"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action for Price Decree Reason -->
+    <record id="action_price_decree_reason" model="ir.actions.act_window">
+        <field name="name">Price Decree Reasons</field>
+        <field name="res_model">price.decree.reason</field>
+        <field name="view_mode">list,form</field>
+        <field name="view_id" ref="view_price_decree_reason_tree"/>
+    </record>
+
+    <!-- Menu for Price Decree Reason under Pharma Specs -->
+    <menuitem id="menu_price_decree_reason" name="Price Decree Reasons"
+              parent="menu_product_pharma_attributes"
+              action="action_price_decree_reason" sequence="20"
+              groups="ak_rpt.group_price_tracking_manager"/>
+
+    <!-- Tree View for Equivalent Status -->
+    <record id="view_equivalent_status_tree" model="ir.ui.view">
+        <field name="name">equivalent.status.tree</field>
+        <field name="model">equivalent.status</field>
+        <field name="arch" type="xml">
+            <list string="Equivalent Status" default_order="code asc">
+                <field name="code"/>
+                <field name="name"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Form View for Equivalent Status -->
+    <record id="view_equivalent_status_form" model="ir.ui.view">
+        <field name="name">equivalent.status.form</field>
+        <field name="model">equivalent.status</field>
+        <field name="arch" type="xml">
+            <form string="Equivalent Status">
+                <sheet>
+                    <group>
+                        <field name="code"/>
+                        <field name="name"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action for Equivalent Status -->
+    <record id="action_equivalent_status" model="ir.actions.act_window">
+        <field name="name">Equivalent Status</field>
+        <field name="res_model">equivalent.status</field>
+        <field name="view_mode">list,form</field>
+        <field name="view_id" ref="view_equivalent_status_tree"/>
+    </record>
+
+    <!-- Menu for Equivalent Status under Pharma Attributes -->
+    <menuitem id="menu_equivalent_status" name="Equivalent Statuses"
+              parent="menu_product_pharma_attributes"
+              action="action_equivalent_status" sequence="30"
+              groups="ak_rpt.group_price_tracking_manager"/>
+
+    <!-- ********** Model for Reference Status (Referans Durumu) **************-->
+
+    <!-- Tree View for Reference Status -->
+    <record id="view_reference_status_tree" model="ir.ui.view">
+        <field name="name">reference.status.tree</field>
+        <field name="model">reference.status</field>
+        <field name="arch" type="xml">
+            <list string="Reference Status" default_order="code asc">
+                <field name="code"/>
+                <field name="name"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Form View for Reference Status -->
+    <record id="view_reference_status_form" model="ir.ui.view">
+        <field name="name">reference.status.form</field>
+        <field name="model">reference.status</field>
+        <field name="arch" type="xml">
+            <form string="Reference Status">
+                <sheet>
+                    <group>
+                        <field name="code"/>
+                        <field name="name"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action to open the Reference Status views -->
+    <record id="action_reference_status" model="ir.actions.act_window">
+        <field name="name">Reference Status</field>
+        <field name="res_model">reference.status</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create the first Reference Status
+            </p>
+        </field>
+    </record>
+
+    <!-- Menu Item to access Reference Status -->
+    <menuitem id="menu_reference_status_main" 
+              name="Reference Status" 
+              parent="menu_product_pharma_attributes" 
+              action="action_reference_status" 
+              sequence="30"
+              groups="ak_rpt.group_price_tracking_manager"/>
+
+    <!-- ********** Model for FDK - AGÖK Status **************-->
+    <!-- Tree View for FDK - AGÖK Status -->
+    <record id="view_fdk_agok_status_tree" model="ir.ui.view">
+        <field name="name">fdk.agok.status.tree</field>
+        <field name="model">fdk.agok.status</field>
+        <field name="arch" type="xml">
+            <list string="FDK - AGÖK Status" default_order="code asc">
+                <field name="code"/>
+                <field name="name"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Form View for FDK - AGÖK Status -->
+    <record id="view_fdk_agok_status_form" model="ir.ui.view">
+        <field name="name">fdk.agok.status.form</field>
+        <field name="model">fdk.agok.status</field>
+        <field name="arch" type="xml">
+            <form string="FDK - AGÖK Status">
+                <sheet>
+                    <group>
+                        <field name="code"/>
+                        <field name="name"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action to open the FDK - AGÖK Status views -->
+    <record id="action_fdk_agok_status" model="ir.actions.act_window">
+        <field name="name">FDK - AGÖK Statuses</field>
+        <field name="res_model">fdk.agok.status</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <!-- Menu Item to access FDK - AGÖK Status -->
+    <menuitem   id="menu_fdk_agok_status" 
+                name="FDK - AGÖK Status" 
+                parent="menu_product_pharma_attributes" 
+                action="action_fdk_agok_status" 
+                sequence="40"
+                groups="ak_rpt.group_price_tracking_manager"/>
+
+    <!-- ********** Model for Sales Price Type **************-->
+    <!-- Tree View for Sales Price Type -->
+    <record id="view_sales_price_type_tree" model="ir.ui.view">
+        <field name="name">sales.price.type.tree</field>
+        <field name="model">sales.price.type</field>
+        <field name="arch" type="xml">
+            <list string="Sales Price Type" default_order="code asc">
+                <field name="code"/>
+                <field name="name"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Form View for Sales Price Type -->
+    <record id="view_sales_price_type_form" model="ir.ui.view">
+        <field name="name">sales.price.type.form</field>
+        <field name="model">sales.price.type</field>
+        <field name="arch" type="xml">
+            <form string="Sales Price Type">
+                <sheet>
+                    <group>
+                        <field name="code"/>
+                        <field name="name"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action to open the Sales Price Type views -->
+    <record id="action_sales_price_type" model="ir.actions.act_window">
+        <field name="name">Sales Price Types</field>
+        <field name="res_model">sales.price.type</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <!-- Menu Item to access Sales Price Type -->
+    <menuitem   id="menu_sales_price_type" 
+                name="Sales Price Type" 
+                parent="menu_product_pharma_attributes" 
+                action="action_sales_price_type" 
+                sequence="50"
+                groups="ak_rpt.group_price_tracking_manager"/>
+
+    <!-- ********** Model for Inhaler Product Group **************-->
+    <!-- Tree View for Inhaler Product Group -->
+    <record id="view_inhaler_product_group_tree" model="ir.ui.view">
+        <field name="name">inhaler.product.group.tree</field>
+        <field name="model">inhaler.product.group</field>
+        <field name="arch" type="xml">
+            <list string="Inhaler Product Group" default_order="code asc">
+                <field name="code"/>
+                <field name="name"/>
+                <field name="parent_id"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Form View for Inhaler Product Group -->
+    <record id="view_inhaler_product_group_form" model="ir.ui.view">
+        <field name="name">inhaler.product.group.form</field>
+        <field name="model">inhaler.product.group</field>
+        <field name="arch" type="xml">
+            <form string="Inhaler Product Group">
+                <sheet>
+                    <group>
+                        <field name="code"/>
+                        <field name="name"/>
+                        <field name="parent_id"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action to open the Inhaler Product Group views -->
+    <record id="action_inhaler_product_group" model="ir.actions.act_window">
+        <field name="name">Inhaler Product Groups</field>
+        <field name="res_model">inhaler.product.group</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <!-- Menu Item to access Inhaler Product Group -->
+    <menuitem   id="menu_inhaler_product_group" 
+                name="Inhaler Product Group" 
+                parent="menu_product_pharma_attributes"
+                action="action_inhaler_product_group" 
+                sequence="60"
+                groups="ak_rpt.group_price_tracking_manager"/>
+
+    <!-- ********** Model for Inhaler Resistance Group **************-->
+    <!-- Tree View for Inhaler Resistance Group -->
+    <record id="view_inhaler_resistance_group_tree" model="ir.ui.view">
+        <field name="name">inhaler.resistance.group.tree</field>
+        <field name="model">inhaler.resistance.group</field>
+        <field name="arch" type="xml">
+            <list string="Inhaler Resistance Group" default_order="code asc">
+                <field name="code"/>
+                <field name="name"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Form View for Inhaler Resistance Group -->
+    <record id="view_inhaler_resistance_group_form" model="ir.ui.view">
+        <field name="name">inhaler.resistance.group.form</field>
+        <field name="model">inhaler.resistance.group</field>
+        <field name="arch" type="xml">
+            <form string="Inhaler Resistance Group">
+                <sheet>
+                    <group>
+                        <field name="code"/>
+                        <field name="name"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action to open the Inhaler Resistance Group views -->
+    <record id="action_inhaler_resistance_group" model="ir.actions.act_window">
+        <field name="name">Inhaler Resistance Groups</field>
+        <field name="res_model">inhaler.resistance.group</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <!-- Menu Item to access Inhaler Resistance Group -->
+    <menuitem   id="menu_inhaler_resistance_group" 
+                name="Inhaler Resistance Group" 
+                parent="menu_product_pharma_attributes" 
+                action="action_inhaler_resistance_group" 
+                sequence="70"
+                groups="ak_rpt.group_price_tracking_manager"/>
+
+   <!-- ********** Model for Inhaler Device Code **************-->
+    <!-- Tree View for Inhaler Device Code -->
+    <record id="view_inhaler_device_code_tree" model="ir.ui.view">
+        <field name="name">inhaler.device.code.tree</field>
+        <field name="model">inhaler.device.code</field>
+        <field name="arch" type="xml">
+            <list string="Inhaler Device Code" default_order="code asc">
+                <field name="code"/>
+                <field name="name"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Form View for Inhaler Device Code -->
+    <record id="view_inhaler_device_code_form" model="ir.ui.view">
+        <field name="name">inhaler.device.code.form</field>
+        <field name="model">inhaler.device.code</field>
+        <field name="arch" type="xml">
+            <form string="Inhaler Device Code">
+                <sheet>
+                    <group>
+                        <field name="code"/>
+                        <field name="name"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action to open the Inhaler Device Code views -->
+    <record id="action_inhaler_device_code" model="ir.actions.act_window">
+        <field name="name">Inhaler Device Codes</field>
+        <field name="res_model">inhaler.device.code</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <!-- Menu Item to access Inhaler Device Code -->
+    <menuitem   id="menu_inhaler_device_code" 
+                name="Inhaler Device Code" 
+                parent="menu_product_pharma_attributes" 
+                action="action_inhaler_device_code" 
+                sequence="80"
+                groups="ak_rpt.group_price_tracking_manager"/>
+
+
+</odoo>

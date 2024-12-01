@@ -1,0 +1,21 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_country_import_wizard_user,country.import.wizard user,model_country_import_wizard,base.group_user,1,1,1,0
+access_country_import_wizard_manager,country.import.wizard manager,model_country_import_wizard,base.group_system,1,1,1,1
+access_price_decree_reason_manager,price.decree.reason manager,model_price_decree_reason,group_price_tracking_manager,1,1,1,1
+access_price_decree_reason_user,price.decree.reason user,model_price_decree_reason,group_price_tracking_user,1,0,0,0
+access_product_atc_manager,product.atc manager,model_product_atc,group_price_tracking_manager,1,1,1,1
+access_product_atc_user,product.atc user,model_product_atc,group_price_tracking_user,1,0,0,0
+access_equivalent_status_manager,equivalent.status manager,model_equivalent_status,group_price_tracking_manager,1,1,1,1
+access_equivalent_status_user,equivalent.status user,model_equivalent_status,group_price_tracking_user,1,0,0,0
+access_reference_status_manager,reference.status manager,model_reference_status,group_price_tracking_manager,1,1,1,1
+access_reference_status_user,reference.status user,model_reference_status,ak_rpt.group_price_tracking_user,1,0,0,0
+access_fdk_agok_status_manager,fdk.agok.status manager,model_fdk_agok_status,group_price_tracking_manager,1,1,1,1
+access_fdk_agok_status_user,fdk.agok.status user,model_fdk_agok_status,group_price_tracking_user,1,0,0,0
+access_sales_price_type_manager,sales.price.type manager,model_sales_price_type,group_price_tracking_manager,1,1,1,1
+access_sales_price_type_user,sales.price.type user,model_sales_price_type,group_price_tracking_user,1,0,0,0
+access_inhaler_product_group_manager,inhaler.product.group manager,model_inhaler_product_group,group_price_tracking_manager,1,1,1,1
+access_inhaler_product_group_user,inhaler.product.group user,model_inhaler_product_group,group_price_tracking_user,1,0,0,0
+access_inhaler_resistance_group_manager,inhaler.resistance.group manager,model_inhaler_resistance_group,group_price_tracking_manager,1,1,1,1
+access_inhaler_resistance_group_user,inhaler.resistance.group user,model_inhaler_resistance_group,group_price_tracking_user,1,0,0,0
+access_inhaler_device_code_manager,inhaler.device.code manager,model_inhaler_device_code,group_price_tracking_manager,1,1,1,1
+access_inhaler_device_code_user,inhaler.device.code user,model_inhaler_device_code,group_price_tracking_user,1,0,0,0

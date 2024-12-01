@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data noupdate="1">
+        <record id="industry_pharma" model="res.partner.industry">
+            <field name="name" eval="{'en_US': 'Pharma', 'tr_TR': 'İlaç'}"/>
+            <field name="full_name" eval="{'en_US': 'PHARMA INDUSTRY', 'tr_TR': 'İlaç Sanayi'}"/>
+            <field name="active" eval="True"/>
+        </record>
+    </data>
+</odoo>

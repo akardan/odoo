@@ -1,0 +1,27 @@
+<odoo>
+
+    <record id="view_res_country_form_inherit_titck" model="ir.ui.view">
+        <field name="name">res.country.form.inherit.titck</field>
+        <field name="model">res.country</field>
+        <field name="inherit_id" ref="base.view_country_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='name']" position="after">
+                <field name="titck_country_code"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_res_country_tree_inherit_titck" model="ir.ui.view">
+        <field name="name">res.country.tree.inherit.titck</field>
+        <field name="model">res.country</field>
+        <field name="inherit_id" ref="base.view_country_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//list" position="inside">
+                <field name="titck_country_code" optional="hide"/>
+                <button name="action_open_country_import_wizard" type="object" string="Import TITCK Codes" class="btn-secondary"/>
+            </xpath>
+        </field>
+    </record>
+
+
+</odoo>
