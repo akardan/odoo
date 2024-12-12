@@ -16,7 +16,7 @@ It supports the management of historical price changes, country-specific price m
     'category': 'Sales Management',
  
     # Bu modülün çalışması için gerekli olan bağımlılıklar
-    'depends': ['base', 'sale', 'mail'],  # Temel modüller, satış ve mail modülleri bağımlı
+    'depends': ['base', 'sale', 'mail','website_slides'],  # Temel modüller, satış ve mail modülleri bağımlı
 
     # Her zaman yüklenecek veriler
     'data': [
