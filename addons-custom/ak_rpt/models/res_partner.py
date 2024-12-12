@@ -133,7 +133,7 @@ def fetch_stakeholder_data(username, password, stakeholder_type="uretici", get_a
         "username": username,
         "password": password
     }
-    token_response = requests.post(token_url, json=token_payload)
+    token_response = requests.post(token_url, json=token_payload, verify=False)
 
     if token_response.status_code == 200:
         token = token_response.json().get("token")
