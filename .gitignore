@@ -49,3 +49,7 @@ package.json
 /man/
 /share/
 /src/
+venv/
+/venv/
+sessions/
+odoo.log
