@@ -1,6 +1,7 @@
 from odoo import models, fields, api, _
 from odoo.http import request
 from markupsafe import Markup
+import base64
 
 
 """     Kurs objelerini genişletmek için kullanılan model.
@@ -55,3 +56,21 @@ class SlideSlide(models.Model):
 
                 slide.embed_code = embed_code
                 slide.embed_code_external = embed_code_external or embed_code
+
+    @api.onchange('document_binary_content')
+    def _on_change_document_binary_content(self):
+        super(SlideSlide, self)._on_change_document_binary_content()
+        if self.slide_category == 'report' and self.source_type == 'local_file' and self.document_binary_content:
+            completion_time = self._get_completion_time_pdf(base64.b64decode(self.document_binary_content))
+            if completion_time:
+                self.completion_time = completion_time
+                
+    @api.onchange('slide_category')
+    def _on_change_slide_category(self):
+        """ Prevents mis-match when ones uploads an image and then a pdf without saving the form. """
+        super(SlideSlide, self)._on_change_slide_category()
+        if self.slide_category != 'infographic' and self.image_binary_content:
+            self.image_binary_content = False
+        elif self.slide_category not in ('document', 'report') and self.document_binary_content:
+            self.document_binary_content = False
+                
