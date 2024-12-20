@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="redirect_form">
+        <!-- Redirect form for PayTR -->
+        <form t-att-action="form_data.get('paytr_url')" method="post">
+            <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+            <input type="hidden" name="merchant_id" t-att-value="form_data.get('merchant_id', '')"/>
+            <input type="hidden" name="user_ip" t-att-value="form_data.get('user_ip', '')"/>
+            <input type="hidden" name="merchant_oid" t-att-value="form_data.get('merchant_oid', '')"/>
+            <input type="hidden" name="email" t-att-value="form_data.get('email', '')"/>
+            <input type="hidden" name="payment_amount" t-att-value="form_data.get('payment_amount', '')"/>
+            <input type="hidden" name="paytr_token" t-att-value="form_data.get('paytr_token', '')"/>
+            <input type="hidden" name="user_basket" t-att-value="form_data.get('user_basket', '')"/>
+            <input type="hidden" name="merchant_ok_url" t-att-value="form_data.get('merchant_ok_url', '')"/>
+            <input type="hidden" name="merchant_fail_url" t-att-value="form_data.get('merchant_fail_url', '')"/>
+            <input type="hidden" name="timeout_limit" t-att-value="form_data.get('timeout_limit', '')"/>
+            <input type="hidden" name="test_mode" t-att-value="form_data.get('test_mode', '')"/>
+        </form>
+    </template>
+</odoo>
+
+

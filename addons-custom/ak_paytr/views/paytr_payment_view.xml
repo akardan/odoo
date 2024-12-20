@@ -1,0 +1,35 @@
+<odoo>
+    <record id="payment_provider_paytr" model="ir.ui.view">
+        <field name="name">PayTR Provider Form</field>
+        <field name="model">payment.provider</field>
+        <field name="inherit_id" ref="payment.payment_provider_form"/>
+        <field name="arch" type="xml">
+            <group name="provider_credentials" position='inside'>
+                <group invisible="code != 'paytr'">
+                    <field name="paytr_merchant_id"
+                        string="Merchant ID"
+                        required="code == 'paytr' and state != 'disabled'"/>
+                    <field name="paytr_merchant_key"
+                        string="Merchant Key"
+                        required="code == 'paytr' and state != 'disabled'"/>
+                    <field name="paytr_merchant_salt"
+                        string="Merchant Salt"
+                        password="True"
+                        required="code == 'paytr' and state != 'disabled'"/>
+                    <field name="paytr_test_mode" string="Test Mode"/>
+                    <widget
+                        name="documentation_link"
+                        path="/applications/finance/payment_providers/paytr.html"
+                        label="How to configure your PayTR account?"
+                        colspan="2"/>
+                </group>
+            </group>
+            <field name="available_currency_ids" position="attributes">
+                <attribute
+                    name="required"
+                    separator="or"
+                    add="(code == 'paytr' and state != 'disabled')"/>
+            </field>
+        </field>
+    </record>
+</odoo>

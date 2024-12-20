@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+        <!-- Yeni PayTr Payment Provider oluşturma -->
+        <record id="payment_provider_paytr_install" model="payment.provider">
+            <field name="code">paytr</field>
+            <field name="name">PayTR</field>
+            <field name="redirect_form_view_id" ref="redirect_form"/> 
+            <field name="module_id" ref="base.module_ak_paytr"/> <!-- Modül ID'sini doğru şekilde ayarlıyoruz -->
+        </record>
+    </data>
+</odoo>

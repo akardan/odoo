@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <template id="redirect_form">
+        <!-- Form that redirects to the QNB payment URL -->
+        <form t-att-action="form_data.get('qnb_form_url')" method="post">
+            <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+            <input type="hidden" name="MbrId" t-att-value="form_data.get('MbrId', '')"/>
+            <input type="hidden" name="MerchantId" t-att-value="form_data.get('MerchantId', '')"/>
+            <input type="hidden" name="MerchantPass" t-att-value="form_data.get('UserPass', '')"/>
+            <input type="hidden" name="UserCode" t-att-value="form_data.get('UserCode', '')"/>
+            <input type="hidden" name="UserPass" t-att-value="form_data.get('UserPass', '')"/>
+            <input type="hidden" name="SecureType" t-att-value="form_data.get('SecureType', '')"/>
+            <input type="hidden" name="TxnType" t-att-value="form_data.get('TxnType', '')"/>
+            <input type="hidden" name="InstallmentCount" t-att-value="form_data.get('InstallmentCount', '')"/>
+            <input type="hidden" name="Currency" t-att-value="form_data.get('Currency', '')"/>
+            <input type="hidden" name="OkUrl" t-att-value="form_data.get('OkUrl', '')"/>
+            <input type="hidden" name="FailUrl" t-att-value="form_data.get('FailUrl', '')"/>
+            <input type="hidden" name="OrderId" t-att-value="form_data.get('OrderId', '')"/>
+            <input type="hidden" name="PurchAmount" t-att-value="form_data.get('PurchAmount', '')"/>
+            <input type="hidden" name="Lang" t-att-value="form_data.get('Lang', '')"/>
+            <input type="hidden" name="Rnd" t-att-value="form_data.get('Rnd', '')"/>
+            <input type="hidden" name="Hash" t-att-value="form_data.get('Hash', '')"/>
+        </form>
+    </template>
+
+</odoo> 
+
