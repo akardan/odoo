@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="res_config_settings_view_form" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.inherit.oem_branding</field>
+        <field name="model">res.config.settings</field>
+        <field name="priority" eval="120"/>
+        <field name="inherit_id" ref="base_setup.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//block[@name='performance']" position="before">
+               <div id="nh_oem_branding">
+                   <block title="OEM Branding" name="nh_oem_branding_container">
+                       <setting id="oem_branding_setting">
+                               <field name="nh_oem_activate" class="w-auto"/>
+                       </setting>
+                       <setting id="oem_branding_level" invisible="not nh_oem_activate">
+                           <label for="nh_oem_level" class="col-3 col-lg-3 o_light_label"/>
+                           <field name="nh_oem_level" />
+                       </setting>
+                   </block>
+               </div>
+            </xpath>
+        </field>
+    </record>
+</odoo>

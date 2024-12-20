@@ -1,22 +1,25 @@
-# -*- coding: utf-8 -*-
-# from odoo import http
+from odoo import http
+from odoo.http import request
 
+class SlidesController4Tag(http.Controller):
+    @http.route(['/slides/all'], type='http', auth='public', website=True)
+    def course_slides_list(self, slide_category=None, **kwargs):
+        domain = [('is_published', '=', True)]  # Yayınlanmış slide'ları getir
 
-# class AkRpt(http.Controller):
-#     @http.route('/ak_rpt/ak_rpt', auth='public')
-#     def index(self, **kw):
-#         return "Hello, world"
+        # Eğer bir kategori varsa domain'e ekle
+        if slide_category:
+            domain.append(('category_id.name', '=', slide_category))
 
-#     @http.route('/ak_rpt/ak_rpt/objects', auth='public')
-#     def list(self, **kw):
-#         return http.request.render('ak_rpt.listing', {
-#             'root': '/ak_rpt/ak_rpt',
-#             'objects': http.request.env['ak_rpt.ak_rpt'].search([]),
-#         })
+        # Gerekli veriler
+        channels = request.env['slide.channel'].sudo().search([])
+        slides = request.env['slide.slide'].sudo().search(domain)
+        
+        # İlk kanalı seçin veya bir varsayılan değer belirleyin
+        channel = channels[0] if channels else None
 
-#     @http.route('/ak_rpt/ak_rpt/objects/<model("ak_rpt.ak_rpt"):obj>', auth='public')
-#     def object(self, obj, **kw):
-#         return http.request.render('ak_rpt.object', {
-#             'object': obj
-#         })
-
+        return request.render('website_slides.course_slides_list', {
+            'channels': channels,
+            'slides': slides,
+            'channel': channel,  # Template'e channel gönderiliyor
+            'selected_category': slide_category,
+        })

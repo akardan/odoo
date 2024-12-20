@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+        <!-- Yeni QNB Payment Provider oluşturma -->
+        <record id="payment_provider_qnb" model="payment.provider">
+            <field name="code">qnb</field>
+            <field name="name">QNB</field>
+            <field name="redirect_form_view_id" ref="redirect_form"/> 
+            <field name="module_id" ref="base.module_ak_payment_qnb"/> <!-- Modül ID'sini doğru şekilde ayarlıyoruz -->
+        </record>
+    </data>
+</odoo>

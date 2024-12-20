@@ -1,0 +1,42 @@
+<odoo>
+    # remove Odoo Logo on the Websites's footer
+    <template id="nh_oem_hiding" name="OEM Brand Hiding" inherit_id="web.brand_promotion">
+        <xpath expr="//div[@class='o_brand_promotion']" position="replace">
+            <div class="o_brand_promotion">
+
+            </div>
+        </xpath>
+    </template>
+
+    <template id="login_page_layout" inherit_id="web.login_layout" name="Login Page Layout">
+        <xpath expr="//div[@class='card-body']//div[last()]" position="replace">
+            <div class="text-center small mt-4 pt-3 login--footer" t-if="not disable_footer">
+                <t t-if="not disable_database_manager">
+                    <a class="pr-2 mr-1" href="/web/database/manager">Manage Databases</a>
+                </t>
+            </div>
+        </xpath>
+    </template>
+
+    <record model="ir.ui.view" id="portal_record_sidebar">
+        <field name="inherit_id" ref="portal.portal_record_sidebar" />
+        <field name="arch" type="xml">
+            <xpath expr="//*[contains(@class, 'd-none d-lg-block mt-5 small text-center text-muted')]" position="replace">
+                <!-- <attribute name="t-if">False</attribute> -->
+            </xpath>
+        </field>
+    </record>
+
+    <record id="res_config_settings_view_form" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.inherit.base.setup.custom</field>
+        <field name="model">res.config.settings</field>
+        <field name="priority" eval="0"/>
+        <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@id='about']" position="replace">
+
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

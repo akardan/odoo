@@ -1,0 +1,2 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+payment_provider_qnb_access,payment_provider_qnb_access,model_payment_provider,base.group_user,1,1,1,1
