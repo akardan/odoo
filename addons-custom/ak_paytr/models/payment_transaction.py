@@ -4,13 +4,12 @@ import base64
 import logging
 import requests
 import json
-from datetime import datetime
-from odoo import models, fields, api, _
+from odoo import models, fields, _
 from odoo.exceptions import ValidationError
 from odoo.http import request  # request modülünü içe aktar
-import re
 
 _logger = logging.getLogger(__name__)
+
 
 class PaymentTransactionPaytr(models.Model):
     _inherit = 'payment.transaction'
@@ -23,8 +22,8 @@ class PaymentTransactionPaytr(models.Model):
         
         # API Entegrasyon Bilgileri
         merchant_id = transaction.provider_id.paytr_merchant_id
-        merchant_key = transaction.provider_id.paytr_merchant_key.encode()  # Key'i byte'a çevir
-        merchant_salt = transaction.provider_id.paytr_merchant_salt.encode()  # Salt'ı byte'a çevir
+        merchant_key = transaction.provider_id.paytr_merchant_key.encode()  
+        merchant_salt = str(transaction.provider_id.paytr_merchant_salt)
         
         base_url = self._get_base_url()
 
@@ -50,13 +49,13 @@ class PaymentTransactionPaytr(models.Model):
         user_name = transaction.partner_id.name
 
         # Müşteri adres (Gerekli ise)
-        user_address = transaction.partner_id.street + ' ' + transaction.partner_id.street2 if transaction.partner_id.street or transaction.partner_id.street2 else ''
+        user_address = (transaction.partner_id.street or '') + ' ' + (transaction.partner_id.street2 or '') if transaction.partner_id.street or transaction.partner_id.street2 else ''
 
         # Müşteri telefon (Gerekli ise)
         user_phone = transaction.partner_id.phone if transaction.partner_id.phone else ''
 
         # Sepet Listesi
-        basket_list = [f"{line.product_id.name},{int(line.product_uom_qty)}" for order in transaction.sale_order_ids for line in order.order_line if not line.display_type]
+        basket_list = [f"{line.product_id.name}, {str(int(line.price_unit * 100))},{int(line.product_uom_qty)}" for order in transaction.sale_order_ids for line in order.order_line if not line.display_type]
         user_basket = base64.b64encode(json.dumps(basket_list).encode())
 
         # Diğer parametreler
@@ -71,8 +70,10 @@ class PaymentTransactionPaytr(models.Model):
         merchant_fail_url = base_url + '/payment/paytr/cancel'
 
         # Hash hesaplama
-        hash_str = f"{merchant_id}{user_ip}{merchant_oid}{email}{payment_amount}{user_basket.decode()}{no_installment}{max_installment}{currency}{test_mode}"
-        paytr_token = base64.b64encode(hmac.new(merchant_key, (hash_str + merchant_salt.decode()).encode(), hashlib.sha256).digest())
+        # Bu kısımda herhangi bir değişiklik yapmanıza gerek yoktur.
+        hash_str = merchant_id + user_ip + merchant_oid + email + payment_amount + user_basket.decode() + no_installment + max_installment + currency + test_mode
+        hash_salt = hash_str + merchant_salt
+        paytr_token = base64.b64encode(hmac.new(merchant_key, hash_salt.encode(), hashlib.sha256).digest())
 
         params = {
             'merchant_id': merchant_id,
@@ -111,6 +112,10 @@ class PaymentTransactionPaytr(models.Model):
         except requests.exceptions.RequestException as e:
             _logger.error("Error communicating with PayTR API: %s", e)
             raise ValidationError(f"Error communicating with PayTR API: {e}")
+        
+    def _get_base_url(self):
+        # Base URL'i döndüren yardımcı metot
+        return self.env['ir.config_parameter'].sudo().get_param('web.base.url')        
     
     def _get_paytr_form_url(self, state):
         # Test veya canlı ortam için PayTR form URL'sini döndür
@@ -158,3 +163,4 @@ class PaymentTransactionPaytr(models.Model):
                 _logger.error("Payment request could not be generated.")
         else:
             super()._send_payment_request()
+
