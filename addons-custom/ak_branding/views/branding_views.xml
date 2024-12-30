@@ -1,0 +1,44 @@
+<odoo>
+    <record id="view_ak_branding_form" model="ir.ui.view">
+        <field name="name">ak.branding.form</field>
+        <field name="model">ak.branding</field>
+        <field name="arch" type="xml">
+            <form string="Branding Settings">
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="footer_text"/>
+                        <field name="footer_url"/>
+                        <field name="logo" widget="image" class="oe_avatar"/>
+                        <field name="favicon" widget="image" class="oe_avatar"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_ak_branding_tree" model="ir.ui.view">
+        <field name="name">ak.branding.tree</field>
+        <field name="model">ak.branding</field>
+        <field name="arch" type="xml">
+            <list string="Branding Settings">
+                <field name="name"/>
+                <field name="footer_text"/>
+                <field name="footer_url"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_ak_branding" model="ir.actions.act_window">
+        <field name="name">Branding</field>
+        <field name="res_model">ak.branding</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <menuitem id="menu_ak_branding" 
+        name="Branding" 
+        parent="base.menu_custom"
+        action="action_ak_branding"
+        sequence="1"/>
+    
+</odoo>

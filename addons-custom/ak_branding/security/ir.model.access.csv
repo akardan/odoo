@@ -1,0 +1,3 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_ak_branding_user,access_ak_branding_user,model_ak_branding,base.group_user,1,0,0,0
+access_ak_branding_manager,access_ak_branding_manager,model_ak_branding,base.group_system,1,1,1,1

@@ -1,0 +1,44 @@
+<!-- <odoo>
+    <template id="footer_branding" inherit_id="web.layout">
+        <xpath expr="//div[contains(@class, 'o_footer')]//a[text()='Odoo']" position="replace">
+            <t t-set="branding" t-value="request.env['ak.branding'].sudo().search([], limit=1)"/>
+            <a t-att-href="branding.footer_url" target="_blank">
+                <t t-esc="branding.footer_text or 'Powered by Kardan.Digital'"/>
+            </a>
+        </xpath>
+    </template>
+</odoo> -->
+
+
+<odoo>
+    <!-- Footer Branding -->
+    <template id="footer_branding" inherit_id="web.frontend_layout" name="Dynamic Footer Branding">
+        <xpath expr="//footer//t[@t-call='web.brand_promotion']" position="replace">
+            <t t-set="branding" t-value="request.env['ak.branding'].sudo().search([], limit=1)"/>
+            <div class="o_brand_promotion">
+                <a t-att-href="branding.footer_url or '#'" target="_blank" class="badge text-bg-light">
+                    <t t-esc="branding.footer_text or 'Powered by Kardan.Digital'"/>
+                </a>
+            </div>
+        </xpath>
+    </template>
+
+    <!-- Login Page Footer Branding -->
+    <template id="login_footer_branding" inherit_id="web.login_layout" name="Dynamic Login Footer Branding">
+        <xpath expr="//div[@class='text-center small mt-4 pt-3 border-top']//a[contains(@href, 'odoo.com')]" position="replace">
+            <t t-set="branding" t-value="request.env['ak.branding'].sudo().search([], limit=1)"/>
+            <a t-att-href="branding.footer_url or '#'" target="_blank">
+                <t t-esc="branding.footer_text or 'Powered by Kardan.Digital'"/>
+            </a>
+        </xpath>
+    </template>
+
+    <!-- Dynamic Logo -->
+    <template id="login_logo_branding" inherit_id="web.login_layout" name="Dynamic Login Logo Branding">
+        <xpath expr="//div[@class='text-center pb-3 border-bottom mb-4']//img" position="replace">
+            <t t-set="branding" t-value="request.env['ak.branding'].sudo().search([], limit=1)"/>
+            <img t-att-src="'data:image/png;base64,' + branding.logo if branding.logo else '/web/static/src/img/default_logo.png'"
+                 alt="Logo" style="max-height:120px; max-width: 100%; width:auto"/>
+        </xpath>
+    </template>
+</odoo>
