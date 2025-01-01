@@ -55,16 +55,16 @@ class PaymentTransactionPaytr(models.Model):
         user_phone = transaction.partner_id.phone if transaction.partner_id.phone else ''
 
         # Sepet Listesi
-        basket_list = [f"{line.product_id.name}, {str(int(line.price_unit * 100))},{int(line.product_uom_qty)}" for order in transaction.sale_order_ids for line in order.order_line if not line.display_type]
+        basket_list = [[line.product_id.name, str(int(line.price_unit * 100)), str(int(line.product_uom_qty))] for order in transaction.sale_order_ids for line in order.order_line if not line.display_type]
         user_basket = base64.b64encode(json.dumps(basket_list).encode())
 
         # Diğer parametreler
         user_ip = request.httprequest.remote_addr
         timeout_limit = '30'
         debug_on = '1'
-        test_mode = '1'
+        test_mode = '1' if transaction.provider_id.paytr_test_mode else '0'
         no_installment = '0'
-        max_installment = '0'
+        max_installment = '3'
         currency = 'TL'
         merchant_ok_url = base_url + '/payment/paytr/return'
         merchant_fail_url = base_url + '/payment/paytr/cancel'
