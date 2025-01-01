@@ -55,7 +55,7 @@ class PaymentTransactionPaytr(models.Model):
         user_phone = transaction.partner_id.phone if transaction.partner_id.phone else ''
 
         # Sepet Listesi
-        basket_list = [[line.product_id.name, str(int(line.price_unit * 100)), str(int(line.product_uom_qty))] for order in transaction.sale_order_ids for line in order.order_line if not line.display_type]
+        basket_list = [[line.product_id.name, str(int(line.price_total * 100)), str(int(line.product_uom_qty))] for order in transaction.sale_order_ids for line in order.order_line if not line.display_type]
         user_basket = base64.b64encode(json.dumps(basket_list).encode())
 
         # Diğer parametreler
