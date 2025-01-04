@@ -5134,8 +5134,8 @@ msgstr "Tarafından desteklenmektedir %s%s"
 
 #. module: web
 #: model_terms:ir.ui.view,arch_db:web.login_layout
-msgid "Powered by <span>Odoo</span>"
-msgstr "Hazırlayan <span>Odoo</span>"
+msgid "Powered by <span>Kardan.Digital</span>"
+msgstr "Hazırlayan <span>Kardan.Digital</span>"
 
 #. module: web
 #. odoo-javascript

@@ -5584,8 +5584,8 @@ msgstr "Hazırlayan"
 #. module: point_of_sale
 #. odoo-javascript
 #: code:addons/point_of_sale/static/src/app/screens/receipt_screen/receipt/order_receipt.xml:0
-msgid "Powered by Odoo"
-msgstr ""
+msgid "Powered by Kardan.Digital"
+msgstr "Hazırlayan: Kardan.Digital"
 
 #. module: point_of_sale
 #: model_terms:ir.ui.view,arch_db:point_of_sale.res_config_settings_view_form
