@@ -1,0 +1,11 @@
+<odoo>
+    <record id="cron_update_exchange_rates" model="ir.cron">
+        <field name="name">Update Exchange Rates Daily</field>
+        <field name="model_id" ref="base.model_res_currency_rate"/>
+        <field name="state">code</field>
+        <field name="code">model.update_exchange_rates()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="nextcall">2025-01-04 17:45:00</field>
+    </record>
+</odoo>

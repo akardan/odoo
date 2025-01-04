@@ -1,0 +1,21 @@
+<odoo>
+    <record id="view_currency_rate_tree_inherit" model="ir.ui.view">
+        <field name="name">res.currency.rate.list.inherit</field>
+        <field name="model">res.currency.rate</field>
+        <field name="inherit_id" ref="base.view_currency_rate_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//list" position="inside">
+                <field name="currency_id"/>
+           </xpath>
+        </field>
+    </record>
+
+    <record id="server_action_update_exchange_rates" model="ir.actions.server">
+        <field name="name">Update Exchange Rates</field>
+        <field name="model_id" ref="base.model_res_currency_rate"/>
+        <field name="binding_model_id" ref="base.model_res_currency"/>
+        <field name="state">code</field>
+        <field name="code">model.update_exchange_rates()</field>
+    </record>
+
+</odoo>
