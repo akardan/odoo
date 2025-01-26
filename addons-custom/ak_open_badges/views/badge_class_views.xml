@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Badge Class Form View -->
+    <record id="view_badge_class_form" model="ir.ui.view">
+        <field name="name">badge.class.form</field>
+        <field name="model">badge.class</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="toggle_active" type="object" class="oe_stat_button" icon="fa-archive">
+                            <field name="active" widget="boolean_button" options="{'terminology': 'archive'}"/>
+                        </button>
+                    </div>
+                    <field name="image" widget="image" class="oe_avatar"/>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" placeholder="Badge Name"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="issuer_id"/>
+                            <field name="description"/>
+                            <field name="criteria_url"/>
+                        </group>
+                        <group>
+                            <field name="criteria_narrative"/>
+                            <field name="tags" widget="many2many_tags" options="{'color_field': 'color'}"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Alignments" name="alignments">
+                            <field name="alignment">
+                                <list editable="bottom">
+                                    <field name="target_name"/>
+                                    <field name="target_url"/>
+                                    <field name="target_description"/>
+                                    <field name="target_framework"/>
+                                    <field name="target_code"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+                <!-- Chatter -->
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- Badge Class Tree View -->
+    <record id="view_badge_class_tree" model="ir.ui.view">
+        <field name="name">badge.class.tree</field>
+        <field name="model">badge.class</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <field name="issuer_id"/>
+                <field name="description"/>
+                <field name="active"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Badge Class Search View -->
+    <record id="view_badge_class_search" model="ir.ui.view">
+        <field name="name">badge.class.search</field>
+        <field name="model">badge.class</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="issuer_id"/>
+                <field name="description"/>
+                <filter string="Archived" name="inactive" domain="[('active', '=', False)]"/>
+            </search>
+        </field>
+    </record>
+
+    <!-- Badge Class Action -->
+    <record id="action_badge_class" model="ir.actions.act_window">
+        <field name="name">Badge Classes</field>
+        <field name="res_model">badge.class</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first badge class!
+            </p>
+        </field>
+    </record>
+
+</odoo>
+

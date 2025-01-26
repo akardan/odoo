@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Top Menu Item -->
+    <menuitem id="menu_open_badges_root"
+              name="Open Badges"
+              sequence="80"
+              web_icon="ak_open_badges,static/description/icon.png"/>
+
+    <!-- Configuration Menu -->
+    <menuitem id="menu_open_badges_config"
+              name="Configuration"
+              parent="menu_open_badges_root"
+              sequence="100"/>
+
+    <!-- Main Menu Items -->
+    <menuitem id="menu_badge_assertion"
+              name="Badges"
+              parent="menu_open_badges_root"
+              action="action_badge_assertion"
+              sequence="10"/>
+
+    <menuitem id="menu_badge_class"
+              name="Badge Classes"
+              parent="menu_open_badges_root"
+              action="action_badge_class"
+              sequence="20"/>
+
+    <!-- Configuration Sub-menus -->
+    <menuitem id="menu_badge_issuer"
+              name="Issuers"
+              parent="menu_open_badges_config"
+              action="action_badge_issuer"
+              sequence="10"/>
+
+   <!-- Menu item for Badge Tags -->
+   <menuitem id="menu_badge_tag"
+             name="Tags"
+             parent="menu_open_badges_config"
+             action="action_badge_tag"
+             sequence="20"/>
+
+</odoo>

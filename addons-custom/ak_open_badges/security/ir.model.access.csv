@@ -1,0 +1,13 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_badge_issuer_user,badge.issuer.user,model_badge_issuer,base.group_user,1,0,0,0
+access_badge_issuer_manager,badge.issuer.manager,model_badge_issuer,base.group_system,1,1,1,1
+access_badge_class_user,badge.class.user,model_badge_class,base.group_user,1,0,0,0
+access_badge_class_manager,badge.class.manager,model_badge_class,base.group_system,1,1,1,1
+access_badge_assertion_user,badge.assertion.user,model_badge_assertion,base.group_user,1,0,0,0
+access_badge_assertion_manager,badge.assertion.manager,model_badge_assertion,base.group_system,1,1,1,1
+access_badge_evidence_user,badge.evidence.user,model_badge_evidence,base.group_user,1,0,0,0
+access_badge_evidence_manager,badge.evidence.manager,model_badge_evidence,base.group_system,1,1,1,1
+access_badge_alignment_user,badge.alignment.user,model_badge_alignment,base.group_user,1,0,0,0
+access_badge_alignment_manager,badge.alignment.manager,model_badge_alignment,base.group_system,1,1,1,1
+access_badge_tag_user,badge.tag.user,model_badge_tag,base.group_user,1,0,0,0
+access_badge_tag_manager,badge.tag.manager,model_badge_tag,base.group_system,1,1,1,1
