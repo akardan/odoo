@@ -19,3 +19,6 @@ access_inhaler_resistance_group_manager,inhaler.resistance.group manager,model_i
 access_inhaler_resistance_group_user,inhaler.resistance.group user,model_inhaler_resistance_group,group_price_tracking_user,1,0,0,0
 access_inhaler_device_code_manager,inhaler.device.code manager,model_inhaler_device_code,group_price_tracking_manager,1,1,1,1
 access_inhaler_device_code_user,inhaler.device.code user,model_inhaler_device_code,group_price_tracking_user,1,0,0,0
+access_titck_detailed_price_import,titck.detailed.price.import,model_titck_detailed_price_import,base.group_system,1,1,1,1
+access_prescription_type_user,prescription.type.user,model_prescription_type,base.group_user,1,0,0,0
+access_prescription_type_manager,prescription.type.manager,model_prescription_type,base.group_system,1,1,1,1

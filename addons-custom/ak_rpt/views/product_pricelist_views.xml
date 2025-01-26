@@ -1,0 +1,153 @@
+<odoo>
+
+    <record id="view_product_pricelist_tree_inherit_pharma" model="ir.ui.view">
+        <field name="name">product.pricelist.tree.inherit.pharma</field>
+        <field name="model">product.pricelist</field>
+        <field name="inherit_id" ref="product.product_pricelist_view_tree"/>
+        <field name="arch" type="xml">
+            <field name="currency_id" position="after">
+                <field name="is_pharma_pricelist" optional="show"/>
+                <field name="effective_date" optional="show" invisible="not is_pharma_pricelist"/>
+                <field name="item_ids" invisible="not is_pharma_pricelist"/>
+            </field>
+        </field>
+    </record>
+
+    <record id="view_product_pricelist_form_inherit_pharma" model="ir.ui.view">
+        <field name="name">product.pricelist.form.inherit.pharma</field>
+        <field name="model">product.pricelist</field>
+        <field name="inherit_id" ref="product.product_pricelist_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='currency_id']" position="after">
+                <field name="is_pharma_pricelist"/>
+                <field name="effective_date" invisible="not is_pharma_pricelist"/>
+            </xpath>
+
+            <page name="pricelist_rules" position="after">
+                <page name="pharma_list" string="Pharmaceutical List" invisible="not is_pharma_pricelist">
+                    <div class="alert alert-info" role="alert" invisible="not is_pharma_pricelist">
+                        <field name="effective_date"/> tarihli ilaç fiyat listesi
+                    </div>
+                    <field name="item_ids" nolabel="1">
+                        <list>
+                            <field name="name" string="Drug"/>
+                            <field name="source_country"/>
+                            <field name="actual_source_country" optional="show"/>
+                            <field name="real_source_price" optional="show"/>
+                            <field name="calculation_source_price" optional="show"/>
+                            <field name="source_price_euro" optional="show"/>
+                            <field name="depot_price_wo_vat" optional="show"/>
+                            <field name="depot_sales_price_wo_vat" optional="show"/>
+                            <field name="pharmacy_sales_price_wo_vat" optional="show"/>
+                            <field name="retail_price_w_vat" optional="show"/>
+                            <field name="decree_id" optional="show"/>
+                            <field name="equivalent_status_id"/>
+                            <field name="reference_status_id"/>
+                            <field name="fdk_agok_status_id"/>
+                            <field name="its_movement_status"/>
+                            <field name="changed_this_week"/>
+                        </list>
+                    </field>
+                </page>
+            </page>
+        </field>
+    </record>
+
+    <record id="product_pricelist_item_tree_view_inherit_pharma" model="ir.ui.view">
+        <field name="name">product.pricelist.item.tree.inherit.pharma</field>
+        <field name="model">product.pricelist.item</field>
+        <field name="inherit_id" ref="product.product_pricelist_item_tree_view"/>
+        <field name="arch" type="xml">
+            <field name="company_id" position="after">
+                <field name="changed_this_week" optional="show"/>
+                <field name="source_country" optional="show"/>
+                <field name="actual_source_country" optional="show"/>
+                <field name="real_source_price" optional="show"/>
+                <field name="calculation_source_price" optional="show"/>
+                <field name="source_price_euro" optional="show"/>
+                <field name="depot_price_wo_vat" optional="show"/>
+                <field name="depot_sales_price_wo_vat" optional="hide"/>
+                <field name="pharmacy_sales_price_wo_vat" optional="hide"/>
+                <field name="retail_price_w_vat" optional="show"/>
+                <field name="decree_id" optional="show"/>
+                <field name="equivalent_status_id" optional="show"/>
+                <field name="reference_status_id" optional="show"/>
+                <field name="fdk_agok_status_id" optional="show"/>
+                <field name="its_movement_status" optional="show"/>
+                <field name="change_description" optional="show"/>
+                <field name="last_operation" optional="hide"/>
+            </field>
+        </field>
+    </record>
+
+    <record id="product_pricelist_item_form_view_inherit_pharma" model="ir.ui.view">
+        <field name="name">product.pricelist.item.form.inherit.pharma</field>
+        <field name="model">product.pricelist.item</field>
+        <field name="inherit_id" ref="product.product_pricelist_item_form_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//group[@name='pricelist_rule_base']" position="after">
+                <group invisible="not pricelist_id.is_pharma_pricelist">
+                    <group string="Source Information">
+                        <field name="source_country"/>
+                        <field name="actual_source_country"/>
+                        <!-- <field name="euro_rate"/> -->
+                    </group>
+                    <group string="Euro Prices">
+                        <field name="real_source_price"/>
+                        <field name="calculation_source_price"/>
+                        <field name="source_price_euro"/>
+                    </group>
+                </group>
+                <group invisible="not pricelist_id.is_pharma_pricelist">
+                    <group string="TL Prices">
+                        <field name="depot_price_wo_vat"/>
+                        <field name="depot_sales_price_wo_vat"/>
+                        <field name="pharmacy_sales_price_wo_vat"/>
+                        <field name="retail_price_w_vat"/>
+                    </group>
+                    <group string="Status Information">
+                        <field name="decree_id"/>
+                        <field name="equivalent_status_id"/>
+                        <field name="reference_status_id"/>
+                        <field name="fdk_agok_status_id"/>
+                        <field name="its_movement_status"/>
+                    </group>
+                </group>
+                <group string="Change Information" invisible="not pricelist_id.is_pharma_pricelist">
+                    <field name="changed_this_week"/>
+                    <field name="change_description"/>
+                    <field name="last_operation"/>
+                    <field name="previous_item_id" readonly="1"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="product_pricelist_item_tree_view_from_product_inherit_pharma" model="ir.ui.view">
+        <field name="name">product.pricelist.item.tree.from.product.inherit.pharma</field>
+        <field name="model">product.pricelist.item</field>
+        <field name="inherit_id" ref="product.product_pricelist_item_tree_view_from_product"/>
+        <field name="arch" type="xml">
+            <field name="company_id" position="after">
+                <field name="changed_this_week" optional="show"/>
+                <field name="source_country" optional="show"/>
+                <field name="actual_source_country" optional="show"/>
+                <field name="real_source_price" optional="show"/>
+                <field name="calculation_source_price" optional="show"/>
+                <field name="source_price_euro" optional="show"/>
+                <field name="depot_price_wo_vat" optional="show"/>
+                <field name="depot_sales_price_wo_vat" optional="hide"/>
+                <field name="pharmacy_sales_price_wo_vat" optional="hide"/>
+                <field name="retail_price_w_vat" optional="show"/>
+                <field name="decree_id" optional="show"/>
+                <field name="equivalent_status_id" optional="show"/>
+                <field name="reference_status_id" optional="show"/>
+                <field name="fdk_agok_status_id" optional="show"/>
+                <field name="its_movement_status" optional="show"/>
+                <field name="change_description" optional="show"/>
+                <field name="last_operation" optional="hide"/>
+            </field>
+        </field>
+    </record>
+
+</odoo>

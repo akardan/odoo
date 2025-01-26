@@ -25,11 +25,13 @@ It supports the management of historical price changes, country-specific price m
         'data/res_partner_industry_data.xml',        
         'data/product_pharma_attributes_data.xml',
         'wizards/country_import_wizard_view.xml',
+        'wizards/titck_detailed_price_import_wizard_view.xml',
         'views/menu.xml',
         'views/res_country_titck_code_view.xml',
         'views/res_partner_view.xml',
         'views/product_template_view.xml',
         'views/product_pharma_attributes_views.xml',
+        'views/product_pricelist_views.xml',
         # 'data/ir_cron_data.xml',  # Zamanlanmış görevler (fiyat güncelleme takipleri için)
     ],
 

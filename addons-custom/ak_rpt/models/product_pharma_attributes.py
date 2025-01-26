@@ -78,3 +78,10 @@ class InhalerDeviceCode(models.Model):
     code = fields.Char(string=_('Code'), required=True)
     name = fields.Char(string=_('Device Description'), translate=True, required=True)
 
+class PrescriptionType(models.Model):
+    _name = 'prescription.type'
+    _description = _('Prescription Type')
+    
+    name = fields.Char(string=_('Name'), required=True, translate=True)
+    code = fields.Char(string=_('Code'), required=True, translate=True)
+

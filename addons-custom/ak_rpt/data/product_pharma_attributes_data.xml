@@ -270,6 +270,41 @@
             <field name="name">NEBULLER</field>
         </record>
 
+       <!-- Data Import for Prescription Type -->
+        <record id="prescription_type_white" model="prescription.type">
+            <field name="name">BEYAZ RECETE</field>
+            <field name="code">BEYAZ</field>
+        </record>
+        <record id="prescription_type_red" model="prescription.type">
+            <field name="name">KIRMIZI RECETE</field>
+            <field name="code">KIRMIZI</field>
+        </record>
+        <record id="prescription_type_restricted_white" model="prescription.type">
+            <field name="name">KISITLANMIŞ BEYAZ RECETE</field>
+            <field name="code">KISITLANMIS_BEYAZ</field>
+        </record>
+        <record id="prescription_type_controlled" model="prescription.type">
+            <field name="name">KONTROLE TABI RECETE</field>
+            <field name="code">KONTROLE_TABI</field>
+        </record>
+        <record id="prescription_type_purple" model="prescription.type">
+            <field name="name">MOR RECETE</field>
+            <field name="code">MOR</field>
+        </record>
+        <record id="prescription_type_none" model="prescription.type">
+            <field name="name">RECETESIZ</field>
+            <field name="code">RECETESIZ</field>
+        </record>
+        <record id="prescription_type_orange" model="prescription.type">
+            <field name="name">TURUNCU RECETE</field>
+            <field name="code">TURUNCU</field>
+        </record>
+        <record id="prescription_type_green" model="prescription.type">
+            <field name="name">YESIL RECETE</field>
+            <field name="code">YESIL</field>
+        </record>
+
+
     </data>
     
 </odoo>
