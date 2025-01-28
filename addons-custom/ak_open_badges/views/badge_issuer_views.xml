@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Badge Issuer Form View -->
+    <record id="view_badge_issuer_form" model="ir.ui.view">
+        <field name="name">badge.issuer.form</field>
+        <field name="model">badge.issuer</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <field name="image" widget="image" class="oe_avatar"/>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" placeholder="Issuer Name"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="url"/>
+                            <field name="email"/>
+                        </group>
+                        <group>
+                            <field name="description"/>
+                            <field name="public_key"/>
+                        </group>
+                    </group>
+                </sheet>
+                <!-- Chatter -->
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- Badge Issuer Tree View -->
+    <record id="view_badge_issuer_tree" model="ir.ui.view">
+        <field name="name">badge.issuer.tree</field>
+        <field name="model">badge.issuer</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <field name="url"/>
+                <field name="email"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Badge Issuer Action -->
+    <record id="action_badge_issuer" model="ir.actions.act_window">
+        <field name="name">Badge Issuers</field>
+        <field name="res_model">badge.issuer</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first badge issuer!
+            </p>
+        </field>
+    </record>
+</odoo>
+

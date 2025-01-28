@@ -363,7 +363,7 @@
                 sequence="70"
                 groups="ak_rpt.group_price_tracking_manager"/>
 
-   <!-- ********** Model for Inhaler Device Code **************-->
+    <!-- ********** Model for Inhaler Device Code **************-->
     <!-- Tree View for Inhaler Device Code -->
     <record id="view_inhaler_device_code_tree" model="ir.ui.view">
         <field name="name">inhaler.device.code.tree</field>
@@ -406,6 +406,51 @@
                 action="action_inhaler_device_code" 
                 sequence="80"
                 groups="ak_rpt.group_price_tracking_manager"/>
+
+    <!-- ********** Model for Prescription Type **************-->
+    <!-- Tree View for Prescription Type -->
+    <record id="view_prescription_type_tree" model="ir.ui.view">
+        <field name="name">prescription.type.tree</field>
+        <field name="model">prescription.type</field>
+        <field name="arch" type="xml">
+            <list string="Prescription Type" default_order="code asc">
+                <field name="code"/>
+                <field name="name"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Form View for Prescription Type -->
+    <record id="view_prescription_type_form" model="ir.ui.view">
+        <field name="name">prescription.type.form</field>
+        <field name="model">prescription.type</field>
+        <field name="arch" type="xml">
+            <form string="Prescription Type">
+                <sheet>
+                    <group>
+                        <field name="code"/>
+                        <field name="name"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action to open the Prescription Type views -->
+    <record id="action_prescription_type" model="ir.actions.act_window">
+        <field name="name">Prescription Types</field>
+        <field name="res_model">prescription.type</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <!-- Menu Item to access Prescription Type -->
+    <menuitem   id="menu_prescription_type" 
+                name="Prescription Type" 
+                parent="menu_product_pharma_attributes" 
+                action="action_prescription_type" 
+                sequence="90"
+                groups="ak_rpt.group_price_tracking_manager"/>
+
 
 
 </odoo>

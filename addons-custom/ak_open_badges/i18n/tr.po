@@ -1,0 +1,92 @@
+# i18n/tr.po
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+# 	* open_badges
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 18.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-01-20 10:00+0000\n"
+"PO-Revision-Date: 2025-01-20 10:00+0000\n"
+"Last-Translator: \n"
+"Language-Team: Turkish\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: \n"
+"Plural-Forms: \n"
+
+#. module: open_badges
+#: model:ir.model.fields,field_description:ak_open_badges.field_badge_issuer__name
+msgid "Name"
+msgstr "İsim"
+
+#. module: open_badges
+#: model:ir.model.fields,field_description:ak_open_badges.field_badge_issuer__url
+msgid "URL"
+msgstr "URL"
+
+#. module: open_badges
+#: model:ir.model.fields,field_description:ak_open_badges.field_badge_issuer__email
+msgid "Email"
+msgstr "E-posta"
+
+#. module: open_badges
+#: model:ir.model.fields,field_description:ak_open_badges.field_badge_issuer__description
+msgid "Description"
+msgstr "Açıklama"
+
+#. module: open_badges
+#: model:ir.model.fields,field_description:ak_open_badges.field_badge_issuer__image
+msgid "Issuer Logo"
+msgstr "Veren Kurum Logosu"
+
+#. module: open_badges
+#: model:ir.model.fields,field_description:ak_open_badges.field_badge_class__criteria_url
+msgid "Criteria URL"
+msgstr "Kriter URL"
+
+#. module: open_badges
+#: model:ir.model.fields,field_description:ak_open_badges.field_badge_class__criteria_narrative
+msgid "Criteria Narrative"
+msgstr "Kriter Açıklaması"
+
+#. module: open_badges
+#: model:ir.model.fields,field_description:ak_open_badges.field_badge_class__issuer_id
+msgid "Issuer"
+msgstr "Veren Kurum"
+
+#. module: open_badges
+#: model:ir.model.fields,field_description:ak_open_badges.field_badge_class__tags
+msgid "Tags"
+msgstr "Etiketler"
+
+#. module: open_badges
+#: model:ir.model.fields,field_description:ak_open_badges.field_badge_alignment__target_name
+msgid "Target Name"
+msgstr "Hedef Adı"
+
+#. module: open_badges
+#: model:ir.model.fields,field_description:ak_open_badges.field_badge_alignment__target_url
+msgid "Target URL"
+msgstr "Hedef URL"
+
+#. module: open_badges
+#: model:ir.model.fields,field_description:ak_open_badges.field_badge_assertion__recipient_type
+msgid "Recipient Type"
+msgstr "Alıcı Tipi"
+
+#. module: open_badges
+#: model:ir.model.fields.selection,name:ak_open_badges.selection__badge_assertion__recipient_type__email
+msgid "Email"
+msgstr "E-posta"
+
+#. module: open_badges
+#: model:ir.model.fields.selection,name:ak_open_badges.selection__badge_assertion__recipient_type__url
+msgid "URL"
+msgstr "URL"
+
+#. module: open_badges
+#: model:ir.model.fields.selection,name:ak_open_badges.selection__badge_assertion__recipient_type__telephone
+msgid "Telephone"
+msgstr "Telefon"

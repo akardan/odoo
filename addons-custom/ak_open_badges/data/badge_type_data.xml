@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data noupdate="1">
+        <record id="badge_type_completion" model="badge.type">
+            <field name="name">Course Completion</field>
+            <field name="code">completion</field>
+            <field name="description">Awarded upon successful course completion</field>
+        </record>
+
+        <record id="badge_type_achievement" model="badge.type">
+            <field name="name">Achievement</field>
+            <field name="code">achievement</field>
+            <field name="description">Awarded for special achievements</field>
+        </record>
+
+        <record id="badge_type_certification" model="badge.type">
+            <field name="name">Certification</field>
+            <field name="code">certification</field>
+            <field name="description">Professional certification badge</field>
+        </record>
+    </data>
+</odoo>

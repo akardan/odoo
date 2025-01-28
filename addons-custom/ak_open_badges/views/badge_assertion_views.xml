@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Badge Assertion Form View -->
+    <record id="view_badge_assertion_form" model="ir.ui.view">
+        <field name="name">badge.assertion.form</field>
+        <field name="model">badge.assertion</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_issue" string="Issue Badge" type="object" 
+                            class="oe_highlight" invisible="state != 'draft'"/>
+                    <button name="action_revoke" string="Revoke Badge" type="object"
+                            invisible="state != 'issued'" confirm="Are you sure you want to revoke this badge?"/>
+                    <field name="state" widget="statusbar" 
+                           statusbar_visible="draft,issued,revoked"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="badge_class_id"/>
+                            <field name="recipient_id"/>
+                            <field name="recipient_type"/>
+                            <field name="issuance_date"/>
+                        </group>
+                        <group>
+                            <field name="expiration_date"/>
+                            <field name="verification_type"/>
+                            <field name="recipient_hashed"/>
+                            <field name="assertion_url" widget="url"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Evidence" name="evidence" readonly="state != 'draft'">
+                            <field name="evidence">
+                                <list editable="bottom">
+                                    <field name="name"/>
+                                    <field name="description"/>
+                                    <field name="narrative"/>
+                                    <field name="genre"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="QR Code" name="qr_code">
+                            <group>
+                                <field name="qr_code" widget="image"/>
+                            </group>
+                        </page>
+                        <page string="Revocation" name="revocation" invisible="state != 'revoked'">
+                            <group>
+                                <field name="revocation_reason"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <!-- Chatter -->
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- Badge Assertion Tree View -->
+    <record id="view_badge_assertion_tree" model="ir.ui.view">
+        <field name="name">badge.assertion.tree</field>
+        <field name="model">badge.assertion</field>
+        <field name="arch" type="xml">
+            <list decoration-info="state == 'draft'" decoration-danger="state == 'revoked'">
+                <field name="name"/>
+                <field name="badge_class_id"/>
+                <field name="recipient_id"/>
+                <field name="issuance_date"/>
+                <field name="state"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Badge Assertion Search View -->
+    <record id="view_badge_assertion_search" model="ir.ui.view">
+        <field name="name">badge.assertion.search</field>
+        <field name="model">badge.assertion</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="badge_class_id"/>
+                <field name="recipient_id"/>
+                <separator/>
+                <filter string="Draft" name="draft" domain="[('state', '=', 'draft')]"/>
+                <filter string="Issued" name="issued" domain="[('state', '=', 'issued')]"/>
+                <filter string="Revoked" name="revoked" domain="[('state', '=', 'revoked')]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Badge Class" name="group_by_badge" domain="[]" context="{'group_by': 'badge_class_id'}"/>
+                    <filter string="Recipient" name="group_by_recipient" domain="[]" context="{'group_by': 'recipient_id'}"/>
+                    <filter string="State" name="group_by_state" domain="[]" context="{'group_by': 'state'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Badge Assertion Action -->
+    <record id="action_badge_assertion" model="ir.actions.act_window">
+        <field name="name">Badge Assertions</field>
+        <field name="res_model">badge.assertion</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Issue your first badge!
+            </p>
+        </field>
+    </record>
+</odoo> 

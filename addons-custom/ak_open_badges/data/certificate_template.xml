@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <!-- <data>
+        <record id="default_badge_issuer" model="badge.issuer">
+            <field name="name">Default Institution</field>
+            <field name="url">https://digipharma.com.tr</field>
+            <field name="email">certificates@digipharma.com.tr</field>
+            <field name="description">Default certificate issuing institution</field>
+        </record>
+    </data>
+
+    <data>
+        <record id="certificate_template_harvard" model="badge.class">
+            <field name="name">Harvard Style Certificate</field>
+            <field name="description">Professional certificate template in Harvard style</field>
+            <field name="criteria_narrative">Successful completion of the course requirements</field>
+            <field name="criteria_url">https://digipharma.com.tr/criteria/harvard</field>
+            <field name="image" type="url">/ak_open_badges/static/src/img/badge_harvard.png</field>
+            <field name="tags">harvard,professional,course</field>
+            <field name="issuer_id" ref="default_badge_issuer"/>
+        </record>
+
+        <record id="certificate_template_standard" model="badge.class">
+            <field name="name">Standard Certificate</field>
+            <field name="description">Standard certificate template</field>
+            <field name="criteria_narrative">Completion of standard requirements</field>
+            <field name="criteria_url">https://digipharma.com.tr/criteria/standard</field>
+            <field name="image" type="url">/ak_open_badges/static/src/img/badge_standard.png</field>
+            <field name="tags">standard,basic</field>
+            <field name="issuer_id" ref="default_badge_issuer"/>
+        </record>
+    </data> -->
+</odoo>
+

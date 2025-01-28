@@ -1,0 +1,281 @@
+/* static/src/scss/certificate_style.scss */
+
+// Değişkenler
+:root {
+    // Tema renkleri
+    --badge-primary: #3B82F6;
+    --badge-secondary: #6B7280;
+    --badge-success: #10B981;
+    --badge-danger: #EF4444;
+    --badge-warning: #F59E0B;
+    --badge-info: #3B82F6;
+    
+    // Nötr renkler
+    --badge-text: #1F2937;
+    --badge-text-light: #6B7280;
+    --badge-border: #E5E7EB;
+    --badge-background: #FFFFFF;
+    
+    // Tema-spesifik değişkenler
+    --badge-font-primary: 'Inter', sans-serif;
+    --badge-font-secondary: 'Georgia', serif;
+}
+
+// Dark mode desteği
+[data-theme="dark"] {
+    --badge-primary: #60A5FA;
+    --badge-secondary: #9CA3AF;
+    --badge-text: #F3F4F6;
+    --badge-text-light: #D1D5DB;
+    --badge-border: #374151;
+    --badge-background: #1F2937;
+}
+
+// Sertifika temaları
+.theme-classic {
+    --theme-font: 'Georgia', serif;
+    --theme-border: 2px solid #000;
+    --theme-spacing: 3rem;
+    
+    .badge-header {
+        border-bottom: var(--theme-border);
+    }
+    
+    .badge-title {
+        font-family: var(--theme-font);
+        letter-spacing: 0.1em;
+    }
+}
+
+.theme-modern {
+    --theme-font: 'Inter', sans-serif;
+    --theme-gradient: linear-gradient(135deg, var(--badge-primary), #818CF8);
+    --theme-spacing: 2rem;
+    
+    .badge-header {
+        background: var(--theme-gradient);
+        color: white;
+        padding: 2rem;
+        border-radius: 1rem 1rem 0 0;
+    }
+}
+
+.theme-minimalist {
+    --theme-font: 'Helvetica Neue', sans-serif;
+    --theme-spacing: 1.5rem;
+    
+    .badge-container {
+        border: none;
+        box-shadow: none;
+    }
+    
+    .badge-title {
+        font-weight: 300;
+        letter-spacing: 0.05em;
+    }
+}
+
+// Responsive mixins
+@mixin mobile {
+    @media (max-width: 640px) { @content; }
+}
+
+@mixin tablet {
+    @media (max-width: 1024px) { @content; }
+}
+
+@mixin print {
+    @media print { @content; }
+}
+
+// Ana konteyner
+.o_badge_container {
+    position: relative;
+    padding: var(--theme-spacing, 2rem);
+    background-color: var(--badge-background);
+    border-radius: 0.5rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    
+    @include mobile {
+        padding: 1rem;
+        margin: 1rem;
+    }
+    
+    @include print {
+        box-shadow: none;
+        border: 1px solid #000;
+    }
+    
+    // Dark mode hover efekti
+    [data-theme="dark"] & {
+        &:hover {
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+    }
+
+    .badge-header {
+        text-align: center;
+        margin-bottom: var(--theme-spacing, 2rem);
+
+        @include mobile {
+            .badge-logo {
+                max-width: 150px;
+            }
+            
+            .badge-title {
+                font-size: 1.5rem;
+            }
+        }
+    }
+
+    .badge-content {
+        text-align: center;
+        margin: var(--theme-spacing, 2rem) 0;
+        
+        @include mobile {
+            .recipient-name {
+                font-size: 1.4rem;
+            }
+            
+            .badge-description {
+                font-size: 1rem;
+            }
+        }
+    }
+
+    .badge-footer {
+        @include mobile {
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+    }
+}
+
+// Kanban görünümü için responsive ayarlar
+.o_kanban_view {
+    .o_badge_kanban {
+        @include mobile {
+            width: 100%;
+        }
+        
+        @include tablet {
+            width: 50%;
+        }
+    }
+}
+
+// Print özellikleri
+@include print {
+    .o_badge_container {
+        page-break-inside: avoid;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+        
+        .watermark {
+            display: block !important;
+            opacity: 0.1;
+        }
+    }
+    
+    // Print için gereksiz elementleri gizle
+    .o_badge_actions,
+    .verification-block {
+        display: none !important;
+    }
+}
+
+// Animasyonlar
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideIn {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+// Badge durumları için animasyonlu geçişler
+.badge-status {
+    transition: all 0.3s ease;
+    
+    &.issued {
+        animation: fadeIn 0.5s ease-out;
+    }
+    
+    &.revoked {
+        animation: slideIn 0.3s ease-out;
+    }
+}
+
+// İnteraktif elementler
+.badge-interactive {
+    .verification-block {
+        cursor: pointer;
+        transition: transform 0.2s ease;
+        
+        &:hover {
+            transform: scale(1.05);
+        }
+        
+        .qr-code {
+            transition: filter 0.3s ease;
+            
+            &:hover {
+                filter: brightness(1.1);
+            }
+        }
+    }
+}
+
+// Erişilebilirlik geliştirmeleri
+.badge-accessibility {
+    :focus {
+        outline: 2px solid var(--badge-primary);
+        outline-offset: 2px;
+    }
+    
+    .screen-reader-text {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        border: 0;
+    }
+}
+
+// PDF çıktısı için özel stiller
+.badge-pdf {
+    padding: 3rem;
+    background-color: #fff;
+    border: 1px solid #e2e8f0;
+    position: relative;
+
+    &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('/open_badges/static/src/img/background-pattern 05.png');
+        opacity: 0.05;
+        pointer-events: none;
+    }
+
+    .watermark {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) rotate(-45deg);
+        font-size: 6rem;
+        color: rgba(0, 0, 0, 0.03);
+        white-space: nowrap;
+        pointer-events: none;
+    }
+}

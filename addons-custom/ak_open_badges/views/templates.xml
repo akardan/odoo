@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="verification_page" name="Badge Verification">
+        <t t-call="web.layout">
+            <div class="container mt-4">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h3 class="card-title mb-0">Badge Verification</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4 text-center">
+                                <img t-att-src="'/web/image/badge.class/%s/image' % badge.badge_class_id.id" 
+                                     class="img-fluid rounded" alt="Badge"/>
+                            </div>
+                            <div class="col-md-8">
+                                <h4 t-esc="data['badge_name']"/>
+                                <p class="text-muted">Issued to: <strong t-esc="data['recipient_name']"/></p>
+                                <p class="text-muted">Issuer: <strong t-esc="data['issuer_name']"/></p>
+                                <p class="text-muted">Issue Date: <strong t-esc="data['issue_date']"/></p>
+                                <t t-if="data['expiry_date']">
+                                    <p class="text-muted">Expiry Date: <strong t-esc="data['expiry_date']"/></p>
+                                </t>
+                                
+                                <div class="mt-3">
+                                    <span t-if="data['status'] == 'valid'" class="badge badge-success">Valid</span>
+                                    <span t-if="data['status'] == 'revoked'" class="badge badge-danger">Revoked</span>
+                                </div>
+
+                                <div class="mt-4">
+                                    <h5>Open Badges Verification</h5>
+                                    <p>This badge follows the Open Badges 2.0 standard</p>
+                                    <div class="btn-group">
+                                        <a t-att-href="data['badge_class_url']" 
+                                           class="btn btn-sm btn-outline-primary" target="_blank">
+                                            View Badge Class
+                                        </a>
+                                        <a t-att-href="data['assertion_json_url']" 
+                                           class="btn btn-sm btn-outline-secondary" target="_blank">
+                                            View Assertion JSON
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </t>
+    </template>
+
+    <template id="verification_error" name="Badge Verification Error">
+        <t t-call="web.layout">
+            <div class="container mt-4">
+                <div class="alert alert-danger">
+                    <h4 class="alert-heading">Verification Error</h4>
+                    <p t-esc="error"/>
+                </div>
+            </div>
+        </t>
+    </template>
+</odoo>
