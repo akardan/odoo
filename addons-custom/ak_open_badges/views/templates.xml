@@ -1,44 +1,81 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+
+
     <template id="verification_page" name="Badge Verification">
         <t t-call="web.layout">
             <div class="container mt-4">
-                <div class="card">
-                    <div class="card-header bg-primary text-white">
-                        <h3 class="card-title mb-0">Badge Verification</h3>
-                    </div>
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col-md-4 text-center">
-                                <img t-att-src="'/web/image/badge.class/%s/image' % badge.badge_class_id.id" 
-                                     class="img-fluid rounded" alt="Badge"/>
-                            </div>
-                            <div class="col-md-8">
-                                <h4 t-esc="data['badge_name']"/>
-                                <p class="text-muted">Issued to: <strong t-esc="data['recipient_name']"/></p>
-                                <p class="text-muted">Issuer: <strong t-esc="data['issuer_name']"/></p>
-                                <p class="text-muted">Issue Date: <strong t-esc="data['issue_date']"/></p>
-                                <t t-if="data['expiry_date']">
-                                    <p class="text-muted">Expiry Date: <strong t-esc="data['expiry_date']"/></p>
-                                </t>
-                                
-                                <div class="mt-3">
-                                    <span t-if="data['status'] == 'valid'" class="badge badge-success">Valid</span>
-                                    <span t-if="data['status'] == 'revoked'" class="badge badge-danger">Revoked</span>
-                                </div>
+                <div class="position-relative" style="width: 297mm; height: 210mm; margin: auto; background-color: white;">
+                    <div class="certificate-container" style="position: relative; height: 100%;">
+                        <!-- SVG Frame -->
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 297 210" style="width: 100%; height: 100%; position: absolute;">
+                            <!-- Main Frame -->
+                            <rect x="15" y="15" width="267" height="180" fill="none" stroke="url(#frame-gold)" stroke-width="0.95"/>
+                            <rect x="20" y="20" width="257" height="170" fill="none" stroke="url(#frame-gold)" stroke-width="0.65"/>
+                            
+                            <!-- Decorative Curves -->
+                            <path d="M0,10 Q148.5,20 297,10" stroke="url(#frame-gold)" stroke-width="0.75" fill="none"/>
+                            <path d="M0,200 Q148.5,190 297,200" stroke="url(#frame-gold)" stroke-width="0.75" fill="none"/>
+                            
+                            <!-- Gradient Definition -->
+                            <defs>
+                                <linearGradient id="frame-gold" x1="0%" y1="0%" x2="100%" y2="0%">
+                                    <stop offset="0%" style="stop-color: #D4AF37"/>
+                                    <stop offset="50%" style="stop-color: #C5A028"/>
+                                    <stop offset="100%" style="stop-color: #D4AF37"/>
+                                </linearGradient>
+                            </defs>
+                        </svg>
 
-                                <div class="mt-4">
-                                    <h5>Open Badges Verification</h5>
-                                    <p>This badge follows the Open Badges 2.0 standard</p>
-                                    <div class="btn-group">
-                                        <a t-att-href="data['badge_class_url']" 
-                                           class="btn btn-sm btn-outline-primary" target="_blank">
-                                            View Badge Class
-                                        </a>
-                                        <a t-att-href="data['assertion_json_url']" 
-                                           class="btn btn-sm btn-outline-secondary" target="_blank">
-                                            View Assertion JSON
-                                        </a>
+                        <!-- Certificate Content -->
+                        <div style="position: absolute; top: 20mm; left: 20mm; right: 20mm; bottom: 20mm;">
+                            <!-- Header - Logo -->
+                            <div style="position: absolute; top: 2mm; right: 2mm;">
+                                <img t-if="badge.badge_class_id.issuer_id.image" 
+                                    t-att-src="'/web/image/badge.issuer/%s/image' % badge.badge_class_id.issuer_id.id" 
+                                    style="height: 17mm;" alt="Logo"/>
+                            </div>
+
+                            <!-- Main Content -->
+                            <div class="text-start">
+                                <h1 style="font-family: 'UnifrakturMaguntia', cursive; font-size: 42pt; color: #333; margin-bottom: 0mm; text-align: center; width: 100%; line-height: 2; font-weight: normal;">
+                                    <t t-esc="badge.badge_class_id.badge_type_id.name"/>
+                                </h1>
+
+                                <div style="font-size: 14pt; line-height: 1.0; text-align: center;">
+                                    <p>This certifies that</p>
+                                    <h2 style="font-family: 'Kings', cursive; font-size: 32pt; margin: 8mm 0;" t-esc="badge.recipient_id.name"/>
+                                    <p>has successfully completed the</p>
+                                    <h3 style="font-size: 18pt; margin: 8mm 0;" t-esc="badge.badge_class_id.name"/>
+                                    <p>and was awarded a certificate in</p>
+                                    <h4 style="font-size: 14pt; margin: 8mm 0;">Successfully completed the course.</h4>
+                                </div>
+                            </div>
+
+                            <!-- Footer Section -->
+                            <div style="margin-top: 10mm; display: grid; grid-template-columns: repeat(3, 1fr); gap: 10mm;">
+                                <div class="text-center">
+                                    <img t-att-src="'/web/image/badge.class/%s/image' % badge.badge_class_id.id" 
+                                        style="height: 35mm; margin-left: 10px;" alt="Badge"/>
+                                </div>
+                                
+                                <div class="text-center">
+                                    <p style="margin-top: 5mm; font-size: 12pt;">Program Director</p>
+                                    <img t-if="badge.badge_class_id.issuer_id.signature" 
+                                        t-att-src="'/web/image/badge.issuer/%s/signature' % badge.badge_class_id.issuer_id.id" 
+                                        style="height: 20mm;" alt="Signature"/>
+                                </div>
+                                
+                                <div style="display: flex; justify-content: space-between; align-items: flex-start; font-size: 10pt;">
+                                    <div style="flex: 1;">
+                                        <p>Issue Date  : <span t-field="badge.issuance_date" t-options='{"format": "dd/MM/yyyy"}'/></p>
+                                        <p>Expiry Date : <span t-field="badge.expiration_date" t-options='{"format": "dd/MM/yyyy"}'/></p>
+                                        <p style="margin-top: 5mm;">CERTIFICATE ID</p>
+                                        <p t-esc="badge.verification_token"/>
+                                    </div>
+                                    <div style="margin-top: 5mm; margin-right: 5mm;">
+                                        <img t-att-src="'/web/image/badge.assertion/%s/qr_code' % badge.id" 
+                                                style="width: 25mm;"/>
                                     </div>
                                 </div>
                             </div>
@@ -46,8 +83,32 @@
                     </div>
                 </div>
             </div>
+
+            <style>
+                @import url("https://fonts.googleapis.com/css2?family=UnifrakturMaguntia");
+                @import url("https://fonts.googleapis.com/css2?family=Kings");
+                
+           
+                @media print {
+                    @page {
+                        size: A4 landscape;
+                        margin: 0;
+                    }
+                    body {
+                        margin: 0;
+                    }
+                }
+            </style>
         </t>
     </template>
+
+
+    <!-- <template id="assets_backend" inherit_id="web.assets_backend" name="My Custom Backend Assets">
+        <xpath expr="." position="inside">
+            <link rel="stylesheet" type="text/css" href="/ak_open_badges/static/src/css/verification.css"/>
+        </xpath>
+    </template> -->
+
 
     <template id="verification_error" name="Badge Verification Error">
         <t t-call="web.layout">

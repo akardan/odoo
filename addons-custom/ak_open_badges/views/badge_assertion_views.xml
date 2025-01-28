@@ -52,7 +52,7 @@
                         </page>
                         <page string="Revocation" name="revocation" invisible="state != 'revoked'">
                             <group>
-                                <field name="revocation_reason"/>
+                                <!-- <field name="revocation_reason"/> -->
                             </group>
                         </page>
                     </notebook>

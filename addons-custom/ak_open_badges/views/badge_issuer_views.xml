@@ -6,6 +6,13 @@
         <field name="model">badge.issuer</field>
         <field name="arch" type="xml">
             <form>
+                <header>
+                    <button name="generate_key_pair" 
+                            string="Generate Keys" 
+                            type="object" 
+                            class="oe_highlight"
+                            confirm="This will generate new keys. Existing badges might need to be re-issued. Are you sure?"/>
+                </header>
                 <sheet>
                     <field name="image" widget="image" class="oe_avatar"/>
                     <div class="oe_title">
@@ -20,9 +27,19 @@
                         </group>
                         <group>
                             <field name="description"/>
-                            <field name="public_key"/>
                         </group>
                     </group>
+                    <group string="İmza" name="signature">
+                        <field name="signature" widget="image"/>
+                    </group>
+                    <notebook>
+                        <page string="Keys" name="keys">
+                            <group>
+                                <field name="public_key" widget="ace" options="{'mode': 'text'}"/>
+                                <field name="private_key" groups="base.group_system" widget="ace" options="{'mode': 'text'}"/>
+                            </group>
+                        </page>
+                    </notebook>
                 </sheet>
                 <!-- Chatter -->
                 <chatter/>

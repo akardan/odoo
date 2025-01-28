@@ -11,3 +11,7 @@ access_badge_alignment_user,badge.alignment.user,model_badge_alignment,base.grou
 access_badge_alignment_manager,badge.alignment.manager,model_badge_alignment,base.group_system,1,1,1,1
 access_badge_tag_user,badge.tag.user,model_badge_tag,base.group_user,1,0,0,0
 access_badge_tag_manager,badge.tag.manager,model_badge_tag,base.group_system,1,1,1,1
+access_badge_type_user,badge.type.user,model_badge_type,base.group_user,1,0,0,0
+access_badge_type_manager,badge.type.manager,model_badge_type,base.group_system,1,1,1,1
+
+

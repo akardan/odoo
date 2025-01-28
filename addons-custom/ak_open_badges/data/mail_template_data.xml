@@ -21,5 +21,6 @@
             <field name="lang">${object.recipient_id.lang}</field>
             <field name="auto_delete" eval="True"/>
         </record>
+
     </data>
 </odoo>

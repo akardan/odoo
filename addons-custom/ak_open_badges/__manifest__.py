@@ -36,12 +36,12 @@
         'views/badge_class_views.xml',       # Badge sınıf görünümleri
         'views/badge_assertion_views.xml',   # Assertion görünümleri
         'views/badge_tag_views.xml',         # Tag görünümleri
-        'views/templates.xml',               # Website şablonları
         'views/menu_views.xml',              # Menü yapısı
         
         # Raporlar
-        # 'report/badge_report_templates.xml',  # Rapor şablonları
-        # 'report/badge_reports.xml',          # Rapor tanımları
+        'reports/badge_reports.xml',        # Önce report tanımları
+
+        'views/templates.xml',               # Website şablonları
         
         # Email Şablonları
         'data/mail_template_data.xml',       # E-posta şablonları
@@ -49,6 +49,7 @@
 
     'assets': {
         'web.assets_backend': [
+            'ak_open_badges/static/src/css/verification.css',
             'ak_open_badges/static/src/scss/certificate_style.scss',
         ],
     },
