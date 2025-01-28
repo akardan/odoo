@@ -2,7 +2,7 @@
 <odoo>
 
 
-    <template id="verification_page" name="Badge Verification">
+    <template id="badge_certificate_template" name="Badge Verification">
         <t t-call="web.layout">
             <div class="container mt-4">
                 <div class="position-relative" style="width: 297mm; height: 210mm; margin: auto; background-color: white;">

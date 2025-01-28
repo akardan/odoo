@@ -22,8 +22,8 @@
         <field name="name">Badge Certificate</field>
         <field name="model">badge.assertion</field>
         <field name="report_type">qweb-pdf</field>
-        <field name="report_name">ak_open_badges.verification_page</field>
-        <field name="report_file">ak_open_badges.verification_page</field>
+        <field name="report_name">ak_open_badges.badge_certificate_template</field>
+        <field name="report_file">ak_open_badges.badge_certificate_template</field>
         <field name="print_report_name">'Certificate - %s' % object.name</field>
         <field name="binding_model_id" ref="model_badge_assertion"/>
         <field name="binding_type">report</field>

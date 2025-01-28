@@ -7,7 +7,22 @@ from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import padding
 from cryptography.hazmat.backends import default_backend
 import base64
+import logging
 
+from reportlab.lib.pagesizes import A4, landscape
+from reportlab.lib import colors
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.units import mm, cm
+from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image
+from reportlab.lib.utils import ImageReader
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+from io import BytesIO
+import os
+import tempfile
+
+_logger = logging.getLogger(__name__)
 
 class BadgeAssertion(models.Model):
     _name = 'badge.assertion'
@@ -55,16 +70,338 @@ class BadgeAssertion(models.Model):
 
     def _generate_certificate_pdf(self):
         self.ensure_one()
-        # Mevcut verification_page template'ini kullanarak PDF oluştur
-        pdf = self.env.ref('ak_open_badges.badge_certificate_report')._render_qweb_pdf(self.id)[0]
         
+        # Font yolunu ayarla
+        module_path = os.path.dirname(os.path.dirname(__file__))
+        pirata_font_path = os.path.join(module_path, 'static/fonts', 'PirataOne-Regular.ttf')
+        ephesis_font_path = os.path.join(module_path, 'static/fonts', 'Ephesis-Regular.ttf')
+
+        # Fontu kaydet
+        pdfmetrics.registerFont(TTFont('PirataOne', pirata_font_path))
+        pdfmetrics.registerFont(TTFont('Ephesis', ephesis_font_path))
+
+        
+        
+        # A4 Landscape
+        width, height = landscape(A4)
+        pdf_buffer = BytesIO()
+        doc = SimpleDocTemplate(
+            pdf_buffer, 
+            pagesize=landscape(A4),
+            leftMargin=1.5*cm,
+            rightMargin=1.5*cm,
+            topMargin=1.5*cm,
+            bottomMargin=1.5*cm
+        )
+        
+        story = []
+        styles = getSampleStyleSheet()
+
+        # Özel stiller
+        title_style = ParagraphStyle(
+            'CustomTitle',
+            parent=styles['Title'],
+            fontName='PirataOne',
+            fontSize=42,
+            leading=44,
+            alignment=TA_CENTER,
+            textColor=colors.HexColor('#1B1B1B'),
+            spaceAfter=30
+        )
+
+        subtitle_style = ParagraphStyle(
+            'CustomSubTitle',
+            parent=styles['Normal'],
+            fontSize=16,
+            leading=22,
+            alignment=TA_CENTER,
+            textColor=colors.HexColor('#333333'),
+            spaceAfter=12
+        )
+
+        name_style = ParagraphStyle(
+            'NameStyle',
+            parent=styles['Normal'],
+            fontName='Ephesis',
+            fontSize=36,
+            leading=34,
+            alignment=TA_CENTER,
+            textColor=colors.HexColor('#1B1B1B'),
+            spaceAfter=20
+        )
+
+        course_style = ParagraphStyle(
+            'CourseStyle',
+            parent=styles['Normal'],
+            fontName='Ephesis',
+            fontSize=32,
+            leading=26,
+            alignment=TA_CENTER,
+            textColor=colors.HexColor('#1B1B1B'),
+            spaceAfter=15
+        )
+
+        # İçerik
+        story.append(Spacer(1, 1*cm))
+        
+        # Başlık
+        title = Paragraph(f"<b>{self.badge_class_id.badge_type_id.name}</b>", title_style)
+        story.append(title)
+        
+        story.append(Spacer(1, 0.5*cm))
+        
+        # Alt başlık
+        subtitle = Paragraph("This certifies that", subtitle_style)
+        story.append(subtitle)
+        
+        # İsim
+        name = Paragraph(f"<b>{self.recipient_id.name}</b>", name_style)
+        story.append(name)
+        
+        # Kurs bilgisi
+        course_info = Paragraph("has successfully completed the", subtitle_style)
+        story.append(course_info)
+        
+        # Kurs adı
+        course_name = Paragraph(f"<b>{self.badge_class_id.name}</b>", course_style)
+        story.append(course_name)
+        
+        story.append(Spacer(1, 2*cm))
+
+        # Altın renkli çerçeve
+        def draw_certificate_template(canvas, doc):
+            # Sayfanın gerçek boyutlarını al
+            page_width = doc.pagesize[0]  # Landscape A4 genişlik
+            page_height = doc.pagesize[1] # Landscape A4 yükseklik
+
+            canvas.saveState()
+            
+            # Background image ekle
+            try:
+                # Background image yolu
+                bg_path = os.path.join(module_path, 'static', 'src', 'img', 'background-pattern 05.png')
+                
+                # Background'u tüm sayfaya yayarak yerleştir
+                canvas.drawImage(
+                    bg_path, 
+                    0,  # x pozisyonu - en soldan başla
+                    0,  # y pozisyonu - en alttan başla
+                    width=page_width,  # sayfanın tam genişliği
+                    height=page_height,  # sayfanın tam yüksekliği
+                    mask='auto',
+                    preserveAspectRatio=False  # Görüntüyü sayfaya sığdır
+                )
+            except Exception as e:
+                _logger.error(f"Background image yüklenemedi: {str(e)}")
+
+            # canvas.setFillColorRGB(1, 1, 1, 0.9)  # Beyaz arka plan %90 opaklık
+            # canvas.rect(0, 0, page_width, page_height, fill=True)
+
+            # Dış çerçeve
+            canvas.setStrokeColor(colors.HexColor('#D4AF37'))
+            canvas.setLineWidth(2)
+            
+            # Kenar boşlukları - 1cm azaltıldı (2cm'den 1cm'ye)
+            margin = 1*cm
+            
+            # Dış çerçeve - sayfa kenarlarından margin kadar içeride
+            canvas.rect(
+                margin,                  
+                margin,                  
+                page_width - 2*margin,   
+                page_height - 2*margin   
+            )
+            
+            # İç çerçeve - 1cm azaltıldı (3cm'den 2cm'ye)
+            inner_margin = 2*cm
+            canvas.setLineWidth(1)
+            canvas.rect(
+                inner_margin,
+                inner_margin,
+                page_width - 2*inner_margin,
+                page_height - 2*inner_margin
+            )
+            
+            # Alt süsleme - dış çerçeve ile aynı genişlikte
+            canvas.setLineWidth(1)
+            p = canvas.beginPath()
+            p.moveTo(margin, margin + 1*cm)
+            p.curveTo(
+                page_width/2, margin + 0.5*cm,     
+                page_width/2, margin + 0.5*cm,     
+                page_width - margin, margin + 1*cm  
+            )
+            canvas.drawPath(p)
+            
+            # Üst süsleme - dış çerçeve ile aynı genişlikte
+            p = canvas.beginPath()
+            p.moveTo(margin, page_height - margin - 1*cm)
+            p.curveTo(
+                page_width/2, page_height - margin - 0.5*cm,
+                page_width/2, page_height - margin - 0.5*cm,
+                page_width - margin, page_height - margin - 1*cm
+            )
+            canvas.drawPath(p)
+
+            # Logo ekle
+            if self.badge_class_id.issuer_id.image:
+                logo_data = BytesIO(base64.b64decode(self.badge_class_id.issuer_id.image))
+                logo = ImageReader(logo_data)
+                # Logo boyutları (3cm x 3cm)
+                logo_width = 5*cm
+                logo_height = 3*cm
+                # Pozisyon: sağ üst köşeden 2cm içeride
+                x = page_width - logo_width - 2*cm
+                y = page_height - logo_height - 2*cm
+                
+                canvas.drawImage(
+                    logo, x, y, 
+                    width=logo_width, 
+                    height=logo_height, 
+                    preserveAspectRatio=True, 
+                    mask='auto'
+                )
+
+            # QR Code ve Detay bilgileri için ortak y pozisyonu
+            detail_y = 4*cm  # QR Code ile aynı hizadan başla
+
+            # Badge Logo (sol alt)
+            if self.badge_class_id.image:
+                badge_logo_data = BytesIO(base64.b64decode(self.badge_class_id.image))
+                badge_logo = ImageReader(badge_logo_data)
+                
+                # Badge logo boyutları
+                badge_width = 3*cm
+                badge_height = 3*cm
+                
+                # Pozisyon: sol alt köşeden 2cm içeride
+                x = 2.5*cm
+                y = detail_y -1*cm
+                
+                # Badge logo'yu yerleştir
+                canvas.drawImage(
+                    badge_logo, x, y, 
+                    width=badge_width, 
+                    height=badge_height, 
+                    preserveAspectRatio=True, 
+                    mask='auto'  # Transparanlık için
+                )                    
+
+            # İmza bölümü (orta alt)
+            sig_x = page_width/2 - 1.5*cm  # İmzayı ortalamak için
+            sig_y = detail_y
+            
+            canvas.setFont('Helvetica-Bold', 10)
+            canvas.drawString(sig_x - 0.5*cm, sig_y + 1.5*cm, "Issuer Signature")
+            canvas.setFont('Helvetica', 10)
+            
+            # İmza çizgisi
+            canvas.line(sig_x - 1.0*cm, sig_y + 1.0*cm, sig_x + 3*cm, sig_y + 1.0*cm)
+
+            # İmza ekle
+            if self.badge_class_id.issuer_id.signature:
+                signature_data = BytesIO(base64.b64decode(self.badge_class_id.issuer_id.signature))
+                signature = ImageReader(signature_data)
+                
+                # İmza pozisyonu - footer table'ın üçüncü sütununun üzerine gelecek şekilde
+                sig_width = 3*cm
+                sig_height = 2.5*cm
+                
+                canvas.drawImage(
+                    signature, sig_x - 0.5*cm, sig_y - 1.5*cm , 
+                    width=sig_width, 
+                    height=sig_height, 
+                    preserveAspectRatio=True, 
+                    mask='auto'
+                )
+                
+            #Qr Code ekle
+            if self.qr_code:
+                qr_code_data = BytesIO(base64.b64decode(self.qr_code))
+                qr_code = ImageReader(qr_code_data)
+                
+                # QR Code boyutları
+                qr_width = 2*cm
+                qr_height = 2*cm
+                
+                # QR Code pozisyonu: sağ alt köşeden 2cm içeride
+                qr_x = page_width - qr_width - 2.5*cm
+                qr_y = detail_y
+
+                # QR Code'yu yerleştir
+                canvas.drawImage(
+                    qr_code, qr_x, qr_y - 1.8*cm,
+                    width=qr_width,
+                    height=qr_height,
+                    preserveAspectRatio=True,
+                    mask='auto'
+                )
+
+                # Detay bilgilerini QR Code'un soluna yerleştir
+                details_x = qr_x - 6*cm  # QR Code'dan 6cm sol
+                canvas.setFont('Helvetica-Bold', 10)
+                
+                # Bilgileri alt alta yaz
+                canvas.drawString(details_x, detail_y - 0.5*cm, f"Issue Date   : {self.issuance_date.strftime('%d/%m/%Y')}")
+                canvas.drawString(details_x, detail_y - 1.0*cm, f"Expiry Date : {self.expiration_date.strftime('%d/%m/%Y') if self.expiration_date else 'N/A'}")
+                canvas.drawString(details_x, detail_y - 1.5*cm, f"Certificate ID: {self.verification_token}")
+                
+                
+            canvas.restoreState()            
+            
+    
+        # PDF oluştur
+        doc.build(story, onFirstPage=draw_certificate_template, onLaterPages=draw_certificate_template)
+        pdf_value = pdf_buffer.getvalue()
+        pdf_buffer.close()
+
+        # PDF'i kaydet
         filename = f'certificate_{self.verification_token}.pdf'
         self.write({
-            'certificate_file': base64.b64encode(pdf),
+            'certificate_file': base64.b64encode(pdf_value),
             'certificate_filename': filename
         })
+
         return True
 
+    # def _generate_certificate_pdf(self):
+    #     self.ensure_one()
+        
+    #     # Debug için önce raporun detaylarını kontrol edelim
+    #     report = self.env['ir.actions.report'].sudo().search([
+    #         ('report_name', '=', 'ak_open_badges.badge_certificate_template')
+    #     ], limit=1)
+        
+    #     if not report:
+    #         raise ValueError("Rapor tanımı bulunamadı")
+            
+    #     try:
+    #         # convert_to_pdf deneyelim
+    #         pdf = report.sudo().with_context(
+    #             active_model='badge.assertion',
+    #             active_id=self.id
+    #         ).convert_to_pdf([self.id])
+            
+    #         # report_render_qweb_pdf deneyelim ve farklı context kullanalım
+    #         # pdf = report.sudo().with_context(
+    #         #     active_model=self._name,
+    #         #     active_id=self.id,
+    #         # )._render_qweb_pdf(self.id)[0]
+            
+    #         filename = f'certificate_{self.verification_token}.pdf'
+    #         self.write({
+    #             'certificate_file': base64.b64encode(pdf),
+    #             'certificate_filename': filename
+    #         })
+    #         return True
+            
+    #     except Exception as e:
+    #         # Hata durumunda daha detaylı bilgi alalım
+    #         _logger.error(f"PDF oluşturma hatası: {str(e)}")
+    #         _logger.error(f"Report ID: {report.id}")
+    #         _logger.error(f"Record ID: {self.id}")
+    #         _logger.error(f"Model: {self._name}")
+    #         raise
 
     @api.depends('create_date', 'recipient_id')
     def _compute_recipient_salt(self):

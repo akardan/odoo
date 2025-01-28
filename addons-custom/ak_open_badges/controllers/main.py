@@ -50,7 +50,7 @@ class OpenBadgesController(http.Controller):
             })
 
         # PDF indir parametresi varsa ve sertifika mevcutsa
-        if download and badge.certificate_file:
+        if badge.certificate_file:
             return http.request.make_response(
                 base64.b64decode(badge.certificate_file),
                 headers=[
@@ -88,7 +88,7 @@ class OpenBadgesController(http.Controller):
             verification_status['is_valid'] = False
             verification_status['messages'].append('Badge has been revoked')
 
-        return request.render('ak_open_badges.verification_page', {
+        return request.render('ak_open_badges.badge_certificate_template', {
             'badge': badge,
             'data': verification_data,
             'verification': verification_status
