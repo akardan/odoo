@@ -334,7 +334,7 @@ msgstr ""
 #: code:addons/website_event/models/event_event.py:0
 #: model_terms:ir.ui.view,arch_db:website_event.navbar
 msgid "All Events"
-msgstr ""
+msgstr "Tüm Etkinlikler"
 
 #. module: website_event
 #: model_terms:ir.ui.view,arch_db:website_event.event_location
@@ -544,38 +544,38 @@ msgstr ""
 #. module: website_event
 #: model_terms:ir.ui.view,arch_db:website_event.registration_complete
 msgid "Don't miss out!"
-msgstr ""
+msgstr "Sakın kaçırmayın!"
 
 #. module: website_event
 #: model_terms:ir.ui.view,arch_db:website_event.registration_ticket_access
 msgid "Download All Tickets"
-msgstr ""
+msgstr "Tüm Biletleri İndir"
 
 #. module: website_event
 #: model_terms:ir.ui.view,arch_db:website_event.registration_ticket_access
 msgid "Download Tickets <i class=\"ms-1 fa fa-download\"/>"
-msgstr ""
+msgstr "Biletleri İndir <i class=\"ms-1 fa fa-download\"/>"
 
 #. module: website_event
 #: model:ir.model,name:website_event.model_event_event
 #: model:ir.model.fields,field_description:website_event.field_website_event_menu__event_id
 msgid "Event"
-msgstr ""
+msgstr "Etkinlik"
 
 #. module: website_event
 #: model:ir.model.fields,field_description:website_event.field_event_event__community_menu_ids
 msgid "Event Community Menus"
-msgstr ""
+msgstr "Etkinlik Topluluğu Menüsü"
 
 #. module: website_event
 #: model_terms:ir.ui.view,arch_db:website_event.snippet_options
 msgid "Event Cover Position"
-msgstr ""
+msgstr "Etkinlik Kapak Pozisyonu"
 
 #. module: website_event
 #: model_terms:ir.ui.view,arch_db:website_event.event_searchbar_input_snippet_options
 msgid "Event Date"
-msgstr ""
+msgstr "Etkinlik Tarihi"
 
 #. module: website_event
 #: model_terms:ir.ui.view,arch_db:website_event.registration_complete

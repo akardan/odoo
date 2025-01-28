@@ -630,7 +630,7 @@ msgstr ""
 #: code:addons/calendar/static/src/views/ask_recurrence_update_policy_dialog.js:0
 #: model:ir.model.fields.selection,name:calendar.selection__calendar_event__recurrence_update__all_events
 msgid "All events"
-msgstr ""
+msgstr "Tüm Etkinlikler"
 
 #. module: calendar
 #: model_terms:ir.ui.view,arch_db:calendar.view_calendar_event_form
