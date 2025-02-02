@@ -35,6 +35,7 @@
         'views/badge_issuer_views.xml',      # Veren kurum görünümleri
         'views/badge_class_views.xml',       # Badge sınıf görünümleri
         'views/badge_assertion_views.xml',   # Assertion görünümleri
+        'views/badge_type_views.xml',        # Type görünümleri
         'views/badge_tag_views.xml',         # Tag görünümleri
         'views/menu_views.xml',              # Menü yapısı
         

@@ -32,11 +32,18 @@
               action="action_badge_issuer"
               sequence="10"/>
 
+   <!-- Menu item for Badge Type -->
+   <menuitem id="menu_badge_type"
+             name="Badge Types"
+             parent="menu_open_badges_config"
+             action="action_badge_type"
+             sequence="20"/>
+
    <!-- Menu item for Badge Tags -->
    <menuitem id="menu_badge_tag"
              name="Tags"
              parent="menu_open_badges_config"
              action="action_badge_tag"
-             sequence="20"/>
+             sequence="30"/>
 
 </odoo>

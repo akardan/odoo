@@ -1,82 +1,109 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-
-
-    <template id="badge_certificate_template" name="Badge Verification">
+    <template id="verification_page" name="Certificate Verification">
         <t t-call="web.layout">
-            <div class="container mt-4">
-                <div class="position-relative" style="width: 297mm; height: 210mm; margin: auto; background-color: white;">
-                    <div class="certificate-container" style="position: relative; height: 100%;">
-                        <!-- SVG Frame -->
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 297 210" style="width: 100%; height: 100%; position: absolute;">
-                            <!-- Main Frame -->
-                            <rect x="15" y="15" width="267" height="180" fill="none" stroke="url(#frame-gold)" stroke-width="0.95"/>
-                            <rect x="20" y="20" width="257" height="170" fill="none" stroke="url(#frame-gold)" stroke-width="0.65"/>
-                            
-                            <!-- Decorative Curves -->
-                            <path d="M0,10 Q148.5,20 297,10" stroke="url(#frame-gold)" stroke-width="0.75" fill="none"/>
-                            <path d="M0,200 Q148.5,190 297,200" stroke="url(#frame-gold)" stroke-width="0.75" fill="none"/>
-                            
-                            <!-- Gradient Definition -->
-                            <defs>
-                                <linearGradient id="frame-gold" x1="0%" y1="0%" x2="100%" y2="0%">
-                                    <stop offset="0%" style="stop-color: #D4AF37"/>
-                                    <stop offset="50%" style="stop-color: #C5A028"/>
-                                    <stop offset="100%" style="stop-color: #D4AF37"/>
-                                </linearGradient>
-                            </defs>
-                        </svg>
-
-                        <!-- Certificate Content -->
-                        <div style="position: absolute; top: 20mm; left: 20mm; right: 20mm; bottom: 20mm;">
-                            <!-- Header - Logo -->
-                            <div style="position: absolute; top: 2mm; right: 2mm;">
-                                <img t-if="badge.badge_class_id.issuer_id.image" 
-                                    t-att-src="'/web/image/badge.issuer/%s/image' % badge.badge_class_id.issuer_id.id" 
-                                    style="height: 17mm;" alt="Logo"/>
+            <div class="container-fluid py-4 px-4 d-flex justify-content-center">
+                <style>
+                    body {
+                        font-family: 'Calibri', sans-serif;
+                    }
+                </style>
+                <!-- PDF Görüntüleme -->
+                <div class="row mb-4" t-if="certificate_data">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header d-flex justify-content-between align-items-center py-3">
+                                <h4 class="card-title m-0">Sertifika Doğrulama servisine hoş geldiniz.</h4>
+                                <h5 class="card-title m-0">Welcome to Certificate Verification service</h5>
+                                <!-- <a t-att-href="'data:application/pdf;base64,%s' % certificate_data" 
+                                   download="certificate.pdf"
+                                   class="btn btn-primary">
+                                    <i class="fa fa-download"/> Download Certificate
+                                </a> -->
+                            </div> 
+                            <div class="card-body p-0 d-flex justify-content-center" style="width: 100%;">
+                                <iframe t-att-src="'data:application/pdf;base64,%s' % certificate_data"
+                                        style="width: 90%; height: 90vh; min-height: 700px;"
+                                        class="border-0"
+                                        allowfullscreen="true"
+                                        webkitallowfullscreen="true">
+                                </iframe>
                             </div>
+                        </div>
+                    </div>
+                </div>
 
-                            <!-- Main Content -->
-                            <div class="text-start">
-                                <h1 style="font-family: 'UnifrakturMaguntia', cursive; font-size: 42pt; color: #333; margin-bottom: 0mm; text-align: center; width: 100%; line-height: 2; font-weight: normal;">
-                                    <t t-esc="badge.badge_class_id.badge_type_id.name"/>
-                                </h1>
-
-                                <div style="font-size: 14pt; line-height: 1.0; text-align: center;">
-                                    <p>This certifies that</p>
-                                    <h2 style="font-family: 'Kings', cursive; font-size: 32pt; margin: 8mm 0;" t-esc="badge.recipient_id.name"/>
-                                    <p>has successfully completed the</p>
-                                    <h3 style="font-size: 18pt; margin: 8mm 0;" t-esc="badge.badge_class_id.name"/>
-                                    <p>and was awarded a certificate in</p>
-                                    <h4 style="font-size: 14pt; margin: 8mm 0;">Successfully completed the course.</h4>
+                <!-- Alignments -->
+                <div class="row mb-4" t-if="badge.badge_class_id.alignment">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header py-3">
+                                <h3 class="card-title m-0">Alignments (Standards &amp; Frameworks)</h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-hover align-middle mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th style="width: 10%">Code</th>
+                                                <th style="width: 30%">Name</th>
+                                                <th style="width: 40%">Description</th>
+                                                <th style="width: 15%">Framework</th>
+                                                <th style="width: 5%">URL</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <t t-foreach="badge.badge_class_id.alignment" t-as="align">
+                                                <tr>
+                                                    <td><t t-esc="align.target_code"/></td>
+                                                    <td><t t-esc="align.target_name"/></td>
+                                                    <td><t t-esc="align.target_description"/></td>
+                                                    <td><t t-esc="align.target_framework"/></td>
+                                                    <td>
+                                                        <a t-if="align.target_url" t-att-href="align.target_url" 
+                                                           class="btn btn-sm btn-outline-primary" target="_blank">
+                                                            <i class="fa fa-external-link"/> View
+                                                        </a>
+                                                    </td>
+                                                </tr>
+                                            </t>
+                                        </tbody>
+                                    </table>
                                 </div>
                             </div>
+                        </div>
+                    </div>
+                </div>
 
-                            <!-- Footer Section -->
-                            <div style="margin-top: 10mm; display: grid; grid-template-columns: repeat(3, 1fr); gap: 10mm;">
-                                <div class="text-center">
-                                    <img t-att-src="'/web/image/badge.class/%s/image' % badge.badge_class_id.id" 
-                                        style="height: 35mm; margin-left: 10px;" alt="Badge"/>
-                                </div>
-                                
-                                <div class="text-center">
-                                    <p style="margin-top: 5mm; font-size: 12pt;">Program Director</p>
-                                    <img t-if="badge.badge_class_id.issuer_id.signature" 
-                                        t-att-src="'/web/image/badge.issuer/%s/signature' % badge.badge_class_id.issuer_id.id" 
-                                        style="height: 20mm;" alt="Signature"/>
-                                </div>
-                                
-                                <div style="display: flex; justify-content: space-between; align-items: flex-start; font-size: 10pt;">
-                                    <div style="flex: 1;">
-                                        <p>Issue Date  : <span t-field="badge.issuance_date" t-options='{"format": "dd/MM/yyyy"}'/></p>
-                                        <p>Expiry Date : <span t-field="badge.expiration_date" t-options='{"format": "dd/MM/yyyy"}'/></p>
-                                        <p style="margin-top: 5mm;">CERTIFICATE ID</p>
-                                        <p t-esc="badge.verification_token"/>
-                                    </div>
-                                    <div style="margin-top: 5mm; margin-right: 5mm;">
-                                        <img t-att-src="'/web/image/badge.assertion/%s/qr_code' % badge.id" 
-                                                style="width: 25mm;"/>
-                                    </div>
+                <!-- Evidence -->
+                <div class="row mb-4" t-if="badge.evidence">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header py-3">
+                                <h3 class="card-title m-0">Evidence List</h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-hover align-middle mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th style="width: 30%">Name</th>
+                                                <th style="width: 40%">Description</th>
+                                                <th style="width: 10%">Genre</th>
+                                                <th style="width: 20%">Narrative</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <t t-foreach="badge.evidence" t-as="evidence">
+                                                <tr>
+                                                    <td><t t-esc="evidence.name"/></td>
+                                                    <td><t t-esc="evidence.description"/></td>
+                                                    <td><t t-esc="evidence.genre"/></td>
+                                                    <td><t t-esc="evidence.narrative"/></td>
+                                                </tr>
+                                            </t>
+                                        </tbody>
+                                    </table>
                                 </div>
                             </div>
                         </div>
@@ -85,39 +112,76 @@
             </div>
 
             <style>
-                @import url("https://fonts.googleapis.com/css2?family=UnifrakturMaguntia");
-                @import url("https://fonts.googleapis.com/css2?family=Kings");
+                body {
+                    background-color: #f8f9fa;
+                }
                 
-           
-                @media print {
-                    @page {
-                        size: A4 landscape;
-                        margin: 0;
-                    }
-                    body {
-                        margin: 0;
+                .card {
+                    box-shadow: 0 2px 4px rgba(0,0,0,.05);
+                }
+
+                .card-header {
+                    background-color: #fff;
+                    border-bottom: 1px solid rgba(0,0,0,.125);
+                }
+
+                .table th {
+                    font-weight: 600;
+                    background-color: #f8f9fa;
+                }
+
+                .table td {
+                    vertical-align: middle;
+                }
+
+                .btn-outline-primary {
+                    padding: .25rem .75rem;
+                }
+
+                @media (max-width: 768px) {
+                    .container-fluid {
+                        padding: 1rem;
                     }
                 }
             </style>
         </t>
     </template>
 
-
-    <!-- <template id="assets_backend" inherit_id="web.assets_backend" name="My Custom Backend Assets">
-        <xpath expr="." position="inside">
-            <link rel="stylesheet" type="text/css" href="/ak_open_badges/static/src/css/verification.css"/>
-        </xpath>
-    </template> -->
-
-
+    <!-- Verification Error Template -->
     <template id="verification_error" name="Badge Verification Error">
         <t t-call="web.layout">
-            <div class="container mt-4">
-                <div class="alert alert-danger">
-                    <h4 class="alert-heading">Verification Error</h4>
-                    <p t-esc="error"/>
+             <div class="container mt-5">
+                <style>
+                    body {
+                        font-family: 'Calibri', sans-serif;
+                    }
+                </style>
+                <div class="row justify-content-center">
+                    <div class="col-md-8">
+                        <div class="card border-danger">
+                            <div class="card-header bg-danger text-white">
+                                <h3 class="card-title mb-0">
+                                    <i class="fa fa-exclamation-triangle me-2"/>
+                                    Verification Failed
+                                </h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="alert alert-danger mb-0">
+                                    <strong>Error:</strong> 
+                                    <span t-esc="error"/>
+                                </div>
+                                <div class="mt-4 text-center">
+                                    <a href="/" class="btn btn-primary">
+                                        <i class="fa fa-home me-2"/>
+                                        Return to Home
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </t>
     </template>
+
 </odoo>

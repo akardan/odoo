@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Odoo Server 18.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-02-02 18:41+0000\n"
-"PO-Revision-Date: 2025-02-02 18:41+0000\n"
+"POT-Creation-Date: 2025-02-01 19:51+0000\n"
+"PO-Revision-Date: 2025-02-01 19:51+0000\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
@@ -44,6 +44,11 @@ msgstr ""
 "                    <p>${object.badge_class_id.issuer_id.name}</p>\n"
 "                </div>\n"
 "            "
+
+#. module: ak_open_badges
+#: model_terms:ir.ui.view,arch_db:ak_open_badges.verification_page
+msgid "<i class=\"fa fa-download\"/> Download Certificate"
+msgstr "<i class=\"fa fa-download\"/> Sertifikayı İndir"
 
 #. module: ak_open_badges
 #: model_terms:ir.ui.view,arch_db:ak_open_badges.verification_error
@@ -193,7 +198,9 @@ msgstr "Sertifika"
 #. module: ak_open_badges
 #. odoo-python
 #: code:addons/ak_open_badges/models/badge_alignment.py:0
+#: code:addons/ak_open_badges/models/badge_assertion.py:0
 #: model:ir.model.fields,field_description:ak_open_badges.field_badge_alignment__badge_class_id
+#: model:ir.model.fields,field_description:ak_open_badges.field_badge_assertion__badge_class_id
 #: model_terms:ir.ui.view,arch_db:ak_open_badges.view_badge_assertion_search
 msgid "Badge Class"
 msgstr "Sertifika Sınıfı"
@@ -246,7 +253,6 @@ msgstr "Sertifika Etiketleri"
 #: code:addons/ak_open_badges/models/badge_type.py:0
 #: model:ir.model,name:ak_open_badges.model_badge_type
 #: model:ir.model.fields,field_description:ak_open_badges.field_badge_class__badge_type_id
-#: model_terms:ir.ui.view,arch_db:ak_open_badges.view_badge_type_form
 msgid "Badge Type"
 msgstr "Sertifika Tipi"
 
@@ -256,13 +262,6 @@ msgstr "Sertifika Tipi"
 #: model:ir.model.constraint,message:ak_open_badges.constraint_badge_type_code_uniq
 msgid "Badge Type Code must be unique!"
 msgstr "Sertifika Tipi Kodu benzersiz olmalıdır!"
-
-#. module: ak_open_badges
-#: model:ir.actions.act_window,name:ak_open_badges.action_badge_type
-#: model:ir.ui.menu,name:ak_open_badges.menu_badge_type
-#: model_terms:ir.ui.view,arch_db:ak_open_badges.view_badge_type_tree
-msgid "Badge Types"
-msgstr "Sertifika Tipleri"
 
 #. module: ak_open_badges
 #: model:mail.template,name:ak_open_badges.email_template_badge_issued
@@ -275,16 +274,14 @@ msgid "Badges"
 msgstr "Sertifikalar"
 
 #. module: ak_open_badges
+#: model_terms:ir.ui.view,arch_db:ak_open_badges.verification_page
+msgid "Certificate"
+msgstr "Sertifika"
+
+#. module: ak_open_badges
 #: model:mail.template,subject:ak_open_badges.email_template_badge_issued
 msgid "Certificate Awarded: ${object.badge_class_id.name}"
 msgstr "Sertifika Verildi: ${object.badge_class_id.name}"
-
-#. module: ak_open_badges
-#. odoo-python
-#: code:addons/ak_open_badges/models/badge_assertion.py:0
-#: model:ir.model.fields,field_description:ak_open_badges.field_badge_assertion__badge_class_id
-msgid "Certificate Class"
-msgstr "Sertifika Sınıfı"
 
 #. module: ak_open_badges
 #. odoo-python
@@ -303,7 +300,6 @@ msgstr "Sertifika Dosya Adı"
 #. module: ak_open_badges
 #. odoo-python
 #: code:addons/ak_open_badges/models/badge_assertion.py:0
-#: model:ir.model.fields,field_description:ak_open_badges.field_badge_assertion__verification_token
 msgid "Certificate ID"
 msgstr "Sertifika No"
 
@@ -344,11 +340,6 @@ msgid "Configuration"
 msgstr "Yapılandırma"
 
 #. module: ak_open_badges
-#: model:badge.type,phrase_last:ak_open_badges.badge_type_achievement
-msgid "Congratulations on your achievement."
-msgstr "Tebrik eder, başarılarının devamını dileriz."
-
-#. module: ak_open_badges
 #: model_terms:ir.actions.act_window,help:ak_open_badges.action_badge_class
 msgid "Create your first badge class!"
 msgstr "İlk sertifika sınıfını oluşturun!"
@@ -362,11 +353,6 @@ msgstr "İlk sertifika vereni oluşturun!"
 #: model_terms:ir.actions.act_window,help:ak_open_badges.action_badge_tag
 msgid "Create your first badge tag!"
 msgstr "İlk sertifika etiketini oluşturun!"
-
-#. module: ak_open_badges
-#: model_terms:ir.actions.act_window,help:ak_open_badges.action_badge_type
-msgid "Create your first badge type!"
-msgstr ""
 
 #. module: ak_open_badges
 #: model:ir.model.fields,field_description:ak_open_badges.field_badge_alignment__create_uid
@@ -662,11 +648,6 @@ msgid "Issuer Name"
 msgstr "Sertifika Veren"
 
 #. module: ak_open_badges
-#: model:ir.model.fields,field_description:ak_open_badges.field_badge_issuer__signature
-msgid "Issuer Signature"
-msgstr "Düzenleyen İmza"
-
-#. module: ak_open_badges
 #: model:ir.ui.menu,name:ak_open_badges.menu_badge_issuer
 msgid "Issuers"
 msgstr "Sertifika Verenler"
@@ -681,13 +662,6 @@ msgstr ""
 #: model_terms:ir.ui.view,arch_db:ak_open_badges.view_badge_issuer_form
 msgid "Keys"
 msgstr "Anahtarlar"
-
-#. module: ak_open_badges
-#. odoo-python
-#: code:addons/ak_open_badges/models/badge_type.py:0
-#: model:ir.model.fields,field_description:ak_open_badges.field_badge_type__phrase_last
-msgid "Last Phrase"
-msgstr ""
 
 #. module: ak_open_badges
 #: model:ir.model.fields,field_description:ak_open_badges.field_badge_alignment__write_uid
@@ -862,27 +836,6 @@ msgstr ""
 
 #. module: ak_open_badges
 #. odoo-python
-#: code:addons/ak_open_badges/models/badge_type.py:0
-#: model:ir.model.fields,field_description:ak_open_badges.field_badge_type__phrase4certificate
-msgid "Phrase for Certificate"
-msgstr ""
-
-#. module: ak_open_badges
-#. odoo-python
-#: code:addons/ak_open_badges/models/badge_type.py:0
-#: model:ir.model.fields,field_description:ak_open_badges.field_badge_type__phrase4recipient
-msgid "Phrase for Recipient"
-msgstr ""
-
-#. module: ak_open_badges
-#. odoo-python
-#: code:addons/ak_open_badges/models/badge_type.py:0
-#: model:ir.model.fields,help:ak_open_badges.field_badge_type__phrase_last
-msgid "Phrase to be used after the badge class name"
-msgstr ""
-
-#. module: ak_open_badges
-#. odoo-python
 #: code:addons/ak_open_badges/models/badge_class.py:0
 #: model:ir.model.fields,field_description:ak_open_badges.field_badge_class__primary_lang
 msgid "Primary Language"
@@ -992,13 +945,9 @@ msgid "Secondary Language"
 msgstr "İkincil Dil"
 
 #. module: ak_open_badges
-#: model_terms:ir.ui.view,arch_db:ak_open_badges.verification_page
-msgid "Sertifika Doğrulama servisine hoş geldiniz."
-msgstr ""
-
-#. module: ak_open_badges
 #. odoo-python
 #: code:addons/ak_open_badges/models/badge_assertion.py:0
+#: model:ir.model.fields,field_description:ak_open_badges.field_badge_issuer__signature
 msgid "Signature"
 msgstr "Düzenleyen İmza"
 
@@ -1098,16 +1047,8 @@ msgstr "Telefon"
 #. module: ak_open_badges
 #. odoo-python
 #: code:addons/ak_open_badges/models/badge_assertion.py:0
-#: code:addons/ak_open_badges/models/badge_type.py:0
-#: model:badge.type,phrase4recipient:ak_open_badges.badge_type_certification
 msgid "This certifies that"
 msgstr "Bu belge onaylar ki"
-
-#. module: ak_open_badges
-#: model:badge.type,phrase4recipient:ak_open_badges.badge_type_achievement
-#: model:badge.type,phrase4recipient:ak_open_badges.badge_type_completion
-msgid "This is to certify that"
-msgstr "Bu belge ile onaylanır ki"
 
 #. module: ak_open_badges
 #: model_terms:ir.ui.view,arch_db:ak_open_badges.view_badge_issuer_form
@@ -1138,7 +1079,14 @@ msgstr ""
 #: model:ir.model.fields.selection,name:ak_open_badges.selection__badge_assertion__recipient_type__url
 #: model_terms:ir.ui.view,arch_db:ak_open_badges.verification_page
 msgid "URL"
-msgstr ""
+msgstr "URL"
+
+#. module: ak_open_badges
+#. odoo-python
+#: code:addons/ak_open_badges/models/badge_assertion.py:0
+#: model:ir.model.fields,field_description:ak_open_badges.field_badge_assertion__verification_token
+msgid "Certificate ID"
+msgstr "Sertifika No"
 
 #. module: ak_open_badges
 #. odoo-python
@@ -1155,11 +1103,6 @@ msgid "Verification URL"
 msgstr "Doğrulama URL"
 
 #. module: ak_open_badges
-#: model:badge.type,phrase_last:ak_open_badges.badge_type_completion
-msgid "We appreciate your participation."
-msgstr "Katılımınız için teşekkür ederiz."
-
-#. module: ak_open_badges
 #: model:ir.model.fields,field_description:ak_open_badges.field_badge_assertion__website_message_ids
 #: model:ir.model.fields,field_description:ak_open_badges.field_badge_class__website_message_ids
 #: model:ir.model.fields,field_description:ak_open_badges.field_badge_issuer__website_message_ids
@@ -1174,27 +1117,10 @@ msgid "Website communication history"
 msgstr ""
 
 #. module: ak_open_badges
-#: model_terms:ir.ui.view,arch_db:ak_open_badges.verification_page
-msgid "Welcome to Certificate Verification service"
-msgstr ""
-
-#. module: ak_open_badges
-#: model:badge.type,phrase4certificate:ak_open_badges.badge_type_completion
-msgid "has attended the following:"
-msgstr "aşağıdaki eğitime katılmıştır:"
-
-#. module: ak_open_badges
 #. odoo-python
 #: code:addons/ak_open_badges/models/badge_assertion.py:0
-#: code:addons/ak_open_badges/models/badge_type.py:0
-#: model:badge.type,phrase4certificate:ak_open_badges.badge_type_certification
 msgid "has successfully completed the"
 msgstr "başarıyla tamamlamıştır"
-
-#. module: ak_open_badges
-#: model:badge.type,phrase4certificate:ak_open_badges.badge_type_achievement
-msgid "has successfully completed:"
-msgstr "aşağıdaki eğitimi başarıyla tamamlamıştır:"
 
 #. module: ak_open_badges
 #: model_terms:ir.ui.view,arch_db:ak_open_badges.view_badge_issuer_form

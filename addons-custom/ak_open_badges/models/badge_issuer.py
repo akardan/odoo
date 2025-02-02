@@ -9,16 +9,23 @@ class BadgeIssuer(models.Model):
     _description = _('Badge Issuer Profile')
     _inherit = ['mail.thread', 'mail.activity.mixin']
 
-    name = fields.Char(string=_('Name'), required=True)
+    # Çevrilecek alanlar
+    name = fields.Char(string=_('Name'), required=True, translate=True, tracking=True)
+    description = fields.Text(string=_('Description'), translate=True, tracking=True)
+
+    # Çevrilmeyecek alanlar
     url = fields.Char(string=_('URL'), required=True)
     email = fields.Char(string=_('Email'), required=True)
-    description = fields.Text(string=_('Description'))
     image = fields.Binary(string=_("Issuer Logo"))
     public_key = fields.Text(string=_('Public Key for Verification'), readonly=True, tracking=True)
     private_key = fields.Text(string=_('Private Key'), readonly=True, groups="base.group_system")
-    signature = fields.Binary(string='Signature', attachment=True)
+    signature = fields.Binary(string='Issuer Signature', attachment=True)
     
     def get_json_ld(self):
+        # Varsayılan dili kullan
+        default_lang = 'en_US'
+        self = self.with_context(lang=default_lang)
+        
         return {
             "@context": "https://w3id.org/openbadges/v2",
             "type": "Issuer",

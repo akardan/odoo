@@ -27,10 +27,10 @@ _logger = logging.getLogger(__name__)
 class BadgeAssertion(models.Model):
     _name = 'badge.assertion'
     _description = _('Open Badge Assertion')
-    _inherit = ['mail.thread', 'mail.activity.mixin']
+    _inherit = ['mail.thread', 'mail.activity.mixin', 'base']
 
     name = fields.Char(compute='_compute_name', store=True)
-    badge_class_id = fields.Many2one('badge.class', string=_('Badge Class'), required=True, tracking=True)
+    badge_class_id = fields.Many2one('badge.class', string=_('Certificate Class'), required=True, tracking=True)
     recipient_id = fields.Many2one('res.partner', string=_('Recipient'), required=True)
     recipient_type = fields.Selection([
         ('email', _('Email')),
@@ -46,7 +46,7 @@ class BadgeAssertion(models.Model):
     )
     
     issuance_date = fields.Datetime(string=_('Issue Date'), default=fields.Datetime.now, required=True, tracking=True)
-    expiration_date = fields.Datetime(string=_('Expiry Date'))
+    expiration_date = fields.Datetime(string=_('Expiry Date'), tracking=True)
     
     evidence = fields.One2many('badge.evidence', 'assertion_id', string=_('Evidence'))
     verification_type = fields.Selection([
@@ -54,34 +54,109 @@ class BadgeAssertion(models.Model):
         ('SignedBadge', _('Signed')),
     ], string=_('Verification Type'), default='HostedBadge', required=True)
 
-    verification_token = fields.Char(string=_('Verification Token'), compute='_compute_verification_token', store=True)
+    verification_token = fields.Char(string=_('Certificate ID'), compute='_compute_verification_token', store=True)
     
     qr_code = fields.Binary(string=_('QR Code'), compute='_compute_qr_code', store=True)
     assertion_url = fields.Char(string=_('Verification URL'), compute='_compute_assertion_url')
 
     state = fields.Selection([
-        ('draft', 'Draft'),
-        ('issued', 'Issued'),
-        ('revoked', 'Revoked')
-    ], string='Status', default='draft', tracking=True)
+        ('draft', _('Draft')),
+        ('issued', _('Issued')),
+        ('revoked', _('Revoked'))
+    ], string=_('Status'), default='draft', tracking=True)
 
     certificate_file = fields.Binary(string=_('Certificate File'), attachment=True)
     certificate_filename = fields.Char(string=_('Certificate Filename'))
+    signature = fields.Text(
+        string='Digital Signature', 
+        readonly=True, 
+        copy=False,
+        help=_('Digital signature for SignedBadge verification type')
+    )
 
+
+    # Çeviri metinlerini hazırla
+    translations = {
+        'certifies_that': _('This certifies that'),
+        'completed': _('has successfully completed the'),
+        'signature': _('Signature'),
+        'issue_date': _('Issue Date'),
+        'expiry_date': _('Expiry Date'),
+        'certificate_id': _('Certificate ID'),
+    }
+
+    def _translate(self, source, lang_code=None):
+        """Helper method to get translation"""
+        if not lang_code:
+            lang_code = self.env.user.lang
+            
+        # Use Odoo's built-in translation method
+        return self.env['ir.translation']._get_source(
+            name=None,         # No specific model name
+            types=['code'],    # Translation type
+            lang=lang_code,    # Target language
+            source=source      # Source string to translate
+        ) or ''
+    
+    def get_field_caption(self, field_name, lang):
+        return self.env['ir.model.fields'].with_context(lang=lang).search([
+            ('model', '=', self._name),
+            ('name', '=', field_name)
+        ]).field_description
+        
+    def get_related_field_caption(self, model, field_path, lang):
+        if not field_path:
+            return None
+
+        field_name, _, remaining_path = field_path.partition('.')
+        # model = self.env[self._name]
+        field = model._fields.get(field_name)
+
+        if not field:
+            return None
+
+        caption = self.env['ir.model.fields'].with_context(lang=lang).search([
+            ('model', '=', model._name),
+            ('name', '=', field_name)
+        ]).field_description
+
+        if not remaining_path:
+            return caption
+
+        if field.type == 'many2one':
+            return self.get_related_field_caption(
+                self.env[field.comodel_name], 
+                remaining_path, 
+                lang
+            )
+        else:
+            return caption        
+            
     def _generate_certificate_pdf(self):
         self.ensure_one()
         
+        # Dilleri al
+        primary_lang = self.env['res.lang'].search([('code', '=', self.badge_class_id.primary_lang)], limit=1)
+        secondary_lang = self.env['res.lang'].search([('code', '=', self.badge_class_id.secondary_lang)], limit=1)
+
+        # Birincil ve ikincil dilde içerikleri al
+        primary_content = self.with_context(lang=primary_lang.code)
+        secondary_content = self.with_context(lang=secondary_lang.code) if secondary_lang else None
+
+
         # Font yolunu ayarla
         module_path = os.path.dirname(os.path.dirname(__file__))
         pirata_font_path = os.path.join(module_path, 'static/fonts', 'PirataOne-Regular.ttf')
         ephesis_font_path = os.path.join(module_path, 'static/fonts', 'Ephesis-Regular.ttf')
+        PTSansNarrow_Regular_path = os.path.join(module_path, 'static/fonts', 'PTSansNarrow-Regular.ttf')
+        PTSansNarrow_Bold_path = os.path.join(module_path, 'static/fonts', 'PTSansNarrow-Bold.ttf')
 
         # Fontu kaydet
         pdfmetrics.registerFont(TTFont('PirataOne', pirata_font_path))
         pdfmetrics.registerFont(TTFont('Ephesis', ephesis_font_path))
+        pdfmetrics.registerFont(TTFont('PTSansNarrow', PTSansNarrow_Regular_path))
+        pdfmetrics.registerFont(TTFont('PTSansNarrow-Bold', PTSansNarrow_Bold_path))
 
-        
-        
         # A4 Landscape
         width, height = landscape(A4)
         pdf_buffer = BytesIO()
@@ -97,37 +172,60 @@ class BadgeAssertion(models.Model):
         story = []
         styles = getSampleStyleSheet()
 
+
         # Özel stiller
         title_style = ParagraphStyle(
             'CustomTitle',
             parent=styles['Title'],
             fontName='PirataOne',
             fontSize=42,
-            leading=44,
+            leading=35,
             alignment=TA_CENTER,
             textColor=colors.HexColor('#1B1B1B'),
-            spaceAfter=30
+            spaceAfter=5
+        )
+        # İkincil dil için başlık stili
+        title_style_secondary = ParagraphStyle(
+            'CustomTitleSecondary',
+            parent=title_style,
+            fontSize=24,
+            leading=30,
+            alignment=TA_CENTER,
+            textColor=colors.HexColor('#666666'),
+            spaceAfter=0
         )
 
         subtitle_style = ParagraphStyle(
             'CustomSubTitle',
             parent=styles['Normal'],
+            fontName='PTSansNarrow',
             fontSize=16,
-            leading=22,
+            leading=20,
             alignment=TA_CENTER,
             textColor=colors.HexColor('#333333'),
-            spaceAfter=12
+            spaceAfter=0
         )
+
+        subtitle_style_secondary = ParagraphStyle(
+            'CustomSubTitleSecondary',
+            parent=subtitle_style,
+            fontSize=12,
+            leading=10,
+            alignment=TA_CENTER,
+            textColor=colors.HexColor('#666666'),
+            spaceAfter=0
+        )
+
 
         name_style = ParagraphStyle(
             'NameStyle',
             parent=styles['Normal'],
             fontName='Ephesis',
             fontSize=36,
-            leading=34,
+            leading=40,
             alignment=TA_CENTER,
             textColor=colors.HexColor('#1B1B1B'),
-            spaceAfter=20
+            spaceAfter=5
         )
 
         course_style = ParagraphStyle(
@@ -138,6 +236,17 @@ class BadgeAssertion(models.Model):
             leading=26,
             alignment=TA_CENTER,
             textColor=colors.HexColor('#1B1B1B'),
+            spaceAfter=5
+        )
+
+        course_style_secondary = ParagraphStyle(
+            'CourseStyleSecondary',
+            parent=styles['Normal'],
+            fontName='Ephesis',
+            fontSize=24,
+            leading=20,
+            alignment=TA_CENTER,
+            textColor=colors.HexColor('#666666'),
             spaceAfter=15
         )
 
@@ -145,28 +254,57 @@ class BadgeAssertion(models.Model):
         story.append(Spacer(1, 1*cm))
         
         # Başlık
-        title = Paragraph(f"<b>{self.badge_class_id.badge_type_id.name}</b>", title_style)
+        title = Paragraph(f"<b>{primary_content.badge_class_id.badge_type_id.name}</b>", title_style)
+        if secondary_content:
+            title_secondary = Paragraph(f"<b>{secondary_content.badge_class_id.badge_type_id.name}</b>", title_style_secondary)
+        else:
+            title_secondary = Paragraph('&nbsp;', title_style_secondary)
         story.append(title)
+        story.append(title_secondary)
         
         story.append(Spacer(1, 0.5*cm))
         
-        # Alt başlık
-        subtitle = Paragraph("This certifies that", subtitle_style)
+        # phrase4recipient
+        subtitle = Paragraph(primary_content.badge_class_id.badge_type_id.phrase4recipient, subtitle_style)
+        if secondary_content:
+            subtitle_sec = Paragraph(secondary_content.badge_class_id.badge_type_id.phrase4recipient, subtitle_style_secondary)
+        else:
+            subtitle_sec = Paragraph('&nbsp;', subtitle_style_secondary)
         story.append(subtitle)
-        
+        story.append(subtitle_sec)
+                
         # İsim
         name = Paragraph(f"<b>{self.recipient_id.name}</b>", name_style)
         story.append(name)
         
-        # Kurs bilgisi
-        course_info = Paragraph("has successfully completed the", subtitle_style)
+        # phrase4certificate
+        course_info = Paragraph(primary_content.badge_class_id.badge_type_id.phrase4certificate, subtitle_style)
+        if secondary_content:
+            course_info_sec = Paragraph(secondary_content.badge_class_id.badge_type_id.phrase4certificate, subtitle_style_secondary)
+        else:
+            course_info_sec = Paragraph('&nbsp;', subtitle_style_secondary)
         story.append(course_info)
+        story.append(course_info_sec)
         
         # Kurs adı
-        course_name = Paragraph(f"<b>{self.badge_class_id.name}</b>", course_style)
+        course_name = Paragraph(f"<b>{primary_content.badge_class_id.name}</b>", course_style)
+        if secondary_content:
+            course_name_secondary = Paragraph(f"<b>{secondary_content.badge_class_id.name}</b>", course_style_secondary)
+        else:
+            course_name_secondary = Paragraph('&nbsp;', course_style_secondary)
         story.append(course_name)
-        
-        story.append(Spacer(1, 2*cm))
+        story.append(course_name_secondary)
+
+        # phrase_last
+        after_course_info = Paragraph(primary_content.badge_class_id.badge_type_id.phrase_last, subtitle_style)
+        if secondary_content:
+            after_course_info_sec = Paragraph(secondary_content.badge_class_id.badge_type_id.phrase_last, subtitle_style_secondary)
+        else:
+            after_course_info_sec = Paragraph('&nbsp;', subtitle_style_secondary)
+        story.append(after_course_info)
+        story.append(after_course_info_sec)
+
+        # story.append(Spacer(1, 2*cm))
 
         # Altın renkli çerçeve
         def draw_certificate_template(canvas, doc):
@@ -291,9 +429,19 @@ class BadgeAssertion(models.Model):
             sig_x = page_width/2 - 1.5*cm  # İmzayı ortalamak için
             sig_y = detail_y
             
-            canvas.setFont('Helvetica-Bold', 10)
-            canvas.drawString(sig_x - 0.5*cm, sig_y + 1.5*cm, "Issuer Signature")
-            canvas.setFont('Helvetica', 10)
+            # İmza başlığı çift dilli
+            sig_text_primary = primary_content.get_related_field_caption(self, 'badge_class_id.issuer_id.signature', primary_lang.code)
+            if secondary_content:
+                sig_text_secondary = secondary_content.get_related_field_caption(self, 'badge_class_id.issuer_id.signature', secondary_lang.code)
+            else:
+                sig_text_secondary = '&nbsp;'
+            
+            canvas.setFont('PTSansNarrow-Bold', 10)
+            canvas.drawString(sig_x - 0.5*cm, sig_y + 1.5*cm, sig_text_primary)
+            canvas.setFont('PTSansNarrow', 8)
+            canvas.drawString(sig_x - 0.3*cm, sig_y + 1.2*cm, sig_text_secondary)
+
+            canvas.setFont('PTSansNarrow', 10)
             
             # İmza çizgisi
             canvas.line(sig_x - 1.0*cm, sig_y + 1.0*cm, sig_x + 3*cm, sig_y + 1.0*cm)
@@ -338,14 +486,33 @@ class BadgeAssertion(models.Model):
                 )
 
                 # Detay bilgilerini QR Code'un soluna yerleştir
-                details_x = qr_x - 6*cm  # QR Code'dan 6cm sol
-                canvas.setFont('Helvetica-Bold', 10)
+                details_x = qr_x - 7*cm  # QR Code'dan 6cm sol
+
+                # Çift dilli detay metinleri
+                details = [
+                    (
+                        f"{primary_content.get_field_caption('issuance_date', primary_lang.code)}" +
+                        (f" / {secondary_content.get_field_caption('issuance_date', secondary_lang.code)}" if secondary_content else '&nbsp;') +
+                        f": {self.issuance_date.strftime('%d/%m/%Y')}", 
+                        0.5
+                    ),
+                    (
+                        f"{primary_content.get_field_caption('expiration_date', primary_lang.code)}" +
+                        (f" / {secondary_content.get_field_caption('expiration_date', secondary_lang.code)}" if secondary_content else '&nbsp;') +
+                        f": {self.expiration_date.strftime('%d/%m/%Y') if self.expiration_date else 'N/A'}", 
+                        1.0
+                    ),
+                    (
+                        f"{primary_content.get_field_caption('verification_token', primary_lang.code)}" +
+                        (f" / {secondary_content.get_field_caption('verification_token', secondary_lang.code)}" if secondary_content else '&nbsp;') +
+                        f": {self.verification_token}",
+                        1.5
+                    )
+                ]
                 
-                # Bilgileri alt alta yaz
-                canvas.drawString(details_x, detail_y - 0.5*cm, f"Issue Date   : {self.issuance_date.strftime('%d/%m/%Y')}")
-                canvas.drawString(details_x, detail_y - 1.0*cm, f"Expiry Date : {self.expiration_date.strftime('%d/%m/%Y') if self.expiration_date else 'N/A'}")
-                canvas.drawString(details_x, detail_y - 1.5*cm, f"Certificate ID: {self.verification_token}")
-                
+                canvas.setFont('PTSansNarrow-Bold', 10)
+                for text, offset in details:
+                    canvas.drawString(details_x, detail_y - offset*cm, text)
                 
             canvas.restoreState()            
             
@@ -363,45 +530,6 @@ class BadgeAssertion(models.Model):
         })
 
         return True
-
-    # def _generate_certificate_pdf(self):
-    #     self.ensure_one()
-        
-    #     # Debug için önce raporun detaylarını kontrol edelim
-    #     report = self.env['ir.actions.report'].sudo().search([
-    #         ('report_name', '=', 'ak_open_badges.badge_certificate_template')
-    #     ], limit=1)
-        
-    #     if not report:
-    #         raise ValueError("Rapor tanımı bulunamadı")
-            
-    #     try:
-    #         # convert_to_pdf deneyelim
-    #         pdf = report.sudo().with_context(
-    #             active_model='badge.assertion',
-    #             active_id=self.id
-    #         ).convert_to_pdf([self.id])
-            
-    #         # report_render_qweb_pdf deneyelim ve farklı context kullanalım
-    #         # pdf = report.sudo().with_context(
-    #         #     active_model=self._name,
-    #         #     active_id=self.id,
-    #         # )._render_qweb_pdf(self.id)[0]
-            
-    #         filename = f'certificate_{self.verification_token}.pdf'
-    #         self.write({
-    #             'certificate_file': base64.b64encode(pdf),
-    #             'certificate_filename': filename
-    #         })
-    #         return True
-            
-    #     except Exception as e:
-    #         # Hata durumunda daha detaylı bilgi alalım
-    #         _logger.error(f"PDF oluşturma hatası: {str(e)}")
-    #         _logger.error(f"Report ID: {report.id}")
-    #         _logger.error(f"Record ID: {self.id}")
-    #         _logger.error(f"Model: {self._name}")
-    #         raise
 
     @api.depends('create_date', 'recipient_id')
     def _compute_recipient_salt(self):
@@ -460,8 +588,8 @@ class BadgeAssertion(models.Model):
             'badge_name': self.badge_class_id.name,
             'recipient_name': self.recipient_id.name,
             'issuer_name': self.badge_class_id.issuer_id.name,
-            'issue_date': self.issuance_date.strftime('%Y-%m-%d %H:%M:%S'),
-            'expiry_date': self.expiration_date and self.expiration_date.strftime('%Y-%m-%d %H:%M:%S') or False,
+            'issue_date': self.issuance_date.isoformat(),
+            'expiry_date': self.expiration_date and self.expiration_date.isoformat() or False,
             'verification_url': self.assertion_url,
             'verification_type': self.verification_type,
             'status': self.state,  # 'draft', 'issued', veya 'revoked' döner
@@ -494,7 +622,7 @@ class BadgeAssertion(models.Model):
                 "hashed": self.recipient_hashed,
                 "salt": self.recipient_salt if self.recipient_hashed else None,
             },
-            "issuedOn": self.issuance_date.isoformat(),
+            "issuedOn": self.issuance_date.isoformat(),     # Tarih formatı: 2021-01-01T00:00:00
             "verification": {
                 "type": self.verification_type,
                 "url": self.assertion_url
@@ -511,6 +639,10 @@ class BadgeAssertion(models.Model):
             assertion["revoked"] = True
             # assertion["revocationReason"] = self.revocation_reason
 
+        # SignedBadge için imza ekle
+        if self.verification_type == 'SignedBadge' and hasattr(self, 'signature') and self.signature:
+            assertion['signature'] = self.signature
+
         return assertion
 
     def _get_salt(self):
@@ -520,6 +652,7 @@ class BadgeAssertion(models.Model):
     def _sign_assertion(self):
         """Rozeti private key ile imzala"""
         self.ensure_one()
+
         if self.verification_type != 'SignedBadge':
             return False
 
@@ -549,7 +682,7 @@ class BadgeAssertion(models.Model):
                 ),
                 hashes.SHA256()
             )
-
+            
             return base64.b64encode(signature).decode('utf-8')
         except Exception as e:
             raise UserError(_('Error signing badge: %s') % str(e))
@@ -560,20 +693,39 @@ class BadgeAssertion(models.Model):
         if self.state != 'draft':
             raise UserError(_('Only draft badges can be issued'))
 
+        # Önce state ve issuance_date'i güncelle
+        self.write({
+            'state': 'issued',
+            'issuance_date': fields.Datetime.now()
+        })
+
+        # Alignment'lardan evidence oluştur
+        if self.badge_class_id.alignment:
+            # Önce mevcut evidence'ları sil
+            self.evidence.unlink()
+            
+            for alignment in self.badge_class_id.alignment:
+                self.env['badge.evidence'].create({
+                    'assertion_id': self.id,
+                    'name': alignment.target_name,
+                    'description': alignment.target_description,
+                    'narrative': f"Demonstrated competency in {alignment.target_name} according to {alignment.target_framework}",
+                    'genre': 'Alignment Based Evidence',
+                    'id': alignment.target_url  # Evidence URL için alignment URL'ini kullan
+                })
+
         if self.verification_type == 'SignedBadge':
             signature = self._sign_assertion()
             if not signature:
                 raise UserError(_('Failed to sign the badge'))
             
-        self.write({
-            'state': 'issued',
-            'issuance_date': fields.Datetime.now()
-        })
-        
-        
+            # İmzayı kaydet
+            self.write({
+                'signature': signature  # İmzayı kaydet
+            })
+       
         # Sertifikayı oluştur
         self._generate_certificate_pdf()
-
 
         return True
     

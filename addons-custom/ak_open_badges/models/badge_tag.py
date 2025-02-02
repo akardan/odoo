@@ -5,7 +5,7 @@ class BadgeTag(models.Model):
     _name = 'badge.tag'
     _description = _('Badge Tag')
 
-    name = fields.Char(string=_('Name'), required=True)
+    name = fields.Char(string=_('Name'), required=True, translate=True)
     color = fields.Integer(string=_('Color Index'))
     active = fields.Boolean(default=True)
 

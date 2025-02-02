@@ -1,0 +1,1159 @@
+# -*- coding: utf-8 -*-
+{
+    'name': 'Digital Certificates & Badges',
+    'version': '18.0.1.0',
+    'category': 'Website',
+    'sequence': -220,
+    'summary': 'Digital certificates and badges management system',
+    'description': """
+        Digital certificates and Open Badges management system
+        * Create and manage Open Badge templates
+        * Issue digital certificates and badges
+        * Verify certificates through QR codes
+        * Integration with events and courses
+        * Open Badges 2.0 compliant
+    """,
+    'author': "Kardan.Digital",
+    'website': "https://kardan.digital",
+    'license': 'LGPL-3',
+
+    # Bu modülün çalışması için gerekli olan bağımlılıklar
+    'depends': ['base', 'mail','web','event','website_event','website_slides','contacts'],  
+
+    # Her zaman yüklenecek veriler
+    'data': [
+        # Güvenlik ve Erişim Hakları
+        'security/open_badges_security.xml',  # Güvenlik grupları
+        'security/ir.model.access.csv',       # Model erişim hakları
+        
+        # Master Data ve Konfigürasyon
+        'data/badge_sequence.xml',           # Sertifika numaralandırma
+        'data/badge_type_data.xml',          # Rozet tipleri
+        'data/certificate_template.xml',     # Hazır şablonlar
+        
+        # Views ve Menüler
+        'views/badge_issuer_views.xml',      # Veren kurum görünümleri
+        'views/badge_class_views.xml',       # Badge sınıf görünümleri
+        'views/badge_assertion_views.xml',   # Assertion görünümleri
+        'views/badge_tag_views.xml',         # Tag görünümleri
+        'views/menu_views.xml',              # Menü yapısı
+        
+        # Raporlar
+        'reports/badge_reports.xml',        # Önce report tanımları
+
+        'views/templates.xml',               # Website şablonları
+        
+        # Email Şablonları
+        'data/mail_template_data.xml',       # E-posta şablonları
+    ],
+
+    'assets': {
+        'web.assets_backend': [
+            'ak_open_badges/static/src/css/verification.css',
+            'ak_open_badges/static/src/scss/certificate_style.scss',
+        ],
+    },
+
+    # Demo modu için gerekli veriler (isteğe bağlı)
+
+    # Modül kurulum özellikleri
+    'installable': True,
+    'application': True,
+    'auto_install': False,
+}
+
+----------------------------------------------------
+
+
+
+# -*- coding: utf-8 -*-
+from . import badge_tag
+from . import badge_type    
+from . import badge_issuer
+from . import badge_class
+from . import badge_alignment
+from . import badge_assertion
+from . import badge_evidence
+
+----------------------------------------------------
+
+from odoo import models, fields, api, _
+
+class BadgeAlignment(models.Model):
+    _name = 'badge.alignment'
+    _description = _('Badge Alignment to External Standards')
+
+    badge_class_id = fields.Many2one('badge.class', string=_('Badge Class'), required=True)
+    target_name = fields.Char(string=_('Target Name'), required=True)
+    target_url = fields.Char(string=_('Target URL'), required=True)
+    target_description = fields.Text(string=_('Target Description'))
+    target_framework = fields.Char(string=_('Target Framework'))
+    target_code = fields.Char(string=_('Target Code'))
+
+    def get_json_ld(self):
+        return {
+            "targetName": self.target_name,
+            "targetUrl": self.target_url,
+            "targetDescription": self.target_description,
+            "targetFramework": self.target_framework,
+            "targetCode": self.target_code,
+        }
+
+----------------------------------------------------
+
+
+import json
+import uuid
+import hashlib
+from odoo import models, fields, api, _
+from odoo.exceptions import UserError
+from cryptography.hazmat.primitives import hashes, serialization
+from cryptography.hazmat.primitives.asymmetric import padding
+from cryptography.hazmat.backends import default_backend
+import base64
+
+
+class BadgeAssertion(models.Model):
+    _name = 'badge.assertion'
+    _description = _('Open Badge Assertion')
+    _inherit = ['mail.thread', 'mail.activity.mixin']
+
+    name = fields.Char(compute='_compute_name', store=True)
+    badge_class_id = fields.Many2one('badge.class', string=_('Badge Class'), required=True, tracking=True)
+    recipient_id = fields.Many2one('res.partner', string=_('Recipient'), required=True)
+    recipient_type = fields.Selection([
+        ('email', _('Email')),
+        ('url', _('URL')),
+        ('telephone', _('Telephone')),
+    ], string=_('Recipient Type'), default='email', required=True, tracking=True)
+    recipient_identity = fields.Char(string=_('Recipient Identity'), compute='_compute_recipient_identity', store=True)
+    recipient_hashed = fields.Boolean(string=_('Hash Recipient'), default=True)
+    recipient_salt = fields.Char(
+        string=_('Salt'), 
+        compute='_compute_recipient_salt', 
+        store=True
+    )
+    
+    issuance_date = fields.Datetime(string=_('Issue Date'), default=fields.Datetime.now, required=True, tracking=True)
+    expiration_date = fields.Datetime(string=_('Expiry Date'))
+    
+    evidence = fields.One2many('badge.evidence', 'assertion_id', string=_('Evidence'))
+    verification_type = fields.Selection([
+        ('HostedBadge', _('Hosted')),
+        ('SignedBadge', _('Signed')),
+    ], string=_('Verification Type'), default='HostedBadge', required=True)
+
+    verification_token = fields.Char(string=_('Verification Token'), compute='_compute_verification_token', store=True)
+    
+    qr_code = fields.Binary(string=_('QR Code'), compute='_compute_qr_code', store=True)
+    assertion_url = fields.Char(string=_('Verification URL'), compute='_compute_assertion_url')
+
+    state = fields.Selection([
+        ('draft', 'Draft'),
+        ('issued', 'Issued'),
+        ('revoked', 'Revoked')
+    ], string='Status', default='draft', tracking=True)
+
+    certificate_file = fields.Binary(string=_('Certificate File'), attachment=True)
+    certificate_filename = fields.Char(string=_('Certificate Filename'))
+
+    def _generate_certificate_pdf(self):
+        self.ensure_one()
+        # Mevcut verification_page template'ini kullanarak PDF oluştur
+        pdf = self.env.ref('ak_open_badges.badge_certificate_report')._render_qweb_pdf(self.id)[0]
+        
+        filename = f'certificate_{self.verification_token}.pdf'
+        self.write({
+            'certificate_file': base64.b64encode(pdf),
+            'certificate_filename': filename
+        })
+        return True
+
+
+    @api.depends('create_date', 'recipient_id')
+    def _compute_recipient_salt(self):
+        for record in self:
+            if record.create_date and record.recipient_id:
+                # recipient_id ve create_date kullanarak benzersiz salt oluştur
+                record.recipient_salt = hashlib.sha256(
+                    f"{record.create_date}-{record.recipient_id.id}".encode()
+                ).hexdigest()[:16]
+
+    @api.depends('create_date', 'badge_class_id')
+    def _compute_verification_token(self):
+        for record in self:
+            if record.create_date and record.badge_class_id:
+                record.verification_token = hashlib.sha256(
+                    f"{record.create_date}-{record.badge_class_id.id}".encode()
+                ).hexdigest()[:16]
+                
+    @api.depends('badge_class_id', 'recipient_id')
+    def _compute_name(self):
+        for record in self:
+            if record.badge_class_id and record.recipient_id:
+                record.name = f"{record.badge_class_id.name} - {record.recipient_id.name}"
+
+    @api.depends('assertion_url')  # assertion_url'e bağımlı hale getirildi
+    def _compute_qr_code(self):
+        import qrcode
+        import base64
+        from io import BytesIO
+        
+        for record in self:
+            qr = qrcode.QRCode(version=1, error_correction=qrcode.constants.ERROR_CORRECT_L)
+            qr.add_data(record.assertion_url)
+            qr.make(fit=True)
+            
+            img = qr.make_image()
+            buffer = BytesIO()
+            img.save(buffer, format='PNG')
+            record.qr_code = base64.b64encode(buffer.getvalue())
+
+    @api.depends('verification_token')
+    def _compute_assertion_url(self):
+        base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
+        for record in self:
+            if record.verification_token:
+                record.assertion_url = f"{base_url}/badge/verify/{record.verification_token}"
+            else:
+                record.assertion_url = False
+                        
+    def get_verification_data(self):
+        """Doğrulama için gerekli tüm verileri döndürür."""
+        self.ensure_one()
+        base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
+        
+        return {
+            'badge_name': self.badge_class_id.name,
+            'recipient_name': self.recipient_id.name,
+            'issuer_name': self.badge_class_id.issuer_id.name,
+            'issue_date': self.issuance_date.strftime('%Y-%m-%d %H:%M:%S'),
+            'expiry_date': self.expiration_date and self.expiration_date.strftime('%Y-%m-%d %H:%M:%S') or False,
+            'verification_url': self.assertion_url,
+            'verification_type': self.verification_type,
+            'status': self.state,  # 'draft', 'issued', veya 'revoked' döner
+            'badge_class_url': f"{base_url}/badge/class/{self.badge_class_id.id}",
+            'assertion_json_url': f"{base_url}/badge/assertion/{self.id}"
+        }
+
+    def action_revoke(self):
+        """Rozeti iptal et"""
+        self.ensure_one()
+        if self.state != 'issued':
+            raise UserError(_('Only issued badges can be revoked.'))
+        
+        self.write({
+            'state': 'revoked',
+        })
+        return True
+    
+    def get_json_ld(self):
+        base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
+        
+        assertion = {
+            "@context": "https://w3id.org/openbadges/v2",
+            "type": "Assertion",
+            "id": f"{base_url}/badge/assertion/{self.id}",
+            "badge": self.badge_class_id.get_json_ld(),
+            "recipient": {
+                "type": self.recipient_type,
+                "identity": self.recipient_identity,
+                "hashed": self.recipient_hashed,
+                "salt": self.recipient_salt if self.recipient_hashed else None,
+            },
+            "issuedOn": self.issuance_date.isoformat(),
+            "verification": {
+                "type": self.verification_type,
+                "url": self.assertion_url
+            }
+        }
+
+        if self.expiration_date:
+            assertion["expires"] = self.expiration_date.isoformat()
+
+        if self.evidence:
+            assertion["evidence"] = [ev.get_json_ld() for ev in self.evidence]
+
+        if self.state == 'revoked':
+            assertion["revoked"] = True
+            # assertion["revocationReason"] = self.revocation_reason
+
+        return assertion
+
+    def _get_salt(self):
+            """Benzersiz bir salt değeri oluştur"""
+            return str(uuid.uuid4())
+        
+    def _sign_assertion(self):
+        """Rozeti private key ile imzala"""
+        self.ensure_one()
+        if self.verification_type != 'SignedBadge':
+            return False
+
+        private_key_pem = self.badge_class_id.issuer_id.private_key
+        if not private_key_pem:
+            raise UserError(_('No private key found for issuer. Please generate keys first.'))
+
+        # JSON-LD'yi string'e çevir (signature alanı hariç)
+        assertion_data = self.get_json_ld()
+        assertion_data.pop('signature', None)
+        assertion_string = json.dumps(assertion_data, sort_keys=True)
+        
+        try:
+            # Private key'i yükle
+            private_key = serialization.load_pem_private_key(
+                private_key_pem.encode(),
+                password=None,
+                backend=default_backend()
+            )
+
+            # İmzala
+            signature = private_key.sign(
+                assertion_string.encode(),
+                padding.PSS(
+                    mgf=padding.MGF1(hashes.SHA256()),
+                    salt_length=padding.PSS.MAX_LENGTH
+                ),
+                hashes.SHA256()
+            )
+
+            return base64.b64encode(signature).decode('utf-8')
+        except Exception as e:
+            raise UserError(_('Error signing badge: %s') % str(e))
+
+    def action_issue(self):
+        """Issue the badge with signature if needed"""
+        self.ensure_one()
+        if self.state != 'draft':
+            raise UserError(_('Only draft badges can be issued'))
+
+        if self.verification_type == 'SignedBadge':
+            signature = self._sign_assertion()
+            if not signature:
+                raise UserError(_('Failed to sign the badge'))
+            
+        self.write({
+            'state': 'issued',
+            'issuance_date': fields.Datetime.now()
+        })
+        
+        
+        # Sertifikayı oluştur
+        self._generate_certificate_pdf()
+
+
+        return True
+    
+    
+--------------------------------------------------------
+
+from odoo import models, fields, api, _
+
+class BadgeClass(models.Model):
+    _name = 'badge.class'
+    _description = _('Open Badge Class Definition')
+    _inherit = ['mail.thread', 'mail.activity.mixin'] 
+
+    name = fields.Char(string=_('Name'), required=True)
+    description = fields.Text(string=_('Description'), required=True)
+    badge_type_id = fields.Many2one('badge.type', string=_('Badge Type'))
+    image = fields.Binary(string=_('Image'), required=True)
+    criteria_url = fields.Char(string=_("Criteria URL"), required=True)
+    criteria_narrative = fields.Text(string=_("Criteria Narrative"))
+    issuer_id = fields.Many2one('badge.issuer', string=_('Issuer'), required=True)
+    tags = fields.Many2many('badge.tag', string=_('Tags'))
+    alignment = fields.One2many('badge.alignment', 'badge_class_id', string=_('Alignments'))
+    active = fields.Boolean(default=True)  # Arşivleme özelliği için eklendi
+    
+    def get_image_url(self):
+        """Badge görselinin URL'ini oluştur"""
+        base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
+        return f"{base_url}/web/image?model=badge.class&id={self.id}&field=image"
+    
+    def get_json_ld(self):
+        return {
+            "@context": "https://w3id.org/openbadges/v2",
+            "type": "BadgeClass",
+            "id": f"{self.env['ir.config_parameter'].sudo().get_param('web.base.url')}/badge/class/{self.id}",
+            "name": self.name,
+            "description": self.description,
+            "image": self.get_image_url(),
+            "criteria": {
+                "id": self.criteria_url,
+                "narrative": self.criteria_narrative,
+            },
+            "issuer": self.issuer_id.get_json_ld(),
+            "tags": self.tags.mapped('name') if self.tags else [],
+            "alignment": [align.get_json_ld() for align in self.alignment] if self.alignment else [],
+        }
+
+---------------------------------------------------------------------------
+
+from odoo import models, fields, api, _
+
+class BadgeEvidence(models.Model):
+    _name = 'badge.evidence'
+    _description = _('Badge Evidence')
+
+    assertion_id = fields.Many2one('badge.assertion', string=_('Assertion'), required=True)
+    type = fields.Char(string=_('Type'), default="Evidence")
+    id = fields.Char(string=_("Evidence URL"))
+    name = fields.Char(string=_('Name'), required=True)
+    description = fields.Text(string=_('Description'))
+    narrative = fields.Text(string=_('Narrative'))
+    genre = fields.Char(string=_('Genre'))
+    audience = fields.Char(string=_('Audience'))
+    
+    def get_json_ld(self):
+        evidence = {
+            "type": self.type,
+            "id": self.id,
+            "name": self.name,
+        }
+        
+        if self.description:
+            evidence["description"] = self.description
+        if self.narrative:
+            evidence["narrative"] = self.narrative
+        if self.genre:
+            evidence["genre"] = self.genre
+        if self.audience:
+            evidence["audience"] = self.audience
+            
+        return evidence
+    
+
+------------------------------------------------------------
+	
+from odoo import models, fields, api, _
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.hazmat.backends import default_backend
+
+
+class BadgeIssuer(models.Model):
+    _name = 'badge.issuer'
+    _description = _('Badge Issuer Profile')
+    _inherit = ['mail.thread', 'mail.activity.mixin']
+
+    name = fields.Char(string=_('Name'), required=True)
+    url = fields.Char(string=_('URL'), required=True)
+    email = fields.Char(string=_('Email'), required=True)
+    description = fields.Text(string=_('Description'))
+    image = fields.Binary(string=_("Issuer Logo"))
+    public_key = fields.Text(string=_('Public Key for Verification'), readonly=True, tracking=True)
+    private_key = fields.Text(string=_('Private Key'), readonly=True, groups="base.group_system")
+    signature = fields.Binary(string='Signature', attachment=True)
+    
+    def get_json_ld(self):
+        return {
+            "@context": "https://w3id.org/openbadges/v2",
+            "type": "Issuer",
+            "id": self.url,
+            "name": self.name,
+            "url": self.url,
+            "email": self.email,
+            "description": self.description or "",
+        }
+        
+    def generate_key_pair(self):
+        # RSA key pair oluştur
+        private_key = rsa.generate_private_key(
+            public_exponent=65537,
+            key_size=2048,
+            backend=default_backend()
+        )
+        public_key = private_key.public_key()
+
+        # Public key'i PEM formatında kaydet
+        pem_public = public_key.public_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PublicFormat.SubjectPublicKeyInfo
+        )
+
+        # Private key'i PEM formatında kaydet
+        pem_private = private_key.private_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PrivateFormat.PKCS8,
+            encryption_algorithm=serialization.NoEncryption()
+        )
+
+        self.write({
+            'public_key': pem_public.decode('utf-8'),
+            'private_key': pem_private.decode('utf-8')
+        })        
+        
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': _('Success'),
+                'message': _('Key pair generated successfully'),
+                'type': 'success',
+                'sticky': False,
+            }
+        }
+
+
+---------------------------------------------------------------
+
+# models/badge_tag.py
+from odoo import models, fields, api, _
+
+class BadgeTag(models.Model):
+    _name = 'badge.tag'
+    _description = _('Badge Tag')
+
+    name = fields.Char(string=_('Name'), required=True)
+    color = fields.Integer(string=_('Color Index'))
+    active = fields.Boolean(default=True)
+
+    _sql_constraints = [
+        ('name_uniq', 'unique (name)', _('Tag name must be unique!')),
+    ]
+
+
+---------------------------------------------------------------
+
+from odoo import models, fields, api, _
+
+class BadgeType(models.Model):
+    _name = 'badge.type'
+    _description = _('Badge Type')
+
+    name = fields.Char(string=_('Name'), required=True)
+    code = fields.Char(string=_('Code'), required=True)
+    description = fields.Text(string=_('Description'))
+    active = fields.Boolean(default=True)
+
+    _sql_constraints = [
+        ('code_uniq', 'unique(code)', 'Badge Type Code must be unique!')
+    ]
+
+
+------------------------------------------------------------------
+
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Paper format tanımı -->
+    <record id="paperformat_badge_certificate" model="report.paperformat">
+        <field name="name">Badge Certificate A4 Landscape</field>
+        <field name="default" eval="True"/>
+        <field name="format">A4</field>
+        <field name="page_height">0</field>
+        <field name="page_width">0</field>
+        <field name="orientation">Landscape</field>
+        <field name="margin_top">0</field>
+        <field name="margin_bottom">0</field>
+        <field name="margin_left">0</field>
+        <field name="margin_right">0</field>
+        <field name="header_line" eval="False"/>
+        <field name="header_spacing">0</field>
+        <field name="dpi">96</field>
+    </record>
+
+    <!-- Report action tanımı -->
+    <record id="badge_certificate_report" model="ir.actions.report">
+        <field name="name">Badge Certificate</field>
+        <field name="model">badge.assertion</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">ak_open_badges.verification_page</field>
+        <field name="report_file">ak_open_badges.verification_page</field>
+        <field name="print_report_name">'Certificate - %s' % object.name</field>
+        <field name="binding_model_id" ref="model_badge_assertion"/>
+        <field name="binding_type">report</field>
+        <field name="paperformat_id" ref="paperformat_badge_certificate"/>
+    </record>
+</odoo>
+
+
+-----------------------------------------------------
+
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Güvenlik Grupları -->
+    <data noupdate="0">
+        <record id="group_open_badges_user" model="res.groups">
+            <field name="name">Open Badges / User</field>
+            <field name="category_id" ref="base.module_category_human_resources"/>
+            <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+        </record>
+
+        <record id="group_open_badges_manager" model="res.groups">
+            <field name="name">Open Badges / Manager</field>
+            <field name="category_id" ref="base.module_category_human_resources"/>
+            <field name="implied_ids" eval="[(4, ref('group_open_badges_user'))]"/>
+            <field name="users" eval="[(4, ref('base.user_root')), (4, ref('base.user_admin'))]"/>
+        </record>
+    </data>
+
+    <!-- Kayıt Kuralları -->
+    <data noupdate="1">
+        <record id="open_badges_rule_own" model="ir.rule">
+            <field name="name">Open Badges: own badges only</field>
+            <field name="model_id" ref="model_badge_assertion"/>
+            <field name="domain_force">[('recipient_id.user_id','=',user.id)]</field>
+            <field name="groups" eval="[(4, ref('group_open_badges_user'))]"/>
+        </record>
+
+        <record id="open_badges_rule_all" model="ir.rule">
+            <field name="name">Open Badges: all badges</field>
+            <field name="model_id" ref="model_badge_assertion"/>
+            <field name="domain_force">[(1,'=',1)]</field>
+            <field name="groups" eval="[(4, ref('group_open_badges_manager'))]"/>
+        </record>
+    </data>
+</odoo>
+
+
+
+--------------------------------------------------------------
+
+from odoo import http, _, fields
+from odoo.http import request
+import json
+from cryptography.exceptions import InvalidSignature
+import base64
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import serialization, hashes
+from cryptography.hazmat.primitives.asymmetric import padding
+
+
+class OpenBadgesController(http.Controller):
+    
+    def _verify_signature(self, assertion_data, signature, public_key_pem):
+        """Rozet imzasını doğrula"""
+        try:
+            # Public key'i yükle
+            public_key = serialization.load_pem_public_key(
+                public_key_pem.encode(),
+                backend=default_backend()
+            )
+            
+            # JSON verisini string'e çevir (signature hariç)
+            assertion_copy = assertion_data.copy()
+            assertion_copy.pop('signature', None)
+            assertion_string = json.dumps(assertion_copy, sort_keys=True)
+
+            # İmzayı doğrula
+            public_key.verify(
+                base64.b64decode(signature),
+                assertion_string.encode(),
+                padding.PSS(
+                    mgf=padding.MGF1(hashes.SHA256()),
+                    salt_length=padding.PSS.MAX_LENGTH
+                ),
+                hashes.SHA256()
+            )
+            return True
+        except (InvalidSignature, Exception):
+            return False    
+    
+    @http.route(['/badge/verify/<string:token>'], type='http', auth='public', website=True)
+    def verify_badge(self, token, download=None):
+        """Badge doğrulama sayfası"""
+        badges = request.env['badge.assertion'].sudo()
+        badge = badges.search([('verification_token', '=', token)], limit=1)
+        
+        if not badge:
+            return request.render('ak_open_badges.verification_error', {
+                'error': 'Invalid verification token'
+            })
+
+        # PDF indir parametresi varsa ve sertifika mevcutsa
+        if download and badge.certificate_file:
+            return http.request.make_response(
+                base64.b64decode(badge.certificate_file),
+                headers=[
+                    ('Content-Type', 'application/pdf'),
+                    ('Content-Disposition', f'inline; filename=certificate_{token}.pdf')
+                ]
+            )
+
+        verification_data = badge.get_verification_data()
+        verification_status = {
+            'is_valid': True,
+            'messages': []
+        }
+
+        # İmza kontrolü
+        if badge.verification_type == 'SignedBadge':
+            assertion_data = badge.get_json_ld()
+            signature = assertion_data.get('signature')
+            public_key = badge.badge_class_id.issuer_id.public_key
+
+            if not signature or not public_key:
+                verification_status['is_valid'] = False
+                verification_status['messages'].append('Missing signature or public key')
+            elif not self._verify_signature(assertion_data, signature, public_key):
+                verification_status['is_valid'] = False
+                verification_status['messages'].append('Invalid signature')
+
+        # Süre kontrolü
+        if badge.expiration_date and badge.expiration_date < fields.Datetime.now():
+            verification_status['is_valid'] = False
+            verification_status['messages'].append('Badge has expired')
+
+        # İptal kontrolü
+        if badge.state == 'revoked':
+            verification_status['is_valid'] = False
+            verification_status['messages'].append('Badge has been revoked')
+
+        return request.render('ak_open_badges.verification_page', {
+            'badge': badge,
+            'data': verification_data,
+            'verification': verification_status
+        })
+    
+    @http.route(['/badge/assertion/<int:assertion_id>'], type='http', auth='public', website=True)
+    def get_assertion(self, assertion_id):
+        """Open Badges Assertion JSON-LD endpoint"""
+        assertion = request.env['badge.assertion'].sudo().browse(assertion_id)
+        if not assertion.exists():
+            return request.not_found()
+            
+        return request.make_response(
+            json.dumps(assertion.get_json_ld()),
+            headers=[('Content-Type', 'application/ld+json')]
+        )
+    
+    @http.route(['/badge/class/<int:class_id>'], type='http', auth='public', website=True)
+    def get_badge_class(self, class_id):
+        """Open Badges BadgeClass JSON-LD endpoint"""
+        badge_class = request.env['badge.class'].sudo().browse(class_id)
+        if not badge_class.exists():
+            return request.not_found()
+            
+        return request.make_response(
+            json.dumps(badge_class.get_json_ld()),
+            headers=[('Content-Type', 'application/ld+json')]
+        )
+        
+        
+
+--------------------------------------------------------------------
+
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Badge Assertion Form View -->
+    <record id="view_badge_assertion_form" model="ir.ui.view">
+        <field name="name">badge.assertion.form</field>
+        <field name="model">badge.assertion</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_issue" string="Issue Badge" type="object" 
+                            class="oe_highlight" invisible="state != 'draft'"/>
+                    <button name="action_revoke" string="Revoke Badge" type="object"
+                            invisible="state != 'issued'" confirm="Are you sure you want to revoke this badge?"/>
+                    <field name="state" widget="statusbar" 
+                           statusbar_visible="draft,issued,revoked"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="badge_class_id"/>
+                            <field name="recipient_id"/>
+                            <field name="recipient_type"/>
+                            <field name="issuance_date"/>
+                        </group>
+                        <group>
+                            <field name="expiration_date"/>
+                            <field name="verification_type"/>
+                            <field name="recipient_hashed"/>
+                            <field name="assertion_url" widget="url"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Evidence" name="evidence" readonly="state != 'draft'">
+                            <field name="evidence">
+                                <list editable="bottom">
+                                    <field name="name"/>
+                                    <field name="description"/>
+                                    <field name="narrative"/>
+                                    <field name="genre"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="QR Code" name="qr_code">
+                            <group>
+                                <field name="qr_code" widget="image"/>
+                            </group>
+                        </page>
+                        <page string="Revocation" name="revocation" invisible="state != 'revoked'">
+                            <group>
+                                <!-- <field name="revocation_reason"/> -->
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <!-- Chatter -->
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- Badge Assertion Tree View -->
+    <record id="view_badge_assertion_tree" model="ir.ui.view">
+        <field name="name">badge.assertion.tree</field>
+        <field name="model">badge.assertion</field>
+        <field name="arch" type="xml">
+            <list decoration-info="state == 'draft'" decoration-danger="state == 'revoked'">
+                <field name="name"/>
+                <field name="badge_class_id"/>
+                <field name="recipient_id"/>
+                <field name="issuance_date"/>
+                <field name="state"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Badge Assertion Search View -->
+    <record id="view_badge_assertion_search" model="ir.ui.view">
+        <field name="name">badge.assertion.search</field>
+        <field name="model">badge.assertion</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="badge_class_id"/>
+                <field name="recipient_id"/>
+                <separator/>
+                <filter string="Draft" name="draft" domain="[('state', '=', 'draft')]"/>
+                <filter string="Issued" name="issued" domain="[('state', '=', 'issued')]"/>
+                <filter string="Revoked" name="revoked" domain="[('state', '=', 'revoked')]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Badge Class" name="group_by_badge" domain="[]" context="{'group_by': 'badge_class_id'}"/>
+                    <filter string="Recipient" name="group_by_recipient" domain="[]" context="{'group_by': 'recipient_id'}"/>
+                    <filter string="State" name="group_by_state" domain="[]" context="{'group_by': 'state'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Badge Assertion Action -->
+    <record id="action_badge_assertion" model="ir.actions.act_window">
+        <field name="name">Badge Assertions</field>
+        <field name="res_model">badge.assertion</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Issue your first badge!
+            </p>
+        </field>
+    </record>
+</odoo> 
+
+
+
+------------------------------------------------------------------
+
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Badge Class Form View -->
+    <record id="view_badge_class_form" model="ir.ui.view">
+        <field name="name">badge.class.form</field>
+        <field name="model">badge.class</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="toggle_active" type="object" class="oe_stat_button" icon="fa-archive">
+                            <field name="active" widget="boolean_button" options="{'terminology': 'archive'}"/>
+                        </button>
+                    </div>
+                    <field name="image" widget="image" class="oe_avatar"/>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" placeholder="Badge Name"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="issuer_id"/>
+                            <field name="badge_type_id"/>
+                            <field name="description"/>
+                            <field name="criteria_url"/>
+                        </group>
+                        <group>
+                            <field name="criteria_narrative"/>
+                            <field name="tags" widget="many2many_tags" options="{'color_field': 'color'}"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Alignments" name="alignments">
+                            <field name="alignment">
+                                <list editable="bottom">
+                                    <field name="target_name"/>
+                                    <field name="target_url"/>
+                                    <field name="target_description"/>
+                                    <field name="target_framework"/>
+                                    <field name="target_code"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+                <!-- Chatter -->
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- Badge Class Tree View -->
+    <record id="view_badge_class_tree" model="ir.ui.view">
+        <field name="name">badge.class.tree</field>
+        <field name="model">badge.class</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <field name="issuer_id"/>
+                <field name="description"/>
+                <field name="active"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Badge Class Search View -->
+    <record id="view_badge_class_search" model="ir.ui.view">
+        <field name="name">badge.class.search</field>
+        <field name="model">badge.class</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="issuer_id"/>
+                <field name="description"/>
+                <filter string="Archived" name="inactive" domain="[('active', '=', False)]"/>
+            </search>
+        </field>
+    </record>
+
+    <!-- Badge Class Action -->
+    <record id="action_badge_class" model="ir.actions.act_window">
+        <field name="name">Badge Classes</field>
+        <field name="res_model">badge.class</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first badge class!
+            </p>
+        </field>
+    </record>
+
+</odoo>
+
+
+-----------------------------------------------------------
+
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Badge Issuer Form View -->
+    <record id="view_badge_issuer_form" model="ir.ui.view">
+        <field name="name">badge.issuer.form</field>
+        <field name="model">badge.issuer</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="generate_key_pair" 
+                            string="Generate Keys" 
+                            type="object" 
+                            class="oe_highlight"
+                            confirm="This will generate new keys. Existing badges might need to be re-issued. Are you sure?"/>
+                </header>
+                <sheet>
+                    <field name="image" widget="image" class="oe_avatar"/>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" placeholder="Issuer Name"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="url"/>
+                            <field name="email"/>
+                        </group>
+                        <group>
+                            <field name="description"/>
+                        </group>
+                    </group>
+                    <group string="İmza" name="signature">
+                        <field name="signature" widget="image"/>
+                    </group>
+                    <notebook>
+                        <page string="Keys" name="keys">
+                            <group>
+                                <field name="public_key" widget="ace" options="{'mode': 'text'}"/>
+                                <field name="private_key" groups="base.group_system" widget="ace" options="{'mode': 'text'}"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <!-- Chatter -->
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- Badge Issuer Tree View -->
+    <record id="view_badge_issuer_tree" model="ir.ui.view">
+        <field name="name">badge.issuer.tree</field>
+        <field name="model">badge.issuer</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <field name="url"/>
+                <field name="email"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Badge Issuer Action -->
+    <record id="action_badge_issuer" model="ir.actions.act_window">
+        <field name="name">Badge Issuers</field>
+        <field name="res_model">badge.issuer</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first badge issuer!
+            </p>
+        </field>
+    </record>
+</odoo>
+
+-------------------------------------------------------
+
+
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+
+    <template id="verification_page" name="Badge Verification">
+        <t t-call="web.layout">
+            <div class="container mt-4">
+                <div class="position-relative" style="width: 297mm; height: 210mm; margin: auto; background-color: white;">
+                    <div class="certificate-container" style="position: relative; height: 100%;">
+                        <!-- SVG Frame -->
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 297 210" style="width: 100%; height: 100%; position: absolute;">
+                            <!-- Main Frame -->
+                            <rect x="15" y="15" width="267" height="180" fill="none" stroke="url(#frame-gold)" stroke-width="0.95"/>
+                            <rect x="20" y="20" width="257" height="170" fill="none" stroke="url(#frame-gold)" stroke-width="0.65"/>
+                            
+                            <!-- Decorative Curves -->
+                            <path d="M0,10 Q148.5,20 297,10" stroke="url(#frame-gold)" stroke-width="0.75" fill="none"/>
+                            <path d="M0,200 Q148.5,190 297,200" stroke="url(#frame-gold)" stroke-width="0.75" fill="none"/>
+                            
+                            <!-- Gradient Definition -->
+                            <defs>
+                                <linearGradient id="frame-gold" x1="0%" y1="0%" x2="100%" y2="0%">
+                                    <stop offset="0%" style="stop-color: #D4AF37"/>
+                                    <stop offset="50%" style="stop-color: #C5A028"/>
+                                    <stop offset="100%" style="stop-color: #D4AF37"/>
+                                </linearGradient>
+                            </defs>
+                        </svg>
+
+                        <!-- Certificate Content -->
+                        <div style="position: absolute; top: 20mm; left: 20mm; right: 20mm; bottom: 20mm;">
+                            <!-- Header - Logo -->
+                            <div style="position: absolute; top: 2mm; right: 2mm;">
+                                <img t-if="badge.badge_class_id.issuer_id.image" 
+                                    t-att-src="'/web/image/badge.issuer/%s/image' % badge.badge_class_id.issuer_id.id" 
+                                    style="height: 17mm;" alt="Logo"/>
+                            </div>
+
+                            <!-- Main Content -->
+                            <div class="text-start">
+                                <h1 style="font-family: 'UnifrakturMaguntia', cursive; font-size: 42pt; color: #333; margin-bottom: 0mm; text-align: center; width: 100%; line-height: 2; font-weight: normal;">
+                                    <t t-esc="badge.badge_class_id.badge_type_id.name"/>
+                                </h1>
+
+                                <div style="font-size: 14pt; line-height: 1.0; text-align: center;">
+                                    <p>This certifies that</p>
+                                    <h2 style="font-family: 'Kings', cursive; font-size: 32pt; margin: 8mm 0;" t-esc="badge.recipient_id.name"/>
+                                    <p>has successfully completed the</p>
+                                    <h3 style="font-size: 18pt; margin: 8mm 0;" t-esc="badge.badge_class_id.name"/>
+                                    <p>and was awarded a certificate in</p>
+                                    <h4 style="font-size: 14pt; margin: 8mm 0;">Successfully completed the course.</h4>
+                                </div>
+                            </div>
+
+                            <!-- Footer Section -->
+                            <div style="margin-top: 10mm; display: grid; grid-template-columns: repeat(3, 1fr); gap: 10mm;">
+                                <div class="text-center">
+                                    <img t-att-src="'/web/image/badge.class/%s/image' % badge.badge_class_id.id" 
+                                        style="height: 35mm; margin-left: 10px;" alt="Badge"/>
+                                </div>
+                                
+                                <div class="text-center">
+                                    <p style="margin-top: 5mm; font-size: 12pt;">Program Director</p>
+                                    <img t-if="badge.badge_class_id.issuer_id.signature" 
+                                        t-att-src="'/web/image/badge.issuer/%s/signature' % badge.badge_class_id.issuer_id.id" 
+                                        style="height: 20mm;" alt="Signature"/>
+                                </div>
+                                
+                                <div style="display: flex; justify-content: space-between; align-items: flex-start; font-size: 10pt;">
+                                    <div style="flex: 1;">
+                                        <p>Issue Date  : <span t-field="badge.issuance_date" t-options='{"format": "dd/MM/yyyy"}'/></p>
+                                        <p>Expiry Date : <span t-field="badge.expiration_date" t-options='{"format": "dd/MM/yyyy"}'/></p>
+                                        <p style="margin-top: 5mm;">CERTIFICATE ID</p>
+                                        <p t-esc="badge.verification_token"/>
+                                    </div>
+                                    <div style="margin-top: 5mm; margin-right: 5mm;">
+                                        <img t-att-src="'/web/image/badge.assertion/%s/qr_code' % badge.id" 
+                                                style="width: 25mm;"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <style>
+                @import url("https://fonts.googleapis.com/css2?family=UnifrakturMaguntia");
+                @import url("https://fonts.googleapis.com/css2?family=Kings");
+                
+           
+                @media print {
+                    @page {
+                        size: A4 landscape;
+                        margin: 0;
+                    }
+                    body {
+                        margin: 0;
+                    }
+                }
+            </style>
+        </t>
+    </template>
+
+
+    <!-- <template id="assets_backend" inherit_id="web.assets_backend" name="My Custom Backend Assets">
+        <xpath expr="." position="inside">
+            <link rel="stylesheet" type="text/css" href="/ak_open_badges/static/src/css/verification.css"/>
+        </xpath>
+    </template> -->
+
+
+    <template id="verification_error" name="Badge Verification Error">
+        <t t-call="web.layout">
+            <div class="container mt-4">
+                <div class="alert alert-danger">
+                    <h4 class="alert-heading">Verification Error</h4>
+                    <p t-esc="error"/>
+                </div>
+            </div>
+        </t>
+    </template>
+</odoo>
+
+
+
+
+        
+	
+

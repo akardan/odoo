@@ -1,0 +1,49 @@
+<odoo>
+    <record id="view_badge_type_form" model="ir.ui.view">
+        <field name="name">badge.type.form</field>
+        <field name="model">badge.type</field>
+        <field name="arch" type="xml">
+            <form string="Badge Type">
+                <sheet>
+                    <group>
+                        <field name="code"/>
+                        <field name="name"/>
+                        <field name="description"/>
+                        <field name="active"/>
+                    </group>
+                    <group>
+                        <field name="phrase4recipient"/>
+                        <field name="phrase4certificate"/>
+                        <field name="phrase_last"/>
+                    </group>                
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_badge_type_tree" model="ir.ui.view">
+        <field name="name">badge.type.tree</field>
+        <field name="model">badge.type</field>
+        <field name="arch" type="xml">
+            <list string="Badge Types">
+                <field name="name"/>
+                <field name="description"/>
+                <field name="code"/>
+                <field name="active"/>
+            </list>
+        </field>
+    </record>
+
+   <!-- Badge Type Action -->
+   <record id="action_badge_type" model="ir.actions.act_window">
+       <field name="name">Badge Types</field>
+       <field name="res_model">badge.type</field>
+       <field name="view_mode">list,form</field>
+       <field name="help" type="html">
+           <p class="o_view_nocontent_smiling_face">
+               Create your first badge type!
+           </p>
+       </field>
+   </record>    
+
+</odoo>
