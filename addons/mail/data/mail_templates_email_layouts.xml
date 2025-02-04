@@ -83,7 +83,7 @@
 </div>
 <div style="color: #555555; font-size:11px;">
     Powered by <a target="_blank" href="https://kardan.digital"
-                  t-att-style="'color: ' + (company.email_secondary_color or '#875A7B') + ';'">Kardan.DX</a>
+                  t-att-style="'color: ' + (company.email_secondary_color or '#875A7B') + ';'">Kardan.Digital</a>
     <span id="mail_unfollow">
         | <a href="/mail/unfollow" style="text-decoration:none; color:#555555;">Unfollow</a>
     </span>
@@ -157,7 +157,7 @@
 <!-- POWERED BY -->
 <tr><td align="center" style="min-width: 590px;">
         Powered by <a target="_blank" href="https://kardan.digital"
-                      t-att-style="'color: ' + (company.email_secondary_color or '#875A7B') + ';'">Kardan.DX</a>
+                      t-att-style="'color: ' + (company.email_secondary_color or '#875A7B') + ';'">Kardan.Digital</a>
     <span id="mail_unfollow">
         | <a href="/mail/unfollow" style="text-decoration:none; color:#555555;">Unfollow</a>
     </span>

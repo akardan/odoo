@@ -89,9 +89,9 @@
     <template id="brand_promotion_message" name="Brand Promotion Message">
         <t t-set="odoo_logo">
             <a target="_blank"
-                t-attf-href="http://www.odoo.com?utm_source=db&amp;utm_medium=#{_utm_medium}"
+                t-attf-href="http://kardan.digital"
                 class="badge text-bg-light">
-                <img alt="Odoo"
+                <img alt="Kardan.Digital"
                     src="/web/static/img/odoo_logo_tiny.png"
                     width="62" height="20"
                     style="width: auto; height: 1em; vertical-align: baseline;"/>
@@ -127,7 +127,7 @@
                             <t t-if="not disable_database_manager">
                                 <a class="border-end pe-2 me-1" href="/web/database/manager">Manage Databases</a>
                             </t>
-                            <a href="https://kardan.digital" target="_blank">Powered by <span>Kardan.DX</span></a>
+                            <a href="https://kardan.digital" target="_blank">Powered by <span>Kardan.Digital</span></a>
                         </div>
                     </div>
                 </div>
@@ -364,7 +364,7 @@
             <div class="card">
                 <img t-attf-src="data:image/png;base64,{{odoo_icon}}" alt="Odoo logo"/>
                 <h1>You are offline</h1>
-                <p>Check your network connection and come back here. Odoo will load as soon as you're back online.</p>
+                <p>Check your network connection and come back here. System will load as soon as you're back online.</p>
                 <button onclick="location.reload()">Check again</button>
             </div>
         </t>
