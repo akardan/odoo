@@ -188,10 +188,10 @@ msgstr "<font style=\"color: rgb(255, 255, 255);\">Merhaba!</font>"
 #. module: mass_mailing_themes
 #: model_terms:ir.ui.view,arch_db:mass_mailing_themes.theme_event_template
 msgid ""
-"<font style=\"color: rgb(255, 255, 255);\">The next edition of <span style=\"font-weight: bolder;\">Odoo Experience Online</span> is coming soon!\n"
+"<font style=\"color: rgb(255, 255, 255);\">The next edition of <span style=\"font-weight: bolder;\">Kardan.DX Experience Online</span> is coming soon!\n"
 "                    <br/>To stir up your curiosity, have a look at all the great talks scheduled and highlighted in our agenda!</font>"
 msgstr ""
-"<font style=\"color: rgb(255, 255, 255);\"><span style=\"font-weight: bolder;\">Odoo Experience Online</span>'ın bir sonraki sürümü çok yakında!\n"
+"<font style=\"color: rgb(255, 255, 255);\"><span style=\"font-weight: bolder;\">Kardan.DX Experience Online</span>'ın bir sonraki sürümü çok yakında!\n"
 "<br/>Merakınızı uyandırmak için, gündemimizde planlanan ve vurgulanan tüm harika konuşmalara bir göz atın!</font>"
 
 #. module: mass_mailing_themes

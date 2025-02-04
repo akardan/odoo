@@ -39,7 +39,7 @@
                 </div>
             </div>
             <footer class="d-flex flex-column align-items-center fixed-bottom">
-                <span>Powered By <a target="_blank" href="https://www.odoo.com?utm_source=db&amp;utm_medium=auth" style="color: #875A7B;">Odoo</a></span>
+                <span>Powered By <a target="_blank" href="https://kardan.digital" style="color: #875A7B;">Kardan.DX</a></span>
             </footer>
             <script>
                 document.querySelectorAll("#url-div a").forEach((anchor) =&gt; {

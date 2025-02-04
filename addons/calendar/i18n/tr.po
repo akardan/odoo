@@ -496,7 +496,7 @@ msgstr ""
 
 #. module: calendar
 #: model_terms:ir.ui.view,arch_db:calendar.view_calendar_event_form_quick_create
-msgid "<span class=\"fa fa-plus\"/> <span>Odoo meeting</span>"
+msgid "<span class=\"fa fa-plus\"/> <span>Digi meeting</span>"
 msgstr ""
 
 #. module: calendar
@@ -866,7 +866,7 @@ msgid ""
 "Choose what to do with other events in the recurrence. Updating All Events "
 "is not allowed when dates or time is modified"
 msgstr ""
-"Yinelemedeki diğer olaylarla ne yapacağınızı seçin. Tarihler veya saatler "
+"Yinelemedeki diğer etlinliklerle ne yapacağınızı seçin. Tarihler veya saatler "
 "değiştirildiğinde Tüm Etkinliklerin güncellenmesine izin verilmez"
 
 #. module: calendar
@@ -1209,12 +1209,12 @@ msgstr "Etkinlik Toplantısı Türü"
 #. module: calendar
 #: model:ir.model,name:calendar.model_calendar_recurrence
 msgid "Event Recurrence Rule"
-msgstr "Olay Tekrarlama Kuralı"
+msgstr "Etkinlik Tekrarlama Kuralı"
 
 #. module: calendar
 #: model:ir.model.fields,field_description:calendar.field_calendar_event__display_time
 msgid "Event Time"
-msgstr "Olay Zamanı"
+msgstr "Etkinlik Zamanı"
 
 #. module: calendar
 #. odoo-python
@@ -2290,7 +2290,7 @@ msgstr "Üçüncü"
 #: code:addons/calendar/static/src/views/ask_recurrence_update_policy_dialog.js:0
 #: model:ir.model.fields.selection,name:calendar.selection__calendar_event__recurrence_update__future_events
 msgid "This and following events"
-msgstr "Bu ve aşağıdaki olaylar"
+msgstr "Bu ve aşağıdaki etkinlikler"
 
 #. module: calendar
 #. odoo-javascript
@@ -2473,7 +2473,7 @@ msgstr ""
 #. odoo-python
 #: code:addons/calendar/models/calendar_event.py:0
 msgid "You can't update a recurrence without base event."
-msgstr "Temel olay olmadan bir yinelemeyi güncelleyemezsiniz."
+msgstr "Temel etkinlik olmadan bir yinelemeyi güncelleyemezsiniz."
 
 #. module: calendar
 #. odoo-python

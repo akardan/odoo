@@ -799,4 +799,4 @@ class EventEvent(models.Model):
 
     def _get_printing_sponsor_text(self):
         sponsor_text = self.env['ir.config_parameter'].sudo().get_param('event.badge_printing_sponsor_text')
-        return sponsor_text or "Powered by Odoo"
+        return sponsor_text or "Powered by Kardan.DX"

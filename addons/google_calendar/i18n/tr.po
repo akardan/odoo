@@ -198,7 +198,7 @@ msgstr "E-Posta"
 #. module: google_calendar
 #: model:ir.model,name:google_calendar.model_calendar_recurrence
 msgid "Event Recurrence Rule"
-msgstr "Olay Tekrarlama Kuralı"
+msgstr "Etkinlik Tekrarlama Kuralı"
 
 #. module: google_calendar
 #. odoo-javascript

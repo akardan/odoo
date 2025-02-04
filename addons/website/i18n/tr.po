@@ -2203,7 +2203,7 @@ msgid ""
 "A timeline is a graphical representation on which important events are "
 "marked."
 msgstr ""
-"Zaman çizelgesi, önemli olayların işaretlendiği grafiksel bir temsildir."
+"Zaman çizelgesi, önemli etkinliklerin işaretlendiği grafiksel bir temsildir."
 
 #. module: website
 #: model_terms:ir.ui.view,arch_db:website.s_timeline
@@ -10200,17 +10200,17 @@ msgstr "VEYA"
 #. module: website
 #: model_terms:ir.ui.view,arch_db:website.snippet_options
 msgid "Odoo Information"
-msgstr "Odoo Bilgileri"
+msgstr "Sistem Bilgileri"
 
 #. module: website
 #: model_terms:ir.ui.view,arch_db:website.snippet_options
 msgid "Odoo Menu"
-msgstr "Odoo Menü"
+msgstr "Sistem Menü"
 
 #. module: website
 #: model_terms:ir.ui.view,arch_db:website.show_website_info
 msgid "Odoo Version"
-msgstr "Odoo Sürümü"
+msgstr "Sistem Sürümü"
 
 #. module: website
 #: model_terms:ir.ui.view,arch_db:website.s_mega_menu_odoo_menu
@@ -12220,7 +12220,7 @@ msgid ""
 "picture, in just a few clicks."
 msgstr ""
 "Web sitenizi göstermek için fotoğraflara ihtiyacınız olduğunda medya "
-"iletişim kutusunda arama yapın. Odoo'nun milyonlarca telifsiz ve yüksek "
+"iletişim kutusunda arama yapın. Sistem'in milyonlarca telifsiz ve yüksek "
 "kaliteli fotoğraf içeren Unsplash ile entegrasyonu, sadece birkaç tıklamayla"
 " mükemmel resmi elde etmenizi mümkün kılar."
 
@@ -14123,7 +14123,7 @@ msgid ""
 msgstr ""
 "Daha fazla ziyaretçi almak için, Google'da sıklıkla aranan anahtar "
 "kelimeleri hedeflemelisiniz. Yerleşik SEO aracıyla, birkaç anahtar kelime "
-"tanımladıktan sonra, Odoo size hedeflenecek en iyi anahtar kelimeleri "
+"tanımladıktan sonra, Sistem size hedeflenecek en iyi anahtar kelimeleri "
 "önerecektir. Ardından, trafiğinizi artırmak için başlığınızı ve açıklamanızı"
 " buna göre uyarlayın."
 
@@ -16628,8 +16628,8 @@ msgstr ""
 
 #. module: website
 #: model_terms:ir.ui.view,arch_db:website.res_config_settings_view_form
-msgid "https://www.odoo.com"
-msgstr "https://www.odoo.com"
+msgid "https://digipharma.com.tr"
+msgstr "https://digipharma.com.tr"
 
 #. module: website
 #: model_terms:ir.ui.view,arch_db:website.s_mega_menu_odoo_menu
@@ -16674,7 +16674,7 @@ msgstr "müşterileri bilgilendirme"
 #. module: website
 #: model_terms:ir.ui.view,arch_db:website.show_website_info
 msgid "instance of Odoo, the"
-msgstr "Odoo örneği"
+msgstr "Sistem örneği"
 
 #. module: website
 #: model:ir.model.fields.selection,name:website.selection__theme_ir_ui_view__inherit_id__ir_ui_view
@@ -16920,7 +16920,7 @@ msgstr "daha fazla satmak"
 #. module: website
 #: model_terms:ir.ui.view,arch_db:website.cookie_policy
 msgid "session_id (Odoo)<br/>"
-msgstr "session_id (Odoo)<br/>"
+msgstr "session_id (Sistem)<br/>"
 
 #. module: website
 #: model_terms:ir.ui.view,arch_db:website.snippets

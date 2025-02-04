@@ -269,31 +269,31 @@ msgstr ""
 msgid ""
 "<div style=\"margin: 0px; padding: 0px; font-size: 13px;\">\n"
 "    <p style=\"margin: 0px; padding: 0px; font-size: 13px;\">\n"
-"        Dear <t t-out=\"object.partner_id.name or 'participant'\">participant</t><br><br>\n"
+"        Sayın <t t-out=\"object.partner_id.name or 'participant'\">katılımcı</t><br><br>\n"
 "        <t t-if=\"object.survey_id.certification\">\n"
-"            You have been invited to take a new certification.\n"
+"            Yeni Sertifikanızı kazanmanız için davet ediyoruz.\n"
 "        </t>\n"
 "        <t t-else=\"\">\n"
-"            We are conducting a survey and your response would be appreciated.\n"
+"            Yeni bir anket başlatıyoruz ve katılımınızı rica ediyoruz.\n"
 "        </t>\n"
 "        <div style=\"margin: 16px 0px 16px 0px;\">\n"
 "            <a t-att-href=\"(object.get_start_url())\" style=\"background-color: #875A7B; padding: 8px 16px 8px 16px; text-decoration: none; color: #fff; border-radius: 5px; font-size:13px;\">\n"
 "                <t t-if=\"object.survey_id.certification\">\n"
-"                    Start Certification\n"
+"                    Sertifikayı Başlat\n"
 "                </t>\n"
 "                <t t-else=\"\">\n"
-"                    Start Survey\n"
+"                    Anketi Başlat\n"
 "                </t>\n"
 "            </a>\n"
 "        </div>\n"
 "        <t t-if=\"object.deadline\">\n"
-"            Please answer the survey for <t t-out=\"format_date(object.deadline) or ''\">05/05/2021</t>.<br><br>\n"
+"            Anketi cevaplamak için süre : <t t-out=\"format_date(object.deadline) or ''\">two days</t>.<br><br>\n"
 "        </t>\n"
 "        <t t-if=\"object.survey_id.certification\">\n"
-"            We wish you good luck!\n"
+"            İyi Şanslar!\n"
 "        </t>\n"
 "        <t t-else=\"\">\n"
-"            Thank you in advance for your participation.\n"
+"            Katılımınız için şimdiden teşekkürler.\n"
 "        </t>\n"
 "    </p>\n"
 "</div>\n"
@@ -3209,12 +3209,12 @@ msgstr "Nesne Yönelimli Açık Organizasyon"
 #. module: survey
 #: model_terms:ir.ui.view,arch_db:survey.question_result_number_or_date_or_datetime
 msgid "Occurrence"
-msgstr "Olay"
+msgstr "Oluşum"
 
 #. module: survey
 #: model_terms:ir.ui.view,arch_db:survey.certification_report_view_general
 msgid "Odoo"
-msgstr "Odoo"
+msgstr "Kardan.DX"
 
 #. module: survey
 #. odoo-python
@@ -3437,7 +3437,7 @@ msgstr "Katılımcılar"
 #. odoo-python
 #: code:addons/survey/wizard/survey_invite.py:0
 msgid "Participate to %(survey_name)s"
-msgstr ""
+msgstr "%(survey_name) katılın"
 
 #. module: survey
 #: model:mail.template,subject:survey.mail_template_user_input_invite
@@ -3448,12 +3448,12 @@ msgstr "{{ object.survey_id.display_name }} anketine katılın"
 #: model:mail.message.subtype,name:survey.mt_survey_survey_user_input_completed
 #: model:mail.message.subtype,name:survey.mt_survey_user_input_completed
 msgid "Participation completed"
-msgstr ""
+msgstr "Katılım tamamlandı"
 
 #. module: survey
 #: model:mail.message.subtype,description:survey.mt_survey_user_input_completed
 msgid "Participation completed."
-msgstr ""
+msgstr "Katılım tamamlandı"
 
 #. module: survey
 #: model:ir.actions.act_window,name:survey.action_survey_user_input

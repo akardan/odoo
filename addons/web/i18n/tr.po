@@ -4339,8 +4339,8 @@ msgstr "Müslüman"
 #. module: web
 #. odoo-javascript
 #: code:addons/web/static/src/webclient/user_menu/user_menu_items.js:0
-msgid "My Odoo.com account"
-msgstr "Odoo.com hesabım"
+msgid "My DigiPharma account"
+msgstr "DigiPharma hesabım"
 
 #. module: web
 #. odoo-javascript
@@ -4716,31 +4716,31 @@ msgstr "Nesneler"
 #: code:addons/web/static/src/webclient/settings_form_view/widgets/res_config_edition.xml:0
 #: model_terms:ir.ui.view,arch_db:web.brand_promotion_message
 msgid "Odoo"
-msgstr "Odoo"
+msgstr "Sistem"
 
 #. module: web
 #. odoo-javascript
 #: code:addons/web/static/src/core/errors/error_dialogs.js:0
 msgid "Odoo Client Error"
-msgstr "Odoo Müşteri Hatası"
+msgstr "Sistem Müşteri Hatası"
 
 #. module: web
 #. odoo-javascript
 #: code:addons/web/static/src/webclient/settings_form_view/fields/upgrade_dialog.xml:0
 msgid "Odoo Enterprise"
-msgstr "Odoo Enterprise"
+msgstr "Sistem Enterprise"
 
 #. module: web
 #. odoo-javascript
 #: code:addons/web/static/src/core/errors/error_dialogs.js:0
 msgid "Odoo Error"
-msgstr "Odoo Hatası"
+msgstr "Sistem Hatası"
 
 #. module: web
 #. odoo-javascript
 #: code:addons/web/static/src/core/errors/error_dialogs.js:0
 msgid "Odoo Network Error"
-msgstr "Odoo Ağ Hatası"
+msgstr "Sistem Ağ Hatası"
 
 #. module: web
 #. odoo-javascript
@@ -4749,7 +4749,7 @@ msgid ""
 "Odoo Push notifications have been blocked. Go to your browser settings to "
 "allow them."
 msgstr ""
-"Odoo Push bildirimleri engellendi. İzin vermek için tarayıcı ayarlarınıza "
+"Sistem Push bildirimleri engellendi. İzin vermek için tarayıcı ayarlarınıza "
 "gidin."
 
 #. module: web
@@ -4757,37 +4757,37 @@ msgstr ""
 #: code:addons/web/static/src/core/install_scoped_app/install_scoped_app.xml:0
 #: code:addons/web/static/src/webclient/settings_form_view/widgets/res_config_edition.xml:0
 msgid "Odoo S.A."
-msgstr "Odoo S.A."
+msgstr "DigiPharma"
 
 #. module: web
 #. odoo-javascript
 #: code:addons/web/static/src/core/errors/error_dialogs.js:0
 msgid "Odoo Server Error"
-msgstr "Odoo Sunucu Hatası"
+msgstr "Sistem Sunucu Hatası"
 
 #. module: web
 #. odoo-javascript
 #: code:addons/web/static/src/core/errors/error_dialogs.xml:0
 #: code:addons/web/static/src/public/error_notifications.js:0
 msgid "Odoo Session Expired"
-msgstr "Odoo Oturumu Sonlandı"
+msgstr "Sistem Oturumu Sonlandı"
 
 #. module: web
 #. odoo-javascript
 #: code:addons/web/static/src/core/errors/error_dialogs.js:0
 msgid "Odoo Warning"
-msgstr "Odoo Uyarısı"
+msgstr "Sistem Uyarısı"
 
 #. module: web
 #: model_terms:ir.ui.view,arch_db:web.webclient_offline
 msgid "Odoo logo"
-msgstr ""
+msgstr "Logo"
 
 #. module: web
 #. odoo-javascript
 #: code:addons/web/static/src/core/barcode/barcode_video_scanner.js:0
 msgid "Odoo needs your authorization first."
-msgstr "Odoo'nun önce sizin yetkilendirmenize ihtiyacı var."
+msgstr "Sistem'in önce sizin yetkilendirmenize ihtiyacı var."
 
 #. module: web
 #. odoo-javascript
@@ -5130,12 +5130,12 @@ msgstr ""
 #. module: web
 #: model_terms:ir.ui.view,arch_db:web.brand_promotion_message
 msgid "Powered by %s%s"
-msgstr "Tarafından desteklenmektedir %s%s"
+msgstr "Powered by %s%s"
 
 #. module: web
 #: model_terms:ir.ui.view,arch_db:web.login_layout
-msgid "Powered by <span>Kardan.Digital</span>"
-msgstr "Hazırlayan <span>Kardan.Digital</span>"
+msgid "Powered by <span>Kardan.DX</span>"
+msgstr "Hazırlayan <span>Kardan.DX</span>"
 
 #. module: web
 #. odoo-javascript
@@ -7458,7 +7458,7 @@ msgid ""
 "You need to start Odoo with at least two workers to print a pdf version of "
 "the reports."
 msgstr ""
-"Raporların pdf sürümünü yazdırmak için Odoo'yu en az iki worker ile "
+"Raporların pdf sürümünü yazdırmak için Sistem'i en az iki worker ile "
 "başlatmanız gerekir."
 
 #. module: web
@@ -7475,7 +7475,7 @@ msgstr ""
 #: code:addons/web/static/src/core/errors/error_dialogs.xml:0
 #: code:addons/web/static/src/public/error_notifications.js:0
 msgid "Your Odoo session expired. The current page is about to be refreshed."
-msgstr "Odoo oturumunuzun süresi doldu. Geçerli sayfa yenilenmek üzere."
+msgstr "Sistem oturumunuzun süresi doldu. Geçerli sayfa yenilenmek üzere."
 
 #. module: web
 #. odoo-javascript

@@ -10,12 +10,12 @@
         <field name="card_template_id" ref="marketing_card.card_template_drawings"/>
         <field name="post_suggestion">Checkout who joined Odoo.</field>
         <field name="tag_ids" eval="[Command.link(ref('card_campaign_tag_demo'))]"/>
-        <field name="target_url">https://www.odoo.com/</field>
+        <field name="target_url">https:/DigiPharma.com/</field>
         <field name="reward_message" type="html">
             <p>You just leveled up your exposure!</p>
-            <p>Check out odoo.com for more!</p>
+            <p>Check out DigiPharma.com for more!</p>
         </field>
-        <field name="reward_target_url">https://www.odoo.com/</field>
+        <field name="reward_target_url">https://DigiPharma.com/</field>
         <field name="user_id" ref="base.user_admin"/>
 
         <field name="request_title">Share the news with your community</field>
@@ -24,7 +24,7 @@
         <field name="content_header_dyn" eval="True"/>
         <field name="content_header_path">name</field>
         <field name="content_header_color">#1F1881</field>
-        <field name="content_sub_header">Welcome to Odoo</field>
+        <field name="content_sub_header">Welcome to DigiPharma</field>
         <field name="content_section">This section is static</field>
         <field name="content_sub_section1_dyn" eval="True"/>
         <field name="content_sub_section1_path">city</field>

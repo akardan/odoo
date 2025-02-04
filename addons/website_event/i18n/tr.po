@@ -381,7 +381,7 @@ msgstr "Tüm Ülkeler"
 #: code:addons/website_event/models/event_event.py:0
 #: model_terms:ir.ui.view,arch_db:website_event.navbar
 msgid "All Events"
-msgstr "Tüm Olaylar"
+msgstr "Tüm Etkinlikler"
 
 #. module: website_event
 #: model_terms:ir.ui.view,arch_db:website_event.event_location
@@ -1349,7 +1349,7 @@ msgstr "Bu kısayol sizi hemen etkinlik formuna geri getirecektir."
 #. module: website_event
 #: model_terms:ir.actions.act_window,help:website_event.website_event_menu_action
 msgid "This technical menu displays all event sub-menu items."
-msgstr "Bu teknik menü, tüm olay alt menü öğelerini görüntüler."
+msgstr "Bu teknik menü, tüm etkinlik alt menü öğelerini görüntüler."
 
 #. module: website_event
 #. odoo-python

@@ -38,8 +38,8 @@ msgstr ""
 
 #. module: digest
 #: model_terms:ir.ui.view,arch_db:digest.digest_mail_main
-msgid "<span class=\"odoo_link_text\">Odoo</span>"
-msgstr "<span class=\"odoo_link_text\">Odoo</span>"
+msgid "<span class=\"odoo_link_text\">Kardan.DX</span>"
+msgstr "<span class=\"odoo_link_text\">Kardan.DX</span>"
 
 #. module: digest
 #: model_terms:ir.ui.view,arch_db:digest.digest_mail_main
@@ -380,8 +380,8 @@ msgstr "Alıcılar"
 
 #. module: digest
 #: model_terms:ir.ui.view,arch_db:digest.digest_section_mobile
-msgid "Run your business from anywhere with <b>Odoo Mobile</b>."
-msgstr "<b>Odoo Mobile</b> ile işinizi her yerden yönetin"
+msgid "Run your business from anywhere with <b>Kardan.DX Mobile</b>."
+msgstr "<b>Kardan.DX Mobile</b> ile işinizi her yerden yönetin"
 
 #. module: digest
 #: model_terms:ir.ui.view,arch_db:digest.digest_digest_view_form

@@ -201,7 +201,7 @@ msgstr ""
 #. module: microsoft_calendar
 #: model:ir.model,name:microsoft_calendar.model_calendar_recurrence
 msgid "Event Recurrence Rule"
-msgstr "Olay Tekrarlama Kuralı"
+msgstr "Etkinlik Tekrarlama Kuralı"
 
 #. module: microsoft_calendar
 #. odoo-python
@@ -366,8 +366,8 @@ msgid ""
 "the day of the previous event, and cannot be moved to or after the day of "
 "the following event."
 msgstr ""
-"Outlook sınırlaması: yinelendiğinde, bir olay önceki olayın gününe veya "
-"gününden önce taşınamaz ve bir sonraki olayın gününe veya sonrasına "
+"Outlook sınırlaması: yinelendiğinde, bir etkinlik önceki etkinliğin gününe veya "
+"gününden önce taşınamaz ve bir sonraki etkinliğin gününe veya sonrasına "
 "taşınamaz."
 
 #. module: microsoft_calendar
