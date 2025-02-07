@@ -5555,7 +5555,7 @@ msgstr "Rozeti aldın"
 #. module: survey
 #: model_terms:ir.ui.view,arch_db:survey.survey_fill_form_done
 msgid "You scored"
-msgstr "Seni attı"
+msgstr "Puanınız"
 
 #. module: survey
 #: model:survey.question,title:survey.survey_demo_quiz_p5
@@ -5604,7 +5604,7 @@ msgstr "cevap"
 #. module: survey
 #: model_terms:ir.ui.view,arch_db:survey.survey_progression
 msgid "answered"
-msgstr "cevap"
+msgstr "cevaplanmış"
 
 #. module: survey
 #: model_terms:ir.ui.view,arch_db:survey.survey_survey_view_form
