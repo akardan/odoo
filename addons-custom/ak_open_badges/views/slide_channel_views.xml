@@ -1,0 +1,58 @@
+<odoo>
+    <record id="view_slide_channel_form" model="ir.ui.view">
+        <field name="name">slide.channel.form</field>
+        <field name="model">slide.channel</field>
+        <field name="inherit_id" ref="website_slides.view_slide_channel_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='channel_type']" position="after">
+                <field name="badge_class_id"/>
+                <field name="issuance_date"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_slide_channel_tree" model="ir.ui.view">
+        <field name="name">slide.channel.tree</field>
+        <field name="model">slide.channel</field>
+        <field name="inherit_id" ref="website_slides.slide_channel_view_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='channel_type']" position="after">
+                <field name="badge_class_id" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_slide_channel_partner_tree" model="ir.ui.view">
+        <field name="name">slide.channel.partner.tree</field>
+        <field name="model">slide.channel.partner</field>
+        <field name="inherit_id" ref="website_slides.slide_channel_partner_view_tree"/>
+        <field name="arch" type="xml">
+            <list position="inside">
+                <field name="badge_assertion_id" optional="show"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Action tanımı -->
+    <record id="action_create_certificates" model="ir.actions.server">
+        <field name="name">Create Certificates</field>
+        <field name="model_id" ref="model_slide_channel_partner"/>
+        <field name="binding_model_id" ref="model_slide_channel_partner"/>
+        <field name="binding_view_types">list</field>
+        <field name="state">code</field>
+        <field name="code">
+if records:
+    records.create_certificates()
+action = {
+    'type': 'ir.actions.client',
+    'tag': 'display_notification',
+    'params': {
+        'title': 'Success',
+        'message': 'Certificates have been created.',
+        'type': 'success',
+        'sticky': False,
+    }
+}        
+        </field>
+    </record>
+</odoo>

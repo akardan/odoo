@@ -38,9 +38,10 @@
         'views/badge_type_views.xml',        # Type görünümleri
         'views/badge_tag_views.xml',         # Tag görünümleri
         'views/menu_views.xml',              # Menü yapısı
+        'views/slide_channel_views.xml',     # Slide görünümleri
         
         # Raporlar
-        'reports/badge_reports.xml',        # Önce report tanımları
+        'reports/badge_reports.xml',         # Önce report tanımları
 
         'views/templates.xml',               # Website şablonları
         

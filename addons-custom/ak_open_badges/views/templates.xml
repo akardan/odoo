@@ -34,7 +34,7 @@
                 </div>
 
                 <!-- Alignments -->
-                <div class="row mb-4" t-if="badge.badge_class_id.alignment">
+                <!-- <div class="row mb-4" t-if="badge.badge_class_id.alignment">
                     <div class="col-12">
                         <div class="card">
                             <div class="card-header py-3">
@@ -73,34 +73,64 @@
                             </div>
                         </div>
                     </div>
-                </div>
+                </div> -->
 
                 <!-- Evidence -->
-                <div class="row mb-4" t-if="badge.evidence">
+                <div class="row mb-4" t-if="evidence_data">
                     <div class="col-12">
                         <div class="card">
                             <div class="card-header py-3">
-                                <h3 class="card-title m-0">Evidence List</h3>
+                                <h3 class="card-title m-0">Kazanılan Yetkinlikler / Acquired Competencies</h3>
                             </div>
                             <div class="card-body">
                                 <div class="table-responsive">
                                     <table class="table table-hover align-middle mb-0">
                                         <thead>
                                             <tr>
-                                                <th style="width: 30%">Name</th>
-                                                <th style="width: 40%">Description</th>
-                                                <th style="width: 10%">Genre</th>
-                                                <th style="width: 20%">Narrative</th>
+                                                <!-- <th style="width: 15%">Type</th> -->
+                                                <th style="width: 20%">Yetkinlik / Competency</th>
+                                                <th style="width: 25%">Açıklama / Description</th>
+                                                <th style="width: 15%">Tür / Genre</th>
+                                                <!-- <th style="width: 15%">Hedef Kitle / Audience</th> -->
+                                                <!-- <th style="width: 10%">Delil / Narrative</th> -->
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            <t t-foreach="badge.evidence" t-as="evidence">
-                                                <tr>
-                                                    <td><t t-esc="evidence.name"/></td>
-                                                    <td><t t-esc="evidence.description"/></td>
-                                                    <td><t t-esc="evidence.genre"/></td>
-                                                    <td><t t-esc="evidence.narrative"/></td>
-                                                </tr>
+                                            <t t-foreach="evidence_data or []" t-as="ev">
+                                                <t t-if="ev">  
+                                                    <tr>
+                                                        <!-- <td>
+                                                            <t t-esc="ev.get('type_primary', '')"/>
+                                                            <br/>
+                                                            <em><t t-esc="ev.get('type_secondary', '')"/></em>
+                                                        </td> -->
+                                                        <td>
+                                                            <t t-esc="ev.get('name_primary', '')"/>
+                                                            <br/>
+                                                            <em><t t-esc="ev.get('name_secondary', '')"/></em>
+                                                        </td>
+                                                        <td>
+                                                            <t t-esc="ev.get('description_primary', '')"/>
+                                                            <br/>
+                                                            <em><t t-esc="ev.get('description_secondary', '')"/></em>
+                                                        </td>
+                                                        <td>
+                                                            <t t-esc="ev.get('genre_primary', '')"/>
+                                                            <br/>
+                                                            <em><t t-esc="ev.get('genre_secondary', '')"/></em>
+                                                        </td>
+                                                        <!-- <td>
+                                                            <t t-esc="ev.get('audience_primary', '')"/>
+                                                            <br/>
+                                                            <em><t t-esc="ev.get('audience_secondary', '')"/></em>
+                                                        </td> -->
+                                                        <!-- <td>
+                                                            <t t-esc="ev.get('narrative_primary', '')"/>
+                                                            <br/>
+                                                            <em><t t-esc="ev.get('narrative_secondary', '')"/></em>
+                                                        </td> -->
+                                                    </tr>
+                                                </t>
                                             </t>
                                         </tbody>
                                     </table>
@@ -110,7 +140,6 @@
                     </div>
                 </div>
             </div>
-
             <style>
                 body {
                     background-color: #f8f9fa;
@@ -125,13 +154,39 @@
                     border-bottom: 1px solid rgba(0,0,0,.125);
                 }
 
+                /* Tablo stil güncellemeleri */
+                .table {
+                    margin-bottom: 0;
+                    border-collapse: separate;
+                    border-spacing: 0;
+                }
+
                 .table th {
                     font-weight: 600;
                     background-color: #f8f9fa;
+                    border-bottom: 2px solid #e9ecef;
+                    color: #495057;
                 }
 
                 .table td {
                     vertical-align: middle;
+                    border-bottom: 1px solid #e9ecef;
+                    padding: 1rem 0.75rem;
+                }
+
+                .table tr:last-child td {
+                    border-bottom: none;
+                }
+
+                .table tr:hover {
+                    background-color: #f8f9fa;
+                }
+
+                /* Em tag'i için stil (ikincil dil için) */
+                .table td em {
+                    color: #6c757d;
+                    font-style: normal;
+                    font-size: 0.95em;
                 }
 
                 .btn-outline-primary {

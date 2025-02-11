@@ -14,7 +14,6 @@
                             confirm="This will generate new keys. Existing badges might need to be re-issued. Are you sure?"/>
                 </header>
                 <sheet>
-                    <field name="image" widget="image" class="oe_avatar"/>
                     <div class="oe_title">
                         <h1>
                             <field name="name" placeholder="Issuer Name"/>
@@ -29,14 +28,31 @@
                             <field name="description"/>
                         </group>
                     </group>
+                    <group string="Logo" name="logo">
+                        <group>
+                            <field name="image2" widget="image" class="oe_avatar"/>
+                        </group>
+                        <group>
+                            <field name="image" widget="image" class="oe_avatar"/>
+                        </group>
+
+                    </group>
+
                     <group string="İmza" name="signature">
-                        <field name="signature" widget="image"/>
+                        <group>
+                            <field name="issuer_title2" widget="text" placeholder="Second Issuer Title"/>
+                            <field name="signature2" widget="image" class="oe_avatar"/>
+                        </group>
+                         <group>
+                            <field name="issuer_title" widget="text" placeholder="Issuer Title"/>
+                            <field name="signature" widget="image" class="oe_avatar"/>
+                        </group>
                     </group>
                     <notebook>
                         <page string="Keys" name="keys">
                             <group>
-                                <field name="public_key" widget="ace" options="{'mode': 'text'}"/>
-                                <field name="private_key" groups="base.group_system" widget="ace" options="{'mode': 'text'}"/>
+                                <field name="public_key" widget="ace" options="{'lang': 'text'}"/>
+                                <field name="private_key" groups="base.group_system" widget="ace" options="{'lang': 'text'}"/>
                             </group>
                         </page>
                     </notebook>

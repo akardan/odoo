@@ -16,9 +16,9 @@ class OpenBadgesController(http.Controller):
         """Rozet imzasını doğrula"""
         try:
             # Debug log ekleyelim
-            _logger.info("=== Signature Verification Debug ===")
-            _logger.info(f"Assertion Data Type: {type(assertion_data)}")
-            _logger.info(f"Signature Type: {type(signature)}")
+            # _logger.info("=== Signature Verification Debug ===")
+            # _logger.info(f"Assertion Data Type: {type(assertion_data)}")
+            # _logger.info(f"Signature Type: {type(signature)}")
 
             # Public key'i yükle
             public_key = serialization.load_pem_public_key(
@@ -31,7 +31,7 @@ class OpenBadgesController(http.Controller):
             assertion_copy.pop('signature', None)
             assertion_string = json.dumps(assertion_copy, sort_keys=True)
 
-            _logger.info(f"Data to verify: {assertion_string}")
+            # _logger.info(f"Data to verify: {assertion_string}")
 
             # İmzayı doğrula
             try:
@@ -44,7 +44,7 @@ class OpenBadgesController(http.Controller):
                     ),
                     hashes.SHA256()
                 )
-                _logger.info("Signature verification successful!")
+                # _logger.info("Signature verification successful!")
                 return True
             except InvalidSignature:
                 _logger.error("Invalid signature detected!")
@@ -60,18 +60,23 @@ class OpenBadgesController(http.Controller):
         badge = badges.search([('verification_token', '=', token)], limit=1)
 
         # Debug logları
-        _logger.info("=== Badge Verification Debug ===")
-        _logger.info(f"Token: {token}")
-        _logger.info(f"Badge Found: {bool(badge)}")
-        _logger.info(f"Verification Type: {badge.verification_type}")
-        _logger.info(f"Badge Class Issuer: {badge.badge_class_id.issuer_id.name}")
-        _logger.info(f"Public Key Exists: {bool(badge.badge_class_id.issuer_id.public_key)}")
+        # _logger.info("=== Badge Verification Debug ===")
+        # _logger.info(f"Token: {token}")
+        # _logger.info(f"Badge Found: {bool(badge)}")
+        # _logger.info(f"Verification Type: {badge.verification_type}")
+        # _logger.info(f"Badge Class Issuer: {badge.badge_class_id.issuer_id.name}")
+        # _logger.info(f"Public Key Exists: {bool(badge.badge_class_id.issuer_id.public_key)}")
 
+        if not badge:
+            return request.render('ak_open_badges.verification_error', {
+                'error': 'Invalid verification token'
+            })
+            
         if badge.verification_type == 'SignedBadge':
             assertion_data = badge.get_json_ld()
-            _logger.info(f"Assertion Data: {assertion_data}")
+            # _logger.info(f"Assertion Data: {assertion_data}")
             signature = assertion_data.get('signature')
-            _logger.info(f"Signature Exists: {bool(signature)}")
+            # _logger.info(f"Signature Exists: {bool(signature)}")
             
             public_key = badge.badge_class_id.issuer_id.public_key
             if not signature or not public_key:
@@ -79,10 +84,6 @@ class OpenBadgesController(http.Controller):
                 _logger.error(f"Signature: {signature}")
                 _logger.error(f"Public Key: {public_key}")
         
-        if not badge:
-            return request.render('ak_open_badges.verification_error', {
-                'error': 'Invalid verification token'
-            })
 
         verification_data = badge.get_verification_data()
         verification_status = {
@@ -124,11 +125,73 @@ class OpenBadgesController(http.Controller):
         if badge.certificate_file:
             certificate_data = badge.certificate_file.decode('utf-8')
 
+        # Alignment verilerini hazırla
+        alignment_data = []
+        for align in badge.badge_class_id.alignment:
+            # Alignment dil logları
+            # _logger.info(f"=== Alignment Language Debug ===")
+            # _logger.info(f"Alignment ID: {align.id}")
+            # _logger.info(f"Primary Lang: {badge.badge_class_id.primary_lang}")
+            # _logger.info(f"Secondary Lang: {badge.badge_class_id.secondary_lang}")
+
+            align_data = {
+                'target_name_primary': align.with_context(lang=badge.badge_class_id.primary_lang).sudo().target_name,
+                'target_name_secondary': align.with_context(lang=badge.badge_class_id.secondary_lang).sudo().target_name,
+                'target_description_primary': align.with_context(lang=badge.badge_class_id.primary_lang).sudo().target_description,
+                'target_description_secondary': align.with_context(lang=badge.badge_class_id.secondary_lang).sudo().target_description,
+                'target_framework_primary': align.with_context(lang=badge.badge_class_id.primary_lang).sudo().target_framework,
+                'target_framework_secondary': align.with_context(lang=badge.badge_class_id.secondary_lang).sudo().target_framework,
+                'target_code': align.target_code,
+                'target_url': align.target_url
+            }
+            
+            # Alignment değer logları
+            # _logger.info(f"Target Name Primary: {align_data['target_name_primary']}")
+            # _logger.info(f"Target Name Secondary: {align_data['target_name_secondary']}")
+            
+            alignment_data.append(align_data)
+
+        # Evidence verilerini hazırla
+        evidence_data = []
+        for evidence in badge.evidence:
+            # Evidence dil logları
+            # _logger.info(f"=== Evidence Language Debug ===")
+            # _logger.info(f"Evidence ID: {evidence.id}")
+            # _logger.info(f"Primary Lang: {badge.badge_class_id.primary_lang}")
+            # _logger.info(f"Secondary Lang: {badge.badge_class_id.secondary_lang}")
+            
+            # Her bir evidence için çift dil desteği
+            if evidence:  # evidence kaydının var olduğunu kontrol et
+                # _logger.info(f"Current context before: {evidence.env.context}")
+                ev_data = {
+                    'name_primary': evidence.with_context(lang=badge.badge_class_id.primary_lang).sudo().name or '',
+                    'name_secondary': evidence.with_context(lang=badge.badge_class_id.secondary_lang).sudo().name or '',
+                    'description_primary': evidence.with_context(lang=badge.badge_class_id.primary_lang).sudo().description or '',
+                    'description_secondary': evidence.with_context(lang=badge.badge_class_id.secondary_lang).sudo().description or '',
+                    'genre_primary': evidence.with_context(lang=badge.badge_class_id.primary_lang).sudo().genre or '',
+                    'genre_secondary': evidence.with_context(lang=badge.badge_class_id.secondary_lang).sudo().genre or '',
+                    'narrative_primary': evidence.with_context(lang=badge.badge_class_id.primary_lang).sudo().narrative or '',
+                    'narrative_secondary': evidence.with_context(lang=badge.badge_class_id.secondary_lang).sudo().narrative or '',
+                    'audience_primary': evidence.with_context(lang=badge.badge_class_id.primary_lang).sudo().audience or '',
+                    'audience_secondary': evidence.with_context(lang=badge.badge_class_id.secondary_lang).sudo().audience or '',
+                    'type_primary': evidence.with_context(lang=badge.badge_class_id.primary_lang).sudo().type or 'Evidence',
+                    'type_secondary': evidence.with_context(lang=badge.badge_class_id.secondary_lang).sudo().type or 'Evidence'
+                }
+                # Debug logları ekleyelim
+                # _logger.info(f"Evidence Data: {ev_data}")
+                evidence_data.append(ev_data)
+
+        # Evidence verisi var mı kontrol et
+        if not evidence_data:
+            evidence_data = None
+
         return request.render('ak_open_badges.verification_page', {
             'badge': badge,
             'data': verification_data,
             'verification': verification_status,
-            'certificate_data': certificate_data
+            'certificate_data': certificate_data,
+            'alignment_data' : alignment_data,
+            'evidence_data': evidence_data
         })
             
     @http.route(['/badge/assertion/<int:assertion_id>'], type='http', auth='public', website=True)

@@ -38,8 +38,8 @@
                                 <list editable="bottom">
                                     <field name="target_code"/>
                                     <field name="target_name"/>
-                                    <field name="target_description"/>
-                                    <field name="target_framework"/>
+                                    <field name="target_description" widget="text"/>
+                                    <field name="target_framework" widget="text"/>
                                     <field name="target_url"/>
                                 </list>
                             </field>

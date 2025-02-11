@@ -381,16 +381,16 @@ class BadgeAssertion(models.Model):
             )
             canvas.drawPath(p)
 
-            # Logo ekle
+            # Logo ekle (sağ üst)
             if self.badge_class_id.issuer_id.image:
                 logo_data = BytesIO(base64.b64decode(self.badge_class_id.issuer_id.image))
                 logo = ImageReader(logo_data)
                 # Logo boyutları (3cm x 3cm)
                 logo_width = 5*cm
-                logo_height = 3*cm
+                logo_height = 2*cm
                 # Pozisyon: sağ üst köşeden 2cm içeride
-                x = page_width - logo_width - 2*cm
-                y = page_height - logo_height - 2*cm
+                x = page_width - logo_width - 2.3*cm
+                y = page_height - logo_height - 2.2*cm
                 
                 canvas.drawImage(
                     logo, x, y, 
@@ -399,7 +399,24 @@ class BadgeAssertion(models.Model):
                     preserveAspectRatio=True, 
                     mask='auto'
                 )
-
+            # Logo ekle (sol üst)
+            if self.badge_class_id.issuer_id.image2: 
+                logo_data = BytesIO(base64.b64decode(self.badge_class_id.issuer_id.image2))
+                logo = ImageReader(logo_data)
+                # Logo boyutları (3cm x 3cm)
+                logo_width = 3.5*cm
+                logo_height = 2*cm
+                # Pozisyon: sağ üst köşeden 2cm içeride
+                x = 2.3*cm
+                y = page_height - logo_height - 2.2*cm
+                
+                canvas.drawImage(
+                    logo, x, y, 
+                    width=logo_width, 
+                    height=logo_height, 
+                    preserveAspectRatio=True, 
+                    mask='auto'
+                )
             # QR Code ve Detay bilgileri için ortak y pozisyonu
             detail_y = 4*cm  # QR Code ile aynı hizadan başla
 
@@ -426,7 +443,7 @@ class BadgeAssertion(models.Model):
                 )                    
 
             # İmza bölümü (orta alt)
-            sig_x = page_width/2 - 1.5*cm  # İmzayı ortalamak için
+            sig_x = page_width/3 - 2.5*cm  # İmzayı ortalamak için
             sig_y = detail_y
             
             # İmza başlığı çift dilli
@@ -436,19 +453,47 @@ class BadgeAssertion(models.Model):
             else:
                 sig_text_secondary = '&nbsp;'
             
-            canvas.setFont('PTSansNarrow-Bold', 10)
-            canvas.drawString(sig_x - 0.5*cm, sig_y + 1.5*cm, sig_text_primary)
-            canvas.setFont('PTSansNarrow', 8)
-            canvas.drawString(sig_x - 0.3*cm, sig_y + 1.2*cm, sig_text_secondary)
+            if self.badge_class_id.issuer_id.signature2:
+                canvas.setFont('PTSansNarrow-Bold', 12)
+                canvas.drawString(sig_x + 3.0*cm, sig_y + 1.5*cm, sig_text_primary)
+                canvas.setFont('PTSansNarrow', 10)
+                canvas.drawString(sig_x + 3.3*cm, sig_y + 1.1*cm, sig_text_secondary)
+            else:
+                canvas.setFont('PTSansNarrow-Bold', 12)
+                canvas.drawString(sig_x + 3.0*cm, sig_y + 1.5*cm, sig_text_primary)
+                canvas.setFont('PTSansNarrow', 10)
+                canvas.drawString(sig_x + 3.3*cm, sig_y + 1.1*cm, sig_text_secondary)
 
             canvas.setFont('PTSansNarrow', 10)
             
             # İmza çizgisi
-            canvas.line(sig_x - 1.0*cm, sig_y + 1.0*cm, sig_x + 3*cm, sig_y + 1.0*cm)
+            if self.badge_class_id.issuer_id.signature2:
+                canvas.line(sig_x - 0*cm, sig_y + 0.9*cm, sig_x + 9*cm, sig_y + 0.9*cm)
+                # for i in range(11):
+                #     canvas.circle(sig_x - 0*cm + i*cm, sig_y + 0.9*cm, 1, stroke=1, fill=1)
+            else:
+                canvas.line(sig_x + 2*cm, sig_y + 0.9*cm, sig_x + 7*cm, sig_y + 0.9*cm)
 
-            # İmza ekle
-            if self.badge_class_id.issuer_id.signature:
-                signature_data = BytesIO(base64.b64decode(self.badge_class_id.issuer_id.signature))
+            # Issuer2 Title ekle
+            if self.badge_class_id.issuer_id.issuer_title2:
+                canvas.setFont('PTSansNarrow-Bold', 10)
+                issuer_title2_lines = self.badge_class_id.issuer_id.issuer_title2.split('\n')
+                for i, line in enumerate(issuer_title2_lines):
+                    canvas.drawString(sig_x + 0.5*cm, sig_y + 0.3*cm - i*0.4*cm, line)
+                
+            # Issuer Title ekle
+            if self.badge_class_id.issuer_id.issuer_title:
+                canvas.setFont('PTSansNarrow-Bold', 10)
+                issuer_title_lines = self.badge_class_id.issuer_id.issuer_title.split('\n')
+                for i, line in enumerate(issuer_title_lines):
+                    if self.badge_class_id.issuer_id.signature2:
+                        canvas.drawString(sig_x + 5*cm, sig_y + 0.3*cm - i*0.4*cm, line)
+                    else:
+                        canvas.drawString(sig_x + 3*cm, sig_y + 0.3*cm - i*0.4*cm, line)
+
+            # Issuer2 signature ekle
+            if self.badge_class_id.issuer_id.signature2:
+                signature_data = BytesIO(base64.b64decode(self.badge_class_id.issuer_id.signature2))
                 signature = ImageReader(signature_data)
                 
                 # İmza pozisyonu - footer table'ın üçüncü sütununun üzerine gelecek şekilde
@@ -456,13 +501,38 @@ class BadgeAssertion(models.Model):
                 sig_height = 2.5*cm
                 
                 canvas.drawImage(
-                    signature, sig_x - 0.5*cm, sig_y - 1.5*cm , 
+                    signature, sig_x + 0.3*cm, sig_y - 2.0*cm , 
                     width=sig_width, 
                     height=sig_height, 
                     preserveAspectRatio=True, 
                     mask='auto'
                 )
+            
+            # Issuer signature ekle
+            if self.badge_class_id.issuer_id.signature:
+                signature_data = BytesIO(base64.b64decode(self.badge_class_id.issuer_id.signature))
+                signature = ImageReader(signature_data)
                 
+                # İmza pozisyonu - footer table'ın üçüncü sütununun üzerine gelecek şekilde
+                sig_width = 3*cm
+                sig_height = 2.5*cm
+                if self.badge_class_id.issuer_id.signature2:
+                    canvas.drawImage(
+                        signature, sig_x + 5.0*cm, sig_y - 2.0*cm , 
+                        width=sig_width, 
+                        height=sig_height, 
+                        preserveAspectRatio=True, 
+                        mask='auto'
+                    )
+                else:
+                    canvas.drawImage(
+                        signature, sig_x + 3.0*cm, sig_y - 2.0*cm , 
+                        width=sig_width, 
+                        height=sig_height, 
+                        preserveAspectRatio=True, 
+                        mask='auto'
+                    )
+
             #Qr Code ekle
             if self.qr_code:
                 qr_code_data = BytesIO(base64.b64decode(self.qr_code))
@@ -545,7 +615,7 @@ class BadgeAssertion(models.Model):
         for record in self:
             if record.create_date and record.badge_class_id:
                 record.verification_token = hashlib.sha256(
-                    f"{record.create_date}-{record.badge_class_id.id}".encode()
+                    f"{record.create_date}-{record.badge_class_id.id}-{record.id}".encode()
                 ).hexdigest()[:16]
                 
     @api.depends('badge_class_id', 'recipient_id')
@@ -696,7 +766,7 @@ class BadgeAssertion(models.Model):
         # Önce state ve issuance_date'i güncelle
         self.write({
             'state': 'issued',
-            'issuance_date': fields.Datetime.now()
+            'issuance_date': self.issuance_date or fields.Datetime.now()
         })
 
         # Alignment'lardan evidence oluştur
@@ -705,14 +775,39 @@ class BadgeAssertion(models.Model):
             self.evidence.unlink()
             
             for alignment in self.badge_class_id.alignment:
-                self.env['badge.evidence'].create({
+                # Primary ve secondary dilleri al
+                primary_lang = self.badge_class_id.primary_lang
+                secondary_lang = self.badge_class_id.secondary_lang
+
+                # İki dildeki değerleri al
+                target_name_primary = alignment.with_context(lang=primary_lang).target_name
+                target_name_secondary = alignment.with_context(lang=secondary_lang).target_name or ''
+                
+                target_desc_primary = alignment.with_context(lang=primary_lang).target_description
+                target_desc_secondary = alignment.with_context(lang=secondary_lang).target_description  or ''
+                
+                target_framework_primary = alignment.with_context(lang=primary_lang).target_framework
+                target_framework_secondary = alignment.with_context(lang=secondary_lang).target_framework or ''
+
+                # Evidence kaydını primary dil değerleriyle oluştur
+                evidence = self.env['badge.evidence'].with_context(lang=primary_lang).create({
                     'assertion_id': self.id,
-                    'name': alignment.target_name,
-                    'description': alignment.target_description,
-                    'narrative': f"Demonstrated competency in {alignment.target_name} according to {alignment.target_framework}",
-                    'genre': 'Alignment Based Evidence',
-                    'id': alignment.target_url  # Evidence URL için alignment URL'ini kullan
+                    'name': target_name_primary,
+                    'description': target_desc_primary,
+                    'narrative': f"Demonstrated competency in {target_name_primary} according to {target_framework_primary}",
+                    'genre': 'Hedef Bazlı Yetkinlik' if primary_lang == 'tr_TR' else 'Alignment Based Competency',
+                    'id': alignment.target_url
                 })
+
+                # Secondary dil için değerleri güncelle
+                if secondary_lang:
+                    evidence.with_context(lang=secondary_lang).write({
+                        'name': target_name_secondary,
+                        'description': target_desc_secondary,
+                        'narrative': f"Demonstrated competency in {target_name_secondary} according to {target_framework_secondary}",
+                        'genre': 'Hedef Bazlı Yetkinlik' if secondary_lang == 'tr_TR' else 'Alignment Based Competency',
+                    })
+
 
         if self.verification_type == 'SignedBadge':
             signature = self._sign_assertion()
@@ -728,5 +823,4 @@ class BadgeAssertion(models.Model):
         self._generate_certificate_pdf()
 
         return True
-    
-    
+

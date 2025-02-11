@@ -6,3 +6,4 @@ from . import badge_class
 from . import badge_alignment
 from . import badge_assertion
 from . import badge_evidence
+from . import slide_channel

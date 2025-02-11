@@ -17,9 +17,13 @@ class BadgeIssuer(models.Model):
     url = fields.Char(string=_('URL'), required=True)
     email = fields.Char(string=_('Email'), required=True)
     image = fields.Binary(string=_("Issuer Logo"))
+    image2 = fields.Binary(string=_("Second Issuer Logo"))
     public_key = fields.Text(string=_('Public Key for Verification'), readonly=True, tracking=True)
     private_key = fields.Text(string=_('Private Key'), readonly=True, groups="base.group_system")
     signature = fields.Binary(string='Issuer Signature', attachment=True)
+    signature2 = fields.Binary(string='Second Issuer Signature', attachment=True)
+    issuer_title = fields.Char(string=_('Issuer Title'))
+    issuer_title2 = fields.Char(string=_('Second Issuer Title'))
     
     def get_json_ld(self):
         # Varsayılan dili kullan

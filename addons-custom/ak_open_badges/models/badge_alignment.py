@@ -10,7 +10,7 @@ class BadgeAlignment(models.Model):
     target_framework = fields.Char(string=_('Target Framework'), translate=True)
 
     badge_class_id = fields.Many2one('badge.class', string=_('Badge Class'), required=True)
-    target_url = fields.Char(string=_('Target URL'), required=True)
+    target_url = fields.Char(string=_('Target URL'))
     target_code = fields.Char(string=_('Target Code'))
 
     def get_json_ld(self):

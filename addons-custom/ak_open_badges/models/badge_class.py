@@ -17,7 +17,7 @@ class BadgeClass(models.Model):
 
     # Çevrilmeyen alanlar
     badge_type_id = fields.Many2one('badge.type', string=_('Badge Type'), tracking=True)
-    image = fields.Binary(string=_('Image'), required=True, tracking=True)
+    image = fields.Binary(string=_('Image'), required=True)
     criteria_url = fields.Char(string=_("Criteria URL"), required=True)
     issuer_id = fields.Many2one('badge.issuer', string=_('Issuer'), required=True, tracking=True)
     tags = fields.Many2many('badge.tag', string=_('Tags'))

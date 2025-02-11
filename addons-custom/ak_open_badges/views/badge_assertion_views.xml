@@ -111,4 +111,28 @@
             </p>
         </field>
     </record>
-</odoo> 
+
+    <!-- Server Action for Issuing Certificates -->
+    <record id="action_issue_certificates" model="ir.actions.server">
+        <field name="name">Issue Certificates</field>
+        <field name="model_id" ref="model_badge_assertion"/>
+        <field name="binding_model_id" ref="model_badge_assertion"/>
+        <field name="binding_view_types">list</field>
+        <field name="state">code</field>
+        <field name="code">
+if records:
+    for record in records:
+        record.action_issue()
+action = {
+    'type': 'ir.actions.client',
+    'tag': 'display_notification',
+    'params': {
+        'title': 'Success',
+        'message': 'Certificates have been issued.',
+        'type': 'success',
+        'sticky': False,
+    }
+}
+        </field>
+    </record>
+</odoo>
