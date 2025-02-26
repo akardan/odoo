@@ -50,9 +50,9 @@ class BadgeAssertion(models.Model):
     
     evidence = fields.One2many('badge.evidence', 'assertion_id', string=_('Evidence'))
     verification_type = fields.Selection([
-        ('HostedBadge', _('Hosted')),
-        ('SignedBadge', _('Signed')),
-    ], string=_('Verification Type'), default='HostedBadge', required=True)
+        ('hosted', _('Hosted')),
+        ('signed', _('Signed')),
+    ], string=_('Verification Type'), default='signed', required=True)
 
     verification_token = fields.Char(string=_('Certificate ID'), compute='_compute_verification_token', store=True)
     
@@ -74,30 +74,8 @@ class BadgeAssertion(models.Model):
         help=_('Digital signature for SignedBadge verification type')
     )
 
+    verify_count = fields.Integer(string='Verify Count', default=0)
 
-    # Çeviri metinlerini hazırla
-    translations = {
-        'certifies_that': _('This certifies that'),
-        'completed': _('has successfully completed the'),
-        'signature': _('Signature'),
-        'issue_date': _('Issue Date'),
-        'expiry_date': _('Expiry Date'),
-        'certificate_id': _('Certificate ID'),
-    }
-
-    def _translate(self, source, lang_code=None):
-        """Helper method to get translation"""
-        if not lang_code:
-            lang_code = self.env.user.lang
-            
-        # Use Odoo's built-in translation method
-        return self.env['ir.translation']._get_source(
-            name=None,         # No specific model name
-            types=['code'],    # Translation type
-            lang=lang_code,    # Target language
-            source=source      # Source string to translate
-        ) or ''
-    
     def get_field_caption(self, field_name, lang):
         return self.env['ir.model.fields'].with_context(lang=lang).search([
             ('model', '=', self._name),
@@ -339,7 +317,7 @@ class BadgeAssertion(models.Model):
             canvas.setStrokeColor(colors.HexColor('#D4AF37'))
             canvas.setLineWidth(2)
             
-            # Kenar boşlukları - 1cm azaltıldı (2cm'den 1cm'ye)
+            # Kenar boşlukları - 1cm 
             margin = 1*cm
             
             # Dış çerçeve - sayfa kenarlarından margin kadar içeride
@@ -350,7 +328,7 @@ class BadgeAssertion(models.Model):
                 page_height - 2*margin   
             )
             
-            # İç çerçeve - 1cm azaltıldı (3cm'den 2cm'ye)
+            # İç çerçeve - 1cm 
             inner_margin = 2*cm
             canvas.setLineWidth(1)
             canvas.rect(
@@ -385,7 +363,7 @@ class BadgeAssertion(models.Model):
             if self.badge_class_id.issuer_id.image:
                 logo_data = BytesIO(base64.b64decode(self.badge_class_id.issuer_id.image))
                 logo = ImageReader(logo_data)
-                # Logo boyutları (3cm x 3cm)
+                # Logo boyutları 
                 logo_width = 5*cm
                 logo_height = 2*cm
                 # Pozisyon: sağ üst köşeden 2cm içeride
@@ -403,7 +381,7 @@ class BadgeAssertion(models.Model):
             if self.badge_class_id.issuer_id.image2: 
                 logo_data = BytesIO(base64.b64decode(self.badge_class_id.issuer_id.image2))
                 logo = ImageReader(logo_data)
-                # Logo boyutları (3cm x 3cm)
+                # Logo boyutları 
                 logo_width = 3.5*cm
                 logo_height = 2*cm
                 # Pozisyon: sağ üst köşeden 2cm içeride
@@ -426,12 +404,12 @@ class BadgeAssertion(models.Model):
                 badge_logo = ImageReader(badge_logo_data)
                 
                 # Badge logo boyutları
-                badge_width = 3*cm
-                badge_height = 3*cm
+                badge_width = 4*cm
+                badge_height = 5*cm
                 
                 # Pozisyon: sol alt köşeden 2cm içeride
                 x = 2.5*cm
-                y = detail_y -1*cm
+                y = detail_y -2*cm
                 
                 # Badge logo'yu yerleştir
                 canvas.drawImage(
@@ -447,39 +425,39 @@ class BadgeAssertion(models.Model):
             sig_y = detail_y
             
             # İmza başlığı çift dilli
-            sig_text_primary = primary_content.get_related_field_caption(self, 'badge_class_id.issuer_id.signature', primary_lang.code)
-            if secondary_content:
-                sig_text_secondary = secondary_content.get_related_field_caption(self, 'badge_class_id.issuer_id.signature', secondary_lang.code)
-            else:
-                sig_text_secondary = '&nbsp;'
+            # sig_text_primary = primary_content.get_related_field_caption(self, 'badge_class_id.issuer_id.signature', primary_lang.code)
+            # sig_text_secondary = secondary_content.get_related_field_caption(self, 'badge_class_id.issuer_id.signature', secondary_lang.code) or '&nbsp;'
+            # # if secondary_content:
+            # #     sig_text_secondary = secondary_content.get_related_field_caption(self, 'badge_class_id.issuer_id.signature', secondary_lang.code)
+            # # else:
+            # #     sig_text_secondary = '&nbsp;'
             
-            if self.badge_class_id.issuer_id.signature2:
-                canvas.setFont('PTSansNarrow-Bold', 12)
-                canvas.drawString(sig_x + 3.0*cm, sig_y + 1.5*cm, sig_text_primary)
-                canvas.setFont('PTSansNarrow', 10)
-                canvas.drawString(sig_x + 3.3*cm, sig_y + 1.1*cm, sig_text_secondary)
-            else:
-                canvas.setFont('PTSansNarrow-Bold', 12)
-                canvas.drawString(sig_x + 3.0*cm, sig_y + 1.5*cm, sig_text_primary)
-                canvas.setFont('PTSansNarrow', 10)
-                canvas.drawString(sig_x + 3.3*cm, sig_y + 1.1*cm, sig_text_secondary)
+            # if self.badge_class_id.issuer_id.signature2:
+            #     canvas.setFont('PTSansNarrow-Bold', 12)
+            #     canvas.drawString(sig_x + 3.0*cm, sig_y + 1.5*cm, sig_text_primary)
+            #     canvas.setFont('PTSansNarrow', 10)
+            #     canvas.drawString(sig_x + 3.3*cm, sig_y + 1.1*cm, sig_text_secondary)
+            # else:
+            #     canvas.setFont('PTSansNarrow-Bold', 12)
+            #     canvas.drawString(sig_x + 3.0*cm, sig_y + 1.5*cm, sig_text_primary)
+            #     canvas.setFont('PTSansNarrow', 10)
+            #     canvas.drawString(sig_x + 3.3*cm, sig_y + 1.1*cm, sig_text_secondary)
 
             canvas.setFont('PTSansNarrow', 10)
             
             # İmza çizgisi
             if self.badge_class_id.issuer_id.signature2:
-                canvas.line(sig_x - 0*cm, sig_y + 0.9*cm, sig_x + 9*cm, sig_y + 0.9*cm)
-                # for i in range(11):
-                #     canvas.circle(sig_x - 0*cm + i*cm, sig_y + 0.9*cm, 1, stroke=1, fill=1)
+                canvas.line(sig_x - 0.00*cm, sig_y - 0.0*cm, sig_x + 4.25*cm, sig_y - 0.0*cm)
+                canvas.line(sig_x + 4.75*cm, sig_y - 0.0*cm, sig_x + 9.00*cm, sig_y - 0.0*cm)
             else:
-                canvas.line(sig_x + 2*cm, sig_y + 0.9*cm, sig_x + 7*cm, sig_y + 0.9*cm)
+                canvas.line(sig_x + 2.00*cm, sig_y + 0.0*cm, sig_x + 7.00*cm, sig_y + 0.0*cm)
 
             # Issuer2 Title ekle
             if self.badge_class_id.issuer_id.issuer_title2:
                 canvas.setFont('PTSansNarrow-Bold', 10)
                 issuer_title2_lines = self.badge_class_id.issuer_id.issuer_title2.split('\n')
                 for i, line in enumerate(issuer_title2_lines):
-                    canvas.drawString(sig_x + 0.5*cm, sig_y + 0.3*cm - i*0.4*cm, line)
+                    canvas.drawString(sig_x + 0.5*cm, sig_y - 0.7*cm - i*0.4*cm, line)
                 
             # Issuer Title ekle
             if self.badge_class_id.issuer_id.issuer_title:
@@ -487,9 +465,9 @@ class BadgeAssertion(models.Model):
                 issuer_title_lines = self.badge_class_id.issuer_id.issuer_title.split('\n')
                 for i, line in enumerate(issuer_title_lines):
                     if self.badge_class_id.issuer_id.signature2:
-                        canvas.drawString(sig_x + 5*cm, sig_y + 0.3*cm - i*0.4*cm, line)
+                        canvas.drawString(sig_x + 5*cm, sig_y - 0.7*cm - i*0.4*cm, line)
                     else:
-                        canvas.drawString(sig_x + 3*cm, sig_y + 0.3*cm - i*0.4*cm, line)
+                        canvas.drawString(sig_x + 3*cm, sig_y - 0.7*cm - i*0.4*cm, line)
 
             # Issuer2 signature ekle
             if self.badge_class_id.issuer_id.signature2:
@@ -497,11 +475,11 @@ class BadgeAssertion(models.Model):
                 signature = ImageReader(signature_data)
                 
                 # İmza pozisyonu - footer table'ın üçüncü sütununun üzerine gelecek şekilde
-                sig_width = 3*cm
-                sig_height = 2.5*cm
+                sig_width = 4.5*cm
+                sig_height = 3.0*cm
                 
                 canvas.drawImage(
-                    signature, sig_x + 0.3*cm, sig_y - 2.0*cm , 
+                    signature, sig_x + 0.0*cm, sig_y + 0.3*cm , 
                     width=sig_width, 
                     height=sig_height, 
                     preserveAspectRatio=True, 
@@ -514,11 +492,11 @@ class BadgeAssertion(models.Model):
                 signature = ImageReader(signature_data)
                 
                 # İmza pozisyonu - footer table'ın üçüncü sütununun üzerine gelecek şekilde
-                sig_width = 3*cm
-                sig_height = 2.5*cm
+                sig_width = 4.5*cm
+                sig_height = 3.0*cm
                 if self.badge_class_id.issuer_id.signature2:
                     canvas.drawImage(
-                        signature, sig_x + 5.0*cm, sig_y - 2.0*cm , 
+                        signature, sig_x + 5.0*cm, sig_y + 0.3*cm , 
                         width=sig_width, 
                         height=sig_height, 
                         preserveAspectRatio=True, 
@@ -526,7 +504,7 @@ class BadgeAssertion(models.Model):
                     )
                 else:
                     canvas.drawImage(
-                        signature, sig_x + 3.0*cm, sig_y - 2.0*cm , 
+                        signature, sig_x + 3.0*cm, sig_y + 0.3*cm , 
                         width=sig_width, 
                         height=sig_height, 
                         preserveAspectRatio=True, 
@@ -678,6 +656,14 @@ class BadgeAssertion(models.Model):
         })
         return True
     
+    def action_draft(self):
+        """Rozeti draft et"""
+        self.ensure_one()
+        self.write({
+            'state': 'draft',
+        })
+        return True
+
     def get_json_ld(self):
         base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
         

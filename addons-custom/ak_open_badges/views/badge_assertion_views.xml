@@ -32,6 +32,7 @@
                             <field name="verification_type"/>
                             <field name="recipient_hashed"/>
                             <field name="assertion_url" widget="url"/>
+                            <field name="verify_count"/>
                         </group>
                     </group>
                     <notebook>
@@ -69,11 +70,12 @@
         <field name="model">badge.assertion</field>
         <field name="arch" type="xml">
             <list decoration-info="state == 'draft'" decoration-danger="state == 'revoked'">
-                <field name="name"/>
-                <field name="badge_class_id"/>
-                <field name="recipient_id"/>
-                <field name="issuance_date"/>
-                <field name="state"/>
+                <field name="name" optional="show"/>
+                <field name="badge_class_id" optional="show"/>
+                <field name="recipient_id" optional="show"/>
+                <field name="issuance_date" optional="show"/>
+                <field name="verify_count" optional="show"/>
+                <field name="state" optional="show"/>
             </list>
         </field>
     </record>
@@ -113,17 +115,44 @@
     </record>
 
     <!-- Server Action for Issuing Certificates -->
+    <record id="action_draft_certificates" model="ir.actions.server">
+        <field name="name">Draft Certificates</field>
+        <field name="model_id" ref="model_badge_assertion"/>
+        <field name="binding_model_id" ref="model_badge_assertion"/>
+        <field name="binding_view_types">list,form</field>
+        <field name="state">code</field>
+        <field name="code">
+if records:
+    for record in records:
+        record.action_draft()
+
+    action = {
+    'type': 'ir.actions.client',
+    'tag': 'display_notification',
+    'params': {
+        'title': 'Success',
+        'message': 'Certificates have been drafted.',
+        'type': 'success',
+        'sticky': False,
+        }
+    }
+        </field>
+    </record>
+
+
+    <!-- Server Action for Issuing Certificates -->
     <record id="action_issue_certificates" model="ir.actions.server">
         <field name="name">Issue Certificates</field>
         <field name="model_id" ref="model_badge_assertion"/>
         <field name="binding_model_id" ref="model_badge_assertion"/>
-        <field name="binding_view_types">list</field>
+        <field name="binding_view_types">list,form</field>
         <field name="state">code</field>
         <field name="code">
 if records:
     for record in records:
         record.action_issue()
-action = {
+
+    action = {
     'type': 'ir.actions.client',
     'tag': 'display_notification',
     'params': {
@@ -131,8 +160,38 @@ action = {
         'message': 'Certificates have been issued.',
         'type': 'success',
         'sticky': False,
+        }
     }
-}
         </field>
     </record>
+
+    <!-- Mail Gönderme Action -->
+    <record id="action_send_certificate_emails" model="ir.actions.server">
+        <field name="name">Send Certificate Emails</field>
+        <field name="model_id" ref="model_badge_assertion"/>
+        <field name="binding_model_id" ref="model_badge_assertion"/>
+        <field name="binding_view_types">list,form</field>
+        <field name="state">code</field>
+        <field name="code">
+if records:
+    sent_count = 0
+    template = env.ref('ak_open_badges.email_template_course_certificate')
+    for record in records:
+        if record.state == 'issued' and record.recipient_id.email:
+            template.send_mail(record.id, force_send=True)
+            sent_count += 1
+            
+action = {
+    'type': 'ir.actions.client',
+    'tag': 'display_notification',
+    'params': {
+        'title': 'Success',
+        'message': f'Certificate emails sent to {sent_count} recipient(s).',
+        'type': 'success',
+        'sticky': False,
+        }
+    }
+        </field>
+    </record>
+
 </odoo>

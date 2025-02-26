@@ -42,17 +42,19 @@
         <field name="state">code</field>
         <field name="code">
 if records:
-    records.create_certificates()
+    # records.create_certificates() 
+    badge_assertions = env['badge.assertion']
+    for record in records:
+        record.create_certificates()
+
+# Oluşturulan sertifikaları göster
 action = {
-    'type': 'ir.actions.client',
-    'tag': 'display_notification',
-    'params': {
-        'title': 'Success',
-        'message': 'Certificates have been created.',
-        'type': 'success',
-        'sticky': False,
-    }
-}        
+    'name': 'Created Certificates',
+    'type': 'ir.actions.act_window',
+    'res_model': 'badge.assertion',
+    'view_mode': 'list,form',
+    'domain': [('badge_class_id', 'in', records.mapped('channel_id.badge_class_id').ids)],
+}
         </field>
     </record>
 </odoo>

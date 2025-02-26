@@ -5,8 +5,13 @@ from cryptography.exceptions import InvalidSignature
 import base64
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization, hashes
+from io import BytesIO
 from cryptography.hazmat.primitives.asymmetric import padding
 import logging
+from werkzeug.urls import url_encode
+from pdf2image import convert_from_bytes
+from urllib.parse import quote_plus
+
 
 _logger = logging.getLogger(__name__)
 
@@ -58,14 +63,6 @@ class OpenBadgesController(http.Controller):
         """Badge doğrulama sayfası"""
         badges = request.env['badge.assertion'].sudo()
         badge = badges.search([('verification_token', '=', token)], limit=1)
-
-        # Debug logları
-        # _logger.info("=== Badge Verification Debug ===")
-        # _logger.info(f"Token: {token}")
-        # _logger.info(f"Badge Found: {bool(badge)}")
-        # _logger.info(f"Verification Type: {badge.verification_type}")
-        # _logger.info(f"Badge Class Issuer: {badge.badge_class_id.issuer_id.name}")
-        # _logger.info(f"Public Key Exists: {bool(badge.badge_class_id.issuer_id.public_key)}")
 
         if not badge:
             return request.render('ak_open_badges.verification_error', {
@@ -120,20 +117,27 @@ class OpenBadgesController(http.Controller):
                 'error': ' '.join(verification_status['messages'])
             })
 
-        # Certificate data'yı base64 formatında template'e gönder
+        # # Certificate data'yı base64 formatında hazırla
         certificate_data = False
+        pdf_url = False
         if badge.certificate_file:
             certificate_data = badge.certificate_file.decode('utf-8')
+        
+        # PDF'i resme çevir
+        try:
+            pdf_bytes = base64.b64decode(certificate_data)
+            pages = convert_from_bytes(pdf_bytes, dpi=200)  # DPI kaliteyi ayarlar
+            if pages:
+                img_byte_arr = BytesIO()
+                pages[0].save(img_byte_arr, format='PNG', optimize=True, quality=85)
+                certificate_image = base64.b64encode(img_byte_arr.getvalue()).decode()
+        except Exception as e:
+            _logger.error(f"PDF to image conversion error: {e}")
+
 
         # Alignment verilerini hazırla
         alignment_data = []
         for align in badge.badge_class_id.alignment:
-            # Alignment dil logları
-            # _logger.info(f"=== Alignment Language Debug ===")
-            # _logger.info(f"Alignment ID: {align.id}")
-            # _logger.info(f"Primary Lang: {badge.badge_class_id.primary_lang}")
-            # _logger.info(f"Secondary Lang: {badge.badge_class_id.secondary_lang}")
-
             align_data = {
                 'target_name_primary': align.with_context(lang=badge.badge_class_id.primary_lang).sudo().target_name,
                 'target_name_secondary': align.with_context(lang=badge.badge_class_id.secondary_lang).sudo().target_name,
@@ -144,25 +148,13 @@ class OpenBadgesController(http.Controller):
                 'target_code': align.target_code,
                 'target_url': align.target_url
             }
-            
-            # Alignment değer logları
-            # _logger.info(f"Target Name Primary: {align_data['target_name_primary']}")
-            # _logger.info(f"Target Name Secondary: {align_data['target_name_secondary']}")
-            
             alignment_data.append(align_data)
 
         # Evidence verilerini hazırla
         evidence_data = []
         for evidence in badge.evidence:
-            # Evidence dil logları
-            # _logger.info(f"=== Evidence Language Debug ===")
-            # _logger.info(f"Evidence ID: {evidence.id}")
-            # _logger.info(f"Primary Lang: {badge.badge_class_id.primary_lang}")
-            # _logger.info(f"Secondary Lang: {badge.badge_class_id.secondary_lang}")
-            
             # Her bir evidence için çift dil desteği
             if evidence:  # evidence kaydının var olduğunu kontrol et
-                # _logger.info(f"Current context before: {evidence.env.context}")
                 ev_data = {
                     'name_primary': evidence.with_context(lang=badge.badge_class_id.primary_lang).sudo().name or '',
                     'name_secondary': evidence.with_context(lang=badge.badge_class_id.secondary_lang).sudo().name or '',
@@ -177,21 +169,23 @@ class OpenBadgesController(http.Controller):
                     'type_primary': evidence.with_context(lang=badge.badge_class_id.primary_lang).sudo().type or 'Evidence',
                     'type_secondary': evidence.with_context(lang=badge.badge_class_id.secondary_lang).sudo().type or 'Evidence'
                 }
-                # Debug logları ekleyelim
-                # _logger.info(f"Evidence Data: {ev_data}")
                 evidence_data.append(ev_data)
 
         # Evidence verisi var mı kontrol et
         if not evidence_data:
             evidence_data = None
-
+            
+         # Increment the verify count
+        badge.sudo().write({'verify_count': badge.verify_count + 1})
+       
         return request.render('ak_open_badges.verification_page', {
             'badge': badge,
             'data': verification_data,
             'verification': verification_status,
             'certificate_data': certificate_data,
             'alignment_data' : alignment_data,
-            'evidence_data': evidence_data
+            'evidence_data': evidence_data,
+            'certificate_image': certificate_image,
         })
             
     @http.route(['/badge/assertion/<int:assertion_id>'], type='http', auth='public', website=True)
