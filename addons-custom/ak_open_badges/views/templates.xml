@@ -255,11 +255,11 @@
                     .pdf-image {
                         max-height: 500px; /* Mobil için daha küçük maksimum yükseklik */
                     }
-    
+
                     .pdf-controls {
                         text-align: center;
                     }
-                    
+
                     .download-btn {
                         width: 100%;
                         justify-content: center;
@@ -276,7 +276,7 @@
                         -webkit-overflow-scrolling: touch;
                         overflow-y: scroll;
                     } -->
-                }                    
+                }
             </style>
 
            <div class="verification-page">
@@ -309,30 +309,29 @@
                             <!-- LinkedIn Add to Profile Button -->
                             <div class="linkedin-add-to-profile-btn">
                                 <t t-set="skills" t-value="','.join([ev.name for ev in badge.evidence])"/>
-                                
-                                <t t-set="linkedin_url" t-value="'https://www.linkedin.com/in/atilakardan/edit/forms/certification/new/?'
-                                    + 'name=' + quote_plus(badge.badge_class_id.name)
+
+                                <t t-set="linkedin_url" t-value="'https://www.linkedin.com/profile/add?startTask=CERTIFICATION_NAME'
+                                    + '&amp;name=' + quote_plus(badge.badge_class_id.name)
                                     + '&amp;organizationId=106586325'
                                     + '&amp;issueYear=' + str(badge.issuance_date.year)
                                     + '&amp;issueMonth=' + str(badge.issuance_date.month)
                                     + (badge.expiration_date and ('&amp;expirationYear=' + str(badge.expiration_date.year) + '&amp;expirationMonth=' + str(badge.expiration_date.month)) or '')
                                     + '&amp;certUrl=' + quote_plus(badge.assertion_url)
                                     + '&amp;certId=' + badge.verification_token
-                                    + '&amp;isFromA2p=true'
                                     + '&amp;licenseNumber=' + badge.verification_token
                                     + (badge.badge_class_id.description and '&amp;notes=' + quote_plus(badge.badge_class_id.description) or '')
                                     + (skills and '&amp;skills=' + quote_plus(skills) or '')"/>
-                                
+
                                 <a t-att-href="linkedin_url" target="_blank" class="d-inline-block">
-                                    <img src="https://download.linkedin.com/desktop/add2profile/buttons/en_US.png" 
+                                    <img src="https://download.linkedin.com/desktop/add2profile/buttons/en_US.png"
                                          alt="LinkedIn Add to Profile button"
                                          class="linkedin-button-img"/>
                                 </a>
                             </div>
                             <!-- LinkedIn Share Button -->
                             <!-- <div class="linkedin-share-btn">
-                                <a t-att-href="'https://www.linkedin.com/sharing/share-offsite/?url=' + request.httprequest.url_root + 'badge/verify/' + badge.verification_token" 
-                                   target="_blank" 
+                                <a t-att-href="'https://www.linkedin.com/sharing/share-offsite/?url=' + request.httprequest.url_root + 'badge/verify/' + badge.verification_token"
+                                   target="_blank"
                                    class="btn btn-linkedin">
                                     <i class="fa fa-linkedin"/> Share on LinkedIn
                                 </a>
@@ -341,9 +340,9 @@
                                 <script src="https://platform.linkedin.com/in.js" type="text/javascript">lang: en_US</script>
                                 <script type="IN/Share" t-att-data-url="request.httprequest.url"></script>
                             </div> -->
-                            
+
                             <!-- Download Button -->
-                            <a t-att-href="'data:application/pdf;base64,%s' % certificate_data" 
+                            <a t-att-href="'data:application/pdf;base64,%s' % certificate_data"
                                download="certificate.pdf"
                                class="download-btn">
                                 <i class="fa fa-download"/> Sertifikayı İndir / Download Certificate
@@ -351,7 +350,7 @@
                         </div>
                     </div>
                     <!-- <div class="pdf-controls">
-                        <a t-att-href="'data:application/pdf;base64,%s' % certificate_data" 
+                        <a t-att-href="'data:application/pdf;base64,%s' % certificate_data"
                         download="certificate.pdf"
                         class="download-btn">
                             <i class="fa fa-download"/> Sertifikayı İndir / Download Certificate
@@ -480,7 +479,7 @@
                     .evidence-section {
                         background: white;
                         border-radius: 12px;
-                        box-shadow: var(--card-shadow);
+                        box-shadow: var (--card-shadow);
                         overflow: hidden;
                     }
 
