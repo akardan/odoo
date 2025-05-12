@@ -1085,7 +1085,7 @@ msgstr "İsteğe Bağlı Devralma Olarak Göster"
 #. module: portal
 #: model_terms:ir.ui.view,arch_db:portal.user_sign_in
 msgid "Sign in"
-msgstr "Portal"
+msgstr "Giriş"
 
 #. module: portal
 #: model_terms:ir.ui.view,arch_db:portal.frontend_layout

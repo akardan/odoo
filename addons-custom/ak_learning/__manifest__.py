@@ -1,0 +1,44 @@
+# -*- coding: utf-8 -*-
+{
+    'name': "ak_learning Expansions",
+
+    'summary': "Random question ordering for certification exams",
+
+    'description': """
+This module enables random ordering of questions in Odoo 18 CE certification exams.
+    
+    Features:
+    - Display questions in a shuffled order
+    - Different question order for each user
+    - Question shuffling in addition to random question selection by section
+    """,
+
+    'author': "Kardan.Digital",
+    'website': "https://kardan.digital",
+
+    # Categories can be used to filter modules in modules listing
+     'category': 'Website/eLearning',
+    'version': '0.1',
+
+    # any module necessary for this one to work correctly
+    'depends': ['web', 'survey', 'website_slides'],
+
+    # always loaded
+    'data': [
+        # 'security/ir.model.access.csv',
+        'views/views.xml',
+        'views/templates.xml',
+    ],
+    'assets': {
+        'web.assets_backend': [
+            'ak_learning/static/src/js/survey_shuffle.js',
+        ],
+        'web.assets_frontend': [
+            'ak_learning/static/src/js/survey_shuffle.js',
+        ],
+    },
+    'installable': True,
+    'application': False,
+    'auto_install': False,
+}
+

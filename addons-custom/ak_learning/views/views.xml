@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Inherit survey.survey form view to add shuffle_questions field -->
+    <record id="survey_form_view_inherit" model="ir.ui.view">
+        <field name="name">survey.survey.form.inherit</field>
+        <field name="model">survey.survey</field>
+        <field name="inherit_id" ref="survey.survey_survey_view_form"/>
+        <field name="arch" type="xml">
+            <!-- Add shuffle_questions field after users_can_go_back -->
+            <xpath expr="//field[@name='users_can_go_back']" position="after">
+                <field name="shuffle_questions" string="Shuffled Question Order" invisible="questions_layout == 'one_page'"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>
