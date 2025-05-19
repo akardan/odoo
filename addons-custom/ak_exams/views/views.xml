@@ -1,0 +1,45 @@
+<odoo>
+  <data>
+
+    <!-- Form View'a Company Field Ekleme -->
+    <record id="survey_form_view_inherit" model="ir.ui.view">
+        <field name="name">survey.survey.form.inherit.company</field>
+        <field name="model">survey.survey</field>
+        <field name="inherit_id" ref="survey.survey_survey_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='access_mode']" position="after">
+                <field name="company_id" groups="base.group_multi_company"/>
+            </xpath>
+        </field>
+    </record>
+    
+    <!-- Tree View'a Company Field Ekleme -->
+    <record id="survey_tree_view_inherit" model="ir.ui.view">
+        <field name="name">survey.survey.tree.inherit.company</field>
+        <field name="model">survey.survey</field>
+        <field name="inherit_id" ref="survey.survey_survey_view_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='title']" position="after">
+                <field name="company_id" optional="show" groups="base.group_multi_company"/>
+            </xpath>
+        </field>
+    </record>
+    
+    <!-- Search View'a Company Field Ekleme -->
+    <record id="survey_search_view_inherit" model="ir.ui.view">
+        <field name="name">survey.survey.search.inherit.company</field>
+        <field name="model">survey.survey</field>
+        <field name="inherit_id" ref="survey.survey_survey_view_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='title']" position="after">
+                <field name="company_id" groups="base.group_multi_company"/>
+                <filter string="My Company" name="my_company" domain="[('company_id', '=', company_id)]"/>
+            </xpath>
+            <xpath expr="//group" position="inside">
+                <filter string="Company" name="company" domain="[]" context="{'group_by': 'company_id'}"/>
+            </xpath>
+        </field>
+    </record>
+
+  </data>
+</odoo>

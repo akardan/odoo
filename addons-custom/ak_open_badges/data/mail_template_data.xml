@@ -10,7 +10,7 @@
             <field name="body_html" type="html">
                 <div style="margin: 0px; padding: 0px;">
                     <p>Dear {{ object.recipient_id.name }},</p>
-                    <p>Congratulations! You have been awarded the "{{ object.badge_class_id.name }}".</p>
+                    <p>Congratulations! You have been awarded the certificate: "{{ object.badge_class_id.name }}".</p>
                      
                     <!-- Verification URL -->
                    <p>You can view and verify your certificate using this link:</p>
