@@ -1,0 +1,15 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_project_issue,access.project.issue,model_project_issue,project.group_project_user,1,1,1,1
+access_project_workspace_admin,access.project.workspace,model_project_workspace,base.group_erp_manager,1,1,1,1
+access_project_workspace_user,access.project.workspace,model_project_workspace,project.group_project_user,1,0,0,0
+access_project_workspace_manager,access.project.workspace,model_project_workspace,project.group_project_manager,1,0,0,0
+access_project_board_manager,access.project.board,model_project_board,project.group_project_manager,1,1,1,0
+access_project_board_user,access.project.board,model_project_board,project.group_project_user,1,0,0,0
+access_project_team_manager,access.crm.team,model_crm_team,project.group_project_manager,1,1,1,1
+access_project_version_manager,access.project.version,model_project_version,project.group_project_manager,1,1,1,1
+access_project_version_user,access.project.version,model_project_version,project.group_project_user,1,0,0,0
+access_project_sprint_manager,access.project.sprint,model_project_sprint,project.group_project_manager,1,1,1,1
+access_project_sprint_user,access.project.sprint,model_project_sprint,project.group_project_user,1,0,0,0
+access_project_project_task_sprint_history_user,access.project.task.sprint.history,model_project_task_sprint_history,project.group_project_user,1,1,1,1
+access_project_phase_manager,access.project.phase,model_project_phase,project.group_project_manager,1,1,1,1
+access_project_phase_user,access.project.phase,model_project_phase,project.group_project_user,1,0,0,0

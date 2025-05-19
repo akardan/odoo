@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <!-- workspace listesi -->
+    <record id="project_workspace_view_tree" model="ir.ui.view">
+        <field name="name">project.workspace.view.tree</field>
+        <field name="model">project.workspace</field>       
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <field name="department_id"/>
+                <field name="board_ids" widget="many2many_tags" />
+                <!-- <field name="visibility_control" invisible="1" /> -->
+            </list>
+        </field>
+    </record>          
+
+    <!-- workspace ekleme ya da güncelleme ekranı -->
+    <record id="project_workspace_view_form" model="ir.ui.view">
+        <field name="name">project.workspace.view.form</field>
+        <field name="model">project.workspace</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <widget name="web_ribbon" title="Archived" bg_color="bg-danger" cond="invisible: active"/>
+                    <group>
+                        <field name="name"/>
+                        <field name="department_id"/>
+                        <field name="active" invisible="1"/>
+                    </group>
+                    <notebook>
+                        <page name="boards_page" string="Boards">
+                            <field name="board_ids" widget="many2many" context="{'default_workspace_id': id}" domain="[('workspace_id', '=', False)]">
+                                <list>
+                                    <field name="name"/>
+                                    <field name="team_ids" widget="many2many_tags" />                                
+                                    <button name="action_open_board" type="object" title="View Board" string="View Board" class="btn btn-link float-end"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>        
+ 
+
+    <!-- workspace listesinde arama ve filtreleme eklemeleri -->
+    <record id="project_workspace_view_search" model="ir.ui.view">
+        <field name="name">project.workspace.view.search</field>
+        <field name="model">project.workspace</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="department_id"/>
+                <separator/>
+                <filter name="archived" string="Archived" domain="[('active', '=', False)]"/>
+            </search>
+        </field>
+    </record>        
+
+    <!-- project stage listeleme sayfasında board alanının eklenmesi -->
+    <record id="project_project_stage_view_tree" model="ir.ui.view">
+        <field name="name">project.project.stage.view.tree.ay.project</field>
+        <field name="model">project.project.stage</field>
+        <field name="inherit_id" ref="project.project_project_stage_view_tree" />
+        <field name="arch" type="xml">
+            <field name="name"  position="after">
+                <field name="board_ids"  widget="many2many_tags" />
+            </field>
+        </field>
+    </record>     
+
+    <record id="project_workspace_action" model="ir.actions.act_window">
+        <field name="name">Workspaces</field>
+        <field name="res_model">project.workspace</field>
+        <field name="view_mode">list,form,kanban</field>        
+        <field name="search_view_id" ref="ak_project.project_workspace_view_search" />
+        <field name="domain">[]</field>
+        <field name="context">{
+            
+        }</field>         
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Workspaces
+            </p>
+        </field>
+    </record>
+
+    <menuitem id="project_workspace_root"
+              name="Workspace &amp; Board"
+              parent="project.menu_project_config"
+              sequence="2"/>
+
+    <menuitem id="project_workspace_menu"
+              name="Workspaces"
+              action="project_workspace_action"
+              parent="project_workspace_root"
+              groups="base.group_erp_manager"
+              sequence="1"/>
+              
+</odoo>

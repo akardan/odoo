@@ -1,0 +1,9 @@
+.selection-issue-type {
+    width: 16px;
+    height: 16px;
+    margin-right: 5px;
+}
+
+select#issue_type option[value="task"]  { background-image: url(ak_project/static/src/img/task.png)}
+select#issue_type option[value="bug"]  { background-image: url(ak_project/static/src/img/bug.png)}
+select#issue_type option[value="story"]  { background-image: url(ak_project/static/src/img/story.png)}

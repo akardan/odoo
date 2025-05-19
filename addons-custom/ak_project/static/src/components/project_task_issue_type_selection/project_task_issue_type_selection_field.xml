@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="ak_project.ProjectTaskIssueTypeSelectionField" t-inherit="web.SelectionField" t-inherit-mode="primary" owl="1">
+        <xpath expr="//t[@t-if='props.readonly']/span" position="replace">
+            <div class="d-flex align-items-center">
+                <img t-attf-src="/ak_project/static/src/img/{{ currentValue }}.png" t-attf-class="me-2"/>
+                <span class="o_status_text text-wrap text-truncate" t-out="string" t-att-raw-value="value"/>
+            </div>
+        </xpath>
+         
+    </t>
+
+</templates>

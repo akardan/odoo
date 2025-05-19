@@ -1,0 +1,311 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>    
+    <!-- projenin güncelleme viewı -->
+    <record id="edit_project" model="ir.ui.view">
+        <field name="name">project.project.view.form.inherit.ak.project</field>
+        <field name="model">project.project</field>
+        <field name="mode">extension</field>
+        <field name="inherit_id" ref="project.edit_project"/>
+        <field name="arch" type="xml">
+            <field name="analytic_account_id" position="after">
+                <field name="board_id" invisible="1" />                
+            </field>         
+            <xpath expr="//div[hasclass('oe_button_box')]"
+                   position="inside">
+                <button class="oe_stat_button" name="button_document"
+                        type="object"
+                        icon="fa-book">
+                    <div class="o_field_widget o_stat_info">
+                        <span class="o_stat_value">
+                            <field name="document_count" readonly="1"/>
+                        </span>
+                        <span class="o_stat_text">
+                            Documents
+                        </span>
+                    </div>
+                </button>
+
+                <button class="oe_stat_button" name="button_phase"
+                        type="object"
+                        icon="fa-ticket">
+                    <div class="o_field_widget o_stat_info">
+                        <span class="o_stat_value">
+                            <field name="phase_count" readonly="1"/>
+                        </span>
+                        <span class="o_stat_text">
+                            Phases
+                        </span>
+                    </div>
+                </button>
+
+                <button class="oe_stat_button" name="button_issue"
+                        type="object"
+                        icon="fa-ticket">
+                    <div class="o_field_widget o_stat_info">
+                        <span class="o_stat_value">
+                            <field name="issue_count" readonly="1"/>
+                        </span>
+                        <span class="o_stat_text">
+                            Issues
+                        </span>
+                    </div>
+                </button>
+
+                <button class="oe_stat_button" name="button_task"
+                        type="object"
+                        icon="fa-ticket">
+                    <div class="o_field_widget o_stat_info">
+                        <span class="o_stat_value">
+                            <field name="task_count" readonly="1"/>
+                        </span>
+                        <span class="o_stat_text">
+                            Tasks
+                        </span>
+                    </div>
+                </button>
+            </xpath>            
+       
+            <field name="label_tasks" position="after">
+                <field name="board_id"  options="{'no_open': True, 'no_create': True}" />                
+            </field>               
+            <field name="user_id" position="after">
+                <field name="department_id"  options="{'no_open': True, 'no_create': True}" />                
+            </field>        
+            <field name="privacy_visibility" position="after">
+                <field name="team_id" domain="[('board_ids', 'in', [board_id])]" context="{'form_view_ref': 'project_team.projects_team_view_form', 'default_type_team':'project'}"/>
+                <field name="added_followers" invisible="1" />
+            </field>    
+<!--            <xpath expr="//group[@name='group_tasks_managment']/setting[@id='project_milestone_setting']" position="after">-->
+            <xpath expr="//setting[@id='project_milestone_setting']/field[@name='allow_milestones']" position="after">
+                <div class="o_setting_box mt-4" id="send_mail_when_the_task_is_ready_container">
+                    <div class="o_setting_left_pane">
+                        <field name="send_mail_when_the_task_is_ready"/>
+                    </div>
+                    <div class="o_setting_right_pane">
+                        <label for="send_mail_when_the_task_is_ready"/>
+                        <div class="text-muted" id="send_mail_when_the_task_is_ready_setting">
+                            Send an e-mail to the project manager when the task is ready
+                        </div>
+                    </div>
+                </div>            
+            </xpath>
+            <xpath expr="//group[@name='group_time_managment']" position="after">
+                 <group name="group_team_management" string="Team Management" col="1" class="row mt16 o_settings_container col-lg-6">
+                    <div>
+                        <div class="o_setting_box" id="only_team_members_can_be_assigned_container">
+                            <div class="o_setting_left_pane">
+                                <field name="only_team_members_can_be_assigned"/>
+                            </div>
+                            <div class="o_setting_right_pane">
+                                <label for="only_team_members_can_be_assigned"/>
+                                <div class="text-muted" id="only_team_members_can_be_assigned_setting">
+                                    To assign tasks to team members only
+                                </div>
+                            </div>
+                        </div>
+                        <div class="o_setting_box mt-4" id="add_the_team_members_to_the_followers_container">
+                            <div class="o_setting_left_pane">
+                                <field name="add_the_team_members_to_the_followers"/>
+                            </div>
+                            <div class="o_setting_right_pane">
+                                <label for="add_the_team_members_to_the_followers"/>
+                                <div class="text-muted" id="add_the_team_members_to_the_followers_setting">
+                                    For members added to the team to be automatically added to the followers list
+                                </div>
+                            </div>
+                        </div>                        
+                    </div>
+                </group>
+            </xpath>            
+            <page name="settings" position="after">
+                <field name="is_rd_board" invisible="1" />
+                <page string="R&amp;D Fields" cond="invisible: not is_rd_board">
+                    <group>
+                        <group>
+                            <field name="project_group"  />                              
+                        </group>
+                        <group>
+                            <field name="project_code"   />                              
+                        </group>                        
+                    </group>
+                    <group>
+                        <field name="project_forms"  />              
+                    </group>
+                </page>
+                <page string="Team">
+                    <field name="members_ids" widget="many2many">
+                        <kanban quick_create="false" create="true" delete="true">
+                            <field name="id"/>
+                            <field name="name"/>
+                            <templates>
+                                <t t-name="kanban-box">
+                                    <div class="oe_kanban_global_click" style="max-inline-size: 200px">
+                                        <div class="o_kanban_record_top">
+                                            <img t-att-src="kanban_image('res.users', 'image_1920', record.id.raw_value)" height="40" width="40" class="oe_avatar oe_kanban_avatar_smallbox mb0" alt="Avatar"/>
+                                            <div class="o_kanban_record_headings ml8">
+                                                <strong class="o_kanban_record_title"><field name="name"/></strong>
+                                            </div>
+                                            <a t-if="! read_only_mode" type="delete" class="text-danger">
+                                                <i class="fa fa-times" title="Delete"></i>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </t>
+                            </templates>
+                        </kanban>
+                    </field>
+                </page>
+            </page>                    
+        </field>
+    </record>
+
+    <!-- kanban görünüm -->
+    <record id="view_project_kanban" model="ir.ui.view">
+        <field name="name">project.project.kanban.ak.project</field>
+        <field name="model">project.project</field>
+        <field name="inherit_id" ref="project.view_project_kanban"/>
+        <field name="arch" type="xml">
+
+            <field name="tag_ids" position="after">
+                <field name="board_id" invisible="1"/>
+                <field name="is_rd_board" invisible="1" />
+                <field name="project_code" />                
+            </field>
+
+            <xpath expr="/kanban/templates/t/div/div/div/div/div/field[@name='tag_ids']" position="after">                    
+                <field name="project_code" cond="invisible: not is_rd_board" />
+            </xpath>
+
+            <!-- <field name="tag_ids" position="after">                    
+                <field name="project_code" />
+            </field>  -->
+        </field>
+    </record>
+
+    <!-- projenin list viewı -->
+    <record id="view_project" model="ir.ui.view">
+        <field name="name">project.project.tree</field>
+        <field name="model">project.project</field>
+        <field name="inherit_id" ref="project.view_project" />
+        <field name="type">tree</field>
+        <field name="arch" type="xml">
+            <field name="message_needaction" position="after">
+                <field name="board_id" invisible="1" />                
+            </field>        
+            <field name="partner_id" position="before">
+                <field name="board_desc"/>                
+            </field>                    
+            <field name="user_id" position="after">
+                <field name="department_id" />
+                <field name="team_id" />    
+                <field name="project_group"  optional="hide"/>
+                <field name="project_code"  optional="hide"/>
+                <field name="project_forms"  optional="hide"/>                            
+            </field>
+        </field>
+    </record>     
+
+    <record id="view_project_project_filter" model="ir.ui.view">
+        <field name="name">project.project.select</field>
+        <field name="model">project.project</field>
+        <field name="inherit_id" ref="project.view_project_project_filter" />
+        <field name="type">search</field>
+        <field name="arch" type="xml">
+            <field name="partner_id" position="before">
+                <field name="board_id" />
+                <field name="department_id" />
+                <field name="project_group" />
+                <field name="project_code" />
+                <field name="project_forms" />
+            </field>
+            <filter name="groupby_stage" position="after">
+                <filter string="Board" name="group_board_id" context="{'group_by':'board_id'}" />
+                <filter string="Department" name="group_department_id" context="{'group_by':'department_id'}" />
+            </filter>
+        </field>
+     </record>    
+
+    <!-- yeni proje ekleme viewı -->
+    <record id="project_project_view_form_simplified_ak_project" model="ir.ui.view">
+        <field name="name">project.project.view.form.simplified.ak.project</field>
+        <field name="model">project.project</field>
+        <field name="inherit_id" ref="project.project_project_view_form_simplified" />
+        <field name="arch" type="xml">
+            <field name="name" position="attributes">
+                <attribute name="class">o_project_name o_text_overflow</attribute>
+            </field>
+            <xpath expr="//div[hasclass('oe_title')]" position="after">
+                <group>
+                    <group>
+                        <field name="board_id" options="{'no_open': True, 'no_create': True}" class="oe_inline  o_text_overflow"/>
+                        <field name="privacy_visibility" widget="radio"/>
+                        <field name="team_id" class="oe_inline  o_text_overflow" domain="[('board_ids', 'in', [board_id])]" context="{'form_view_ref': 'project_team.projects_team_view_form', 'default_type_team':'project'}"/>
+                        <field name="added_followers" invisible="1"/>
+                    </group>
+                </group>                
+            </xpath> 
+            <xpath expr="//div[@name='alias_def']" position="before">
+                <div class="row mt16 o_settings_container">
+                    <div class="col-lg-6 o_setting_box mt-4" id="only_team_members_can_be_assigned_container">
+                        <div class="o_setting_left_pane">
+                            <field name="only_team_members_can_be_assigned"/>
+                        </div>
+                        <div class="o_setting_right_pane">
+                            <label for="only_team_members_can_be_assigned"/>
+                            <div class="text-muted" id="only_team_members_can_be_assigned_setting">
+                                To assign tasks to team members only
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6 o_setting_box mt-4" id="add_the_team_members_to_the_followers_container">
+                        <div class="o_setting_left_pane">
+                            <field name="add_the_team_members_to_the_followers"/>
+                        </div>
+                        <div class="o_setting_right_pane">
+                            <label for="add_the_team_members_to_the_followers"/>
+                            <div class="text-muted" id="add_the_team_members_to_the_followers_setting">
+                                For members added to the team to be automatically added to the followers list
+                            </div>
+                        </div>
+                    </div>
+                </div>                           
+            </xpath>                       
+        </field>
+    </record>      
+
+    <!-- kanban görünümünde yeni proje açılış ekranının açılması -->
+    <record id="project.open_create_project" model="ir.actions.act_window">
+        <field name="name">Create a Project</field>
+        <field name="res_model">project.project</field>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="project_project_view_form_simplified_ak_project"/>
+        <field name="target">new</field>
+        <field name="context">{"default_allow_billable": 0, 'default_board_id': active_id, 'default_privacy_visibility': 'followers', 'default_only_team_members_can_be_assigned': 1, 'default_add_the_team_members_to_the_followers': 1}</field>
+    </record>    
+
+    <!-- javascript ile tüm tree listesine duplicate eklendi. aşağıdaki koda gerek kalmadı -->
+    <!-- <record id="action_server_duplicate_project_stage" model="ir.actions.server">
+        <field name="name">Duplicate</field>
+        <field name="model_id" ref="project.model_project_project_stage" />
+        <field name="binding_model_id" ref="project.model_project_project_stage" />
+        <field name="state">code</field>
+        <field name="code">action = records.copy()</field>
+    </record>     -->
+
+
+    <!-- projects menüsünü kaldırmak için -->
+    <record id="project.menu_projects" model="ir.ui.menu">
+        <field name="active" eval="False"/>
+    </record>
+    <record id="project.menu_projects_group_stage" model="ir.ui.menu">
+        <field name="active" eval="False"/>
+    </record>     
+        
+    <menuitem id="menu_project_definition"
+              name="Project Definitions"
+              parent="project.menu_project_config"
+              sequence="6"/>
+
+    <menuitem action="project.project_project_stage_configure" id="menu_project_config_project_stage" name="Stages" parent="ak_project.menu_project_definition" sequence="10" groups="project.group_project_stages"/>
+
+</odoo>

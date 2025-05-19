@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<templates id="template" xml:space="preserve">
+    <span t-name="ak_project.issueTypeWithImage" t-att-class="o_status_bubble me-2">
+        <img src="/ak_project/static/src/img/'+value+'.png'" />
+    </span>
+</templates>

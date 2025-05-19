@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- Proje aşaması değiştiğinde gönderilecek mail -->
+        <record id="mail_template_data_project_project" model="mail.template">
+            <field name="name">Project: Stage changed</field>
+            <field name="model_id" ref="project.model_project_project"/>
+            <field name="subject">Project "{{ object.name }}" has changed stage</field>
+            <field name="use_default_to" eval="False"/>
+            <field name="partner_to">{{ object.user_id.partner_id.id }}</field>
+            <field name="description">Mail to be sent when the project changes stage</field>
+            <field name="body_html" type="html">
+<div>
+    Dear <t t-out="object.user_id.name or 'project manager'">Ali Yazıcı</t>,<br/>
+    <br />
+    Project "<t t-out="object.name">A</t>" has been passed on to stage "<t t-out="object.stage_id.name">C</t>".
+    <br/><br/>
+    Thank you,
+    <br/>
+    <t t-out="object.write_uid.name">B</t>
+</div>
+            </field>
+            <field name="lang">{{ object.user_id.lang }}</field>
+            <field name="auto_delete" eval="True"/>
+        </record>
+
+        <!-- Görev hazır duruma getirildiğinde gönderilecek mail -->
+        <record id="mail_template_data_project_task_chage_status" model="mail.template">
+            <field name="name">Project / Task: Status changed</field>
+            <field name="model_id" ref="project.model_project_task"/>
+            <field name="subject">"{{ object.name }}" task ready to change stage</field>
+            <field name="use_default_to" eval="False"/>
+            <field name="partner_to">{{ object.project_id.user_id.partner_id.id }}</field>
+            <field name="description">Mail to be sent when the task is ready</field>
+            <field name="body_html" type="html">
+<div>
+    Dear <t t-out="object.project_id.user_id.name or 'project manager'">Ali Yazıcı</t>,<br/>
+    <br />
+    Task "<t t-out="object.name">A</t>" has been made ready.
+    <br/><br/>
+    Thank you,
+    <br/>
+    <t t-out="object.write_uid.name">B</t>
+</div>
+            </field>
+            <field name="lang">{{ object.write_uid.lang }}</field>
+            <field name="auto_delete" eval="True"/>
+        </record>        
+    </data>        
+</odoo>

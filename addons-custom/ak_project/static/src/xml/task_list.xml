@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="project_task.ListButtons" t-inherit="web.ListView.Buttons" t-inherit-mode="extension" owl="1">
+        <xpath expr="//div[hasclass('o_list_buttons')]" position="after">
+            <button t-if="isDisplay" class="d-none d-md-block btn btn-secondary" t-on-click="onViewProjectClick">
+                View Project
+            </button>
+        </xpath>
+    </t>
+
+<!--    <t t-name="project_task.ListView.Buttons" t-inherit="web.ListView.Buttons" t-inherit-mode="primary">-->
+<!--        <xpath expr="//div[hasclass('o_list_buttons')]" position="after">-->
+<!--            <t t-if="props.showButtons" t-call="account.AccountViewUploadButton"/>-->
+<!--        </xpath>-->
+<!--    </t>    -->
+
+
+
+    <t t-name="project_task.KanbanButtons" t-inherit="web.KanbanView.Buttons" t-inherit-mode="extension" owl="1">
+
+        <xpath expr="//div[hasclass('o_cp_buttons')]" position="after">
+            <button t-if="isDisplay" class="d-none d-md-block btn btn-secondary" t-on-click="onViewProjectClick">
+                View Project
+            </button>
+        </xpath>
+    </t>
+
+<!--    <t t-name="account.KanbanView.Buttons" t-inherit="web.KanbanView.Buttons" t-inherit-mode="primary">-->
+<!--        <xpath expr="//div[hasclass('o_cp_buttons')]" position="inside">-->
+<!--            <t t-if="showUploadButton" t-call="account.AccountViewUploadButton"/>-->
+<!--        </xpath>-->
+<!--    </t>    -->
+
+</templates>
+
+

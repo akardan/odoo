@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>    
+    <record id="project_version_view_tree" model="ir.ui.view">
+        <field name="name">project.version.view.tree</field>
+        <field name="model">project.version</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="project_id"/>
+                <field name="name" />                
+                <field name="description"/>                
+                <field name="start_date"/>
+                <field name="task_count" />
+                <field name="release_date"/>
+                <field name="is_released_text" string="Release Status" widget="badge"
+                       decoration-success="is_released_text == 'Released'"
+                       decoration-primary="is_released_text == ''"/>
+            </list>
+        </field>
+    </record>    
+
+    <record id="project_version_view_form" model="ir.ui.view">
+        <field name="name">project.version.view.form</field>
+        <field name="model">project.version</field>
+        <field name="arch" type="xml">
+            <form string="Project Versions">
+                <header>
+                    <button name="action_version_release" string="Release"
+                        type="object" class="oe_highlight"
+                        cond="invisible: is_released or task_count == 0"/>
+                </header>
+                <sheet>
+                    <widget name="web_ribbon" title="Archived" bg_color="bg-danger" cond= "invisible: active"/>
+                    <widget name="web_ribbon" title="Released" bg_color="bg-success" cond= "invisible: not is_released"/>
+                    <group>
+                        <field name="active" invisible="1"/>
+                        <field name="task_count" invisible="1" />
+                        <field name="project_id" options="{'no_open': True, 'no_create': True}"/>
+                        <field name="name" />
+                        <field name="description" />                        
+                        <field name="start_date"/>
+                        <field name="release_date"/>
+                        <field name="is_released" invisible="1" />
+                        <field name="task_ids" string="Tasks">
+                            <list create="False">
+                                <field name="name" widget="name_with_subtask_count"/>
+                                <field name="user_ids" optional="show" widget="many2many_avatar_user" domain="[('share', '=', False), ('active', '=', True)]" options='{"no_quick_create": True}'/>
+                                <field name="tag_ids" widget="many2many_tags" options="{'color_field': 'color'}" optional="show"/>
+                                <field name="sprint_id"/>
+                                <field name="stage_id" invisible="context.get('set_visible',False)" optional="show" readonly="not context.get('default_project_id')"/>
+                            </list>
+                        </field>                        
+                    </group>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"  groups="project.group_project_manager"/>
+                    <field name="activity_ids" widget="mail_activity" />
+                    <field name="message_ids"/>
+                </div>                    
+            </form>
+        </field>
+    </record>
+
+    <record id="project_version_view_kanban" model="ir.ui.view">
+        <field name="name">project.version.view.kanban</field>
+        <field name="model">project.version</field>
+        <field name="arch" type="xml">
+            <kanban class="oe_background_grey o_kanban_dashboard o_emphasize_colors o_stock_kanban" default_group_by="project_id">
+                <field name="task_count" />
+                <field name="name" />
+                <field name="project_id" />
+                <field name="start_date" />
+                <field name="release_date" />
+                <field name="is_released_text" />
+                <templates>
+                    <t t-name="kanban-box">
+                        <div name="board" class="oe_kanban_card oe_kanban_global_click">
+                            <div t-attf-class="o_kanban_card_header">
+                                <div class="o_kanban_card_header_title">
+                                    <div class="o_primary">
+                                        <field name="name"/> <t t-if="record.is_released_text.value != ''">(<span style="color: green"><field name="is_released_text"/></span>)</t>
+                                    </div>
+                                    <div class="o_secondary">
+                                        <small>
+                                            <i class="fa fa-cubes" role="img" aria-label="Project" title="Project"/> <field name="project_id"/>
+                                        </small>
+                                    </div>                                    
+                                </div>                                                           
+                            </div>
+                            <div class="container o_kanban_card_content">
+                                <div class="row o_kanban_card_upper_content">
+                                    <div class="col-6 o_kanban_primary_left">                                        
+                                        <t t-esc="record.task_count.value"/> Task<span t-if="record.task_count.value > 1">s</span>
+                                    </div>                                    
+                                    <div>
+                                        <field name="task_ids" invisible="1"/>
+                                        <field name="checklist_progress" widget="progressbar" cond="invisible: not task_ids"/>
+                                    </div>                                       
+                                </div>                                
+                            </div>                                                                             
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>     
+
+    <record id="project_version_view_search" model="ir.ui.view">
+        <field name="name">project.version.view.search</field>
+        <field name="model">project.version</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="project_id"/>
+                <field name="name"/>
+                <field name="start_date"/>
+                <field name="release_date"/>
+                <filter name="filter_released" string="Released" domain="[('is_released', '=', True)]" />
+                <filter name="filter_unreleased" string="Unreleased" domain="[('is_released', '=', False)]" />
+                <group expand="0" string="Group by...">
+                    <filter string="Released" name="group_by_released" context="{'group_by': 'is_released'}" />
+                    <filter string="Project" name="group_by_project" context="{'group_by': 'project_id'}" />                    
+                </group>
+            </search>
+        </field>
+    </record>   
+
+    <record id="project_version_action" model="ir.actions.act_window">
+        <field name="name">Project Versions</field>
+        <field name="res_model">project.version</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="search_view_id" ref="ak_project.project_version_view_search" />
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Project Versions
+            </p>
+        </field>
+    </record>
+    
+    <menuitem id="project_version_menu" name="Project Versions"
+              sequence="3"
+              parent="menu_project_config_scrum"
+              action="project_version_action"
+              groups="project.group_project_manager">
+    </menuitem>    
+
+    <record id="action_server_unrelease" model="ir.actions.server">
+        <field name="name">Unrelease</field>
+        <field name="model_id" ref="ak_project.model_project_version" />
+        <field name="binding_model_id" ref="ak_project.model_project_version" />
+        <field name="state">code</field>
+        <field name="code">action = records.action_unrelease()</field>
+    </record>        
+</odoo>

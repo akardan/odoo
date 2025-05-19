@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo> 
+    <record id="sales_team.crm_team_action_config" model="ir.actions.act_window">
+        <field name="domain">[('type_team','=','sale')]</field>
+        <field name="context">{'default_type_team':'sale'}</field>
+    </record>
+
+    <record id="sales_team.crm_team_action_sales" model="ir.actions.act_window">
+        <field name="domain">[('type_team','=','sale')]</field>
+    </record>
+ 
+    <record id="sales_team.crm_team_action_pipeline" model="ir.actions.act_window">
+        <field name="domain">[('use_opportunities', '=', True), ('type_team','=','sale')]</field>
+    </record>
+    
+    <record model="ir.ui.view" id="crm_team_member_view_kanban_project">
+        <field name="name">crm.team.member.view.kanban.project</field>
+        <field name="model">crm.team.member</field>
+        <field name="inherit_id" ref="sales_team.crm_team_member_view_kanban"/>
+        <field name="arch" type="xml">
+            <xpath expr="//kanban" position="inside">
+                <kanban>
+                    <field name="crm_sales_team_id" />
+                </kanban>                    
+            </xpath>              
+            <xpath expr="//kanban" position="attributes">
+                <attribute name="default_group_by">crm_sales_team_id</attribute>
+            </xpath>
+        </field>
+    </record>         
+
+    <record id="crm_team_member_view_search_project" model="ir.ui.view">
+        <field name="name">crm.team.member.view.search.project</field>
+        <field name="model">crm.team.member</field>
+        <field name="inherit_id" ref="sales_team.crm_team_member_view_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//search" position="replace">
+                <search string="Sales Person">
+                    <field name="user_id"/>
+                    <field name="crm_sales_team_id"/>
+                    <separator/>
+                    <filter name="archived" string="Archived" domain="[('active', '=', False)]"/>
+                    <group expand="0" string="Group By">
+                        <filter string="Sales Team" name="groupby_crm_team_id" context="{'group_by': 'crm_sales_team_id'}"/>
+                    </group>
+                </search>            
+            </xpath>        
+        </field>
+    </record>
+</odoo>

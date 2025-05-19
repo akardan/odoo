@@ -1,0 +1,218 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <!-- <record id="project_board_view_tree" model="ir.ui.view">
+        <field name="name">project.board.view.tree</field>
+        <field name="model">project.board</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+            </list>
+        </field>
+    </record>     -->
+
+    <record id="project_project_stage_view_tree_for_board" model="ir.ui.view">
+        <field name="name">project.project.stage.view.tree.board.ay.project</field>
+        <field name="model">project.project.stage</field>
+        <field name="arch" type="xml">
+            <list editable="bottom" sample="1">
+                <field name="name"/>                
+                <field name="board_ids"  widget="many2many_tags" />
+                <button string="Duplicate" type="object" name="duplicate_project_stage"/>
+            </list>
+        </field>
+    </record>    
+    
+    <record id="project_board_view_kanban" model="ir.ui.view">
+        <field name="name">project.board.view.kanban</field>
+        <field name="model">project.board</field>
+        <field name="arch" type="xml">
+            <kanban class="oe_background_grey o_kanban_dashboard o_emphasize_colors o_stock_kanban" create="0" group_create="false">
+                <field name="project_count" />
+                <field name="color"/>
+                <field name="department_desc" />
+                <templates>
+                    <t t-name="kanban-box">
+                        <div name="board" t-attf-class="#{!selection_mode ? kanban_color(record.color.raw_value) : ''}">
+                            <div t-attf-class="o_kanban_card_header">
+                                <div class="o_kanban_card_header_title">
+                                    <div class="o_primary" t-if="!selection_mode">
+                                        <a type="object" name="get_project_board_action">
+                                            <field name="name"/>
+                                        </a>
+                                    </div>
+                                    <div class="o_secondary"  t-if="!selection_mode">
+                                        <small>
+                                            <i class="fa fa-cubes" role="img" aria-label="Department" title="Department"/> <field name="department_desc"/>
+                                        </small>
+                                    </div>                                    
+                                    <div class="o_primary" t-if="selection_mode">
+                                        <field name="name"/>
+                                    </div>                                
+                                </div>
+                                <div class="o_kanban_manage_button_section" t-if="!selection_mode">
+                                    <a class="o_kanban_manage_toggle_button" href="#"><i class="fa fa-ellipsis-v" role="img" aria-label="Manage" title="Manage"/></a>
+                                </div>                                                            
+                            </div>
+                            <div class="container o_kanban_card_content" t-if="!selection_mode">
+                                <div class="row o_kanban_card_upper_content">
+                                    <div class="col-6 o_kanban_primary_left">
+                                        <button class="btn btn-primary" name="get_project_board_action" type="object">
+                                            <t t-esc="record.project_count.value"/> Project<span t-if="record.project_count.value > 1">s</span>
+                                        </button>
+                                    </div>                                    
+                                </div>
+                            </div>                          
+                            <div class="o_kanban_card_manage_pane dropdown-menu" role="menu">
+
+                                <a t-if="widget.editable" role="menuitem" class="dropdown-item" type="edit">Configuration</a>
+                                <ul t-if="widget.editable" class="oe_kanban_colorpicker" data-field="color" role="menu"/>
+                            </div>                                                         
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>     
+
+    <record id="project_board_view_search" model="ir.ui.view">
+        <field name="name">project.board.view.search</field>
+        <field name="model">project.board</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="workspace_id" />                
+                <filter string="Workspace" name="groupby_workspace_id" context="{'group_by':'workspace_id'}" />                
+            </search>
+        </field>
+    </record>       
+
+
+    <!-- board sayfasında liste görünümü (workspacede board listesinde add a line linkine tıklanınca açılan sayfadaki görünüm) -->
+    <record id="project_board_view_tree" model="ir.ui.view">
+        <field name="name">project.board.tree</field>
+        <field name="model">project.board</field>        
+        <field name="arch" type="xml">
+            <list string="Boards" multi_edit="1" sample="1">
+                <field name="name" />
+                <field name="description" invisible="1" />
+                <field name="workspace_id" />
+                <field name="type" />
+                <field name="stage_ids" widget="many2many_tags"/>
+                <field name="team_ids" widget="many2many_tags"/>
+                <field name="is_rd_board"  optional="hide" />
+            </list>
+        </field>
+    </record>    
+
+    <!-- board ekleme ya da güncelleme -->
+    <record id="project_board_view_form" model="ir.ui.view">
+        <field name="name">project.board.form</field>
+        <field name="model">project.board</field>
+        <field name="arch" type="xml">
+            <form string="Boards">
+                <sheet>
+                    <widget name="web_ribbon" title="Archived" bg_color="bg-danger" cond="invisble: active"/>
+                    <group>    
+                        <field name="active" invisible="1"/>
+                        <field name="allowed_workspace_ids" invisible="1" />
+                        <field name="workspace_id" domain="[('id', 'in', allowed_workspace_ids)]" />                            
+                        <field name="name" />
+                        <field name="description" />
+                        <field name="type" />
+                        <field name="is_rd_board" con="invisible: type == 'scrum'"/>
+                        <field name="stage_ids" context="{'tree_view_ref': 'ak_project.project_project_stage_view_tree_for_board'}" domain="['|', ('board_ids', '=', False), ('board_ids.workspace_id', '=', workspace_id)]">
+                            <list>
+                                <field name="name"/>                
+                                <field name="board_ids"  widget="many2many_tags" />
+                            </list>
+                        </field>                       
+                        <field name="team_ids" domain="[('type_team','=','project')]" context="{'form_view_ref': 'ak_project.projects_team_view_form', 'default_type_team': 'project'}"  />
+                        <field name="project_ids" domain="[('board_id', '=', False)]">
+                            <list create="False">
+                                <field name="display_name" string="Name" class="fw-bold" modifiers="{'readonly': true}"/>
+                                <field name="user_id" optional="show" string="Project Manager" widget="many2one_avatar_user" options="{'no_open':True, 'no_create': True, 'no_create_edit': True}" can_create="true" can_write="true"/>
+                                <field name="department_id" can_create="true" can_write="true"/>
+                                <field name="team_id" on_change="1" can_create="true" can_write="true"/>
+                            </list>
+                        </field>
+                    </group>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"  groups="base.group_user"/>
+                    <field name="message_ids"/>
+                </div>                
+            </form>
+        </field>
+    </record>      
+
+
+    <!-- board sayfasında team alanındaki alanların replace edilmesi -->
+    <record id="project_team_view_tree" model="ir.ui.view">
+        <field name="name">crm.team.tree.inherit</field>
+        <field name="model">crm.team</field>        
+        <field name="inherit_id" ref="sales_team.crm_team_view_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//list" position="replace">
+                <list string="Project Team" >
+                    <field name="name" string="Project Team"/>
+                    <field name="user_id"/>
+                </list>
+            </xpath>            
+        </field>         
+    </record>    
+
+    <record id="crm_team_view_search" model="ir.ui.view">
+        <field name="name">crm.team.view.search.inherit</field>
+        <field name="model">crm.team</field>
+        <field name="inherit_id" ref="sales_team.crm_team_view_search"/>
+        <field name="arch" type="xml">
+            <field name="member_ids" position="after">
+                <field name="type_team" />
+            </field>
+        </field>
+    </record>     
+
+    <record id="project_board_action" model="ir.actions.act_window">
+        <field name="name">Boards</field>
+        <field name="res_model">project.board</field>
+        <field name="view_mode">list,form,kanban</field>        
+        <field name="search_view_id" ref="ak_project.project_board_view_search" />
+        <field name="view_id" ref="project_board_view_tree"/>
+        <field name="domain">[]</field>        
+        <field name="context">{}</field>  
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Boards
+            </p>
+        </field>
+    </record>
+
+    <menuitem id="project_board_menu"
+              name="Boards"
+              action="project_board_action"
+              parent="project_workspace_root"
+              groups="project.group_project_manager"
+              sequence="2"/>
+
+    <record id="project_board_main_action" model="ir.actions.act_window">
+        <field name="name">Boards</field>
+        <field name="res_model">project.board</field>
+        <field name="view_mode">kanban,list</field>
+        <field name="domain">[]</field>
+        <field name="context">{'search_default_groupby_workspace_id': 1}</field>                 
+        <field name="view_id" ref="project_board_view_kanban"/>
+        <field name="target">main</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Boards
+            </p>
+        </field>
+    </record>
+
+    <menuitem id="project_board_main_menu"
+                name="Boards"
+                action="project_board_main_action"
+                parent="project.menu_main_pm"
+                groups="project.group_project_user"
+                sequence="0"/>    
+</odoo>

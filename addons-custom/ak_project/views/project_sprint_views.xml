@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Project Sprint -->
+    <!-- Menu Item for Scrum Projects -->
+    <menuitem id="menu_project_scrum"
+              name="Scrum"
+              parent="project.menu_main_pm"
+              sequence="20"/>
+
+    <!-- Menu Item for Scrum Projects Configuration-->
+    <menuitem id="menu_project_config_scrum"
+              name="Scrum"
+              parent="project.menu_project_config"
+              sequence="20"/>
+
+
+    <!-- Action for Project Sprint -->
+    <record id="action_project_sprint" model="ir.actions.act_window">
+        <field name="name">Team Sprints</field>
+        <field name="res_model">project.sprint</field>
+        <field name="view_mode">list,form</field>
+    </record>
+    <!-- Menu Item for Project Sprint -->
+    <menuitem id="menu_project_sprint"
+              name="Team Sprints"
+              parent="menu_project_scrum"
+              sequence="10"
+              action="action_project_sprint"/>
+
+    <!-- Action for Scrum Board -->
+    <record id="action_project_task_scrum" model="ir.actions.act_window">
+        <field name="name">Scrum Board</field>
+        <field name="res_model">project.task</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="view_id" ref="project.view_task_kanban"/>
+        <field name="domain">[('project_id.members_ids', 'in', [uid])]
+        </field>
+        <field name="context">{'group_by': 'sprint_id'}</field>
+    </record>
+
+    <!-- Action for Active Sprint -->
+    <record id="action_project_task_sprint" model="ir.actions.act_window">
+        <field name="name">Active Sprint</field>
+        <field name="res_model">project.task</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="view_id" ref="project.view_task_kanban"/>
+        <field name="domain">[('project_id.members_ids', 'in', [uid]), ('sprint_id.state', '=', 'active')]
+        </field>
+        <field name="context">{'group_by': 'stage_id'}</field>
+    </record>
+
+    <!-- Menu Item for Scrum Board -->
+    <menuitem id="menu_scrum_sprint"
+              name="Active Sprint"
+              parent="menu_project_scrum"
+              sequence="4"
+              action="action_project_task_sprint"/>
+
+    <record id="view_scrum_board_tree" model="ir.ui.view">
+        <field name="name">scrum.board.tree</field>
+        <field name="model">project.task</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="project_id"/>
+                <field name="sprint_id"/>
+                <field name="user_ids"/>
+                <!-- Diğer alanlar -->
+            </list>
+        </field>
+    </record>
+
+    <!-- Menu Item for Scrum Board -->
+    <menuitem id="menu_scrum_board"
+              name="Scrum Board"
+              parent="menu_project_scrum"
+              sequence="5"
+              action="action_project_task_scrum"/>
+
+    <!-- Tree View for Project Sprint -->
+    <record id="view_project_sprint_tree" model="ir.ui.view">
+        <field name="name">project.sprint.tree</field>
+        <field name="model">project.sprint</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="team_id"/>
+                <field name="start_date"/>
+                <field name="end_date"/>
+                <field name="state"/>
+                <field name="task_ids" optional="show"/>
+            </list>
+        </field>
+    </record>
+    <!-- Form View for Project Sprint -->
+    <record id="view_project_sprint_form" model="ir.ui.view">
+        <field name="name">project.sprint.form</field>
+        <field name="model">project.sprint</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <field name="state" widget="statusbar" options="{'clickable': '1'}"/>
+                </header>
+                <div class="oe_title">
+                    <h1 class="d-flex flex-row">
+                        <field name="is_active" nolabel="1" widget="boolean_toggle"/>
+                        <field name="name" class="o_text_overflow" placeholder="New Sprint"
+                               modifiers="{&quot;required&quot;: true}"/>
+                    </h1>
+                </div>
+                <group>
+                    <group>
+                        <field name="board_id"/>
+                        <field name="team_id"/>                        
+                    </group>                
+                    <group>
+                        <label for="start_date" string="Planned Date"/>
+                        <div name="dates" class="o_row">
+                            <field name="start_date" widget="daterange"
+                                   options="{&quot;related_end_date&quot;: &quot;end_date&quot;}"/>
+                            <i class="fa fa-long-arrow-right mx-2 oe_edit_only" aria-label="Arrow icon" title="Arrow"/>
+                            <i class="fa fa-long-arrow-right mx-2 oe_read_only" aria-label="Arrow icon" title="Arrow"
+                               cond="invisible: not start_date and not end_date"/>
+                            <field name="end_date" widget="daterange"
+                                   options="{&quot;related_start_date&quot;: &quot;start_date&quot;}"/>
+                        </div>
+                    </group>
+
+                </group>
+                <notebook>
+                    <page string="Tasks">
+<!--                        <field name="task_ids" widget="one2many_list" options="{'create': True}">-->
+                        <field name="task_ids" options="{'create': True}">
+                            <!-- Define the fields you want to display for tasks -->
+                        </field>
+                    </page>
+                </notebook>
+            </form>
+        </field>
+    </record>
+
+</odoo>
