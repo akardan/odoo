@@ -14,6 +14,7 @@ class TitckDetailedPriceImport(models.TransientModel):
 
     import_file = fields.Binary(string='Excel File', required=True)
     file_name = fields.Char(string='File Name')
+    only_changed = fields.Boolean(string='Sadece Değişenleri Aktar', default=True)
 
     def _process_excel_data(self):
         """Determine file type and process Excel data accordingly"""
@@ -195,10 +196,13 @@ class TitckDetailedPriceImport(models.TransientModel):
 
         batch_updates = []
         
-        # Sort DataFrame by changed_this_week column (True values first)
-        df = df.sort_values(by=[columns['changed_this_week_col']], ascending=False)
+        # # Sort DataFrame by changed_this_week column (True values first)
+        # df = df.sort_values(by=[columns['changed_this_week_col']], ascending=False)
 
-        
+        # Filter DataFrame if only_changed is True
+        if self.only_changed:
+            df = df[df[columns['changed_this_week_col']].apply(lambda x: str(x).split('.')[0].strip() == '1')]
+
         for _, row in df.iterrows():
             try:
                 # Get manufacturer information using GLN
@@ -316,7 +320,6 @@ class TitckDetailedPriceImport(models.TransientModel):
                         'real_source_price': float(str(row[columns['real_source_price_col']]).strip() or 0),
                         'calculation_source_price': float(str(row[columns['calculation_source_price_col']]).strip() or 0),
                         'source_price_euro': float(str(row[columns['source_price_euro_col']]).strip() or 0),
-                        # 'euro_rate': float(str(row[columns['euro_rate_col']]).replace('1 € =', '').strip() or 0),
                         'depot_price_wo_vat': float(str(row[columns['depot_price_wo_vat_col']]).strip() or 0),
                         'depot_sales_price_wo_vat': float(str(row[columns['depot_sales_wo_vat_col']]).strip() or 0),
                         'pharmacy_sales_price_wo_vat': float(str(row[columns['pharmacy_sales_wo_vat_col']]).strip() or 0),
@@ -434,8 +437,6 @@ class TitckDetailedPriceImport(models.TransientModel):
                     if product.its_movement_status != its_status:
                         updates['its_movement_status'] = its_status
                         update_stats['field_updates']['its_movement_status'] += 1
-                        
-                    
                         
                 if updates:
                     batch_updates.append((product.id, updates))

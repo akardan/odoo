@@ -9,6 +9,7 @@
                     <group>
                         <field name="import_file" filename="file_name"/>
                         <field name="file_name" invisible="1"/>
+                        <field name="only_changed"/>
                     </group>
                 </sheet>
                 <footer>
