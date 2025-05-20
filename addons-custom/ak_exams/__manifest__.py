@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': "ak_exams",
-
     'summary': "Exam Management System for customers",
-
     'description': """
 Exam Management System for customers that isolates based on company
 Özellikler:
@@ -16,10 +14,14 @@ Exam Management System for customers that isolates based on company
     'website': "https://kardan.digital",
 
     'category': 'Marketing/Surveys',
-    'version': '0.1',
+    'version': '18.0.1.0',
 
     # any module necessary for this one to work correctly
-    'depends': ['survey'],
+    'depends': [
+        'base',
+        'survey',
+        'crm',
+    ],
 
     # always loaded
     'data': [
@@ -27,6 +29,10 @@ Exam Management System for customers that isolates based on company
         'views/views.xml',
         'views/templates.xml',
     ],
+    'installable': True,
+    'application': False,
+    'auto_install': False,
+    'license': 'LGPL-3',    
 
 }
 

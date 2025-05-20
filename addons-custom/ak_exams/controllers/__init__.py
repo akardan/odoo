@@ -1,3 +1,3 @@
 # -*- coding: utf-8 -*-
 
-from . import organization_sync
+from . import sync_controller

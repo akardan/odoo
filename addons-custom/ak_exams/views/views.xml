@@ -41,5 +41,55 @@
         </field>
     </record>
 
+    <!-- CRM Team views update-->
+    <record id="view_crm_team_tree_inherit" model="ir.ui.view">
+        <field name="name">crm.team.tree.inherit</field>
+        <field name="model">crm.team</field>
+        <field name="inherit_id" ref="sales_team.crm_team_view_tree"/>
+        <field name="arch" type="xml">
+            <field name="name" position="after">
+                <field name="external_id" optional="hide"/>
+            </field>
+        </field>
+    </record>
+
+    <record id="view_crm_team_form_inherit" model="ir.ui.view">
+        <field name="name">crm.team.form.inherit</field>
+        <field name="model">crm.team</field>
+        <field name="inherit_id" ref="sales_team.crm_team_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='alias_name']" position="before">
+                <field name="external_id"/>
+            </xpath>
+         </field>
+    </record>
+
+   <!-- Users views update-->
+    <record id="res_users_view_tree_inherit_external_id" model="ir.ui.view">
+        <field name="name">res.users.view.tree.inherit.external.id</field>
+        <field name="model">res.users</field>
+        <field name="inherit_id" ref="base.view_users_tree"/>
+        <field name="arch" type="xml">
+            <field name="login" position="after">
+                <field name="external_id" optional="hide"/>
+            </field>
+        </field>
+    </record>
+
+    <record id="res_users_view_form_inherit_external_id" model="ir.ui.view">
+        <field name="name">res.users.view.form.inherit.external.id</field>
+        <field name="model">res.users</field>
+        <field name="inherit_id" ref="base.view_users_form"/>
+        <field name="arch" type="xml">
+            <field name="login" position="after">
+                <group>
+                    <!-- <label for="external_id" string="Harici ID"/> -->
+                    <field name="external_id"/>
+                </group>
+            </field>
+        </field>
+    </record>
+
+
   </data>
 </odoo>

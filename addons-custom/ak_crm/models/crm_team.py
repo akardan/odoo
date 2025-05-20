@@ -4,13 +4,13 @@ from odoo.exceptions import ValidationError
 class CrmTeam(models.Model):
     _inherit = 'crm.team'
 
-    parent_id = fields.Many2one('crm.team', string='Parent Team', index=True, ondelete='cascade')
-    child_ids = fields.One2many('crm.team', 'parent_id', string='Child Teams')
+    parent_id = fields.Many2one('crm.team', string=_('Parent Team'), index=True, ondelete='cascade')
+    child_ids = fields.One2many('crm.team', 'parent_id', string=_('Child Teams'))
     # is_sales_group = fields.Boolean(string='Is Sales Group?', default=False)
-    team_type = fields.Selection([('G', 'Group'), ('H', 'Head Office'), ('R', 'Region')],
-                                 string='Team Type', default='R', required=True, index=True)
-    product_ids = fields.Many2many('product.product', string='Marketing Products')
-    group_id = fields.Many2one('crm.team', string='Marketing Group', compute='_compute_group_id', readonly=True)
+    team_type = fields.Selection([('G', _('Group')), ('H', _('Head Office')), ('R', _('Region')), ('U', _('Unit'))],
+                                 string=_('Team Type'), default='U', required=True, index=True)
+    product_ids = fields.Many2many('product.product', string=_('Marketing Products'))
+    group_id = fields.Many2one('crm.team', string=_('Marketing Group'), compute='_compute_group_id', readonly=True)
 
     @api.depends('parent_id', 'parent_id.team_type')
     def _compute_group_id(self):
