@@ -17,7 +17,7 @@
         <field name="name">crm.brick.tree</field>
         <field name="model">crm.brick</field>
         <field name="arch" type="xml">
-            <tree>
+            <list>
                 <field name="name"/>
                 <field name="code"/>
                 <field name="state_id"/>
@@ -25,7 +25,7 @@
                 <field name="territory_id"/>
                 <field name="active"/>
                 <field name="unit_ids"/>
-            </tree>
+            </list>
         </field>
     </record>
     <record model="ir.ui.view" id="crm_brick_form_view">

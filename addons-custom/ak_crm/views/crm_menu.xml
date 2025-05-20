@@ -5,7 +5,7 @@
         <field name="name">Bricks</field>
         <field name="type">ir.actions.act_window</field>
         <field name="res_model">crm.brick</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">list,form</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
                 Create a new Brick!
@@ -16,7 +16,7 @@
     <!--        <field name="name">Territory</field>-->
     <!--        <field name="type">ir.actions.act_window</field>-->
     <!--        <field name="res_model">crm.territory</field>-->
-    <!--        <field name="view_mode">tree,form</field>-->
+    <!--        <field name="view_mode">list,form</field>-->
     <!--        <field name="help" type="html">-->
     <!--            <p class="o_view_nocontent_smiling_face">-->
     <!--                Create a new Brick!-->
@@ -27,7 +27,7 @@
         <field name="name">Segment</field>
         <field name="type">ir.actions.act_window</field>
         <field name="res_model">crm.segment</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">list,form</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
                 Create a new Segment!
@@ -38,7 +38,7 @@
         <field name="name">Segmentation</field>
         <field name="type">ir.actions.act_window</field>
         <field name="res_model">crm.segmentation</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">list,form</field>
         <!--        <field name="domain">[('company_id', 'in', user.company_ids)]</field>-->
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
@@ -50,7 +50,7 @@
         <field name="name">Medical Specializations</field>
         <field name="type">ir.actions.act_window</field>
         <field name="res_model">crm.medical.specialization</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">list,form</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
                 Create a new Medical Specialization!
@@ -61,7 +61,7 @@
         <field name="name">Distribution Plan</field>
         <field name="type">ir.actions.act_window</field>
         <field name="res_model">crm.promotion.distribution.plan</field>
-        <field name="view_mode">tree,form,pivot</field>
+        <field name="view_mode">list,form,pivot</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
                 Create a new Promotion / Sample Distribution Plan!
@@ -73,19 +73,19 @@
         <field name="name">Units</field>
         <field name="type">ir.actions.act_window</field>
         <field name="res_model">crm.unit</field>
-        <field name="view_mode">tree,form,pivot</field>
+        <field name="view_mode">list,form,pivot</field>
     </record>
     <record id="crm_unit_type_action" model="ir.actions.act_window">
         <field name="name">Unit Types</field>
         <field name="type">ir.actions.act_window</field>
         <field name="res_model">crm.unit.type</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">list,form</field>
     </record>
     <record id="crm_unit_code_action" model="ir.actions.act_window">
         <field name="name">Unit Codes</field>
         <field name="type">ir.actions.act_window</field>
         <field name="res_model">crm.unit.code</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">list,form</field>
     </record>
 
     <!-- Add the CRM Selection menu actions -->
@@ -93,7 +93,7 @@
         <field name="name">crm.selection</field>
         <field name="type">ir.actions.act_window</field>
         <field name="res_model">crm.selection</field>
-        <field name="view_mode">tree</field>
+        <field name="view_mode">list</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
                 Create a new Selection!
@@ -104,7 +104,7 @@
         <field name="name">crm.selection.period</field>
         <field name="type">ir.actions.act_window</field>
         <field name="res_model">crm.selection.period</field>
-        <field name="view_mode">tree</field>
+        <field name="view_mode">list</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
                 Create a new Selection Period!
@@ -236,7 +236,7 @@
     <record id="action_crm_visit_type" model="ir.actions.act_window">
         <field name="name">Visit Types</field>
         <field name="res_model">crm.visit.type</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">list,form</field>
         <field name="view_id" ref="view_crm_visit_type_tree"/>
     </record>
 

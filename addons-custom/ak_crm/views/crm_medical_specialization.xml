@@ -4,10 +4,10 @@
         <field name="name">crm.medical.specialization.tree</field>
         <field name="model">crm.medical.specialization</field>
         <field name="arch" type="xml">
-            <tree string="CRM Medical Specializations">
+            <list string="CRM Medical Specializations">
                 <field name="code"/>
                 <field name="name"/>
-            </tree>
+            </list>
         </field>
     </record>
     <record id="view_crm_medical_specialization_form" model="ir.ui.view">

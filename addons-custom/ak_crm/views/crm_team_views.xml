@@ -41,7 +41,7 @@
                 <field name="parent_id"/>
                 <field name="child_ids" widget="many2many_tags"/>
                 <field name="group_id" readonly="1"/>
-                <field name="product_ids" widget="many2many_tags" attrs="{'readonly': [('team_type', '!=', 'G')]}"/>
+                <field name="product_ids" widget="many2many_tags" readonly= "team_type != 'G'"/>
             </xpath>
             <xpath expr="//page[@name='members_users']" position="after">
                 <page string="Child Teams" name="tree">
@@ -65,9 +65,8 @@
                 <field name="team_type"/>
                 <field name="parent_id"/>
             </xpath>
-            <xpath expr="//div[hasclass('o_kanban_card_header_title')]" position="after">
+            <xpath expr="//field[@name='alias_name']" position="after">
                 <div class="row">
-                    <!--                    <label for="parent_id">Parent Team</label>-->
                     <div class="col-3 text-truncate">
                         <field name="team_type"/>
                     </div>

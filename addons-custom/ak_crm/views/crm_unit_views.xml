@@ -4,7 +4,7 @@
         <field name="name">crm.unit.tree</field>
         <field name="model">crm.unit</field>
         <field name="arch" type="xml">
-            <tree string="Crm Units" editable="top">
+            <list string="Crm Units" editable="top">
                 <field name="name"/>
                 <field name="brick_id"/>
                 <field name="type_id"/>
@@ -14,7 +14,7 @@
                 <field name="active"/>
                 <field name="partner_ids"/>
                 <button name="open_unit_form" string="Form View" type="object" icon="fa-ellipsis-h"/>
-            </tree>
+            </list>
         </field>
     </record>
     <record id="view_crm_unit_form" model="ir.ui.view">
@@ -48,13 +48,13 @@
                     <notebook>
                         <page string="Partners">
                             <field name="partner_ids" widget="many2many">
-                                <tree string="Partners">
+                                <list string="Partners">
                                     <field name="name"/>
                                     <field name="medical_type"/>
                                     <field name="state_id"/>
                                     <field name="city"/>
                                     <field name="specialization_ids" widget="many2many_tags" optional="hide"/>
-                                </tree>
+                                </list>
                             </field>
                         </page>
                     </notebook>

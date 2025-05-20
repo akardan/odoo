@@ -17,12 +17,12 @@
         <field name="name">crm.territory.tree</field>
         <field name="model">crm.territory</field>
         <field name="arch" type="xml">
-            <tree>
+            <list>
                 <field name="name"/>
                 <field name="company_id"/>
                 <field name="brick_ids"/>
                 <field name="active"/>
-            </tree>
+            </list>
         </field>
     </record>
     <record model="ir.ui.view" id="crm_territory_form_view">

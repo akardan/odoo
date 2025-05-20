@@ -20,7 +20,7 @@
                         </group>
                     </group>
                     <separator string="Partners to Visit"/>
-                    <group col="4" attrs="{'invisible': [(0, '=', 1)]}">
+                    <group col="4" invisible="false">
                         <group col="1">
                             <field name="brick_id"/>
                         </group>
@@ -47,12 +47,12 @@
             <field name="name">crm.visit.transient.tree</field>
             <field name="model">crm.visit.transient</field>
             <field name="arch" type="xml">
-                <tree editable="bottom" create="False">
+                <list editable="bottom" create="False">
                     <field name="customer_id" readonly="True"/>
                     <field name="unit_id"/>
                     <field name="brick_id"/>
                     <field name="visit_type_id"/>
-                </tree>
+                </list>
             </field>
         </record>
 
@@ -62,12 +62,12 @@
             <field name="name">crm.visit.tree</field>
             <field name="model">crm.visit</field>
             <field name="arch" type="xml">
-                <tree>
+                <list>
                     <field name="visit_date"/>
                     <field name="unit_id"/>
                     <field name="customer_ids" widget="many2many_tags"/>
                     <field name="visit_type_id"/>
-                </tree>
+                </list>
             </field>
         </record>
 
@@ -96,10 +96,10 @@
             <field name="name">crm.visit.type.tree</field>
             <field name="model">crm.visit.type</field>
             <field name="arch" type="xml">
-                <tree string="Visit Types">
+                <list string="Visit Types">
                     <field name="name"/>
                     <field name="code"/>
-                </tree>
+                </list>
             </field>
         </record>
         <!-- Form View for crm.visit.type -->
@@ -137,14 +137,14 @@
                         </group>
                     </group>
                     <separator string="Visits"/>
-                    <field name="daily_stats_ids" options="{'no_open': True}" mode="tree" readonly="1">
-                        <tree editable="top" create="false" delete="false">
+                    <field name="daily_stats_ids" options="{'no_open': True}" mode="list" readonly="1">
+                        <list editable="top" create="false" delete="false">
                             <button type="object" name="open_daily_visits" icon="fa-bars" class="oe_highlight"/>
                             <field name="visit_date"/>
                             <field name="visit_count"/>
                             <field name="doctor_count"/>
                             <field name="pharmacy_count"/>
-                        </tree>
+                        </list>
                     </field>
                 </form>
             </field>

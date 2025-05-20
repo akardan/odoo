@@ -12,7 +12,7 @@
         <field name="name">crm.promotion.distribution.plan.tree</field>
         <field name="model">crm.promotion.distribution.plan</field>
         <field name="arch" type="xml">
-            <tree string="Promotion / Sample Distribution Plan" editable="top">
+            <list string="Promotion / Sample Distribution Plan" editable="top">
                 <header>
                     <button name="%(action_crm_promotion_dist)d" string="New Promotion" type="action"
                             class="oe_highlight"/>
@@ -24,7 +24,7 @@
                 <field name="team_member_id"/>
                 <field name="sales_team_id"/>
                 <field name="state"/>
-            </tree>
+            </list>
         </field>
     </record>
 

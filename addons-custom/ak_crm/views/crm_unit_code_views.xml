@@ -5,10 +5,10 @@
             <field name="name">crm.unit.code.tree</field>
             <field name="model">crm.unit.code</field>
             <field name="arch" type="xml">
-                <tree string="CRM Unit Code" editable="top">
+                <list string="CRM Unit Code" editable="top">
                     <field name="name"/>
                     <field name="ref_code"/>
-                </tree>
+                </list>
             </field>
         </record>
 

@@ -5,7 +5,7 @@
         <field name="model">res.partner</field>
         <field name="inherit_id" ref="base.view_partner_tree"/>
         <field name="arch" type="xml">
-            <xpath expr="//field[@name='display_name']" position="after">
+            <xpath expr="//field[@name='complete_name']" position="after">
                 <field name="medical_type" optional="show"/>
                 <field name="specialization_ids" widget="many2many_tags" optional="hide"/>
                 <field name="unit_id"/>
@@ -31,10 +31,10 @@
                         <group string="Segment By Groups" name="segmentbygroups">
                             <field name="segmentation_ids" nolabel="1" colspan="2" context="{}"
                                    on_change="1">
-                                <tree editable="bottom">
+                                <list editable="bottom">
                                     <field name="sales_team_id"/>
                                     <field name="segment_id"/>
-                                </tree>
+                                </list>
                             </field>
                         </group>
                     </group>

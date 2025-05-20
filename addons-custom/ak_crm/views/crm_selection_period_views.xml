@@ -5,7 +5,7 @@
             <field name="name">crm.selection.period.tree</field>
             <field name="model">crm.selection.period</field>
             <field name="arch" type="xml">
-                 <tree string="Selection Periods" editable="top" default_order="date_start desc">
+                 <list string="Selection Periods" editable="top" default_order="date_start desc">
                     <field name="name"/>
                     <field name="date_start"/>
                     <field name="date_end"/>
@@ -15,7 +15,7 @@
                     <field name="month" optional="hide"/>
                     <field name="active_for_planning"/>
                     <field name="active"/>
-                </tree>
+                </list>
             </field>
         </record>
     </data>

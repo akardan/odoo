@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'CRM Pharma',
-    'version': '15.0.1.0',
+    'version': '18.0.1.0',
     'author': 'Atila Kardan',
     'category': 'Sales/CRM',
     'summary': 'CRM Management',
@@ -11,11 +11,11 @@ CRM Pharma
 ====================
 CRM for a Pharmaceutical Company
     """,
-    'website': 'https://www.akka.com/app/crm',
+    'website': 'https:/kardan.digital/app/crm',
     'images': [],
     'depends': [
         'base',
-        'web',
+        # 'web',
         'crm',
         'sales_team',
         'contacts',
@@ -44,25 +44,6 @@ CRM for a Pharmaceutical Company
         'data/crm_unit_type_data.xml',
         'data/crm_unit_code_data.xml',
     ],
-    'qweb': [
-        # 'static/src/xml/tree_widget_template.xml',
-    ],
-    'demo': [],
-    'assets': {
-        'web.assets_backend': [
-            'ak_crm/views/tree_widget.xml',
-            # 'ak_crm/static/src/**/*',
-            # 'ak_crm/static/src/js/*.js',
-            # 'ak_crm/static/src/css/style.min.css',
-            # 'ak_crm/static/src/xml/*.xml',
-        ],
-        'web.assets_frontend': [],
-        'web.assets_tests': [],
-        'web.qunit_suite_tests': [],
-        'web.assets_qweb': [],
-        'hr.department': (),
-    },
-    # 'icon': "static/icon.png",
     'images': ['static/description/icon.png'],
     'installable': True,
     'application': True,

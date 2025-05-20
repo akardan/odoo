@@ -26,7 +26,7 @@
         <field name="name">crm.selection.tree</field>
         <field name="model">crm.selection</field>
         <field name="arch" type="xml">
-            <tree editable="top">
+            <list editable="top">
                 <field name="period_id"/>
                 <field name="team_member_id" optional="show"/>
                 <field name="group_id"/>
@@ -41,7 +41,7 @@
                 <field name="introduced_product1" optional="show"/>
                 <field name="introduced_product2" optional="hide"/>
                 <field name="introduced_product3" optional="hide"/>
-            </tree>
+            </list>
         </field>
     </record>
 

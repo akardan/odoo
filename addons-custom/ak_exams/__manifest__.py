@@ -6,7 +6,11 @@
 
     'description': """
 Exam Management System for customers that isolates based on company
-    """,
+Özellikler:
+        - Yerleşik Odoo API Key yönetimi
+        - Takım kodu ve hiyerarşi alanları
+        - API ile satış ekibi hiyerarşisi senkronizasyonu
+ """,
 
     'author': "Kardan.Digital",
     'website': "https://kardan.digital",

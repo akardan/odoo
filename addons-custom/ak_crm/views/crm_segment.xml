@@ -16,7 +16,7 @@
         <field name="name">crm.segment.tree</field>
         <field name="model">crm.segment</field>
         <field name="arch" type="xml">
-            <tree>
+            <list>
                 <field name="name"/>
                 <field name="frequency_min"/>
                 <field name="frequency_max"/>
@@ -24,7 +24,7 @@
                 <field name="score_max"/>
                 <field name="active"/>
                 <field name="company_id" groups="base.group_multi_company"/>
-            </tree>
+            </list>
         </field>
     </record>
     <record model="ir.ui.view" id="crm_segment_form_view">

@@ -16,12 +16,12 @@
         <field name="name">crm.segmentation.tree</field>
         <field name="model">crm.segmentation</field>
         <field name="arch" type="xml">
-            <tree>
+            <list>
                 <field name="company_id" groups="base.group_multi_company"/>
                 <field name="sales_team_id"/>
                 <field name="partner_id"/>
                 <field name="segment_id"/>
-            </tree>
+            </list>
         </field>
     </record>
     <record model="ir.ui.view" id="crm_segmentation_form_view">
