@@ -1,0 +1,1 @@
+from . import crm_promotion_dist_plan_wizard

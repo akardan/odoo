@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <record model="ir.ui.view" id="crm_segment_search_view">
+        <field name="name">crm.segment.search</field>
+        <field name="model">crm.segment</field>
+        <field name="arch" type="xml">
+            <search>
+                <field string="Name" name="name"/>
+                <separator/>
+                <filter string="Active" name="active" domain="[('active', '=', True)]"/>
+                <filter string="Archived" name="active" domain="[('active', '=', False)]"/>
+            </search>
+        </field>
+    </record>
+    <record model="ir.ui.view" id="crm_segment_tree_view">
+        <field name="name">crm.segment.tree</field>
+        <field name="model">crm.segment</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name"/>
+                <field name="frequency_min"/>
+                <field name="frequency_max"/>
+                <field name="score_min"/>
+                <field name="score_max"/>
+                <field name="active"/>
+                <field name="company_id" groups="base.group_multi_company"/>
+            </tree>
+        </field>
+    </record>
+    <record model="ir.ui.view" id="crm_segment_form_view">
+        <field name="name">crm.segment.form</field>
+        <field name="model">crm.segment</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="toggle_active" type="object" class="oe_stat_button" icon="fa-check">
+                            <field name="active" widget="boolean_button" options='{"terminology": "active"}'/>
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <label for="name" class="oe_edit_only"/>
+                        <h1>
+                            <field name="name" required="1"/>
+                        </h1>
+                        <field name="company_id" groups="base.group_multi_company"/>
+                    </div>
+                    <group>
+                        <field name="frequency_min"/>
+                        <field name="frequency_max"/>
+                        <field name="score_min"/>
+                        <field name="score_max"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+</odoo>

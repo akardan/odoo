@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <!--    <record model="ir.ui.view" id="crm_segmentation_search_view">-->
+    <!--        <field name="name">crm.segmentation.search</field>-->
+    <!--        <field name="model">crm.segmentation</field>-->
+    <!--        <field name="arch" type="xml">-->
+    <!--            <search>-->
+    <!--                <field string="Name" name="name"/>-->
+    <!--                <separator/>-->
+    <!--                <filter string="Active" name="active" domain="[('active', '=', True)]"/>-->
+    <!--                <filter string="Archived" name="active" domain="[('active', '=', False)]"/>-->
+    <!--            </search>-->
+    <!--        </field>-->
+    <!--    </record>-->
+    <record model="ir.ui.view" id="crm_segmentation_tree_view">
+        <field name="name">crm.segmentation.tree</field>
+        <field name="model">crm.segmentation</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="company_id" groups="base.group_multi_company"/>
+                <field name="sales_team_id"/>
+                <field name="partner_id"/>
+                <field name="segment_id"/>
+            </tree>
+        </field>
+    </record>
+    <record model="ir.ui.view" id="crm_segmentation_form_view">
+        <field name="name">crm.segmentation.form</field>
+        <field name="model">crm.segmentation</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                </header>
+                <sheet>
+                    <group>
+                        <field name="company_id" groups="base.group_multi_company"/>
+                        <field name="sales_team_id"/>
+                        <field name="partner_id"/>
+                        <field name="segment_id"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+</odoo>

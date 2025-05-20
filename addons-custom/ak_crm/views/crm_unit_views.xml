@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="view_crm_unit_tree" model="ir.ui.view">
+        <field name="name">crm.unit.tree</field>
+        <field name="model">crm.unit</field>
+        <field name="arch" type="xml">
+            <tree string="Crm Units" editable="top">
+                <field name="name"/>
+                <field name="brick_id"/>
+                <field name="type_id"/>
+                <field name="code_id"/>
+                <field name="external_id"/>
+                <field name="is_large_unit"/>
+                <field name="active"/>
+                <field name="partner_ids"/>
+                <button name="open_unit_form" string="Form View" type="object" icon="fa-ellipsis-h"/>
+            </tree>
+        </field>
+    </record>
+    <record id="view_crm_unit_form" model="ir.ui.view">
+        <field name="name">crm.unit.form</field>
+        <field name="model">crm.unit</field>
+        <field name="arch" type="xml">
+            <form string="Crm Unit">
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="toggle_active" type="object" class="oe_stat_button" icon="fa-check">
+                            <field name="active" widget="boolean_button" options='{"terminology": "active"}'/>
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <label for="name" class="oe_edit_only"/>
+                        <h1>
+                            <field name="name" required="1"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="brick_id"/>
+                            <field name="type_id"/>
+                            <field name="code_id"/>
+                        </group>
+                        <group>
+                            <field name="is_large_unit"/>
+                            <field name="external_id"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Partners">
+                            <field name="partner_ids" widget="many2many">
+                                <tree string="Partners">
+                                    <field name="name"/>
+                                    <field name="medical_type"/>
+                                    <field name="state_id"/>
+                                    <field name="city"/>
+                                    <field name="specialization_ids" widget="many2many_tags" optional="hide"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+</odoo>

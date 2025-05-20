@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <!-- CRM Team views update-->
+    <record model="ir.ui.view" id="view_crm_team_search_inherit">
+        <field name="name">crm.team.search.inherit</field>
+        <field name="model">crm.team</field>
+        <field name="arch" type="xml">
+            <search>
+                <filter string="Group" name="annual" domain="[('team_type', '=', 'G')]"/>
+                <filter string="Headoffice" name="halfyear" domain="[('team_type', '=', 'H')]"/>
+                <filter string="Region" name="quarter" domain="[('team_type', '=', 'R')]"/>
+                <separator/>
+                <filter string="Active" name="active" domain="[('active', '=', True)]"/>
+                <filter string="Archived" name="active" domain="[('active', '=', False)]"/>
+                <group expand="0" string="Group By">
+                    <filter name="parent_id" string="Parent" domain="" context="{'group_by':'parent_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+    <record id="view_crm_team_tree_inherit" model="ir.ui.view">
+        <field name="name">crm.team.tree.inherit</field>
+        <field name="model">crm.team</field>
+        <field name="inherit_id" ref="sales_team.crm_team_view_tree"/>
+        <field name="arch" type="xml">
+            <field name="name" position="after">
+                <field name="team_type"/>
+                <field name="parent_id" string="Parent Team" groups="base.group_user"/>
+                <field name="group_id" readonly="1"/>
+                <field name="child_ids" invisible="1"/>
+            </field>
+        </field>
+    </record>
+    <record id="view_crm_team_form_inherit" model="ir.ui.view">
+        <field name="name">crm.team.form.inherit</field>
+        <field name="model">crm.team</field>
+        <field name="inherit_id" ref="sales_team.crm_team_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='user_id']" position="after">
+                <field name="team_type"/>
+                <field name="parent_id"/>
+                <field name="child_ids" widget="many2many_tags"/>
+                <field name="group_id" readonly="1"/>
+                <field name="product_ids" widget="many2many_tags" attrs="{'readonly': [('team_type', '!=', 'G')]}"/>
+            </xpath>
+            <xpath expr="//page[@name='members_users']" position="after">
+                <page string="Child Teams" name="tree">
+                    <group>
+                        <group>
+<!--                            <field string="" name="child_ids" />-->
+                            <field name="child_ids" widget="tree_widget" options="{'model': 'crm.team', 'parent_field': 'parent_id', 'display_field': 'name'}"/>
+<!--                            <field name="my_field" colspan="3" widget="jstree" options="{'model': 'crm.team', 'parent_field': 'parent_id', 'display_field': 'name'}"/>-->
+                        </group>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+    <record id="view_crm_team_kanban_inherit" model="ir.ui.view">
+        <field name="name">crm.team.kanban.inherit</field>
+        <field name="model">crm.team</field>
+        <field name="inherit_id" ref="sales_team.crm_team_view_kanban_dashboard"/>
+        <field name="arch" type="xml">
+            <xpath expr="//templates" position="before">
+                <field name="team_type"/>
+                <field name="parent_id"/>
+            </xpath>
+            <xpath expr="//div[hasclass('o_kanban_card_header_title')]" position="after">
+                <div class="row">
+                    <!--                    <label for="parent_id">Parent Team</label>-->
+                    <div class="col-3 text-truncate">
+                        <field name="team_type"/>
+                    </div>
+                    <div class="col-12 text-truncate">
+                        <field name="parent_id"/>
+                    </div>
+                    <div class="col-12 text-truncate">
+                        <field name="group_id"/>
+                    </div>
+                </div>
+            </xpath>
+        </field>
+    </record>
+
+
+</odoo>

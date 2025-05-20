@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data noupdate="1">
+        <record id="crm_unit_type_hastane" model="crm.unit.type">
+            <field name="name">HASTANE</field>
+            <field name="ref_code">H</field>
+        </record>
+        <record id="crm_unit_type_saglik_unitesi" model="crm.unit.type">
+            <field name="name">SAĞLIK ÜNİTESİ</field>
+            <field name="ref_code">U</field>
+        </record>
+        <record id="crm_unit_type_daire" model="crm.unit.type">
+            <field name="name">DAIRE</field>
+            <field name="ref_code">D</field>
+        </record>
+        <record id="crm_unit_type_eczane" model="crm.unit.type">
+            <field name="name">ECZANE</field>
+            <field name="ref_code">E</field>
+        </record>
+        <record id="crm_unit_type_muayenehane" model="crm.unit.type">
+            <field name="name">MUAYENEHANE</field>
+            <field name="ref_code">M</field>
+        </record>
+        <record id="crm_unit_type_veteriner" model="crm.unit.type">
+            <field name="name">VETERİNER</field>
+            <field name="ref_code">V</field>
+        </record>
+        <record id="crm_unit_type_ecza_deposu" model="crm.unit.type">
+            <field name="name">ECZA DEPOSU</field>
+            <field name="ref_code">W</field>
+        </record>
+        <record id="crm_unit_type_sales" model="crm.unit.type">
+            <field name="name">SALES</field>
+            <field name="ref_code">X</field>
+        </record>
+    </data>
+</odoo>

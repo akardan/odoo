@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_crm_selection_search" model="ir.ui.view">
+        <field name="name">crm.selection.search</field>
+        <field name="model">crm.selection</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="team_member_id"/>
+                <field name="partner_id"/>
+                <filter name="my_selection" string="My Selections" domain="[('team_member_id.user_id', '=', uid)]"/>
+                <separator/>
+                <filter name="this_month" string="This Month"
+                        domain="[('period_id.date_start', '&lt;=', time.strftime('%%Y-%%m-%%d')), ('period_id.date_end', '&gt;=', time.strftime('%%Y-%%m-%%d'))]"/>
+                <filter name="next_month" string="Next Month"
+                        domain="[('period_id.date_start', '&gt;', (time.strftime('%%Y-%%m-%%d') | datetime.timedelta(days=30)).strftime('%%Y-%%m-%%d')), ('period_id.date_end', '&lt;', (time.strftime('%%Y-%%m-%%d') | datetime.timedelta(days=60)).strftime('%%Y-%%m-%%d'))]"/>
+                <separator/>
+                <group expand="0" string="Group by Month">
+                    <filter name="group_by_month" string="Month" context="{'group_by':'period_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_crm_selection_tree" model="ir.ui.view">
+        <field name="name">crm.selection.tree</field>
+        <field name="model">crm.selection</field>
+        <field name="arch" type="xml">
+            <tree editable="top">
+                <field name="period_id"/>
+                <field name="team_member_id" optional="show"/>
+                <field name="group_id"/>
+                <field name="partner_id"/>
+                <field name="visit_location"/>
+                <field name="brick_id"/>
+                <field name="segment_id"/>
+                <field name="frequency"/>
+                <field name="change_reason"/>
+                <field name="info_note" optional="hide"/>
+                <field name="return_date" optional="show"/>
+                <field name="introduced_product1" optional="show"/>
+                <field name="introduced_product2" optional="hide"/>
+                <field name="introduced_product3" optional="hide"/>
+            </tree>
+        </field>
+    </record>
+
+</odoo>

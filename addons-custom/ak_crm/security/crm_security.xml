@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <data noupdate="1">
+        <!-- Company Rules -->
+        <record id="crm_brick_company_rule" model="ir.rule">
+            <field name="name">CRM Brick Rule</field>
+            <field name="model_id" ref="model_crm_brick"/>
+            <field name="global" eval="True"/>
+            <field name="domain_force">['|',('company_id','=',False),('company_id', 'in', company_ids)]</field>
+        </record>
+        <record id="crm_segment_company_rule" model="ir.rule">
+            <field name="name">CRM Segment Company Rule</field>
+            <field name="model_id" ref="model_crm_segment"/>
+            <field name="global" eval="True"/>
+            <field name="domain_force">['|',('company_id','=',False),('company_id', 'in', company_ids)]</field>
+        </record>
+        <record id="crm_segmentation_company_rule" model="ir.rule">
+            <field name="name">CRM Segmentation Company Rule</field>
+            <field name="model_id" ref="model_crm_segmentation"/>
+            <field name="global" eval="True"/>
+            <field name="domain_force">['|',('company_id','=',False),('company_id', 'in', company_ids)]</field>
+        </record>
+    </data>
+</odoo>

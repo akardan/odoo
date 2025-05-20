@@ -1,0 +1,252 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="crm_brick_action" model="ir.actions.act_window">
+        <field name="name">Bricks</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">crm.brick</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create a new Brick!
+            </p>
+        </field>
+    </record>
+    <!--    <record id="crm_territory_action" model="ir.actions.act_window">-->
+    <!--        <field name="name">Territory</field>-->
+    <!--        <field name="type">ir.actions.act_window</field>-->
+    <!--        <field name="res_model">crm.territory</field>-->
+    <!--        <field name="view_mode">tree,form</field>-->
+    <!--        <field name="help" type="html">-->
+    <!--            <p class="o_view_nocontent_smiling_face">-->
+    <!--                Create a new Brick!-->
+    <!--            </p>-->
+    <!--        </field>-->
+    <!--    </record>-->
+    <record id="crm_segment_action" model="ir.actions.act_window">
+        <field name="name">Segment</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">crm.segment</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create a new Segment!
+            </p>
+        </field>
+    </record>
+    <record id="crm_segmentation_action" model="ir.actions.act_window">
+        <field name="name">Segmentation</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">crm.segmentation</field>
+        <field name="view_mode">tree,form</field>
+        <!--        <field name="domain">[('company_id', 'in', user.company_ids)]</field>-->
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Set a new Segmentation!
+            </p>
+        </field>
+    </record>
+    <record id="crm_medical_specialization_action" model="ir.actions.act_window">
+        <field name="name">Medical Specializations</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">crm.medical.specialization</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create a new Medical Specialization!
+            </p>
+        </field>
+    </record>
+    <record id="crm_promotion_plan_action" model="ir.actions.act_window">
+        <field name="name">Distribution Plan</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">crm.promotion.distribution.plan</field>
+        <field name="view_mode">tree,form,pivot</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create a new Promotion / Sample Distribution Plan!
+            </p>
+        </field>
+    </record>
+    <!-- Add the CRM Unit menu actions -->
+    <record id="crm_unit_action" model="ir.actions.act_window">
+        <field name="name">Units</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">crm.unit</field>
+        <field name="view_mode">tree,form,pivot</field>
+    </record>
+    <record id="crm_unit_type_action" model="ir.actions.act_window">
+        <field name="name">Unit Types</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">crm.unit.type</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+    <record id="crm_unit_code_action" model="ir.actions.act_window">
+        <field name="name">Unit Codes</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">crm.unit.code</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <!-- Add the CRM Selection menu actions -->
+    <record id="crm_selection_action" model="ir.actions.act_window">
+        <field name="name">crm.selection</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">crm.selection</field>
+        <field name="view_mode">tree</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create a new Selection!
+            </p>
+        </field>
+    </record>
+    <record id="crm_selection_period_action" model="ir.actions.act_window">
+        <field name="name">crm.selection.period</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">crm.selection.period</field>
+        <field name="view_mode">tree</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create a new Selection Period!
+            </p>
+        </field>
+    </record>
+
+
+    <!-- Add the CRM menu item -->
+    <record id="crm_brick" model="ir.ui.menu">
+        <field name="name">Bricks</field>
+        <field name="sequence" eval="7"/>
+        <field name="parent_id" ref="crm.crm_menu_config"/>
+        <field name="action" ref="crm_brick_action"/>
+    </record>
+    <!--    <record id="crm_territory" model="ir.ui.menu">-->
+    <!--        <field name="name">Territory</field>-->
+    <!--        <field name="sequence" eval="8"/>-->
+    <!--        <field name="parent_id" ref="crm.crm_menu_config"/>-->
+    <!--        <field name="action" ref="crm_territory_action"/>-->
+    <!--    </record>-->
+    <record id="crm_segment_node" model="ir.ui.menu">
+        <field name="name">CRM Segment</field>
+        <field name="sequence" eval="9"/>
+        <field name="parent_id" ref="crm.crm_menu_config"/>
+    </record>
+    <record id="crm_segment" model="ir.ui.menu">
+        <field name="name">Segments</field>
+        <field name="sequence" eval="1"/>
+        <field name="parent_id" ref="crm_segment_node"/>
+        <field name="action" ref="crm_segment_action"/>
+    </record>
+    <record id="crm_segmentation" model="ir.ui.menu">
+        <field name="name">Segmentations</field>
+        <field name="sequence" eval="2"/>
+        <field name="parent_id" ref="crm_segment_node"/>
+        <field name="action" ref="crm_segmentation_action"/>
+    </record>
+    <record id="crm_medical_specialization" model="ir.ui.menu">
+        <field name="name">Medical Specializations</field>
+        <field name="sequence" eval="9"/>
+        <field name="parent_id" ref="crm.crm_menu_config"/>
+        <field name="action" ref="crm_medical_specialization_action"/>
+    </record>
+    <record id="menu_crm_unit_node" model="ir.ui.menu">
+        <field name="name">CRM Units</field>
+        <field name="sequence" eval="9"/>
+        <field name="parent_id" ref="crm.crm_menu_config"/>
+    </record>
+
+    <!-- Add the CRM Unit menu items -->
+    <record id="menu_crm_unit" model="ir.ui.menu">
+        <field name="name">Units</field>
+        <field name="sequence" eval="1"/>
+        <field name="parent_id" ref="menu_crm_unit_node"/>
+        <field name="action" ref="crm_unit_action"/>
+    </record>
+    <record id="menu_crm_unit_type" model="ir.ui.menu">
+        <field name="name">Unit Types</field>
+        <field name="sequence" eval="2"/>
+        <field name="parent_id" ref="menu_crm_unit_node"/>
+        <field name="action" ref="crm_unit_type_action"/>
+    </record>
+    <record id="menu_crm_unit_code" model="ir.ui.menu">
+        <field name="name">Unit Codes</field>
+        <field name="sequence" eval="3"/>
+        <field name="parent_id" ref="menu_crm_unit_node"/>
+        <field name="action" ref="crm_unit_code_action"/>
+    </record>
+
+    <!-- PROMOTION & SAMPLE -->
+    <record id="crm_promotion" model="ir.ui.menu">
+        <field name="name">Promotion</field>
+        <field name="sequence" eval="11"/>
+        <field name="parent_id" ref="crm.crm_menu_root"/>
+    </record>
+    <record id="crm_promo_dist_plan" model="ir.ui.menu">
+        <field name="name">Distribution Plan</field>
+        <field name="sequence" eval="10"/>
+        <field name="parent_id" ref="crm_promotion"/>
+        <field name="action" ref="crm_promotion_plan_action"/>
+    </record>
+
+    <!-- Add Selection menu items to the CRM/Sales menu  -->
+    <record id="crm_selection" model="ir.ui.menu">
+        <field name="name">My Selections</field>
+        <field name="sequence" eval="3"/>
+        <field name="parent_id" ref="crm.crm_menu_sales"/>
+        <field name="action" ref="crm_selection_action"/>
+    </record>
+    <record id="crm_selection_period" model="ir.ui.menu">
+        <field name="name">Selection Periods</field>
+        <field name="sequence" eval="9"/>
+        <field name="parent_id" ref="crm.crm_menu_sales"/>
+        <field name="action" ref="crm_selection_period_action"/>
+    </record>
+
+    <!-- Action to open crm.visit.dashboard -->
+    <record id="action_crm_visit_dashboard" model="ir.actions.act_window">
+        <field name="name">CRM Visit Dashboard</field>
+        <field name="res_model">crm.visit.dashboard</field>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="ak_crm.view_form_crm_visit_dashboard"/>
+    </record>
+
+    <record id="menu_crm_visit_dashboard" model="ir.ui.menu">
+        <field name="name">My Visits</field>
+        <field name="sequence" eval="3"/>
+        <field name="parent_id" ref="crm.crm_menu_sales"/>
+        <field name="action" ref="action_crm_visit_dashboard"/>
+    </record>
+
+    <!-- Add the CRM Visits menu & action -->
+    <record id="action_crm_visits_transient" model="ir.actions.act_window">
+        <field name="name">Visits</field>
+        <field name="res_model">crm.visits.transient</field>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="ak_crm.view_crm_visits_transient_form"/>
+    </record>
+
+<!--    <record id="menu_crm_visits_transient" model="ir.ui.menu">-->
+<!--        <field name="name">My Visits Daily</field>-->
+<!--        <field name="sequence" eval="4"/>-->
+<!--        <field name="parent_id" ref="crm.crm_menu_sales"/>-->
+<!--        <field name="action" ref="action_crm_visits_transient"/>-->
+<!--    </record>-->
+
+    <!-- Action for crm.visit.type -->
+    <record id="action_crm_visit_type" model="ir.actions.act_window">
+        <field name="name">Visit Types</field>
+        <field name="res_model">crm.visit.type</field>
+        <field name="view_mode">tree,form</field>
+        <field name="view_id" ref="view_crm_visit_type_tree"/>
+    </record>
+
+    <!-- Menu for crm.visit.type -->
+    <record id="menu_crm_visit_type" model="ir.ui.menu">
+        <field name="name">Visit Types</field>
+        <field name="sequence" eval="11"/>
+        <field name="parent_id" ref="crm.crm_menu_config"/>
+        <field name="action" ref="action_crm_visit_type"/>
+    </record>
+
+</odoo>
+

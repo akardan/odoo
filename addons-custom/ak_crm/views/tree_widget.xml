@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="assets_backend" name="ak_crm assets" inherit_id="web.assets_backend ">
+        <xpath expr="." position="inside">
+            <!-- CSS bağımlılıklarınızı dahil edin -->
+            <link rel="stylesheet" type="text/css" href="/ak_crm/static/src/css/style.min.css"/>
+            <!-- JS bağımlılıklarınızı dahil edin -->
+            <script type="text/javascript" src="/ak_crm/static/src/js/jstree.min.js"></script>
+            <script type="text/javascript" src="/ak_crm/static/src/js/tree_widget.js"></script>
+        </xpath>
+    </template>
+</odoo>
