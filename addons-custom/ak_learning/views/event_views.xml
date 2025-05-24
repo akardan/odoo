@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_event_form_training_channel" model="ir.ui.view">
+        <field name="name">event.event.form.training.channel</field>
+        <field name="model">event.event</field>
+        <field name="inherit_id" ref="event.view_event_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='event_type_id']" position="after">
+                <field name="is_training_event" invisible="1"/>
+                <field name="training_id" 
+                       invisible="not is_training_event"
+                       required="is_training_event"
+                       options="{'no_create': True, 'no_create_edit': True}"
+                       domain="[('channel_type', '=', 'training')]"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="action_sync_event_attendees_to_course" model="ir.actions.server">
+        <field name="name">Sync Event Attendees to Training Course</field>
+        <field name="model_id" ref="event.model_event_event"/>
+        <field name="binding_model_id" ref="event.model_event_event"/>
+        <field name="binding_view_types">form</field>
+        <field name="state">code</field>
+        <field name="code">
+try:
+    training_event = record.is_training_event
+except:
+    training_event = False
+
+try:
+    training_course = record.training_id
+except:
+    training_course = False
+
+if training_event and training_course:
+    event_attendees = record.registration_ids.filtered(lambda r: r.state in ['open', 'done'])
+    
+    synced_count = 0
+    error_count = 0
+    error_details = []
+    
+    for attendee in event_attendees:
+        try:
+            if attendee.email:
+                partner = env['res.partner'].search([('email', '=', attendee.email)], limit=1)
+                
+                if not partner:
+                    try:
+                        phone_val = attendee.phone
+                    except:
+                        phone_val = False
+                        
+                    partner = env['res.partner'].create({
+                        'name': attendee.name or attendee.email,
+                        'email': attendee.email,
+                        'phone': phone_val,
+                    })
+                
+                existing_enrollment = env['slide.channel.partner'].search([
+                    ('channel_id', '=', training_course.id),
+                    ('partner_id', '=', partner.id)
+                ], limit=1)
+                
+                if not existing_enrollment:
+                    env['slide.channel.partner'].create({
+                        'channel_id': training_course.id,
+                        'partner_id': partner.id,
+                    })
+                    synced_count += 1
+                    
+                    training_course.message_subscribe(partner_ids=[partner.id])
+                    
+        except Exception as e:
+            error_count += 1
+            error_name = attendee.name or 'Unknown'
+            error_email = attendee.email or 'No email'
+            error_details.append("%s (%s): %s" % (error_name, error_email, str(e)))
+    
+    if synced_count > 0:
+        msg = "Successfully synchronized %d attendees to training course '%s'." % (synced_count, training_course.name)
+        if error_count > 0:
+            msg += " %d errors occurred." % error_count
+        
+        action = {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': 'Sync Completed',
+                'message': msg,
+                'type': 'success' if error_count == 0 else 'warning',
+                'sticky': True,
+            }
+        }
+    else:
+        msg = "No attendees were synchronized."
+        if error_count > 0:
+            error_text = " | ".join(error_details[:3])
+            msg += " %d errors: %s" % (error_count, error_text)
+            
+        action = {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': 'Sync Failed',
+                'message': msg,
+                'type': 'warning',
+                'sticky': True,
+            }
+        }
+else:
+    action = {
+        'type': 'ir.actions.client',
+        'tag': 'display_notification',
+        'params': {
+            'title': 'Invalid Event',
+            'message': 'This action can only be used on Training events with an assigned training course.',
+            'type': 'danger',
+            'sticky': True,
+        }
+    }
+        </field>
+    </record>
+</odoo>
