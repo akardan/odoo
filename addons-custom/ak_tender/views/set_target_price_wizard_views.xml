@@ -1,0 +1,32 @@
+<odoo>
+    <data>
+        <record id="view_set_target_price_wizard_form" model="ir.ui.view">
+            <field name="name">ak.tender.set.target.price.wizard.form</field>
+            <field name="model">ak.tender.set.target.price.wizard</field>
+            <field name="arch" type="xml">
+                <form string="Hedef Fiyat Belirleme">
+                    <sheet>
+                        <group>
+                            <field name="tender_id" invisible="1"/>
+                            <field name="currency_id" invisible="1"/>
+                            <field name="target_price" widget="monetary" options="{'currency_field': 'currency_id'}"/>
+                        </group>
+                    </sheet>
+                    <footer>
+                        <button name="action_confirm" string="Onayla" type="object" class="btn-primary"/>
+                        <button string="İptal" class="btn-secondary" special="cancel"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_set_target_price_wizard" model="ir.actions.act_window">
+            <field name="name">Hedef Fiyat Belirleme</field>
+            <field name="res_model">ak.tender.set.target.price.wizard</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+            <field name="binding_model_id" ref="model_ak_tender"/>
+            <field name="binding_view_types">form</field>
+        </record>
+    </data>
+</odoo>

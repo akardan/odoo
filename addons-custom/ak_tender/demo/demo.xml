@@ -1,0 +1,365 @@
+<odoo>
+    <data>
+        <!-- Demo Products for Tender Lines -->
+        <record id="product_server_hardware" model="product.product">
+            <field name="name">Sunucu Donanımı</field>
+            <field name="type">product</field>
+            <field name="categ_id" ref="product.product_category_all"/>
+            <field name="list_price">15000.00</field>
+            <field name="standard_price">12000.00</field>
+            <field name="uom_id" ref="uom.product_uom_unit"/>
+            <field name="uom_po_id" ref="uom.product_uom_unit"/>
+            <field name="description">Yüksek performanslı sunucu donanımı</field>
+        </record>
+
+        <record id="product_network_equipment" model="product.product">
+            <field name="name">Ağ Ekipmanı</field>
+            <field name="type">product</field>
+            <field name="categ_id" ref="product.product_category_all"/>
+            <field name="list_price">8000.00</field>
+            <field name="standard_price">6500.00</field>
+            <field name="uom_id" ref="uom.product_uom_unit"/>
+            <field name="uom_po_id" ref="uom.product_uom_unit"/>
+            <field name="description">Kurumsal ağ ekipmanı</field>
+        </record>
+
+        <record id="product_office_furniture" model="product.product">
+            <field name="name">Ofis Mobilyası</field>
+            <field name="type">product</field>
+            <field name="categ_id" ref="product.product_category_all"/>
+            <field name="list_price">1200.00</field>
+            <field name="standard_price">900.00</field>
+            <field name="uom_id" ref="uom.product_uom_unit"/>
+            <field name="uom_po_id" ref="uom.product_uom_unit"/>
+            <field name="description">Ergonomik ofis mobilyası</field>
+        </record>
+
+        <record id="product_software_license" model="product.product">
+            <field name="name">Yazılım Lisansı</field>
+            <field name="type">service</field>
+            <field name="categ_id" ref="product.product_category_all"/>
+            <field name="list_price">5000.00</field>
+            <field name="standard_price">4000.00</field>
+            <field name="uom_id" ref="uom.product_uom_unit"/>
+            <field name="uom_po_id" ref="uom.product_uom_unit"/>
+            <field name="description">Kurumsal yazılım lisansı</field>
+        </record>
+
+        <record id="product_consulting_service" model="product.product">
+            <field name="name">Danışmanlık Hizmeti</field>
+            <field name="type">service</field>
+            <field name="categ_id" ref="product.product_category_all"/>
+            <field name="list_price">2000.00</field>
+            <field name="standard_price">1500.00</field>
+            <field name="uom_id" ref="uom.product_uom_hour"/>
+            <field name="uom_po_id" ref="uom.product_uom_hour"/>
+            <field name="description">Profesyonel danışmanlık hizmeti</field>
+        </record>
+
+        <!-- Demo Suppliers -->
+        <record id="supplier_tech_solutions" model="res.partner">
+            <field name="name">Tekno Çözümler A.Ş.</field>
+            <field name="supplier_rank">5</field>
+            <field name="customer_rank">0</field>
+            <field name="email">info@teknocozumler.com.tr</field>
+            <field name="phone">+90 212 555 1234</field>
+            <field name="country_id" ref="base.tr"/>
+            <field name="city">İstanbul</field>
+            <field name="street">Maslak Mah. Büyükdere Cad. No:123</field>
+        </record>
+
+        <record id="supplier_global_tech" model="res.partner">
+            <field name="name">Global Teknoloji Ltd. Şti.</field>
+            <field name="supplier_rank">4</field>
+            <field name="customer_rank">0</field>
+            <field name="email">info@globaltech.com.tr</field>
+            <field name="phone">+90 216 555 6789</field>
+            <field name="country_id" ref="base.tr"/>
+            <field name="city">İstanbul</field>
+            <field name="street">Kozyatağı Mah. Atatürk Cad. No:45</field>
+        </record>
+
+        <record id="supplier_office_systems" model="res.partner">
+            <field name="name">Ofis Sistemleri A.Ş.</field>
+            <field name="supplier_rank">3</field>
+            <field name="customer_rank">0</field>
+            <field name="email">info@ofissistem.com.tr</field>
+            <field name="phone">+90 312 555 9876</field>
+            <field name="country_id" ref="base.tr"/>
+            <field name="city">Ankara</field>
+            <field name="street">Çankaya Mah. Tunalı Hilmi Cad. No:67</field>
+        </record>
+
+        <record id="supplier_software_experts" model="res.partner">
+            <field name="name">Yazılım Uzmanları Ltd. Şti.</field>
+            <field name="supplier_rank">4</field>
+            <field name="customer_rank">0</field>
+            <field name="email">info@yazilimuzman.com.tr</field>
+            <field name="phone">+90 232 555 4321</field>
+            <field name="country_id" ref="base.tr"/>
+            <field name="city">İzmir</field>
+            <field name="street">Alsancak Mah. Cumhuriyet Bulvarı No:89</field>
+        </record>
+
+        <!-- Demo Tenders -->
+        <!-- 1. Completed Tender -->
+        <record id="tender_completed" model="ak.tender">
+            <field name="name">Sunucu Altyapı Yenileme İhalesi</field>
+            <field name="code">TENDER/2025/001</field>
+            <field name="erp_pr_id">ERP-PR-10025</field>
+            <field name="erp_company_code">TR01</field>
+            <field name="erp_plant_code">IST01</field>
+            <field name="tender_type">open_auction</field>
+            <field name="start_date" eval="(DateTime.today() - relativedelta(months=2)).strftime('%Y-%m-%d %H:%M:%S')"/>
+            <field name="end_date" eval="(DateTime.today() - relativedelta(days=15)).strftime('%Y-%m-%d %H:%M:%S')"/>
+            <field name="description">
+                <![CDATA[
+                <h3>Sunucu Altyapı Yenileme İhalesi</h3>
+                <p>Bu ihale, şirketimizin veri merkezi sunucu altyapısının yenilenmesi için açılmıştır.</p>
+                <ul>
+                    <li>Yüksek performanslı sunucu donanımı</li>
+                    <li>Ağ ekipmanları</li>
+                    <li>Kurulum ve konfigürasyon hizmetleri</li>
+                </ul>
+                <p>Teknik şartname ekte sunulmuştur.</p>
+                ]]>
+            </field>
+            <field name="state">done</field>
+            <field name="target_price">120000.00</field>
+            <field name="approval_user_id" ref="base.user_admin"/>
+            <field name="approval_date" eval="(DateTime.today() - relativedelta(days=10)).strftime('%Y-%m-%d %H:%M:%S')"/>
+            <field name="invited_partners" eval="[(6, 0, [ref('supplier_tech_solutions'), ref('supplier_global_tech')])]"/>
+        </record>
+
+        <!-- Tender Lines for Completed Tender -->
+        <record id="tender_line_server" model="ak.tender.line">
+            <field name="tender_id" ref="tender_completed"/>
+            <field name="product_id" ref="product_server_hardware"/>
+            <field name="quantity">5.0</field>
+            <field name="required_delivery_date" eval="(DateTime.today() + relativedelta(days=30)).strftime('%Y-%m-%d')"/>
+            <field name="sequence">10</field>
+        </record>
+
+        <record id="tender_line_network" model="ak.tender.line">
+            <field name="tender_id" ref="tender_completed"/>
+            <field name="product_id" ref="product_network_equipment"/>
+            <field name="quantity">10.0</field>
+            <field name="required_delivery_date" eval="(DateTime.today() + relativedelta(days=30)).strftime('%Y-%m-%d')"/>
+            <field name="sequence">20</field>
+        </record>
+
+        <!-- Tender Results for Completed Tender -->
+        <record id="tender_result_tech_solutions_1" model="ak.tender.result">
+            <field name="tender_id" ref="tender_completed"/>
+            <field name="partner_id" ref="supplier_tech_solutions"/>
+            <field name="tender_round">first</field>
+            <field name="offer_date" eval="(DateTime.today() - relativedelta(days=45)).strftime('%Y-%m-%d %H:%M:%S')"/>
+            <field name="price_unit">14500.00</field>
+            <field name="delivery_date" eval="(DateTime.today() + relativedelta(days=35)).strftime('%Y-%m-%d')"/>
+            <field name="payment_terms" ref="account.account_payment_term_30days"/>
+            <field name="guarantee_period">2 Yıl</field>
+            <field name="notes">İlk teklif</field>
+            <field name="status">received</field>
+        </record>
+
+        <record id="tender_result_global_tech_1" model="ak.tender.result">
+            <field name="tender_id" ref="tender_completed"/>
+            <field name="partner_id" ref="supplier_global_tech"/>
+            <field name="tender_round">first</field>
+            <field name="offer_date" eval="(DateTime.today() - relativedelta(days=44)).strftime('%Y-%m-%d %H:%M:%S')"/>
+            <field name="price_unit">14200.00</field>
+            <field name="delivery_date" eval="(DateTime.today() + relativedelta(days=40)).strftime('%Y-%m-%d')"/>
+            <field name="payment_terms" ref="account.account_payment_term_30days"/>
+            <field name="guarantee_period">2 Yıl</field>
+            <field name="notes">İlk teklif</field>
+            <field name="status">received</field>
+        </record>
+
+        <record id="tender_result_tech_solutions_2" model="ak.tender.result">
+            <field name="tender_id" ref="tender_completed"/>
+            <field name="partner_id" ref="supplier_tech_solutions"/>
+            <field name="tender_round">second</field>
+            <field name="offer_date" eval="(DateTime.today() - relativedelta(days=30)).strftime('%Y-%m-%d %H:%M:%S')"/>
+            <field name="price_unit">13800.00</field>
+            <field name="delivery_date" eval="(DateTime.today() + relativedelta(days=35)).strftime('%Y-%m-%d')"/>
+            <field name="payment_terms" ref="account.account_payment_term_30days"/>
+            <field name="guarantee_period">2 Yıl</field>
+            <field name="notes">Revize teklif</field>
+            <field name="status">received</field>
+        </record>
+
+        <record id="tender_result_global_tech_2" model="ak.tender.result">
+            <field name="tender_id" ref="tender_completed"/>
+            <field name="partner_id" ref="supplier_global_tech"/>
+            <field name="tender_round">second</field>
+            <field name="offer_date" eval="(DateTime.today() - relativedelta(days=29)).strftime('%Y-%m-%d %H:%M:%S')"/>
+            <field name="price_unit">13500.00</field>
+            <field name="delivery_date" eval="(DateTime.today() + relativedelta(days=35)).strftime('%Y-%m-%d')"/>
+            <field name="payment_terms" ref="account.account_payment_term_30days"/>
+            <field name="guarantee_period">2 Yıl 6 Ay</field>
+            <field name="notes">Revize teklif, garanti süresi uzatıldı</field>
+            <field name="status">selected</field>
+        </record>
+
+        <!-- 2. Ongoing Tender (Evaluation Stage) -->
+        <record id="tender_evaluation" model="ak.tender">
+            <field name="name">Ofis Mobilyası Tedarik İhalesi</field>
+            <field name="code">TENDER/2025/002</field>
+            <field name="erp_pr_id">ERP-PR-10026</field>
+            <field name="erp_company_code">TR01</field>
+            <field name="erp_plant_code">IST01</field>
+            <field name="tender_type">standard</field>
+            <field name="start_date" eval="(DateTime.today() - relativedelta(days=15)).strftime('%Y-%m-%d %H:%M:%S')"/>
+            <field name="end_date" eval="(DateTime.today() + relativedelta(days=15)).strftime('%Y-%m-%d %H:%M:%S')"/>
+            <field name="description">
+                <![CDATA[
+                <h3>Ofis Mobilyası Tedarik İhalesi</h3>
+                <p>Bu ihale, şirketimizin yeni ofis lokasyonu için mobilya tedariki amacıyla açılmıştır.</p>
+                <ul>
+                    <li>Ergonomik çalışma masaları</li>
+                    <li>Ofis koltukları</li>
+                    <li>Toplantı masaları ve sandalyeleri</li>
+                    <li>Dolaplar ve depolama üniteleri</li>
+                </ul>
+                <p>Teknik şartname ekte sunulmuştur.</p>
+                ]]>
+            </field>
+            <field name="state">evaluation</field>
+            <field name="invited_partners" eval="[(6, 0, [ref('supplier_office_systems'), ref('supplier_global_tech')])]"/>
+        </record>
+
+        <!-- Tender Lines for Evaluation Tender -->
+        <record id="tender_line_furniture" model="ak.tender.line">
+            <field name="tender_id" ref="tender_evaluation"/>
+            <field name="product_id" ref="product_office_furniture"/>
+            <field name="quantity">50.0</field>
+            <field name="required_delivery_date" eval="(DateTime.today() + relativedelta(days=45)).strftime('%Y-%m-%d')"/>
+            <field name="sequence">10</field>
+        </record>
+
+        <!-- Tender Results for Evaluation Tender -->
+        <record id="tender_result_office_systems" model="ak.tender.result">
+            <field name="tender_id" ref="tender_evaluation"/>
+            <field name="partner_id" ref="supplier_office_systems"/>
+            <field name="tender_round">first</field>
+            <field name="offer_date" eval="(DateTime.today() - relativedelta(days=5)).strftime('%Y-%m-%d %H:%M:%S')"/>
+            <field name="price_unit">1150.00</field>
+            <field name="delivery_date" eval="(DateTime.today() + relativedelta(days=40)).strftime('%Y-%m-%d')"/>
+            <field name="payment_terms" ref="account.account_payment_term_30days"/>
+            <field name="guarantee_period">1 Yıl</field>
+            <field name="notes">Standart teklif</field>
+            <field name="status">received</field>
+        </record>
+
+        <record id="tender_result_global_tech_furniture" model="ak.tender.result">
+            <field name="tender_id" ref="tender_evaluation"/>
+            <field name="partner_id" ref="supplier_global_tech"/>
+            <field name="tender_round">first</field>
+            <field name="offer_date" eval="(DateTime.today() - relativedelta(days=4)).strftime('%Y-%m-%d %H:%M:%S')"/>
+            <field name="price_unit">1180.00</field>
+            <field name="delivery_date" eval="(DateTime.today() + relativedelta(days=35)).strftime('%Y-%m-%d')"/>
+            <field name="payment_terms" ref="account.account_payment_term_30days"/>
+            <field name="guarantee_period">2 Yıl</field>
+            <field name="notes">Daha uzun garanti süresi</field>
+            <field name="status">received</field>
+        </record>
+
+        <!-- 3. Draft Tender -->
+        <record id="tender_draft" model="ak.tender">
+            <field name="name">Yazılım Lisansı İhalesi</field>
+            <field name="code">TENDER/2025/003</field>
+            <field name="erp_pr_id">ERP-PR-10027</field>
+            <field name="erp_company_code">TR01</field>
+            <field name="erp_plant_code">IST01</field>
+            <field name="tender_type">sealed_bid</field>
+            <field name="start_date" eval="(DateTime.today() + relativedelta(days=5)).strftime('%Y-%m-%d %H:%M:%S')"/>
+            <field name="end_date" eval="(DateTime.today() + relativedelta(days=30)).strftime('%Y-%m-%d %H:%M:%S')"/>
+            <field name="description">
+                <![CDATA[
+                <h3>Yazılım Lisansı İhalesi</h3>
+                <p>Bu ihale, şirketimizin ihtiyaç duyduğu kurumsal yazılım lisanslarının tedariki için açılmıştır.</p>
+                <ul>
+                    <li>İşletim sistemi lisansları</li>
+                    <li>Veritabanı lisansları</li>
+                    <li>Ofis yazılımı lisansları</li>
+                    <li>Güvenlik yazılımı lisansları</li>
+                </ul>
+                <p>Teknik şartname ekte sunulmuştur.</p>
+                ]]>
+            </field>
+            <field name="state">draft</field>
+            <field name="invited_partners" eval="[(6, 0, [ref('supplier_software_experts'), ref('supplier_tech_solutions')])]"/>
+        </record>
+
+        <!-- Tender Lines for Draft Tender -->
+        <record id="tender_line_software" model="ak.tender.line">
+            <field name="tender_id" ref="tender_draft"/>
+            <field name="product_id" ref="product_software_license"/>
+            <field name="quantity">100.0</field>
+            <field name="required_delivery_date" eval="(DateTime.today() + relativedelta(days=45)).strftime('%Y-%m-%d')"/>
+            <field name="sequence">10</field>
+        </record>
+
+        <!-- 4. First Round Tender -->
+        <record id="tender_first_round" model="ak.tender">
+            <field name="name">Danışmanlık Hizmeti İhalesi</field>
+            <field name="code">TENDER/2025/004</field>
+            <field name="erp_pr_id">ERP-PR-10028</field>
+            <field name="erp_company_code">TR01</field>
+            <field name="erp_plant_code">IST01</field>
+            <field name="tender_type">open_auction</field>
+            <field name="start_date" eval="(DateTime.today() - relativedelta(days=5)).strftime('%Y-%m-%d %H:%M:%S')"/>
+            <field name="end_date" eval="(DateTime.today() + relativedelta(days=25)).strftime('%Y-%m-%d %H:%M:%S')"/>
+            <field name="description">
+                <![CDATA[
+                <h3>Danışmanlık Hizmeti İhalesi</h3>
+                <p>Bu ihale, şirketimizin dijital dönüşüm projesi için danışmanlık hizmeti alımı amacıyla açılmıştır.</p>
+                <ul>
+                    <li>Proje yönetimi danışmanlığı</li>
+                    <li>Süreç iyileştirme danışmanlığı</li>
+                    <li>Teknoloji danışmanlığı</li>
+                </ul>
+                <p>Teknik şartname ekte sunulmuştur.</p>
+                ]]>
+            </field>
+            <field name="state">first_tender_round</field>
+            <field name="invited_partners" eval="[(6, 0, [ref('supplier_software_experts'), ref('supplier_tech_solutions'), ref('supplier_global_tech')])]"/>
+        </record>
+
+        <!-- Tender Lines for First Round Tender -->
+        <record id="tender_line_consulting" model="ak.tender.line">
+            <field name="tender_id" ref="tender_first_round"/>
+            <field name="product_id" ref="product_consulting_service"/>
+            <field name="quantity">500.0</field>
+            <field name="required_delivery_date" eval="(DateTime.today() + relativedelta(days=60)).strftime('%Y-%m-%d')"/>
+            <field name="sequence">10</field>
+        </record>
+
+        <!-- Tender Results for First Round Tender -->
+        <record id="tender_result_software_experts_consulting" model="ak.tender.result">
+            <field name="tender_id" ref="tender_first_round"/>
+            <field name="partner_id" ref="supplier_software_experts"/>
+            <field name="tender_round">first</field>
+            <field name="offer_date" eval="(DateTime.today() - relativedelta(days=2)).strftime('%Y-%m-%d %H:%M:%S')"/>
+            <field name="price_unit">1950.00</field>
+            <field name="delivery_date" eval="(DateTime.today() + relativedelta(days=60)).strftime('%Y-%m-%d')"/>
+            <field name="payment_terms" ref="account.account_payment_term_30days"/>
+            <field name="guarantee_period">N/A</field>
+            <field name="notes">Sektör deneyimli danışmanlar</field>
+            <field name="status">received</field>
+        </record>
+
+        <record id="tender_result_tech_solutions_consulting" model="ak.tender.result">
+            <field name="tender_id" ref="tender_first_round"/>
+            <field name="partner_id" ref="supplier_tech_solutions"/>
+            <field name="tender_round">first</field>
+            <field name="offer_date" eval="(DateTime.today() - relativedelta(days=1)).strftime('%Y-%m-%d %H:%M:%S')"/>
+            <field name="price_unit">1980.00</field>
+            <field name="delivery_date" eval="(DateTime.today() + relativedelta(days=55)).strftime('%Y-%m-%d')"/>
+            <field name="payment_terms" ref="account.account_payment_term_30days"/>
+            <field name="guarantee_period">N/A</field>
+            <field name="notes">Uluslararası sertifikalı danışmanlar</field>
+            <field name="status">received</field>
+        </record>
+    </data>
+</odoo>

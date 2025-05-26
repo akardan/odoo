@@ -1,0 +1,11 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_ak_tender_user,ak.tender.user,model_ak_tender,base.group_user,1,1,1,0
+access_ak_tender_manager,ak.tender.manager,model_ak_tender,base.group_system,1,1,1,1
+access_ak_tender_line_user,ak.tender.line.user,model_ak_tender_line,base.group_user,1,1,1,0
+access_ak_tender_line_manager,ak.tender.line.manager,model_ak_tender_line,base.group_system,1,1,1,1
+access_ak_tender_result_user,ak.tender.result.user,model_ak_tender_result,base.group_user,1,1,1,0
+access_ak_tender_result_manager,ak.tender.result.manager,model_ak_tender_result,base.group_system,1,1,1,1
+access_ak_tender_result_line_user,ak.tender.result.line.user,model_ak_tender_result_line,base.group_user,1,1,1,0
+access_ak_tender_result_line_manager,ak.tender.result.line.manager,model_ak_tender_result_line,base.group_system,1,1,1,1
+access_ak_tender_set_target_price_wizard,ak.tender.set.target.price.wizard,model_ak_tender_set_target_price_wizard,base.group_user,1,1,1,1
+access_ak_tender_action_wizard,ak.tender.action.wizard,model_ak_tender_action_wizard,base.group_user,1,1,1,1
