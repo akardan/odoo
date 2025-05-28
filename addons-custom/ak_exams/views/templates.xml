@@ -2,8 +2,15 @@
     <data>
 
         <template id="survey_fill_header_inherit" inherit_id="survey.survey_fill_header" name="Survey Fill Header Inherit">
-            <xpath expr="//div[hasclass('o_survey_timer')]/h1" position="inside">
-                <i class="fa fa-clock-o me-2"></i>
+            <!-- Remove the original timer div -->
+            <xpath expr="//div[hasclass('o_survey_timer')]" position="replace"/>
+
+            <!-- Add the timer div after the o_survey_nav div -->
+            <xpath expr="//div[hasclass('o_survey_nav')]" position="after">
+                <div class="o_survey_timer pt-4">
+                    <h1 class="o_survey_timer_container timer text-end">
+                    </h1>
+                </div>
             </xpath>
         </template>
 

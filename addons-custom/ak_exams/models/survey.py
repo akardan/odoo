@@ -37,13 +37,13 @@ class Survey(models.Model):
                 return False
             return True # Can go back if not first question in the relevant list
 
-# class SurveyQuestion(models.Model):
-#     _inherit = 'survey.question'
-    
-#     company_id = fields.Many2one(
-#         'res.company', 
-#         string='Company',
-#         related='survey_id.company_id',  # Survey'den otomatik alınacak
-#         store=True,  # Aramalar için depolanır
-#         readonly=True  # Direkt düzenlenemez, survey'den gelir
-#     )
+class SurveyUserInput(models.Model):
+    _inherit = 'survey.user_input'
+
+    company_id = fields.Many2one(
+        'res.company',
+        string='Company',
+        related='survey_id.company_id',
+        store=True,
+        readonly=True
+    )

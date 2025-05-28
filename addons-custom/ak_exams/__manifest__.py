@@ -21,6 +21,7 @@ Exam Management System for customers that isolates based on company
         'base',
         'survey',
         'crm',
+        'mail',
     ],
 
     # always loaded

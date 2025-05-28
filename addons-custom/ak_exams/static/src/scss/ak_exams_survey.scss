@@ -1,4 +1,15 @@
+@font-face {
+    font-family: 'Digital-7 Mono';
+    src: url('/ak_exams/static/src/fonts/digital-7 (mono).ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
 .o_survey_form {
+    h3 { /* Target the question title */
+        font-size: 1.5rem !important; /* Slightly reduce font size */
+    }
+
     .o_survey_choice_btn {
         /* Ensure the inner content (text and icons) are properly spaced and vertically aligned */
         /* These divs already have display: flex and align-items: center from Bootstrap */
@@ -27,7 +38,15 @@
 }
 
 .o_survey_timer {
-    font-size: 2.2rem !important; /* Keep the timer font size change */
+    font-size: 3.0rem !important; /* Increase timer font size */
+    position: fixed !important;
+    top: 20px !important; /* Adjust as needed */
+    right: 20px !important; /* Adjust as needed */
+    z-index: 1000 !important; /* Ensure it's on top */
+    background-color: rgba(255, 255, 255, 0.8); /* Add a slight background for readability */
+    padding: 10px 15px !important;
+    border-radius: 8px !important;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
 .o_survey_timer_container {
@@ -35,7 +54,7 @@
     align-items: center !important;
     justify-content: flex-end !important; /* Keep it aligned to the right */
     min-width: 80px !important; /* Give it a fixed minimum width to prevent shifting */
-    font-family: 'Digital-7 Regular', 'monospace' !important; /* Apply digital font */
+    font-family: 'Digital-7 Mono', monospace !important; /* Apply digital font */
 }
 
 /* Remove the tilt from the Start Exam button and ensure vertical alignment */
