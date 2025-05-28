@@ -47,7 +47,7 @@ class AkTender(models.Model):
         ('approved', 'Onaylandı'),
         ('done', 'Tamamlandı'),
         ('cancel', 'İptal Edildi'),
-    ], string='Durum', default='draft', tracking=True)
+    ], string='Durum', default='draft', tracking=True, group_expand='_read_group_state')
 
     tender_type = fields.Selection([
         ('standard', 'Standart İhale'), # Tek bir tur
@@ -87,6 +87,26 @@ class AkTender(models.Model):
     
     # Akıllı Butonlar için compute field'lar
     purchase_order_count = fields.Integer(string='SAS Sayısı', compute='_compute_purchase_order_count')
+    
+    tender_result_count = fields.Integer(string='Teklif Veren Sayısı', compute='_compute_tender_result_count')
+
+    @api.depends('tender_results', 'state')
+    def _compute_tender_result_count(self):
+        for tender in self:
+            # State'e göre teklif filtreleme
+            if tender.state == 'first_tender_round':
+                # 1. tur teklifleri say
+                tender.tender_result_count = len(tender.tender_results.filtered(lambda r: r.tender_round == 'first'))
+            elif tender.state == 'second_tender_round' or tender.state == 'target_price_set':
+                # 2. tur teklifleri say
+                tender.tender_result_count = len(tender.tender_results.filtered(lambda r: r.tender_round == 'second'))
+            elif tender.state in ['evaluation', 'approval_pending', 'approved', 'done']:
+                # Değerlendirme ve sonraki aşamalarda tüm teklifleri say
+                tender.tender_result_count = len(tender.tender_results)
+            else:
+                # Diğer durumlarda (draft, cancel) sıfır
+                tender.tender_result_count = 0
+
     
     @api.depends('tender_results')
     def _compute_winning_result(self):
@@ -341,13 +361,14 @@ class AkTender(models.Model):
             'type': 'ir.actions.act_window',
             'name': _('Teklif Sonuçları'),
             'res_model': 'ak.tender.result',
-            'view_mode': 'list,form',
+            'view_mode': 'list,form,pivot',
             'domain': [('tender_id', '=', self.id)],
             'context': {'default_tender_id': self.id},
             'target': 'current',
             'views': [
-                (False, 'list'),
-                (False, 'form'),
+                (self.env.ref('ak_tender.view_tender_result_tree').id, 'list'),
+                (self.env.ref('ak_tender.view_tender_result_form').id, 'form'),
+                (self.env.ref('ak_tender.view_tender_result_pivot').id, 'pivot'),
             ],
         }
     
@@ -369,3 +390,11 @@ class AkTender(models.Model):
         else:
             action = {'type': 'ir.actions.act_window_close'} # No PO to show
         return action
+        
+    @api.model
+    def _read_group_state(self, *args, **kwargs):
+        """Read group customization for state field: returns all states in their original order."""
+        # Return all possible states in the same order as defined in the model
+        return ['draft', 'first_tender_round', 'target_price_set', 'second_tender_round',
+                'evaluation', 'approval_pending', 'approved', 'done', 'cancel']
+

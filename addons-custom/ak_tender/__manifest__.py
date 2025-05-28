@@ -24,6 +24,7 @@
         'security/ir.model.access.csv',
         'views/tender_sequence.xml',
         'views/tender_result_line_views.xml',
+        'views/tender_result_views.xml',
         'views/tender_views.xml',
         'views/set_target_price_wizard_views.xml',
         'wizards/tender_action_wizard_views.xml',

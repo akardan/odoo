@@ -29,10 +29,14 @@ Exam Management System for customers that isolates based on company
         'views/views.xml',
         'views/templates.xml',
     ],
+    'assets': {
+        'web.assets_frontend': [
+            'ak_exams/static/src/scss/ak_exams_survey.scss',
+        ],
+    },
     'installable': True,
     'application': False,
     'auto_install': False,
-    'license': 'LGPL-3',    
-
+    'license': 'LGPL-3',
 }
 

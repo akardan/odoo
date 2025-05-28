@@ -54,7 +54,6 @@
                                 icon="fa-check-square-o"
                                 string="Onay Bilgileri"
                                 help="Bu ihale ile ilgili onay bilgileri"
-                                invisible="approval_user_id == False"
                                 disabled="1"
                             />
                             <button name="action_view_tender_results"
@@ -62,7 +61,7 @@
                                 class="oe_stat_button"
                                 icon="fa-balance-scale"
                                 string="Teklif Sonuçları"
-                                help="Tedarikçilerden gelen teklif sonuçları"
+                                help="Tedarikçilerden gelen teklifler"
                             />
                         </div>
                         <div class="oe_title">
@@ -118,64 +117,19 @@
                                 <field name="description" widget="html" nolabel="1"/>
                             </page>
                             <page string="Teklif Sonuçları &amp; Değerlendirme" name="tender_results_evaluation">
-                                <field name="tender_results" nolabel="1">
-                                    <list>
+                                <field name="tender_results" nolabel="1" context="{'default_tender_id': id}">
+                                    <list editable="bottom">
+                                        <field name="sequence" widget="handle"/>
                                         <field name="partner_id"/>
                                         <field name="tender_round"/>
                                         <field name="offer_date"/>
                                         <field name="currency_id"/>
-                                        <field name="total_price" sum="Toplam Teklif"/>
                                         <field name="delivery_date"/>
                                         <field name="status"/>
+                                        <field name="total_price" min="Min. Teklif"/>
                                         <field name="purchase_order_id" optional="hide"/>
+                                        <button name="action_view_offer_items" type="object" icon="fa-list" string="Teklif Kalemleri" class="oe_highlight"/>
                                     </list>
-                                    <form>
-                                        <sheet>
-                                            <group>
-                                                <group>
-                                                    <field name="partner_id"/>
-                                                    <field name="offer_date"/>
-                                                    <field name="tender_round"/>
-                                                </group>
-                                                <group>
-                                                    <field name="currency_id" options="{'no_create': True}"/>
-                                                    <field name="total_price"/>
-                                                    <button name="create_missing_result_lines" string="Eksik Kalemleri Oluştur"
-                                                            type="object" class="oe_link" icon="fa-refresh"
-                                                            context="{'from_button': True}"/>
-                                                </group>
-                                                <group>
-                                                    <field name="delivery_date"/>
-                                                    <field name="payment_terms"/>
-                                                    <field name="guarantee_period"/>
-                                                </group>
-                                            </group>
-                                            
-                                            <notebook>
-                                                <page string="Teklif Kalemleri" name="result_lines">
-                                                    <field name="result_lines" nolabel="1" context="{'default_result_id': id}">
-                                                        <list editable="bottom" create="false" edit="true">
-                                                            <field name="sequence" widget="handle"/>
-                                                            <field name="tender_line_id"/>
-                                                            <field name="product_id"/>
-                                                            <field name="name"/>
-                                                            <field name="quantity"/>
-                                                            <field name="uom_id"/>
-                                                            <field name="price_unit"/>
-                                                            <field name="price_subtotal" sum="Toplam"/>
-                                                        </list>
-                                                    </field>
-                                                </page>
-                                                <page string="Notlar" name="notes">
-                                                    <field name="notes" nolabel="1"/>
-                                                </page>
-                                            </notebook>
-                                            
-                                            <group class="oe_right">
-                                                <field name="status"/>
-                                            </group>
-                                        </sheet>
-                                    </form>
                                 </field>
                                 <group class="oe_subtotal_footer oe_right">
                                     <field name="target_price" widget="monetary" options="{'currency_field': 'currency_id'}"
@@ -245,6 +199,214 @@
             <field name="name">ak.tender.kanban</field>
             <field name="model">ak.tender</field>
             <field name="arch" type="xml">
+                <kanban default_group_by="state" class="o_kanban_dashboard o_tender_kanban" edit="false" sample="1">
+                    <field name="state"/>
+                    <field name="name"/>
+                    <field name="code"/>
+                    <field name="tender_type"/>
+                    <field name="start_date"/>
+                    <field name="end_date"/>
+                    <field name="erp_pr_id"/>
+                    <field name="invited_partners"/>
+                    <field name="currency_id"/>
+                    <field name="target_price"/>
+                    <field name="winning_result_id"/>
+                    <field name="purchase_order_count"/>
+                    <field name="tender_result_count"/>
+                    <field name="create_date"/>
+                    <field name="activity_ids"/>
+                    <field name="activity_state"/>
+                    
+                    <progressbar field="activity_state" colors='{"overdue": "danger", "today": "warning", "planned": "success"}'/>
+                    
+                    <templates>
+                        <t t-name="menu">
+                            <div class="o_kanban_tender_card_manage_pane">
+                                <a role="menuitem" type="edit" class="dropdown-item">
+                                    <i class="fa fa-fw fa-edit"/> Düzenle
+                                </a>
+                                <a role="menuitem" name="action_view_tender_results" type="object" class="dropdown-item">
+                                    <i class="fa fa-fw fa-eye"/> Teklif Sonuçları
+                                </a>
+                                <t t-if="record.purchase_order_count.raw_value > 0">
+                                    <a role="menuitem" name="action_view_purchase_orders" type="object" class="dropdown-item">
+                                        <i class="fa fa-fw fa-shopping-cart"/> Satın Alma Siparişleri
+                                    </a>
+                                </t>
+                                <div class="dropdown-divider"/>
+                                <a role="menuitem" type="delete" class="dropdown-item">
+                                    <i class="fa fa-fw fa-trash"/> Sil
+                                </a>
+                            </div>
+                        </t>
+                        
+                        <t t-name="card">
+                            <!-- Ribbon for urgent tenders -->
+                            <widget name="web_ribbon" title="Acil" bg_color="text-bg-danger"
+                                    t-if="record.end_date.raw_value and (new Date(record.end_date.raw_value) - new Date()) / (1000 * 60 * 60 * 24) &lt; 3 and record.state.raw_value and !['done', 'cancel', 'approved'].includes(record.state.raw_value)"/>
+                            
+                            <!-- Ribbon for completed tenders -->
+                            <widget name="web_ribbon" title="Tamamlandı" bg_color="text-bg-success"
+                                    t-if="record.state.raw_value and record.state.raw_value == 'done'"/>
+                            
+                            <!-- Ribbon for approved tenders -->
+                            <widget name="web_ribbon" title="Onaylandı" bg_color="text-bg-info"
+                                    t-if="record.state.raw_value and record.state.raw_value == 'approved'"/>
+
+                            <!-- Tender Title and Code -->
+                            <field name="name" class="fw-bold fs-4 me-auto ms-1"/>
+                            <div class="mb-3"></div>
+                            <div class="mb-2 ms-1">
+                                <span class="badge bg-light text-dark border me-2">
+                                    <i class="fa fa-barcode"/> <field name="code"/>
+                                </span>
+                                <span t-attf-class="badge #{record.tender_type.raw_value == 'standard' and 'bg-light text-muted border' or record.tender_type.raw_value == 'open_auction' and 'bg-warning bg-opacity-25 text-dark border' or 'bg-info bg-opacity-25 text-dark border'}">
+                                    <field name="tender_type"/>
+                                </span>
+                            </div>
+
+                            <!-- Main Content Area -->
+                            <div class="row g-0 mb16 mt-1 ms-2 me-2">
+                                <div class="col-12">
+                                    <!-- Action Button based on state -->
+                                    <div class="mb-2">
+                                        <t t-if="record.state.raw_value and record.state.raw_value == 'draft'">
+                                            <button class="btn btn-outline-success btn-sm" name="action_start_first_round" type="object">
+                                                <i class="fa fa-play"/> İhaleyi Başlat
+                                            </button>
+                                        </t>
+                                        <t t-elif="record.state.raw_value and record.state.raw_value == 'first_tender_round'">
+                                            <button class="btn btn-outline-warning btn-sm" name="action_set_target_price" type="object">
+                                                <i class="fa fa-target"/> Hedef Fiyat Belirle
+                                            </button>
+                                        </t>
+                                        <t t-elif="record.state.raw_value and record.state.raw_value == 'target_price_set'">
+                                            <button class="btn btn-outline-info btn-sm" name="action_start_second_round" type="object">
+                                                <i class="fa fa-refresh"/> 2. Tur Başlat
+                                            </button>
+                                        </t>
+                                        <t t-elif="record.state.raw_value and ['second_tender_round', 'evaluation'].includes(record.state.raw_value)">
+                                            <button class="btn btn-outline-primary btn-sm" name="action_request_approval" type="object">
+                                                <i class="fa fa-check"/> Onaya Gönder
+                                            </button>
+                                        </t>
+                                    </div>
+                                    
+                                    <!-- Info List - Full Width -->
+                                    <!-- SAT Info -->
+                                    <div class="d-flex mb-1" t-if="record.erp_pr_id.raw_value">
+                                        <span class="me-auto o_form_label">
+                                            <i class="fa fa-file-text-o"/> SAT No
+                                        </span>
+                                        <span class="fw-bold">
+                                            <field name="erp_pr_id"/>
+                                        </span>
+                                    </div>
+                                    
+                                    <!-- Target Price -->
+                                    <div class="d-flex mb-1" t-if="record.target_price.raw_value">
+                                        <span class="me-auto o_form_label">
+                                            <i class="fa fa-target"/> Hedef Fiyat
+                                        </span>
+                                        <span class="text-warning fw-bold">
+                                            <field name="target_price" widget="monetary" options="{'currency_field': 'currency_id'}"/>
+                                        </span>
+                                    </div>
+                                    
+                                    <!-- End Date -->
+                                    <div class="d-flex mb-1" t-if="record.end_date.raw_value">
+                                        <span class="me-auto o_form_label">
+                                            <i class="fa fa-calendar"/> Bitiş
+                                        </span>
+                                        <span>
+                                            <field name="end_date" widget="datetime" options="{'format': 'dd-MM-yyyy HH:mm'}"/>
+                                        </span>
+                                    </div>
+                                    
+                                    <!-- Winning Result -->
+                                    <div class="d-flex mb-1" t-if="record.winning_result_id.raw_value">
+                                        <span class="me-auto text-success o_form_label">
+                                            <i class="fa fa-trophy"/> Kazanan
+                                        </span>
+                                        <span class="text-success fw-bold">
+                                            <field name="winning_result_id" options="{'no_open': True}"/>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Progress Bar -->
+                            <div class="mb-3 ms-2 me-2">
+                                <div class="progress" style="height: 8px;">
+                                    <div class="progress-bar"
+                                        t-attf-class="progress-bar #{record.state.raw_value == null or record.state.raw_value == undefined ? 'bg-danger bg-opacity-50' :
+                                            record.state.raw_value == 'draft' ? 'bg-secondary bg-opacity-50' :
+                                            record.state.raw_value == 'first_tender_round' ? 'bg-info bg-opacity-50' :
+                                            record.state.raw_value == 'target_price_set' ? 'bg-warning bg-opacity-50' :
+                                            record.state.raw_value == 'second_tender_round' ? 'bg-primary bg-opacity-50' :
+                                            record.state.raw_value == 'evaluation' ? 'bg-warning bg-opacity-50' :
+                                            record.state.raw_value == 'approval_pending' ? 'bg-info bg-opacity-50' :
+                                            record.state.raw_value == 'approved' ? 'bg-success bg-opacity-50' :
+                                            record.state.raw_value == 'done' ? 'bg-success bg-opacity-50' :
+                                            'bg-danger bg-opacity-50'}"
+                                        t-attf-style="width: #{record.state.raw_value == null or record.state.raw_value == undefined ? '0' :
+                                            record.state.raw_value == 'draft' ? '12' :
+                                            record.state.raw_value == 'first_tender_round' ? '25' :
+                                            record.state.raw_value == 'target_price_set' ? '37' :
+                                            record.state.raw_value == 'second_tender_round' ? '50' :
+                                            record.state.raw_value == 'evaluation' ? '62' :
+                                            record.state.raw_value == 'approval_pending' ? '75' :
+                                            record.state.raw_value == 'approved' ? '87' :
+                                            record.state.raw_value == 'done' ? '100' : '0'}%">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Footer Stats -->
+                            <div name="card_content" class="row mt-auto">
+                                <a name="action_view_tender_results" type="object" 
+                                class="d-flex flex-column align-items-center col-4 border-end">
+                                    <span class="fw-bold text-primary">
+                                        <t t-esc="record.invited_partners.raw_value.length"/>
+                                    </span>
+                                    <span class="text-muted text-truncate mw-100" title="Davet Edilen">Davet Edilen</span>
+                                </a>
+                                
+                                <div class="d-flex flex-column align-items-center col-4 border-end">
+                                    <span class="fw-bold text-success">
+                                        <field name="tender_result_count"/>
+                                    </span>
+                                    <span class="text-muted text-truncate mw-100" title="Teklif Veren">Teklif Veren</span>
+                                </div>
+                                
+                                <div class="d-flex flex-column align-items-center col-4">
+                                    <span class="fw-bold text-warning">
+                                        <t t-if="record.target_price.raw_value">
+                                            <i class="fa fa-check"/>
+                                        </t>
+                                        <t t-else="">
+                                            <i class="fa fa-minus"/>
+                                        </t>
+                                    </span>
+                                    <span class="text-muted text-truncate mw-100" title="Hedef Fiyat">Hedef Fiyat</span>
+                                </div>
+                            </div>
+
+                            <!-- Activity indicator at bottom -->
+                            <div class="position-absolute bottom-0 end-0 me-2 mb-2">
+                                <field name="activity_ids" widget="kanban_activity"/>
+                            </div>
+                        </t>
+                    </templates>
+                </kanban>
+            </field>
+        </record>
+
+<!-- 
+        <record id="ak_tender_view_kanban" model="ir.ui.view">
+            <field name="name">ak.tender.kanban</field>
+            <field name="model">ak.tender</field>
+            <field name="arch" type="xml">
                 <kanban default_group_by="state">
                     <field name="state"/>
                     <field name="name"/>
@@ -274,7 +436,7 @@
                     </templates>
                 </kanban>
             </field>
-        </record>
+        </record> -->
 
         <record id="ak_tender_action" model="ir.actions.act_window">
             <field name="name">İhaleler</field>

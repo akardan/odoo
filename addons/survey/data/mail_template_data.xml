@@ -24,6 +24,9 @@
                 <t t-if="object.survey_id.certification">
                     Start Certification
                 </t>
+                <t t-elif="object.survey_id.survey_type == 'assessment'">
+                    Start Exam
+                </t>
                 <t t-else="">
                     Start Survey
                 </t>

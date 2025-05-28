@@ -6,7 +6,10 @@ from odoo.exceptions import ValidationError
 class AkTenderResult(models.Model):
     _name = 'ak.tender.result'
     _description = 'İhale Teklif Sonucu'
-    _order = 'total_price asc, offer_date desc' # En düşük fiyata ve en yeni tarihe göre sırala
+    _rec_name = 'partner_id'
+    _order = 'sequence, total_price asc, offer_date desc' # En düşük fiyata ve en yeni tarihe göre sırala
+
+    sequence = fields.Integer(string='Sıra', default=10)
 
     tender_id = fields.Many2one('ak.tender', string='İhale', required=True, ondelete='cascade')
     
@@ -57,6 +60,15 @@ class AkTenderResult(models.Model):
 
     purchase_order_id = fields.Many2one('purchase.order', string='Oluşturulan SAS', readonly=True, copy=False,
                                         help="Bu teklif sonucunda oluşturulan Satın Alma Siparişi.")
+    is_readonly = fields.Boolean(compute='_compute_is_readonly', store=False)
+    
+
+    @api.depends('tender_id.state', 'tender_round')
+    def _compute_is_readonly(self):
+        for record in self:
+            record.is_readonly = False
+            if record.tender_id.state == 'second_tender_round' and record.tender_round == 'first':
+                record.is_readonly = True
     
     @api.depends('result_lines.price_subtotal')
     def _compute_total_price(self):
@@ -66,6 +78,13 @@ class AkTenderResult(models.Model):
     # Method to create result lines for all tender lines when a new result is created
     @api.model
     def create(self, vals):
+        if 'tender_id' in vals:
+            tender = self.env['ak.tender'].browse(vals['tender_id'])
+            if tender.state == 'second_tender_round':
+                vals['tender_round'] = 'second'
+            else:
+                vals['tender_round'] = 'first'
+        
         result = super(AkTenderResult, self).create(vals)
         # Create result lines for each tender line
         if result.tender_id:
@@ -112,5 +131,18 @@ class AkTenderResult(models.Model):
                 raise ValidationError(_('%d adet eksik kalem oluşturuldu.') % created_count)
             else:
                 raise ValidationError(_('Tüm kalemler zaten mevcut.'))
-        
-    
+
+    def action_view_offer_items(self):
+        self.ensure_one()
+        if not self.result_lines:
+            raise ValidationError(_("Bu teklif sonucuna ait kalem bulunamadı."))
+
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Teklif Kalemleri'),
+            'res_model': 'ak.tender.result',
+            'res_id': self.id,
+            'view_mode': 'form',
+            'views': [(False, 'form')],
+            'target': 'new',
+        }

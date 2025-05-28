@@ -1,24 +1,29 @@
 <odoo>
     <data>
-<!--
-        <template id="listing">
-          <ul>
-            <li t-foreach="objects" t-as="object">
-              <a t-attf-href="#{ root }/objects/#{ object.id }">
-                <t t-esc="object.display_name"/>
-              </a>
-            </li>
-          </ul>
+
+        <template id="survey_fill_header_inherit" inherit_id="survey.survey_fill_header" name="Survey Fill Header Inherit">
+            <xpath expr="//div[hasclass('o_survey_timer')]/h1" position="inside">
+                <i class="fa fa-clock-o me-2"></i>
+            </xpath>
         </template>
-        <template id="object">
-          <h1><t t-esc="object.display_name"/></h1>
-          <dl>
-            <t t-foreach="object._fields" t-as="field">
-              <dt><t t-esc="field"/></dt>
-              <dd><t t-esc="object[field]"/></dd>
-            </t>
-          </dl>
+
+        <template id="survey_progression_inherit" inherit_id="survey.survey_progression" name="Survey Progression Inherit">
+            <xpath expr="//t[@t-else][span[@t-esc='page_number']]" position="replace">
+                <t t-else="">
+                    Soru <span class="o_survey_progress_number" t-esc="page_number + 1"/> / <span t-esc="len(page_ids)"/>
+                </t>
+            </xpath>
         </template>
--->
+        
+        <template id="brand_promotion_message_inherit" inherit_id="web.brand_promotion_message" name="Brand Promotion Message Inherit">
+            <xpath expr="//t[@t-set='odoo_logo']" position="replace">
+                <t t-set="odoo_logo">
+                    <a target="_blank" href="https://kardan.digital" class="badge text-bg-light">
+                        <span class="o_logo_text">KARDAN.DX</span>
+                    </a>
+                </t>
+            </xpath>
+        </template>
+
     </data>
 </odoo>

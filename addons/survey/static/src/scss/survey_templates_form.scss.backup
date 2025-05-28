@@ -25,32 +25,17 @@ $dynamic-text-color: if(lightness($body-bg) > 50%, $gray-900, $gray-100);
     background: no-repeat fixed center;
     background-size: cover;
     color: $dynamic-text-color !important;
-    position: relative;
-    
-    &::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.7) 100%);
-        z-index: -1;
-    }
-    
     .text-muted {
-        opacity: 0.8;
+        opacity: 0.7;
         color: $dynamic-text-color !important;
     }
-    
     &.o_survey_background_shadow {
-        box-shadow: inset 0 0 0 10000px rgba(255,255,255,.8);
+        box-shadow: inset 0 0 0 10000px rgba(255,255,255,.7);
         color: $gray-900 !important;
         .text-muted {
             color: $gray-900 !important;
         }
     }
-    
     &.o_survey_background_transition {
         box-shadow: inset 0 0 0 10000px rgba(255,255,255,1);
     }
@@ -58,143 +43,6 @@ $dynamic-text-color: if(lightness($body-bg) > 50%, $gray-900, $gray-100);
 
 .o_survey_wrap {
     min-height: 100%;
-}
-
-/* Enhanced Survey Start Screen */
-.o_survey_start {
-    max-width: 800px;
-    margin: 0 auto;
-    padding: 2.5rem;
-    background-color: white;
-    border-radius: 8px !important;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
-    /* Remove border from container to avoid nested borders */
-    border: none !important;
-    
-    h1, h2 {
-        font-weight: 700;
-        margin-bottom: 1.5rem;
-        color: $gray-900;
-    }
-    
-    .btn-primary, .btn-primary.disabled, button[type="submit"] {
-        background: none !important;
-        background-color: #00529B !important; /* Nutricia blue */
-        background-image: linear-gradient(to right, #00529B, #0066c2) !important; /* Pill-like gradient */
-        border: none !important;
-        box-shadow: 0 4px 8px rgba(0, 82, 155, 0.4) !important; /* Enhanced shadow for 3D effect */
-        transition: all 0.2s ease !important;
-        font-weight: 500 !important;
-        letter-spacing: 0.3px !important;
-        padding: 0.8rem 3rem !important; /* Wider padding for pill shape */
-        border-radius: 50px !important; /* Full rounded corners for pill shape */
-        font-size: 1.05rem !important;
-        transform: rotate(-1deg) !important; /* Slight tilt like a medicine pill */
-        
-        &:hover:not(.disabled) {
-            background-color: #004785 !important; /* Darker Nutricia blue */
-            background-image: linear-gradient(to right, #004785, #0059a9) !important; /* Darker gradient on hover */
-            box-shadow: 0 5px 10px rgba(0, 82, 155, 0.5) !important; /* Enhanced shadow on hover */
-            transform: rotate(-1deg) scale(1.03) !important; /* Slight grow effect on hover */
-        }
-        
-        &:active:not(.disabled) {
-            background-color: #003d70 !important; /* Even darker Nutricia blue */
-            background-image: linear-gradient(to right, #003d70, #004c8f) !important; /* Even darker gradient when active */
-            box-shadow: 0 2px 5px rgba(0, 82, 155, 0.4) !important;
-            transform: rotate(-1deg) scale(0.98) !important; /* Slight shrink effect when pressed */
-        }
-        
-        &.disabled {
-            opacity: 0.95 !important;
-            cursor: pointer !important;
-            background: none !important;
-            background-color: #00529B !important; /* Nutricia blue */
-            background-image: linear-gradient(to right, #00529B, #0066c2) !important; /* Maintain gradient even when disabled */
-        }
-    }
-    
-    .oe_no_empty {
-        padding: 1.2rem 1.5rem !important; /* Match the padding of the paragraph element */
-        background-color: #f5f9fc !important; /* Very light Nutricia blue */
-        border-radius: 4px !important;
-        font-size: 1.05rem !important; /* Larger welcome text */
-        line-height: 1.7 !important;
-        color: #333333 !important;
-        margin-bottom: 2rem !important;
-        border: none !important; /* Remove border completely */
-        box-shadow: none !important;
-        text-align: left !important; /* Ensure left alignment */
-    }
-    
-    p {
-        background-color: #f5f9fc !important; /* Very light Nutricia blue */
-        border: none !important; /* Remove border completely */
-        padding: 1.2rem 1.5rem !important;
-        margin-bottom: 1.8rem !important;
-        border-radius: 4px !important;
-        font-size: 1.05rem !important;
-        
-        .text-danger {
-            color: #e63946 !important; /* Nutricia red */
-            font-weight: 500 !important;
-            font-size: 1.1rem !important;
-        }
-    }
-    
-    .o_survey_enter {
-        color: $gray-600 !important;
-        font-style: italic;
-    }
-    
-    /* Instructions styling */
-    ul {
-        margin-bottom: 1.8rem !important;
-        padding-left: 1.2rem !important;
-        
-        li {
-            margin-bottom: 0.8rem !important;
-            line-height: 1.6 !important;
-            font-size: 1.05rem !important;
-            color: #333333 !important;
-            position: relative !important;
-            list-style-type: none !important;
-            
-            &::before {
-                content: "•" !important;
-                color: #00529B !important; /* Nutricia blue */
-                font-weight: bold !important;
-                display: inline-block !important;
-                width: 1em !important;
-                margin-left: -1em !important;
-            }
-        }
-    }
-    
-    /* Start button specific styling */
-    .btn-lg {
-        margin-top: 1rem !important;
-        min-width: 200px !important;
-    }
-}
-
-/* Responsive adjustments */
-@media (max-width: 767.98px) {
-    .o_survey_start {
-        margin: 1rem;
-        padding: 1.5rem;
-        border-radius: 12px;
-        
-        .btn-primary {
-            width: 100%;
-            padding: 0.8rem 1.2rem;
-        }
-        
-        .oe_no_empty {
-            padding: 1.2rem;
-            font-size: 1rem;
-        }
-    }
 }
 
 // Safari(v 7.1+) specific fix (min-height given above doesn't work with safari)
@@ -226,26 +74,10 @@ _::-webkit-full-page-media, _:future, :root .o_survey_wrap {
 
 .o_survey_timer {
     min-height: 1.2rem;
-    font-weight: 600;
-    font-size: 1.1rem;
-    
-    i {
-        color: $primary;
-        margin-right: 0.5rem;
-    }
 }
 
 .o_survey_brand_message {
-    background-color: rgba(255,255,255,0.8);
-    padding: 0.5rem 1rem;
-    border-radius: 30px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
-    font-size: 0.9rem;
-    
-    img {
-        max-height: 20px;
-        vertical-align: middle;
-    }
+    background-color: rgba(255,255,255,0.7);
 }
 
 .o_survey_form, .o_survey_print, .o_survey_session_manage, .o_survey_quick_access {
@@ -272,25 +104,15 @@ _::-webkit-full-page-media, _:future, :root .o_survey_wrap {
     .o_survey_question_datetime,
     .o_survey_question_numerical_box {
         border: 0px;
-        border-bottom: 2px solid $primary;
-        padding: 0.8rem 0.5rem;
-        transition: all 0.3s ease;
-        background-color: rgba(255,255,255,0.5);
-        border-radius: 4px 4px 0 0;
-        
+        border-bottom: 1px solid $primary;
         &:disabled {
             color: black !important;
             border-color: $gray-600;
             border-bottom: 1px solid $gray-600;
-            background-color: rgba(0,0,0,0.03);
         }
-        
         &:focus {
             box-shadow: none;
-            background-color: rgba(255,255,255,0.9);
-            border-bottom: 2px solid darken($primary, 10%);
         }
-        
         .o_survey_background_shadow & {
             color: $gray-900 !important;
         }
@@ -310,21 +132,16 @@ _::-webkit-full-page-media, _:future, :root .o_survey_wrap {
     }
 
     .o_survey_choice_btn {
-        transition: all 0.3s ease;
+        transition: background-color 0.3s ease;
         flex: 1 0 300px;
         color: $primary;
-        border-radius: 8px;
-        margin-bottom: 0.5rem;
 
         span {
             line-height: 25px;
-            font-size: 1.05rem;
         }
-        
         i {
             top: 0px;
-            font-size: 1.2rem;
-            transition: transform 0.2s ease;
+            font-size: large;
         }
 
         &.o_survey_selected i.fa-circle-thin,
@@ -333,38 +150,22 @@ _::-webkit-full-page-media, _:future, :root .o_survey_wrap {
         &:not(.o_survey_selected) i.fa-check-square {
             display: none;
         }
-        
-        &.o_survey_selected i {
-            transform: scale(1.2);
-            color: darken($primary, 10%);
-        }
     }
 
     input::placeholder, textarea::placeholder {
         font-weight: 300;
-        font-style: italic;
-        color: $gray-500;
     }
 
     .o_survey_question_matrix {
-        border-collapse: separate;
-        border-spacing: 3px;
-        
         td {
             min-width: 100px;
-            transition: all 0.2s ease;
-            border-radius: 6px;
-            
             i {
                 font-size: 22px;
                 display: none;
-                transition: transform 0.2s ease;
-                
                 &.o_survey_matrix_empty_checkbox {
                     display: inline;
                 }
             }
-            
             .o_survey_choice_key {
                 left: 10px;
                 right: auto;
@@ -375,50 +176,28 @@ _::-webkit-full-page-media, _:future, :root .o_survey_wrap {
             }
 
             &.o_survey_selected {
-                transform: scale(1.03);
-                
                 i {
                     display: inline;
-                    transform: scale(1.1);
-                    color: darken($primary, 5%);
-                    
                     &.o_survey_matrix_empty_checkbox {
                         display: none;
                     }
                 }
             }
         }
-        
         thead {
-            th {
-                padding: 0.8rem 1rem;
-                font-weight: 600;
-                letter-spacing: 0.5px;
-                
-                &:first-child {
-                    border-top-left-radius: 8px;
-                }
-                &:last-child {
-                    border-top-right-radius: 8px;
-                }
+            th:first-child {
+                border-top-left-radius: .25rem;
+            }
+            th:last-child {
+                border-top-right-radius: .25rem;
             }
         }
-        
-        tbody {
-            tr {
-                th {
-                    padding: 0.8rem 1rem;
-                    font-weight: 500;
-                }
-                
-                &:last-child {
-                    th {
-                        border-bottom-left-radius: 8px;
-                    }
-                    td:last-child {
-                        border-bottom-right-radius: 8px;
-                    }
-                }
+        tbody tr:last-child {
+            th {
+                border-bottom-left-radius: .25rem;
+            }
+            td:last-child {
+                border-bottom-right-radius: .25rem;
             }
         }
     }
@@ -437,23 +216,9 @@ _::-webkit-full-page-media, _:future, :root .o_survey_wrap {
     .o_survey_question_matrix {
         th {
             background-color: $primary;
-            color: white;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
         }
         td {
-            background-color: rgba($primary, 0.1);
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-            
-            &:hover {
-                background-color: rgba($primary, 0.25);
-                transform: translateY(-2px);
-                box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
-            }
-            
-            &.o_survey_selected {
-                background-color: rgba($primary, 0.3);
-                box-shadow: 0 3px 10px rgba($primary, 0.2);
-            }
+            background-color: rgba($primary, 0.2);
         }
     }
 }
@@ -467,22 +232,15 @@ _::-webkit-full-page-media, _:future, :root .o_survey_wrap {
 
     .o_survey_choice_btn {
         cursor: pointer;
-        background-color: rgba($primary, 0.08);
+        background-color: rgba($primary, 0.1);
         box-shadow: $primary 0px 0px 0px 1px;
-        border-radius: 8px;
-        transition: all 0.2s ease;
-        padding: 1rem 1.2rem;
-        margin-bottom: 0.8rem;
 
         &.o_survey_selected {
             box-shadow: $primary 0px 0px 0px 2px;
-            background-color: rgba($primary, 0.15);
-            transform: translateY(-2px);
         }
 
         &:hover {
-            background-color: rgba($primary, 0.2);
-            transform: translateY(-1px);
+            background-color: rgba($primary, 0.3);
             .o_survey_choice_key span.o_survey_key {
                 opacity: 1;
             }
@@ -493,58 +251,39 @@ _::-webkit-full-page-media, _:future, :root .o_survey_wrap {
         max-width: 95%;
         max-height: 60vh;
         cursor: zoom-in;
-        border-radius: 8px;
-        transition: all 0.3s ease;
-        
         &:hover {
             box-sizing: border-box;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-            transform: scale(1.02);
+            box-shadow: 0 0 5px 2px grey;
         }
     }
 
     .o_survey_choice_key {
-        width: 28px;
-        height: 28px;
+        width: 25px;
+        height: 25px;
         border: 1px solid $primary;
-        border-radius: 50%;
-        background-color: rgba($primary, 0.05);
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-        
         span {
             font-size: smaller;
             top: -1px;
-            font-weight: 600;
-            
             &.o_survey_key {
-                right: 24px;
+                right: 21px;
                 border: 1px solid $primary;
                 border-right: 0px;
-                height: 28px;
-                transition: all 0.4s ease;
+                height: 25px;
+                transition: opacity 0.4s ease;
                 white-space: nowrap;
                 opacity: 0;
-                border-radius: 14px 0 0 14px;
-                background-color: rgba($primary, 0.05);
-                padding-left: 8px;
-                
                 span {
-                    top: -1px;
-                    font-weight: 500;
+                    top: -2px;
                 }
             }
         }
     }
 
     .o_survey_question_matrix td:hover {
-        background-color: rgba($primary, 0.25);
+        background-color: rgba($primary, 0.5);
         cursor: pointer;
-        transform: translateY(-2px);
-        box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
-        
         .o_survey_choice_key span.o_survey_key {
             opacity: 1;
-            transform: translateX(-5px);
         }
     }
 }
@@ -671,12 +410,6 @@ _::-webkit-full-page-media, _:future, :root .o_survey_wrap {
 
     .o_survey_session_copy {
         cursor: pointer;
-        transition: all 0.2s ease;
-        
-        &:hover {
-            color: $primary;
-            transform: scale(1.05);
-        }
     }
 }
 
@@ -783,41 +516,14 @@ _::-webkit-full-page-media, _:future, :root .o_survey_wrap {
         height: 90%;
         width: 90%;
         max-width: none !important;
-        
         .modal-content {
             height: 100%;
-            border-radius: 12px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-            border: none;
-            
-            .modal-header {
-                background-color: $gray-100;
-                border-bottom: 1px solid $gray-200;
-                border-radius: 12px 12px 0 0;
-                
-                .close {
-                    font-size: 1.5rem;
-                    opacity: 0.8;
-                    transition: all 0.2s ease;
-                    
-                    &:hover {
-                        opacity: 1;
-                        transform: scale(1.1);
-                    }
-                }
-            }
-            
             .o_survey_img_zoom_body {
                 max-height: 100%;
                 overflow: auto;
-                padding: 1.5rem;
-                background-color: $white;
-                
                 img {
                     max-width: 100%;
                     max-height: 100%;
-                    border-radius: 8px;
-                    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
                 }
             }
         }

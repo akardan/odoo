@@ -172,6 +172,9 @@
                         <t t-if="survey.certification">
                             Start Certification
                         </t>
+                        <t t-elif="survey.survey_type == 'assessment'">
+                            Start Exam
+                        </t>
                         <t t-else="">
                             Start Survey
                         </t>
