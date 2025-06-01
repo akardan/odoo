@@ -1,0 +1,42 @@
+<odoo>
+    <data>
+        <record id="survey_exam_features_form_view_inherit" model="ir.ui.view">
+            <field name="name">survey.survey.exam.features.form.inherit</field>
+            <field name="model">survey.survey</field>
+            <field name="inherit_id" ref="survey.survey_survey_view_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//group[@name='scoring']" position="after">
+                    <group string="Exam Security Features &amp; Penalties" invisible="survey_type != 'assessment'">
+                        <label for="full_screen_mode"/>
+                        <div class="o_row">
+                            <field name="full_screen_mode" nolabel="1"/>
+                            <field name="penalty_fullscreen_exit" nolabel="1" placeholder="Penalty Points"/>
+                        </div>
+                        <label for="detect_tab_switching"/>
+                        <div class="o_row">
+                            <field name="detect_tab_switching" nolabel="1"/>
+                            <field name="penalty_tab_switch" nolabel="1" placeholder="Penalty Points"/>
+                        </div>
+                        <label for="disable_dev_tools"/>
+                        <div class="o_row">
+                            <field name="disable_dev_tools" nolabel="1"/>
+                            <field name="penalty_devtools_attempt" nolabel="1" placeholder="Penalty Points"/>
+                        </div>
+                        <label for="disable_print_screen"/>
+                        <div class="o_row">
+                            <field name="disable_print_screen" nolabel="1"/>
+                            <field name="penalty_print_screen_attempt" nolabel="1" placeholder="Penalty Points"/>
+                        </div>
+                        <separator string="Other Security Settings"/>
+                        <field name="session_timeout_minutes"/>
+                        <field name="disable_copy_paste"/>
+                    </group>
+                    <group string="Global Violation Limits" invisible="survey_type != 'assessment'">
+                        <field name="max_total_violations_allowed"/>
+                        <field name="max_total_penalty_points"/>
+                    </group>
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo>

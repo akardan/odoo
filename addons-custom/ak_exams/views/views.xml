@@ -91,5 +91,50 @@
     </record>
 
 
+    <!-- Survey User Input views update for security violations -->
+    <record id="survey_user_input_view_form_inherit_security" model="ir.ui.view">
+        <field name="name">survey.user_input.form.inherit.security</field>
+        <field name="model">survey.user_input</field>
+        <field name="inherit_id" ref="survey.survey_user_input_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet" position="inside">
+                <notebook>
+                    <page string="Security Violations" name="security_violations">
+                        <group>
+                            <group string="Violation Counts">
+                                <field name="fullscreen_violation_count"/>
+                                <field name="tab_switch_violation_count"/>
+                                <field name="devtools_attempt_count"/>
+                                <field name="print_screen_attempt_count"/>
+                            </group>
+                            <group string="Totals &amp; Status">
+                                <field name="total_security_violations"/>
+                                <field name="accumulated_penalty_points"/>
+                                <field name="is_terminated"/>
+                            </group>
+                        </group>
+                    </page>
+                </notebook>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="survey_user_input_view_tree_inherit_security" model="ir.ui.view">
+        <field name="name">survey.user_input.tree.inherit.security</field>
+        <field name="model">survey.user_input</field>
+        <field name="inherit_id" ref="survey.survey_user_input_view_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='state']" position="after">
+                <field name="is_terminated" optional="show"/>
+                <field name="total_security_violations" optional="show"/>
+                <field name="accumulated_penalty_points" optional="show"/>
+                <field name="fullscreen_violation_count" optional="hide"/>
+                <field name="tab_switch_violation_count" optional="hide"/>
+                <field name="devtools_attempt_count" optional="hide"/>
+                <field name="print_screen_attempt_count" optional="hide"/>
+            </xpath>
+        </field>
+    </record>
+
   </data>
 </odoo>

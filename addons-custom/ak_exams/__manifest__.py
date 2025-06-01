@@ -15,6 +15,8 @@ Exam Management System for customers that isolates based on company
 
     'category': 'Marketing/Surveys',
     'version': '18.0.1.0',
+        
+    'sequence': -225,
 
     # any module necessary for this one to work correctly
     'depends': [
@@ -22,6 +24,7 @@ Exam Management System for customers that isolates based on company
         'survey',
         'crm',
         'mail',
+        'website', # Added website dependency
     ],
 
     # always loaded
@@ -29,10 +32,13 @@ Exam Management System for customers that isolates based on company
         'security/survey_security.xml',
         'views/views.xml',
         'views/templates.xml',
+        'views/survey_exam_features_view.xml',
+        'views/survey_full_screen_template.xml',
     ],
     'assets': {
         'web.assets_frontend': [
             'ak_exams/static/src/scss/ak_exams_survey.scss',
+            'ak_exams/static/src/js/survey_security_minimal.js',
         ],
     },
     'installable': True,

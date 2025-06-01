@@ -68,3 +68,79 @@
         }
     }
 }
+
+/* Security-related CSS for exams */
+.o_survey_form[data-disable-copy-paste="true"] {
+    /* Disable text selection */
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    
+    /* Prevent dragging of content */
+    -webkit-user-drag: none;
+    -khtml-user-drag: none;
+    -moz-user-drag: none;
+    -o-user-drag: none;
+    
+    /* Make sure input fields are still selectable */
+    input, textarea {
+        -webkit-user-select: text;
+        -moz-user-select: text;
+        -ms-user-select: text;
+        user-select: text;
+    }
+    
+    /* Prevent image dragging */
+    img {
+        pointer-events: none;
+    }
+}
+
+/* Fullscreen mode styling */
+.o_survey_form[data-full-screen-mode="true"] {
+    /* Make sure content fills the screen in fullscreen mode */
+    &:fullscreen, &:-webkit-full-screen, &:-moz-full-screen, &:-ms-fullscreen {
+        width: 100vw;
+        height: 100vh;
+        overflow-y: auto;
+        background-color: white;
+        padding: 20px;
+    }
+    
+    /* Add a warning banner when not in fullscreen */
+    &:not(:fullscreen):not(:-webkit-full-screen):not(:-moz-full-screen):not(:-ms-fullscreen) {
+        &::before {
+            content: "Please return to fullscreen mode to continue the exam";
+            display: block;
+            background-color: #dc3545;
+            color: white;
+            text-align: center;
+            padding: 10px;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+    }
+}
+
+/* Security-related CSS for exams */
+.o_survey_nocopy {
+    /* Disable text selection only */
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    
+    /* Make sure input fields are still selectable */
+    input, textarea {
+        -webkit-user-select: text;
+        -moz-user-select: text;
+        -ms-user-select: text;
+        user-select: text;
+    }
+}

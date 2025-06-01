@@ -1,0 +1,16 @@
+<odoo>
+    <data>
+        <template id="survey_full_screen_form" inherit_id="survey.survey_fill_form" customize_show="True" name="Survey Full Screen Form">
+            <xpath expr="//form" position="attributes">
+                <attribute name="t-attf-class">o_survey_security {{ survey.disable_copy_paste and 'o_survey_nocopy' or '' }}</attribute>
+                <attribute name="t-att-data-survey-id">survey.id</attribute>
+                <attribute name="t-att-data-disable-copy-paste">survey.disable_copy_paste and 'true' or 'false'</attribute>
+                <attribute name="t-att-data-full-screen-mode">survey.full_screen_mode and 'true' or 'false'</attribute>
+                <attribute name="t-att-data-detect-tab-switching">survey.detect_tab_switching and 'true' or 'false'</attribute>
+                <attribute name="t-att-data-disable-dev-tools">survey.disable_dev_tools and 'true' or 'false'</attribute>
+                <attribute name="t-att-data-disable-print-screen">survey.disable_print_screen and 'true' or 'false'</attribute>
+                <attribute name="t-att-data-access-token">answer and answer.access_token</attribute>
+            </xpath>
+        </template>
+    </data>
+</odoo>
