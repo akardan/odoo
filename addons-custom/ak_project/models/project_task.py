@@ -46,7 +46,6 @@ class ProjectTask(models.Model):
     sprint_id = fields.Many2one('project.sprint', string=_('Sprint'), group_expand='_read_group_sprint_id')
     sprint_history_ids = fields.One2many('project.task.sprint.history', 'task_id', string=_('Sprint History'))
     
-    phase_id = fields.Many2one('project.phase', "Project Phase")    
 
     def write(self, vals):
         # Eğer sprint_id değeri değişirse, geçmişe yeni bir kayıt ekle

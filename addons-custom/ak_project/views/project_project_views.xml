@@ -7,7 +7,7 @@
         <field name="mode">extension</field>
         <field name="inherit_id" ref="project.edit_project"/>
         <field name="arch" type="xml">
-            <field name="analytic_account_id" position="after">
+            <field name="name" position="after">
                 <field name="board_id" invisible="1" />                
             </field>         
             <xpath expr="//div[hasclass('oe_button_box')]"
@@ -21,32 +21,6 @@
                         </span>
                         <span class="o_stat_text">
                             Documents
-                        </span>
-                    </div>
-                </button>
-
-                <button class="oe_stat_button" name="button_phase"
-                        type="object"
-                        icon="fa-ticket">
-                    <div class="o_field_widget o_stat_info">
-                        <span class="o_stat_value">
-                            <field name="phase_count" readonly="1"/>
-                        </span>
-                        <span class="o_stat_text">
-                            Phases
-                        </span>
-                    </div>
-                </button>
-
-                <button class="oe_stat_button" name="button_issue"
-                        type="object"
-                        icon="fa-ticket">
-                    <div class="o_field_widget o_stat_info">
-                        <span class="o_stat_value">
-                            <field name="issue_count" readonly="1"/>
-                        </span>
-                        <span class="o_stat_text">
-                            Issues
                         </span>
                     </div>
                 </button>
@@ -75,7 +49,6 @@
                 <field name="team_id" domain="[('board_ids', 'in', [board_id])]" context="{'form_view_ref': 'project_team.projects_team_view_form', 'default_type_team':'project'}"/>
                 <field name="added_followers" invisible="1" />
             </field>    
-<!--            <xpath expr="//group[@name='group_tasks_managment']/setting[@id='project_milestone_setting']" position="after">-->
             <xpath expr="//setting[@id='project_milestone_setting']/field[@name='allow_milestones']" position="after">
                 <div class="o_setting_box mt-4" id="send_mail_when_the_task_is_ready_container">
                     <div class="o_setting_left_pane">
@@ -118,20 +91,6 @@
                 </group>
             </xpath>            
             <page name="settings" position="after">
-                <field name="is_rd_board" invisible="1" />
-                <page string="R&amp;D Fields" cond="invisible: not is_rd_board">
-                    <group>
-                        <group>
-                            <field name="project_group"  />                              
-                        </group>
-                        <group>
-                            <field name="project_code"   />                              
-                        </group>                        
-                    </group>
-                    <group>
-                        <field name="project_forms"  />              
-                    </group>
-                </page>
                 <page string="Team">
                     <field name="members_ids" widget="many2many">
                         <kanban quick_create="false" create="true" delete="true">
@@ -165,29 +124,17 @@
         <field name="model">project.project</field>
         <field name="inherit_id" ref="project.view_project_kanban"/>
         <field name="arch" type="xml">
-
             <field name="tag_ids" position="after">
                 <field name="board_id" invisible="1"/>
-                <field name="is_rd_board" invisible="1" />
-                <field name="project_code" />                
             </field>
-
-            <xpath expr="/kanban/templates/t/div/div/div/div/div/field[@name='tag_ids']" position="after">                    
-                <field name="project_code" cond="invisible: not is_rd_board" />
-            </xpath>
-
-            <!-- <field name="tag_ids" position="after">                    
-                <field name="project_code" />
-            </field>  -->
         </field>
     </record>
 
     <!-- projenin list viewı -->
     <record id="view_project" model="ir.ui.view">
-        <field name="name">project.project.tree</field>
+        <field name="name">project.project.form</field>
         <field name="model">project.project</field>
         <field name="inherit_id" ref="project.view_project" />
-        <field name="type">tree</field>
         <field name="arch" type="xml">
             <field name="message_needaction" position="after">
                 <field name="board_id" invisible="1" />                
@@ -198,9 +145,6 @@
             <field name="user_id" position="after">
                 <field name="department_id" />
                 <field name="team_id" />    
-                <field name="project_group"  optional="hide"/>
-                <field name="project_code"  optional="hide"/>
-                <field name="project_forms"  optional="hide"/>                            
             </field>
         </field>
     </record>     
@@ -214,9 +158,6 @@
             <field name="partner_id" position="before">
                 <field name="board_id" />
                 <field name="department_id" />
-                <field name="project_group" />
-                <field name="project_code" />
-                <field name="project_forms" />
             </field>
             <filter name="groupby_stage" position="after">
                 <filter string="Board" name="group_board_id" context="{'group_by':'board_id'}" />
@@ -282,16 +223,6 @@
         <field name="target">new</field>
         <field name="context">{"default_allow_billable": 0, 'default_board_id': active_id, 'default_privacy_visibility': 'followers', 'default_only_team_members_can_be_assigned': 1, 'default_add_the_team_members_to_the_followers': 1}</field>
     </record>    
-
-    <!-- javascript ile tüm tree listesine duplicate eklendi. aşağıdaki koda gerek kalmadı -->
-    <!-- <record id="action_server_duplicate_project_stage" model="ir.actions.server">
-        <field name="name">Duplicate</field>
-        <field name="model_id" ref="project.model_project_project_stage" />
-        <field name="binding_model_id" ref="project.model_project_project_stage" />
-        <field name="state">code</field>
-        <field name="code">action = records.copy()</field>
-    </record>     -->
-
 
     <!-- projects menüsünü kaldırmak için -->
     <record id="project.menu_projects" model="ir.ui.menu">

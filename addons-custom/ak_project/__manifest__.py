@@ -4,8 +4,10 @@
     'sequence': -200,
     'category': 'Productivity',
     'license': 'LGPL-3',
-    'author': 'Atila Kardan',
-    'maintainer': 'Kardan.DX',
+    'author': 'Kardan Digital',
+    'maintainer': 'Kardan Digital',
+    'website': 'https://kardan.digital',
+    'support': 'info@kardan.digital',
     'summary': 'Agile Project Management',
     'description': """
     Agile features for Project Management
@@ -29,14 +31,12 @@
         'views/crm_team_views.xml',
         'views/project_project_views.xml',
         'views/project_milestone_views.xml',
-        'views/project_issue_views.xml',        
         'views/project_task_views.xml',
         'views/project_team_views.xml',
         'views/project_workspace_views.xml',
         'views/project_board_views.xml',        
         'views/project_sprint_views.xml',       
         'views/project_version_views.xml',
-        'views/project_phase_views.xml',
     ],
     'assets': {
         'web.assets_backend': [

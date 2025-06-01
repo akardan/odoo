@@ -28,9 +28,6 @@ class ProjectProject(models.Model):
     document_count = fields.Integer(string='Documents',
                                     compute='_compute_document_count',
                                     help="For getting the document count")
-    issue_count = fields.Integer(string="Project issues",
-                                 help="For getting project issue count",
-                                 compute="_compute_issue_count")
         
     members_ids = fields.Many2many('res.users', 'project_user_rel', 'project_id',
                                    'user_id', 'Project Members', help="""Project's
@@ -48,18 +45,9 @@ class ProjectProject(models.Model):
     send_mail_when_the_task_is_ready = fields.Boolean("Task Reminder")
 
     task_count = fields.Integer("Task Count", compute="_compute_task_count")
-    phase_count = fields.Integer("Phases Count", compute="_compute_phase_count")
 
     # ar-ge projeleri için
-    project_group = fields.Char("Project Group", size=50)
-    project_code = fields.Char("Project Code", size=20)
-    project_forms = fields.Char("Project Forms", size=100)
-    is_rd_board = fields.Boolean(compute="_compute_is_rd_board")
 
-    @api.depends('board_id', 'board_id.is_rd_board')
-    def _compute_is_rd_board(self):
-        for record in self:
-            record.is_rd_board = record.board_id.is_rd_board
 
     def _compute_board_desc(self):
         for record in self:
@@ -70,15 +58,15 @@ class ProjectProject(models.Model):
     
     # board açıldığında board için tanımlanan stagelerin gelmesi için 
     @api.model
-    def _read_group_stage_ids(self, stages, domain, order):
+    def _read_group_stage_ids(self, stages, domain, order=None):
         search_domain = [('id', 'in', stages.ids)]
         if 'default_board_id' in self.env.context:
             search_domain = ['|', ('board_ids', '=', self.env.context['default_board_id'])] + search_domain
         else: 
             search_domain = []
 
-        stage_ids = stages._search(search_domain, order=order, access_rights_uid=SUPERUSER_ID)
-        return stages.browse(stage_ids)                
+        stage_ids = stages.sudo()._search(search_domain, order=order)
+        return stages.browse(stage_ids)
 
     def _default_stage_id(self):
         board_id = self.env.context.get('default_board_id')
@@ -107,20 +95,7 @@ class ProjectProject(models.Model):
                  ('res_id', '=', rec.id)])
             rec.document_count = len(attachment_ids)    
 
-    def button_issue(self):
-        return {
-            'type': 'ir.actions.act_window',
-            'name': 'Project Issues',
-            'view_mode': 'list,form',
-            'res_model': 'project.issue',
-            'domain': [('project_id', '=', self.id)]
-        }            
     
-    def _compute_issue_count(self):
-        for rec in self:
-            issue_id = self.env['project.issue'].search(
-                [('project_id', '=', rec.id)])
-            rec.issue_count = len(issue_id)    
 
     def button_task(self):
         return {
@@ -137,18 +112,7 @@ class ProjectProject(models.Model):
                 [('project_id', '=', rec.id)])
             rec.task_count = len(task_id)  
 
-    def button_phase(self):
-        return {
-            'type': 'ir.actions.act_window',
-            'name': 'Project Phases',
-            'view_mode': 'kanban,list,form',
-            'res_model': 'project.phase',
-            'domain': [('project_id', '=', self.id)],
-        }
 
-    def _compute_phase_count(self):
-        for rec in self:
-            rec.phase_count = self.env['project.phase'].search_count([('project_id', '=', rec.id)])
             
 
 

@@ -33,7 +33,6 @@ class ProjectBoard(models.Model):
 
     type = fields.Selection([('kanban', 'Kanban'), ('scrum', 'Scrum')], default='kanban', string='Board Type', required=True)
 
-    is_rd_board = fields.Boolean("R&D Board", default=False, help="Check this field to display the special fields of R&D projects")
 
     project_count = fields.Integer(compute='_compute_project_count')
     department_desc = fields.Char(compute='_compute_department_desc')

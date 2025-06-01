@@ -39,9 +39,8 @@
                 <attribute name="domain">[('share', '=', False), ('active', '=', True), ('id', 'in', allowed_assigned_user_ids)]</attribute>
             </field>      
             <xpath expr="//field[@name='user_ids']" position="after">
-                <field name="phase_id" domain="[('project_id', '=', project_id)]"/>
                 <field name="sprint_id"  cond="invisible: board_type =='kanban'"/>
-            </xpath>                  
+            </xpath>
             <xpath expr="//notebook/page[@name='extra_info']" position="after">
                 <page name="sprint_history" string="Sprint History"  cond="invisible: board_type =='kanban'">
                     <field name="sprint_history_ids" readonly="1">
@@ -52,10 +51,10 @@
                     </field>                    
                 </page>
             </xpath>                  
-            <xpath expr="//notebook/page[@name='sub_tasks_page']/field[@name='child_ids']/tree/field[@name='user_ids']" position="before">  
+            <xpath expr="//notebook/page[@name='sub_tasks_page']/field[@name='child_ids']/list/field[@name='user_ids']" position="before">  
                 <field name="allowed_assigned_user_ids" invisible="1" />
             </xpath>                                 
-            <xpath expr="//notebook/page[@name='sub_tasks_page']/field[@name='child_ids']/tree/field[@name='user_ids']" position="attributes">  
+            <xpath expr="//notebook/page[@name='sub_tasks_page']/field[@name='child_ids']/list/field[@name='user_ids']" position="attributes">  
                 <attribute name="domain">[('share', '=', False), ('active', '=', True), ('id', 'in', allowed_assigned_user_ids)]</attribute>
             </xpath>  
             <xpath expr="//notebook/page[@name='extra_info']" position="attributes">     
@@ -100,7 +99,6 @@
         <field name="arch" type="xml">
             <field name="user_ids" position="after">
                 <field name="project_department_id" />
-                <field name="phase_id" />
             </field>
             <field name="user_ids" position="before">
                 <field name="allowed_assigned_user_ids" invisible="1" />
@@ -114,8 +112,7 @@
             </xpath> -->
             <xpath expr="//filter[@name='stage']" position="before">
                 <filter string="Project Department" name="group_department_id" context="{'group_by':'project_department_id'}" />
-                <filter string="Project Phases" name="project_phase" context="{'group_by': 'phase_id'}"/>
-                <filter string="Sprint" name="group_by_sprint" domain="[]" context="{'group_by': 'sprint_id'}"/>                                
+                <filter string="Sprint" name="group_by_sprint" domain="[]" context="{'group_by': 'sprint_id'}"/>
             </xpath>            
 
         </field>
@@ -190,7 +187,7 @@
 
     <record id="open_project_all_tasks_view_tree" model="ir.actions.act_window.view">
         <field name="sequence" eval="10"/>
-        <field name="view_mode">tree</field>
+        <field name="view_mode">list</field>
         <field name="act_window_id" ref="project_all_tasks_action"/>
     </record>
     

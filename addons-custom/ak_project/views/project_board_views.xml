@@ -1,14 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
-    <!-- <record id="project_board_view_tree" model="ir.ui.view">
-        <field name="name">project.board.view.tree</field>
-        <field name="model">project.board</field>
-        <field name="arch" type="xml">
-            <list>
-                <field name="name"/>
-            </list>
-        </field>
-    </record>     -->
 
     <record id="project_project_stage_view_tree_for_board" model="ir.ui.view">
         <field name="name">project.project.stage.view.tree.board.ay.project</field>
@@ -99,7 +90,6 @@
                 <field name="type" />
                 <field name="stage_ids" widget="many2many_tags"/>
                 <field name="team_ids" widget="many2many_tags"/>
-                <field name="is_rd_board"  optional="hide" />
             </list>
         </field>
     </record>    
@@ -119,7 +109,6 @@
                         <field name="name" />
                         <field name="description" />
                         <field name="type" />
-                        <field name="is_rd_board" con="invisible: type == 'scrum'"/>
                         <field name="stage_ids" context="{'tree_view_ref': 'ak_project.project_project_stage_view_tree_for_board'}" domain="['|', ('board_ids', '=', False), ('board_ids.workspace_id', '=', workspace_id)]">
                             <list>
                                 <field name="name"/>                
