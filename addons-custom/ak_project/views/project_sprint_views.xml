@@ -27,7 +27,22 @@
               parent="menu_project_scrum"
               sequence="10"
               action="action_project_sprint"/>
-
+    <!-- Action for Backlog -->
+    <record id="action_project_task_backlog" model="ir.actions.act_window">
+        <field name="name">Team Backlog</field>
+        <field name="res_model">project.task</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="view_id" ref="project.view_task_kanban"/>
+        <field name="domain">[('project_id.members_ids', 'in', [uid]), ('sprint_id.sequence', '=', 0)]</field>
+        <field name="context">{'group_by': 'stage_id'}</field>
+    </record>
+    
+    <!-- Menu Item for Backlog -->
+    <menuitem id="menu_scrum_backlog"
+              name="Team Backlog"
+              parent="menu_project_scrum"
+              sequence="3"
+              action="action_project_task_backlog"/>
     <!-- Action for Scrum Board -->
     <record id="action_project_task_scrum" model="ir.actions.act_window">
         <field name="name">Scrum Board</field>
@@ -50,7 +65,7 @@
         <field name="context">{'group_by': 'stage_id'}</field>
     </record>
 
-    <!-- Menu Item for Scrum Board -->
+    <!-- Menu Item for Active Sprint -->
     <menuitem id="menu_scrum_sprint"
               name="Active Sprint"
               parent="menu_project_scrum"
@@ -95,6 +110,7 @@
             </list>
         </field>
     </record>
+    
     <!-- Form View for Project Sprint -->
     <record id="view_project_sprint_form" model="ir.ui.view">
         <field name="name">project.sprint.form</field>
@@ -114,8 +130,8 @@
                 <group>
                     <group>
                         <field name="board_id"/>
-                        <field name="team_id"/>                        
-                    </group>                
+                        <field name="team_id"/>
+                    </group>
                     <group>
                         <label for="start_date" string="Planned Date"/>
                         <div name="dates" class="o_row">
@@ -132,9 +148,7 @@
                 </group>
                 <notebook>
                     <page string="Tasks">
-<!--                        <field name="task_ids" widget="one2many_list" options="{'create': True}">-->
-                        <field name="task_ids" options="{'create': True}">
-                            <!-- Define the fields you want to display for tasks -->
+                        <field name="task_ids">
                         </field>
                     </page>
                 </notebook>

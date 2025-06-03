@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <templates xml:space="preserve">
-
+<!--
     <t t-name="ak_project.ProjectTaskIssueTypeSelectionField" t-inherit="web.SelectionField" t-inherit-mode="primary" owl="1">
         <xpath expr="//t[@t-if='props.readonly']/span" position="replace">
             <div class="d-flex align-items-center">
@@ -10,5 +10,5 @@
         </xpath>
          
     </t>
-
+-->
 </templates>

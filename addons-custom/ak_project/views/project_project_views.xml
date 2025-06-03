@@ -9,7 +9,12 @@
         <field name="arch" type="xml">
             <field name="name" position="after">
                 <field name="board_id" invisible="1" />                
-            </field>         
+            </field>
+
+            <xpath expr="//header/field[@name='stage_id']" position="attributes">
+                <attribute name="domain">[('board_ids', '=', board_id)]</attribute>
+            </xpath>
+            
             <xpath expr="//div[hasclass('oe_button_box')]"
                    position="inside">
                 <button class="oe_stat_button" name="button_document"

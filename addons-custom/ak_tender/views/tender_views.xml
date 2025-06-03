@@ -50,11 +50,13 @@
                             />
                             <!-- Onay bilgileri için yeni buton -->
                             <button
+                                name="action_show_approval_info"
+                                type="object"
                                 class="oe_stat_button"
                                 icon="fa-check-square-o"
                                 string="Onay Bilgileri"
                                 help="Bu ihale ile ilgili onay bilgileri"
-                                disabled="1"
+                                invisible="approval_user_id == False"
                             />
                             <button name="action_view_tender_results"
                                 type="object"
@@ -107,14 +109,14 @@
                                     **Önemli:** İhale başlatılmadan önce en az bir ihale kalemi tanımlanmalıdır.
                                 </p>
                             </page>
+                            <page string="Açıklama ve Ekler" name="description_attachments">
+                                <field name="description" widget="html" nolabel="1"/>
+                            </page>
                             <page string="Davetli Tedarikçiler" name="invited_partners">
                                 <field name="invited_partners" widget="many2many_tags" nolabel="1"/>
                                 <p class="oe_grey">
                                     **Önemli:** İhale başlatılmadan önce en az bir tedarikçi davet edilmelidir.
                                 </p>
-                            </page>
-                            <page string="Açıklama ve Ekler" name="description_attachments">
-                                <field name="description" widget="html" nolabel="1"/>
                             </page>
                             <page string="Teklif Sonuçları &amp; Değerlendirme" name="tender_results_evaluation">
                                 <field name="tender_results" nolabel="1" context="{'default_tender_id': id}">
@@ -123,9 +125,11 @@
                                         <field name="partner_id"/>
                                         <field name="tender_round"/>
                                         <field name="offer_date"/>
-                                        <field name="currency_id"/>
-                                        <field name="delivery_date"/>
                                         <field name="status"/>
+                                        <field name="delivery_date" optional="hide"/>
+                                        <field name="guarantee_period" optional="hide"/>    
+                                        <field name="payment_terms"/>
+                                        <field name="currency_id"/>
                                         <field name="total_price" min="Min. Teklif"/>
                                         <field name="purchase_order_id" optional="hide"/>
                                         <button name="action_view_offer_items" type="object" icon="fa-list" string="Teklif Kalemleri" class="oe_highlight"/>

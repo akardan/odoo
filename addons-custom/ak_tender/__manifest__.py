@@ -19,15 +19,17 @@
     'category': 'Purchases',
     'version': '0.5', # Versiyon yükseltildi
     'sequence': -225,
-    'depends': ['base', 'purchase', 'mail', 'contacts', 'product'],
+    'depends': ['base', 'purchase', 'stock', 'mail', 'contacts', 'product', 'portal'],
     'data': [
         'security/ir.model.access.csv',
         'views/tender_sequence.xml',
         'views/tender_result_line_views.xml',
         'views/tender_result_views.xml',
         'views/tender_views.xml',
+        'views/portal_templates.xml',
         'views/set_target_price_wizard_views.xml',
         'wizards/tender_action_wizard_views.xml',
+        'wizards/tender_approval_info_wizard_views.xml',
     ],
     'demo': [
         'demo/demo.xml',

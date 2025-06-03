@@ -47,7 +47,7 @@ class AkTenderResult(models.Model):
     total_price = fields.Monetary(string='Toplam Teklif Fiyatı', compute='_compute_total_price', store=True, currency_field='currency_id',
                                   help="Tüm kalemler için toplam teklif fiyatı.")
     
-    delivery_date = fields.Date(string='Tedarikçi Teslim Tarihi', help="Tedarikçinin taahhüt ettiği teslim tarihi.")
+    delivery_date = fields.Date(string='Teslim Tarihi', help="Tedarikçinin taahhüt ettiği teslim tarihi.")
     payment_terms = fields.Many2one('account.payment.term', string='Ödeme Koşulları', help="Tedarikçinin teklif ettiği ödeme koşulları.")
     guarantee_period = fields.Char(string='Garanti Süresi', help="Tedarikçinin sunduğu garanti süresi (örn: 2 Yıl).")
     notes = fields.Text(string='Tedarikçinin Notları', help="Tedarikçinin ek notları veya teklif detayları.")

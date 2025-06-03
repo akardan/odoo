@@ -263,7 +263,6 @@ class AkTender(models.Model):
                 'partner_id': winning_result.partner_id.id,
                 'currency_id': winning_result.currency_id.id,
                 'date_order': fields.Datetime.now(),
-                'picking_type_id': self.env.ref('stock.picking_type_in').id, # Default alım türü
                 'origin': self.code, # İhale kodunu referans olarak ekleyelim
                 'company_id': self.env.company.id,
                 'payment_term_id': winning_result.payment_terms.id if winning_result.payment_terms else False,
@@ -272,20 +271,35 @@ class AkTender(models.Model):
 
             # SAS kalemlerini oluşturma (ihale kalemlerini temel alarak)
             for tender_line in self.tender_lines:
-                # Basitlik için her ihale kalemi için kazananın birim fiyatı uygulandı.
-                # Gerçekte her ihale kalemi için ayrı birim fiyatlar gerekebilir, bu durumda tender_result_line modeli daha uygun olur.
+                # Find the corresponding result line for this tender_line in the winning_result
+                result_line_for_po = winning_result.result_lines.filtered(
+                    lambda rl: rl.tender_line_id.id == tender_line.id
+                )
+                # Ensure we found exactly one matching line, otherwise, it's an issue or needs specific handling.
+                # For now, we'll assume one is found, or default to 0.0 if not (though this indicates a data problem).
+                price_unit_for_po_line = result_line_for_po.price_unit if result_line_for_po else 0.0
+                if len(result_line_for_po) > 1:
+                    # Handle case with multiple matching lines if necessary, e.g., log a warning or raise error
+                    # For now, take the first one if multiple (though ideally this shouldn't happen)
+                    price_unit_for_po_line = result_line_for_po[0].price_unit
+
                 self.env['purchase.order.line'].create({
                     'order_id': purchase_order.id,
                     'product_id': tender_line.product_id.id,
                     'name': tender_line.name,
                     'product_qty': tender_line.quantity,
                     'product_uom': tender_line.uom_id.id,
-                    'price_unit': winning_result.price_unit, 
+                    'price_unit': price_unit_for_po_line,
                     'date_planned': tender_line.required_delivery_date,
                 })
             
             # Oluşturulan SAS'ı ihale sonucuna bağla
             winning_result.purchase_order_id = purchase_order.id
+            
+            # Confirm the Purchase Order
+            if purchase_order.state == 'draft': # Confirm only if it's still an RFQ
+                purchase_order.button_confirm()
+
             self._compute_purchase_order_count() # Akıllı buton sayacını güncelle
 
             # ERP'ye SAS gönderme işlemi burada tetiklenecek (simülasyon)
@@ -375,7 +389,7 @@ class AkTender(models.Model):
     def action_view_purchase_orders(self):
         self.ensure_one()
         purchase_orders = self.tender_results.mapped('purchase_order_id').filtered(lambda po: po.exists())
-        action = self.env.ref('purchase.purchase_rfq_action').read()[0]
+        action = self.env.ref('purchase.purchase_form_action').read()[0]
         if len(purchase_orders) > 1:
             action['domain'] = [('id', 'in', purchase_orders.ids)]
             # Update view_mode to use list instead of tree
@@ -390,11 +404,40 @@ class AkTender(models.Model):
         else:
             action = {'type': 'ir.actions.act_window_close'} # No PO to show
         return action
-        
+    
+    def action_show_approval_info(self):
+        self.ensure_one()
+        if not self.approval_user_id:
+            # Should not happen if button is correctly made invisible
+            # but as a safeguard:
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'title': _('Approval Information'),
+                    'message': _('This tender has not been approved yet.'),
+                    'sticky': False,
+                    'type': 'warning',
+                }
+            }
+
+        wizard = self.env['tender.approval.info.wizard'].create({
+            'tender_id': self.id,
+        })
+        return {
+            'name': _('Approval Information'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'tender.approval.info.wizard',
+            'view_mode': 'form',
+            'res_id': wizard.id,
+            'target': 'new', # Opens in a popup/dialog
+        }
+
     @api.model
     def _read_group_state(self, *args, **kwargs):
         """Read group customization for state field: returns all states in their original order."""
         # Return all possible states in the same order as defined in the model
         return ['draft', 'first_tender_round', 'target_price_set', 'second_tender_round',
                 'evaluation', 'approval_pending', 'approved', 'done', 'cancel']
+
 

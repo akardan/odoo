@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <record id="view_tender_approval_info_wizard_form" model="ir.ui.view">
+            <field name="name">tender.approval.info.wizard.form</field>
+            <field name="model">tender.approval.info.wizard</field>
+            <field name="arch" type="xml">
+                <form string="Approval Information">
+                    <group>
+                        <field name="approval_user_id"/>
+                        <field name="approval_date"/>
+                    </group>
+                    <footer>
+                        <button string="Close" class="btn-secondary" special="cancel" />
+                    </footer>
+                </form>
+            </field>
+        </record>
+
+    </data>
+</odoo>

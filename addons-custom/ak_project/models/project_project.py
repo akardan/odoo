@@ -1,4 +1,5 @@
 from odoo import api, fields, models, _, SUPERUSER_ID
+from odoo.osv import expression
 
 
 class ProjectProjectStage(models.Model):
@@ -59,14 +60,54 @@ class ProjectProject(models.Model):
     # board açıldığında board için tanımlanan stagelerin gelmesi için 
     @api.model
     def _read_group_stage_ids(self, stages, domain, order=None):
-        search_domain = [('id', 'in', stages.ids)]
-        if 'default_board_id' in self.env.context:
-            search_domain = ['|', ('board_ids', '=', self.env.context['default_board_id'])] + search_domain
-        else: 
-            search_domain = []
+        # Determine the board_id to filter stages by.
+        # Priority: 1. default_board_id from context.
+        #           2. Current project's board_id (if on a project form view).
+        board_to_filter_by_id = self.env.context.get('default_board_id')
+        
+        if not board_to_filter_by_id and self.env.context.get('active_model') == 'project.project' and self.env.context.get('active_id'):
+            project = self.env['project.project'].browse(self.env.context.get('active_id'))
+            if project.exists() and project.board_id:
+                board_to_filter_by_id = project.board_id.id
 
-        stage_ids = stages.sudo()._search(search_domain, order=order)
-        return stages.browse(stage_ids)
+        if board_to_filter_by_id:
+            # Construct search domain for project.project.stage based *only* on the identified board
+            # and the initial `stages` recordset (which respects field domain and security).
+            # The `domain` parameter (for project.project) is NOT used here.
+            search_domain_for_stages = [('board_ids', '=', board_to_filter_by_id)]
+            
+            if stages.ids:
+                # Ensure we select from the `stages` initially passed (respecting field's static domain, company rules, etc.)
+                # AND that they belong to the board_to_filter_by_id.
+                search_domain_for_stages = expression.AND([
+                    [('id', 'in', stages.ids)],
+                    search_domain_for_stages
+                ])
+            # If stages.ids is empty, search_domain_for_stages will just be [('board_ids', '=', board_to_filter_by_id)]
+            # which is correct if we want to find any stages for that board regardless of initial `stages` content.
+            # However, to be safer and always respect the initial `stages` set:
+            # if not stages.ids: # If initial stages is empty, no stages can match.
+            #    return self.browse([])
+            # The above `if stages.ids:` block handles this by ANDing. If stages.ids is empty,
+            # [('id', 'in', [])] effectively makes the AND result empty unless search_domain_for_stages is also empty.
+            # A simpler way if `stages` is already correctly filtered by the field domain `[('board_ids', '=', board_id)]`:
+            # search_domain_for_stages = [('id', 'in', stages.ids)] if stages.ids else [('id', '=', 0)]
+            # This was closer to a previous correct version.
+            # Let's stick to: if a board_to_filter_by_id is found, we ONLY care about its stages.
+            # The `stages` argument might be broader if the field domain is not specific enough or context changes.
+            # So, primary filter is board_to_filter_by_id.
+
+            # For group_expand, we want ALL stages for the board, regardless of the original stages set
+            # This ensures all stages defined for the board appear in the kanban view
+            effective_stages_domain = [('board_ids', '=', board_to_filter_by_id)]
+            
+            # Search in project.project.stage model, not in project.project
+            stage_ids_found = self.env['project.project.stage']._search(effective_stages_domain, order=order, limit=None)
+            return self.env['project.project.stage'].browse(stage_ids_found)
+        else:
+            # No specific board identified. To prevent showing unrelated "unassigned" stages,
+            # return an empty recordset for group_expand.
+            return self.browse([])
 
     def _default_stage_id(self):
         board_id = self.env.context.get('default_board_id')

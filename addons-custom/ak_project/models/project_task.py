@@ -1,4 +1,7 @@
 from odoo import api, fields, models, _, exceptions
+import logging
+
+_logger = logging.getLogger(__name__)
 
 
 class ProjectTask(models.Model):
@@ -84,14 +87,20 @@ class ProjectTask(models.Model):
         return super(ProjectTask, self).create(vals_list)
 
     @api.model
-    def _read_group_sprint_id(self, sprints, domain, order):
-        # sprint_ids = self.env['project.sprint'].search([('state', '!=', 'closed')], order='sequence').ids
+    def _read_group_sprint_id(self, sprints, domain, order=None):
+        """
+        Group by sprint_id - used by Kanban view to show tasks grouped by sprint
+        """
+        
+        # Get sprints that are not closed and either have no team or user is in the team
+        # Order by sequence to ensure backlog (sequence=0) comes first
         sprint_ids = self.env['project.sprint'].search([
             ('state', '!=', 'closed'),
             '|',
             ('team_id', '=', False),
             ('team_id.team_members_ids', 'in', [self.env.user.id])
         ], order='sequence').ids
+        
         return sprints.browse(sprint_ids)
     
     def _compute_document_count(self):
@@ -115,15 +124,23 @@ class ProjectTask(models.Model):
         }    
     
     @api.depends("project_id", "project_id.team_id", "project_id.members_ids")
-    def _compute_allowed_assigned_user_ids(self):      
+    def _compute_allowed_assigned_user_ids(self):
         user_obj = self.env["res.users"]
         for task in self:
             domain = []
-            if task.project_id and task.project_id.team_id and self.project_id.only_team_members_can_be_assigned: #self.env['ir.config_parameter'].sudo().get_param('project_team.only_team_members_can_be_assigned'):         
-                domain = [
-                ("user_ids", "in", task.project_id.members_ids.ids),          
-                ]
-            task.allowed_assigned_user_ids = user_obj.search(domain)  
+            # Ensure we have a valid project_id and team_id before checking only_team_members_can_be_assigned
+            if (task.project_id and task.project_id.team_id and
+                hasattr(task.project_id, 'only_team_members_can_be_assigned') and
+                task.project_id.only_team_members_can_be_assigned):
+                
+                # Ensure members_ids exists and has values before creating domain
+                if task.project_id.members_ids:
+                    domain = [
+                        ("user_ids", "in", task.project_id.members_ids.ids),
+                    ]
+            
+            # Search with the domain (empty or with constraints)
+            task.allowed_assigned_user_ids = user_obj.search(domain)
 
     def action_duplicate_subtasks(self):
         action = self.env.ref("project.action_view_task")
@@ -154,15 +171,20 @@ class ProjectTask(models.Model):
 
         else:
             result["domain"] = "[('id', 'in', " + str(task_created.ids) + ")]"
-        return result            
+        return result
+
+    def action_assign_to_me(self):
+        self.ensure_one()
+        self.write({'user_ids': [(4, self.env.user.id)]})
+        return True
       
 class ProjectTaskType(models.Model):
     _inherit = 'project.task.type'      
 
-    authorised_group = fields.Selection(selection=lambda self: self._get_project_groups(), 
+    authorised_group = fields.Selection(selection=lambda self: self._get_project_groups(),
                                         string="Groups Authorised To Change Stage")
-
+    
     def _get_project_groups(self):
         groups = self.env['res.groups'].search([('category_id', '=', self.env.ref('base.module_category_services_project').id)])
-        return [(group.name, group.name) for group in groups]    
+        return [(group.name, group.name) for group in groups]
     

@@ -7,24 +7,27 @@
             <field name="arch" type="xml">
                 <form string="Teklif Sonucu" readonly="is_readonly">
                     <sheet>
-                        <group>
+                        <group col="3">
                             <group>
                                 <field name="partner_id"/>
                                 <field name="offer_date"/>
                                 <field name="tender_round"/>
-                            </group>
-                            <group>
-                                <field name="currency_id" options="{'no_create': True}"/>
-                                <field name="total_price"/>
+                                <field name="status"/>
                                 <button name="create_missing_result_lines" string="Eksik Kalemleri Oluştur"
                                         type="object" class="oe_link" icon="fa-refresh"
                                         context="{'from_button': True}"
                                         invisible="is_readonly"/>
                             </group>
                             <group>
-                                <field name="delivery_date"/>
+                                <field name="currency_id" options="{'no_create': True}"/>
+                                <field name="total_price"/>
                                 <field name="payment_terms"/>
+                                <field name="delivery_date"/>
                                 <field name="guarantee_period"/>
+                            </group>
+                            <group string="Ek Bilgiler">
+                                <!-- <separator string="Ek Bilgiler" /> -->
+                                <field name="notes" nolabel="1" widget="html"/>
                             </group>
                         </group>
                         
@@ -43,14 +46,7 @@
                                     </list>
                                 </field>
                             </page>
-                            <page string="Notlar" name="notes">
-                                <field name="notes" nolabel="1"/>
-                            </page>
                         </notebook>
-                        
-                        <group class="oe_right">
-                            <field name="status"/>
-                        </group>
                     </sheet>
                 </form>
             </field>
@@ -66,10 +62,12 @@
                     <field name="partner_id"/>
                     <field name="tender_round"/>
                     <field name="offer_date"/>
-                    <field name="currency_id"/>
-                    <field name="total_price" sum="Toplam Teklif"/>
-                    <field name="delivery_date"/>
                     <field name="status"/>
+                    <field name="delivery_date"/>
+                    <field name="guarantee_period"/>    
+                    <field name="payment_terms"/>
+                    <field name="currency_id"/>
+                    <field name="total_price"/>
                     <field name="purchase_order_id" optional="hide"/>
                 </list>
             </field>

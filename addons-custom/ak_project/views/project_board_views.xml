@@ -101,7 +101,7 @@
         <field name="arch" type="xml">
             <form string="Boards">
                 <sheet>
-                    <widget name="web_ribbon" title="Archived" bg_color="bg-danger" cond="invisble: active"/>
+                    <widget name="web_ribbon" title="Archived" bg_color="bg-danger" invisible="not active"/>
                     <group>    
                         <field name="active" invisible="1"/>
                         <field name="allowed_workspace_ids" invisible="1" />
@@ -126,10 +126,8 @@
                         </field>
                     </group>
                 </sheet>
-                <div class="oe_chatter">
-                    <field name="message_follower_ids"  groups="base.group_user"/>
-                    <field name="message_ids"/>
-                </div>                
+                <!-- Chatter -->
+                <chatter/>                
             </form>
         </field>
     </record>      

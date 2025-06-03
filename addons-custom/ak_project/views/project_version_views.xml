@@ -51,11 +51,8 @@
                         </field>                        
                     </group>
                 </sheet>
-                <div class="oe_chatter">
-                    <field name="message_follower_ids"  groups="project.group_project_manager"/>
-                    <field name="activity_ids" widget="mail_activity" />
-                    <field name="message_ids"/>
-                </div>                    
+                <!-- Chatter -->
+                <chatter/>                   
             </form>
         </field>
     </record>

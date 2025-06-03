@@ -41,14 +41,27 @@ class ProjectBoard(models.Model):
     allowed_workspace_ids = fields.Many2many("project.workspace", compute="_compute_allowed_workspace_ids")
 
     def _compute_allowed_workspace_ids(self):
+        """
+        Compute allowed workspaces based on user permissions and department
+        Ensures domain is always valid to prevent JS errors
+        """
         workspace = self.env["project.workspace"]
         for record in self:
             domain = []
-            if self.env.user.has_group('base.group_erp_manager') == False:
-                domain = [('department_id', 'child_of', self.env.user.department_id.id)]
+            # Use record.env.user for consistency as we are iterating records
+            if not record.env.user.has_group('base.group_erp_manager'):
+                if record.env.user.department_id:
+                    # Ensure department_id exists before creating domain
+                    domain = [('department_id', 'child_of', record.env.user.department_id.id)]
+                else:
+                    # If user is not manager and has no department, restrict access
+                    domain = [('id', '=', False)]
             else:
-                domain = [(1, '=', 1)]
-            record.allowed_workspace_ids = workspace.search(domain)              
+                # Use a standard domain format for "all records"
+                domain = []
+            
+            # Search with the domain
+            record.allowed_workspace_ids = workspace.search(domain)
     
     @api.onchange('team_ids')
     def _get_team_members(self):
@@ -71,11 +84,11 @@ class ProjectBoard(models.Model):
     def _compute_project_count(self):
         for record in self:
             
-            if self.env.user.partner_id.user_has_groups('base.group_erp_manager'):
+            if self.env.user.has_group('base.group_erp_manager'):
                 domain = [('board_id', '=', record.id)]
             else:
                 domain = ['&', ('board_id', '=', record.id), '|', ('message_partner_ids', 'in', [self.env.user.partner_id.id]), ('privacy_visibility', '!=', 'followers')]
-            record.project_count = record.project_count + len(record.sudo().project_ids.search(domain))
+            record.project_count = len(record.sudo().project_ids.search(domain))
 
     def _compute_department_desc(self):
         for record in self:
@@ -106,16 +119,32 @@ class ProjectBoard(models.Model):
     
     @api.model
     def default_get(self, fields):
+        """
+        Set default values for fields when creating a new record
+        Ensures domains are always valid to prevent JS errors
+        """
         res = super(ProjectBoard, self).default_get(fields)
         
-        # yeni kayıt ekranında compute fonksiyonu çalışmıyor bu yüzden buraya da eklendi
-        workspace = self.env["project.workspace"]
-        domain = []
-        if self.env.user.has_group('base.group_erp_manager') == False:
-            domain = [('department_id', 'child_of', self.env.user.department_id.id)]
-        else:
-            domain = [(1, '=', 1)]
-        res['allowed_workspace_ids'] = workspace.search(domain)  
+        # For 'allowed_workspace_ids' default value
+        if 'allowed_workspace_ids' in fields:
+            workspace_model = self.env["project.workspace"]
+            domain_for_default = []
+            
+            if not self.env.user.has_group('base.group_erp_manager'):
+                if self.env.user.department_id:
+                    # Ensure department_id exists before creating domain
+                    domain_for_default = [('department_id', 'child_of', self.env.user.department_id.id)]
+                else:
+                    # If user is not manager and has no department, no default allowed workspaces
+                    domain_for_default = [('id', '=', False)]
+            # For managers, use empty domain to get all workspaces
+            
+            allowed_ws_records = workspace_model.search(domain_for_default)
+            # Ensure M2M default is in the format [(6, 0, [IDs])]
+            if allowed_ws_records:
+                res['allowed_workspace_ids'] = [(6, 0, allowed_ws_records.ids)]
+            else:
+                res['allowed_workspace_ids'] = [(6, 0, [])]
 
         return res
 
