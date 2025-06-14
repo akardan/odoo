@@ -78,15 +78,14 @@
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="payment_terms">Payment Terms:</label>
-                                <!-- Assuming payment_terms is a Many2one to account.payment.term -->
-                                <!-- You might need to fetch available payment terms and populate a select -->
-                                <!-- For simplicity, using a text input or pre-filling if existing_bid.payment_terms -->
-                                <input type="text" name="payment_terms_display" class="form-control" 
-                                       t-att-value="existing_bid and existing_bid.payment_terms and existing_bid.payment_terms.name or ''"
-                                       placeholder="e.g., Net 30 Days" disabled="True" title="Payment terms are usually selected from a list. This is a display for now."/>
-                                <!-- Actual submission might need a selection or a different handling if it's a Many2one -->
-                                <!-- Hidden field if you want to submit an ID, or handle text input in controller -->
-                                <input type="hidden" name="payment_terms" t-att-value="existing_bid and existing_bid.payment_terms and existing_bid.payment_terms.id or ''"/>
+                                <select name="payment_terms" class="form-control" required="required">
+                                    <option value="">Select Payment Terms</option>
+                                    <t t-foreach="payment_terms or []" t-as="term">
+                                        <option t-att-value="term.id" t-att-selected="existing_bid and existing_bid.payment_terms and existing_bid.payment_terms.id == term.id">
+                                            <t t-esc="term.name"/>
+                                        </option>
+                                    </t>
+                                </select>
                             </div>
                         </div>
                     </div>
@@ -117,9 +116,9 @@
                                         <td><span t-field="line.name"/></td>
                                         <td class="text-end"><span t-field="line.quantity"/> <span t-field="line.uom_id.name"/></td>
                                         <td>
-                                            <input type="number" t-attf-name="price_unit_line_{{line.id}}" class="form-control form-control-sm" 
+                                            <input type="number" t-attf-name="price_unit_line_{{line.id}}" class="form-control form-control-sm"
                                                    step="0.01" min="0" required="required"
-                                                   t-att-value="bid_lines_data and bid_lines_data.get(line.id) and bid_lines_data[line.id]['price_unit'] or '0.00'"
+                                                   t-att-value="bid_lines_data and bid_lines_data.get(line.id, {}).get('price_unit', '0.00')"
                                                    t-att-disabled="tender.state not in ['first_tender_round', 'second_tender_round', 'target_price_set'] or None" />
                                         </td>
                                     </tr>
@@ -166,6 +165,7 @@
                 <t t-set="url" t-value="'/my/tenders'"/>
                 <t t-set="text">View and submit bids for open tenders</t>
                 <t t-set="placeholder_count" t-value="'tender_count'"/>
+                <t t-set="icon" t-value="'/ak_tender/static/src/img/tender-bids.svg'"/>
             </t>
         </div>
     </template>

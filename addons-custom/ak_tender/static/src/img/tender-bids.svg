@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" fill="none" stroke="#6B7280" stroke-width="2">
+  <!-- Document/Contract base -->
+  <rect x="12" y="8" width="40" height="48" rx="2" stroke="#6B7280" fill="#F3F4F6"/>
+  
+  <!-- Document lines -->
+  <line x1="20" y1="20" x2="44" y2="20" stroke="#6B7280"/>
+  <line x1="20" y1="28" x2="44" y2="28" stroke="#6B7280"/>
+  <line x1="20" y1="36" x2="44" y2="36" stroke="#6B7280"/>
+  
+  <!-- Checkmark/Approval symbol -->
+  <circle cx="44" cy="44" r="8" fill="#E5E7EB" stroke="#6B7280"/>
+  <path d="M40 44L43 47L48 42" stroke="#4F46E5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

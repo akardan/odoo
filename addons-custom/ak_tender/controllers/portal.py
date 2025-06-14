@@ -97,6 +97,9 @@ class TenderPortal(CustomerPortal): # Inherit from CustomerPortal for standard l
             ('partner_id', '=', request.env.user.partner_id.id)
         ], limit=1)
         
+        # Fetch available payment terms
+        payment_terms = request.env['account.payment.term'].sudo().search([])
+        
         # Prepare values for the form, including tender lines and existing bid data if any
         form_values = {
             'tender': tender,
@@ -104,16 +107,21 @@ class TenderPortal(CustomerPortal): # Inherit from CustomerPortal for standard l
             'existing_bid': existing_bid, # This will be an ak.tender.result recordset
             'page_name': 'tender_form',
             'user': request.env.user,
+            'payment_terms': payment_terms,
             # Add other necessary values
         }
         # Add existing bid line data if an existing bid is found
         if existing_bid:
+            # Create a dictionary with tender_line_id as key for easier lookup in the template
             bid_lines_data = {}
             for line in existing_bid.result_lines:
-                bid_lines_data[line.tender_line_id.id] = {
-                    'price_unit': line.price_unit,
-                    # any other fields from ak.tender.result.line you want to prefill
-                }
+                # Make sure we have the tender line ID as the key
+                tender_line_id = line.tender_line_id.id
+                if tender_line_id:
+                    bid_lines_data[tender_line_id] = {
+                        'price_unit': line.price_unit,
+                        # any other fields from ak.tender.result.line you want to prefill
+                    }
             form_values['bid_lines_data'] = bid_lines_data
 
 
