@@ -65,7 +65,7 @@ class PaymentTransactionPaytr(models.Model):
         test_mode = '1' if transaction.provider_id.paytr_test_mode else '0'
         no_installment = '0'
         max_installment = '3'
-        currency = 'TL'
+        currency = transaction.currency_id.name
         merchant_ok_url = base_url + '/payment/paytr/return'
         merchant_fail_url = base_url + '/payment/paytr/cancel'
 

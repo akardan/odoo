@@ -51,7 +51,7 @@ class PaytrController(http.Controller):
         user_ip = request.httprequest.remote_addr
         no_installment = '0'
         max_installment = '0'
-        currency = 'TL'
+        currency = transaction.currency_id.name
         test_mode = '1' if provider.paytr_test_mode else '0'
         
         # Hash hesaplama
