@@ -26,12 +26,15 @@ This module enables random ordering of questions in Odoo 18 CE certification exa
     'depends': [
         'event',
         'website_slides',
+        'website_sale',
+        'website_sale_slides',
     ],
 
     # always loaded
     'data': [
         # 'security/ir.model.access.csv',
         'views/event_views.xml',
+        'views/website_slides_templates.xml',
     ],
     
     # 'assets': {

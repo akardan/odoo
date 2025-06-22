@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Add currency selector above the price display -->
+    <template id="course_buy_course_button_currency" inherit_id="website_sale_slides.course_buy_course_button">
+        <xpath expr="//div[hasclass('css_editable_mode_hidden')]" position="before">
+            <div class="currency_selector text-end mb-2" t-if="product_info and channel.product_id.website_published and not channel.is_member">
+                <t t-call="website_sale.pricelist_list">
+                    <t t-set="_classes" t-value="'btn-sm'"/>
+                    <t t-set="navClass" t-value="'secondary'"/>
+                </t>
+            </div>
+        </xpath>
+    </template>
+</odoo>
