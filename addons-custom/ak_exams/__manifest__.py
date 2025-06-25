@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': "ak_exams",
-    'summary': "Exam Management System for customers",
+    'summary': "Exam Management System for Exam Providers",
     'description': """
 Exam Management System for customers that isolates based on company
 Özellikler:
@@ -29,11 +29,14 @@ Exam Management System for customers that isolates based on company
 
     # always loaded
     'data': [
+        'security/ir.model.access.csv',
         'security/survey_security.xml',
+        'security/survey_question_poll_security.xml',
         'views/views.xml',
         'views/templates.xml',
         'views/survey_exam_features_view.xml',
         'views/survey_full_screen_template.xml',
+        'views/survey_question_poll_views.xml',
     ],
     'assets': {
         'web.assets_frontend': [
