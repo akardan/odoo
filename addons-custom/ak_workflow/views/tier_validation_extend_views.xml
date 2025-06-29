@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!--
+            Tier Validation Extend Views
+            This file extends views from the base_tier_validation module
+            to add workflow-specific information and actions.
+        -->
+
+        <record id="tier_review_form_inherit_workflow" model="ir.ui.view">
+            <field name="name">tier.review.form.inherit.workflow</field>
+            <field name="model">tier.review</field>
+            <field name="inherit_id" ref="base_tier_validation.tier_review_form"/>
+            <field name="arch" type="xml">
+                <group name="main" position="after">
+                    <group string="Workflow Info" name="workflow_info">
+                        <!-- Fields from tier_review_extend.py will be added here -->
+                        <field name="id" string="Placeholder for extended fields"/>
+                    </group>
+                </group>
+            </field>
+        </record>
+
+    </data>
+</odoo>

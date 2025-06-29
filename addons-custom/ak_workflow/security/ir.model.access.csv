@@ -1,0 +1,5 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_ak_workflow_state_user,ak.workflow.state user,model_ak_workflow_state,base.group_user,1,1,1,1
+access_ak_workflow_transition_user,ak.workflow.transition user,model_ak_workflow_transition,base.group_user,1,1,1,1
+access_ak_workflow_action_user,ak.workflow.action user,model_ak_workflow_action,base.group_user,1,1,1,1
+access_ak_workflow_analytics_user,ak.workflow.analytics user,model_ak_workflow_analytics,base.group_user,1,0,0,0

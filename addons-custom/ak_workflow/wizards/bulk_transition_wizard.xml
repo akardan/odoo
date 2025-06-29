@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="bulk_transition_wizard_form" model="ir.ui.view">
+        <field name="name">bulk.transition.wizard.form</field>
+        <field name="model">ak.workflow.bulk.transition.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Bulk Transition">
+                <group>
+                    <field name="transition_id" domain="[('id', 'in', context.get('available_transition_ids', []))]" required="1"/>
+                    <field name="comment"/>
+                </group>
+                <footer>
+                    <button string="Apply" name="action_apply_transition" type="object" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>
