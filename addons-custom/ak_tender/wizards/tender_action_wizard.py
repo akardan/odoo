@@ -5,22 +5,22 @@ from odoo.exceptions import UserError
 
 class TenderActionWizard(models.TransientModel):
     _name = 'ak.tender.action.wizard'
-    _description = 'İhale İşlem Sihirbazı'
+    _description = _('İhale İşlem Sihirbazı')
 
-    tender_id = fields.Many2one('ak.tender', string='İhale', required=True)
+    tender_id = fields.Many2one('ak.tender', string=_('İhale'), required=True)
     action_type = fields.Selection([
-        ('start_first_round', '1. Teklif Toplamayı Başlat'),
-        ('set_target_price', 'Hedef Fiyatı Belirle'),
-        ('start_second_round', '2. Teklif Toplamayı Başlat'),
-        ('to_evaluation', 'Değerlendirmeye Geç'),
-        ('request_approval', 'Onay Talep Et'),
-        ('approve_tender', 'İhaleyi Onayla'),
-        ('complete_tender', 'İhaleyi Tamamla'),
-        ('cancel_tender', 'İptal Et'),
-        ('set_draft', 'Taslağa Çevir'),
-    ], string='Yapılacak İşlem', required=True)
+        ('start_first_round', _('1. Teklif Toplamayı Başlat')),
+        ('set_target_price', _('Hedef Fiyatı Belirle')),
+        ('start_second_round', _('2. Teklif Toplamayı Başlat')),
+        ('to_evaluation', _('Değerlendirmeye Geç')),
+        ('request_approval', _('Onay Talep Et')),
+        ('approve_tender', _('İhaleyi Onayla')),
+        ('complete_tender', _('İhaleyi Tamamla')),
+        ('cancel_tender', _('İptal Et')),
+        ('set_draft', _('Taslağa Çevir')),
+    ], string=_('Yapılacak İşlem'), required=True)
     
-    notes = fields.Text(string='Notlar')
+    notes = fields.Text(string=_('Notlar'))
     
     def confirm_action(self):
         self.ensure_one()

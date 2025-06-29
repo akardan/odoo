@@ -5,12 +5,12 @@ from odoo.exceptions import UserError
 
 class SetTargetPriceWizard(models.TransientModel):
     _name = 'ak.tender.set.target.price.wizard'
-    _description = 'Hedef Fiyat Belirleme Sihirbazı'
+    _description = _('Hedef Fiyat Belirleme Sihirbazı')
 
-    tender_id = fields.Many2one('ak.tender', string='İhale', required=True, readonly=True)
+    tender_id = fields.Many2one('ak.tender', string=_('İhale'), required=True, readonly=True)
     currency_id = fields.Many2one('res.currency', related='tender_id.currency_id', readonly=True)
-    target_price = fields.Monetary(string='Hedef Fiyat', currency_field='currency_id', required=True,
-                                  help="Satın Alma Direktörü tarafından belirlenen hedef fiyat.")
+    target_price = fields.Monetary(string=_('Hedef Fiyat'), currency_field='currency_id', required=True,
+                                  help=_("Satın Alma Direktörü tarafından belirlenen hedef fiyat."))
     
     @api.model
     def default_get(self, fields_list):

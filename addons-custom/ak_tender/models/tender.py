@@ -7,88 +7,91 @@ from odoo.exceptions import ValidationError, UserError
 
 class AkTenderLine(models.Model):
     _name = 'ak.tender.line'
-    _description = 'İhale Kalemi'
+    _description = _('İhale Kalemi')
     _order = 'sequence, id'
 
-    sequence = fields.Integer(string='Sıra', default=10)
-    tender_id = fields.Many2one('ak.tender', string='İhale', required=True, ondelete='cascade')
-    product_id = fields.Many2one('product.product', string='Ürün/Malzeme', required=True,
-                                 help="İhale edilecek ürün veya malzeme.")
-    name = fields.Char(string='Açıklama', related='product_id.name', readonly=True)
-    quantity = fields.Float(string='Miktar', required=True, default=1.0)
-    uom_id = fields.Many2one('uom.uom', string='Birim', related='product_id.uom_id', readonly=True)
-    required_delivery_date = fields.Date(string='Gerekli Teslim Tarihi',
-                                         help="İstenen teslimat tarihi.")
+    sequence = fields.Integer(string=_('Sıra'), default=10)
+    tender_id = fields.Many2one('ak.tender', string=_('İhale'), required=True, ondelete='cascade')
+    product_id = fields.Many2one('product.product', string=_('Ürün/Malzeme'), required=True,
+                                 help=_("İhale edilecek ürün veya malzeme."))
+    name = fields.Char(string=_('Açıklama'), related='product_id.name', readonly=True)
+    quantity = fields.Float(string=_('Miktar'), required=True, default=1.0)
+    uom_id = fields.Many2one('uom.uom', string=_('Birim'), related='product_id.uom_id', readonly=True)
+    required_delivery_date = fields.Date(string=_('Gerekli Teslim Tarihi'),
+                                         help=_("İstenen teslimat tarihi."))
 
 class AkTender(models.Model):
     _name = 'ak.tender'
-    _description = 'İLKOis Tender'
-    _inherit = ['mail.thread', 'mail.activity.mixin']
+    _description = _('İLKOis Tender')
+    _inherit = ['mail.thread', 'mail.activity.mixin', 'tier.validation']
 
-    name = fields.Char(string='İhale Adı', required=True, copy=False,
-                       help="İhale sürecinin başlığı veya kısa adı.")
-    code = fields.Char(string='İhale Kodu', required=True, copy=False, readonly=True,
+    # Tier Validation Settings
+    _state_field = 'state'
+    _state_from = ['evaluation']
+    _state_to = ['approved']
+    _cancel_state = 'cancel'
+    _tier_validation_manual_config = False
+
+    name = fields.Char(string=_('İhale Adı'), required=True, copy=False,
+                       help=_("İhale sürecinin başlığı veya kısa adı."))
+    code = fields.Char(string=_('İhale Kodu'), required=True, copy=False, readonly=True,
                        default=lambda self: _('New'))
     
     # ERP Entegrasyon Alanları (Simülasyon)
-    erp_pr_id = fields.Char(string='ERP SAT No', copy=False,
-                             help="İlgili ERP Satın Alma Talebi Numarası (entegrasyon ile gelecek).")
-    erp_company_code = fields.Char(string='ERP Şirket Kodu', help="İlgili ERP Şirket Kodu (entegrasyon ile gelecek).")
-    erp_plant_code = fields.Char(string='ERP Tesis Kodu', help="İlgili ERP Tesis Kodu (entegrasyon ile gelecek).")
+    erp_pr_id = fields.Char(string=_('ERP SAT No'), copy=False,
+                             help=_("İlgili ERP Satın Alma Talebi Numarası (entegrasyon ile gelecek)."))
+    erp_company_code = fields.Char(string=_('ERP Şirket Kodu'), help=_("İlgili ERP Şirket Kodu (entegrasyon ile gelecek)."))
+    erp_plant_code = fields.Char(string=_('ERP Tesis Kodu'), help=_("İlgili ERP Tesis Kodu (entegrasyon ile gelecek)."))
     
     # TEKLİF DOKÜMANINA GÖRE REVİZE EDİLEN DURUM ALANI
     state = fields.Selection([
-        ('draft', 'Taslak'),
-        ('first_tender_round', '1. Teklif Toplama'), # RFQ Gönderildi / İlk Teklifler Alınıyor
-        ('target_price_set', 'Hedef Fiyat Belirlendi'), # İlk Teklifler Değerlendirildi, Hedef Fiyat Belirlendi
-        ('second_tender_round', '2. Teklif Toplama'), # Açık Eksiltme / Teklif Revizyonu
-        ('evaluation', 'Değerlendirme'), # Son Tekliflerin Detaylı Değerlendirilmesi
-        ('approval_pending', 'Onay Bekliyor'),
-        ('approved', 'Onaylandı'),
-        ('done', 'Tamamlandı'),
-        ('cancel', 'İptal Edildi'),
-    ], string='Durum', default='draft', tracking=True, group_expand='_read_group_state')
+        ('draft', _('Taslak')),
+        ('first_tender_round', _('1. Teklif Toplama')),
+        ('target_price_set', _('Hedef Fiyat Belirlendi')),
+        ('second_tender_round', _('2. Teklif Toplama')),
+        ('evaluation', _('Değerlendirme')),
+        ('approved', _('Onaylandı')),
+        ('done', _('Tamamlandı')),
+        ('cancel', _('İptal Edildi')),
+    ], string=_('Durum'), default='draft', tracking=True, group_expand='_read_group_state')
 
     tender_type = fields.Selection([
-        ('standard', 'Standart İhale'), # Tek bir tur
-        ('open_auction', 'Açık Eksiltme (Açık İhale)'), # Birden fazla tur, hedef fiyat ile
-        ('sealed_bid', 'Kapalı Zarf Teklif'), # Genelde tek tur ama hedef fiyat ile revizyon olabilir
-    ], string='İhale Tipi', default='standard', required=True)
+        ('standard', _('Standart İhale')), # Tek bir tur
+        ('open_auction', _('Açık Eksiltme (Açık İhale)')), # Birden fazla tur, hedef fiyat ile
+        ('sealed_bid', _('Kapalı Zarf Teklif')), # Genelde tek tur ama hedef fiyat ile revizyon olabilir
+    ], string=_('İhale Tipi'), default='standard', required=True)
 
-    start_date = fields.Datetime(string='Başlangıç Tarihi', default=fields.Datetime.now(), required=True)
-    end_date = fields.Datetime(string='Bitiş Tarihi', required=True)
-    description = fields.Html(string='İhale Açıklaması',
-                              help="İhale ile ilgili detaylı bilgiler ve şartnameler.")
+    start_date = fields.Datetime(string=_('Başlangıç Tarihi'), default=fields.Datetime.now(), required=True)
+    end_date = fields.Datetime(string=_('Bitiş Tarihi'), required=True)
+    description = fields.Html(string=_('İhale Açıklaması'),
+                              help=_("İhale ile ilgili detaylı bilgiler ve şartnameler."))
     
     # İhale Kalemleri (One2many ilişki) - İhalenin temelini oluşturur
-    tender_lines = fields.One2many('ak.tender.line', 'tender_id', string='İhale Kalemleri', required=True)
+    tender_lines = fields.One2many('ak.tender.line', 'tender_id', string=_('İhale Kalemleri'), required=True)
 
     # Davetli Tedarikçiler (Many2many ilişki)
-    invited_partners = fields.Many2many('res.partner', string='Davetli Tedarikçiler',
+    invited_partners = fields.Many2many('res.partner', string=_('Davetli Tedarikçiler'),
                                        domain=[('supplier_rank', '>=', 0)],
-                                       help="Bu ihaleye davet edilecek tedarikçiler.")
+                                       help=_("Bu ihaleye davet edilecek tedarikçiler."))
 
     # İhale Sonuçları (One2many ilişki)
-    tender_results = fields.One2many('ak.tender.result', 'tender_id', string='Teklif Sonuçları')
+    tender_results = fields.One2many('ak.tender.result', 'tender_id', string=_('Teklif Sonuçları'))
     
     # Kazanan Teklif ve Hedef Fiyat (Raporlama için)
-    winning_result_id = fields.Many2one('ak.tender.result', string='Kazanan Teklif', compute='_compute_winning_result', store=True, readonly=True)
+    winning_result_id = fields.Many2one('ak.tender.result', string=_('Kazanan Teklif'), compute='_compute_winning_result', store=True, readonly=True)
     
     # TEKLİF DOKÜMANINA GÖRE KRİTİK ALAN: HEDEF FİYAT
-    target_price = fields.Monetary(string='Hedef Fiyat', currency_field='currency_id', 
-                                   help="Satın Alma Direktörü tarafından belirlenen hedef fiyat.",
+    target_price = fields.Monetary(string=_('Hedef Fiyat'), currency_field='currency_id',
+                                   help=_("Satın Alma Direktörü tarafından belirlenen hedef fiyat."),
                                    tracking=True) # Değişiklikleri takip et
-    currency_id = fields.Many2one('res.currency', string='Para Birimi', default=lambda self: self.env.company.currency_id)
+    currency_id = fields.Many2one('res.currency', string=_('Para Birimi'), default=lambda self: self.env.company.currency_id)
     
     # Onay Mekanizması için alanlar
-    approval_user_id = fields.Many2one('res.users', string='Onaylayan Kullanıcı', copy=False, readonly=True,
-                                      help="Bu ihaleyi onaylayan kullanıcı.")
-    approval_date = fields.Datetime(string='Onay Tarihi', copy=False, readonly=True)
     
     # Akıllı Butonlar için compute field'lar
-    purchase_order_count = fields.Integer(string='SAS Sayısı', compute='_compute_purchase_order_count')
+    purchase_order_count = fields.Integer(string=_('SAS Sayısı'), compute='_compute_purchase_order_count')
     
-    tender_result_count = fields.Integer(string='Teklif Veren Sayısı', compute='_compute_tender_result_count')
+    tender_result_count = fields.Integer(string=_('Teklif Veren Sayısı'), compute='_compute_tender_result_count')
 
     @api.depends('tender_results', 'state')
     def _compute_tender_result_count(self):
@@ -100,7 +103,7 @@ class AkTender(models.Model):
             elif tender.state == 'second_tender_round' or tender.state == 'target_price_set':
                 # 2. tur teklifleri say
                 tender.tender_result_count = len(tender.tender_results.filtered(lambda r: r.tender_round == 'second'))
-            elif tender.state in ['evaluation', 'approval_pending', 'approved', 'done']:
+            elif tender.state in ['evaluation', 'approved', 'done']:
                 # Değerlendirme ve sonraki aşamalarda tüm teklifleri say
                 tender.tender_result_count = len(tender.tender_results)
             else:
@@ -140,6 +143,59 @@ class AkTender(models.Model):
         for record in self:
             if record.start_date and record.end_date and record.start_date > record.end_date:
                 raise ValidationError(_("Başlangıç Tarihi, Bitiş Tarihinden sonra olamaz!"))
+
+    def _create_purchase_order(self):
+        self.ensure_one()
+        winning_result = self.winning_result_id
+        if winning_result and winning_result.partner_id:
+            purchase_order = self.env['purchase.order'].create({
+                'partner_id': winning_result.partner_id.id,
+                'currency_id': winning_result.currency_id.id,
+                'date_order': fields.Datetime.now(),
+                'origin': self.code,
+                'company_id': self.env.company.id,
+                'payment_term_id': winning_result.payment_terms.id if winning_result.payment_terms else False,
+            })
+            for tender_line in self.tender_lines:
+                result_line_for_po = winning_result.result_lines.filtered(
+                    lambda rl: rl.tender_line_id.id == tender_line.id
+                )
+                price_unit_for_po_line = result_line_for_po.price_unit if result_line_for_po else 0.0
+                if len(result_line_for_po) > 1:
+                    price_unit_for_po_line = result_line_for_po[0].price_unit
+                self.env['purchase.order.line'].create({
+                    'order_id': purchase_order.id,
+                    'product_id': tender_line.product_id.id,
+                    'name': tender_line.name,
+                    'product_qty': tender_line.quantity,
+                    'product_uom': tender_line.uom_id.id,
+                    'price_unit': price_unit_for_po_line,
+                    'date_planned': tender_line.required_delivery_date,
+                })
+            winning_result.purchase_order_id = purchase_order.id
+            if purchase_order.state == 'draft':
+                purchase_order.button_confirm()
+            self._compute_purchase_order_count()
+            notification_message = _('İhale başarıyla onaylandı. Satın Alma Siparişi %s oluşturuldu.') % (purchase_order.name)
+        else:
+            notification_message = _('İhale başarıyla onaylandı. Ancak kazanan teklif bilgileri eksik olduğu için SAS oluşturulamadı.')
+        self.env['bus.bus']._sendone(
+            self.env.user.partner_id,
+            'display_notification',
+            {
+                'title': _('İhale Onaylandı'),
+                'message': notification_message,
+            }
+        )
+
+    def write(self, vals):
+        previous_states = {rec.id: rec.state for rec in self}
+        res = super(AkTender, self).write(vals)
+        if 'state' in vals and vals['state'] == 'approved':
+            for tender in self:
+                if previous_states.get(tender.id) != 'approved' and tender.state == 'approved':
+                    tender._create_purchase_order()
+        return res
             
     # YENİ DURUM GEÇİŞ METOTLARI (TEKLİF DOKÜMANINA GÖRE)
     
@@ -219,108 +275,10 @@ class AkTender(models.Model):
         }
 
     def action_request_approval(self):
-        self.ensure_one()
-        if self.state != 'evaluation':
-            raise UserError(_("Onay talebi sadece 'Değerlendirme' aşamasında yapılabilir."))
-        if not self.winning_result_id:
-            raise UserError(_("Onay talep etmeden önce kazanan bir teklif seçilmelidir."))
-        
-        # Doğrudan onay bekliyor durumuna geç
-        self.write({'state': 'approval_pending'})
-        
-        return {
-            'type': 'ir.actions.client',
-            'tag': 'display_notification',
-            'params': {
-                'title': _('Onay Talebi Gönderildi'),
-                'message': _('İhale için onay talebi gönderildi. Lütfen onay sürecini takip edin.'),
-                'sticky': False,
-            }
-        }
-        
-    # Onay talebi görüntüleme metodu kaldırıldı - approvals modülü olmadığı için
-
-    def action_approve_tender(self):
-        self.ensure_one()
-        if self.state != 'approval_pending':
-            raise UserError(_("İhale sadece 'Onay Bekliyor' durumundayken onaylanabilir."))
-        
-        if not self.winning_result_id:
-            raise UserError(_("İhaleyi onaylamak için kazanan bir teklif belirlenmelidir."))
-            
-        # Onay bilgilerini kaydet
-        self.write({
-            'approval_user_id': self.env.user.id,
-            'approval_date': fields.Datetime.now()
-        })
-
-        # *** ODOO PURCHASE.ORDER OLUŞTURMA BAŞLANGICI ***
-        winning_result = self.winning_result_id
-        
-        if winning_result and winning_result.partner_id:
-            # Satın Alma Siparişi (PO) oluşturma
-            purchase_order = self.env['purchase.order'].create({
-                'partner_id': winning_result.partner_id.id,
-                'currency_id': winning_result.currency_id.id,
-                'date_order': fields.Datetime.now(),
-                'origin': self.code, # İhale kodunu referans olarak ekleyelim
-                'company_id': self.env.company.id,
-                'payment_term_id': winning_result.payment_terms.id if winning_result.payment_terms else False,
-                # Diğer gerekli alanlar eklenebilir (örn: incoterm_id)
-            })
-
-            # SAS kalemlerini oluşturma (ihale kalemlerini temel alarak)
-            for tender_line in self.tender_lines:
-                # Find the corresponding result line for this tender_line in the winning_result
-                result_line_for_po = winning_result.result_lines.filtered(
-                    lambda rl: rl.tender_line_id.id == tender_line.id
-                )
-                # Ensure we found exactly one matching line, otherwise, it's an issue or needs specific handling.
-                # For now, we'll assume one is found, or default to 0.0 if not (though this indicates a data problem).
-                price_unit_for_po_line = result_line_for_po.price_unit if result_line_for_po else 0.0
-                if len(result_line_for_po) > 1:
-                    # Handle case with multiple matching lines if necessary, e.g., log a warning or raise error
-                    # For now, take the first one if multiple (though ideally this shouldn't happen)
-                    price_unit_for_po_line = result_line_for_po[0].price_unit
-
-                self.env['purchase.order.line'].create({
-                    'order_id': purchase_order.id,
-                    'product_id': tender_line.product_id.id,
-                    'name': tender_line.name,
-                    'product_qty': tender_line.quantity,
-                    'product_uom': tender_line.uom_id.id,
-                    'price_unit': price_unit_for_po_line,
-                    'date_planned': tender_line.required_delivery_date,
-                })
-            
-            # Oluşturulan SAS'ı ihale sonucuna bağla
-            winning_result.purchase_order_id = purchase_order.id
-            
-            # Confirm the Purchase Order
-            if purchase_order.state == 'draft': # Confirm only if it's still an RFQ
-                purchase_order.button_confirm()
-
-            self._compute_purchase_order_count() # Akıllı buton sayacını güncelle
-
-            # ERP'ye SAS gönderme işlemi burada tetiklenecek (simülasyon)
-            # Örneğin: self.env['erp.connector'].create_po_in_erp(purchase_order)
-            
-            notification_message = _('İhale başarıyla onaylandı. Satın Alma Siparişi %s oluşturuldu ve ERP\'ye gönderiliyor.') % (purchase_order.name)
-        else:
-            notification_message = _('İhale başarıyla onaylandı. Ancak kazanan teklif bilgileri eksik olduğu için SAS oluşturulamadı.')
-
-        self.write({'state': 'approved'})
-        
-        return {
-            'type': 'ir.actions.client',
-            'tag': 'display_notification',
-            'params': {
-                'title': _('İhale Onaylandı'),
-                'message': notification_message,
-                'sticky': False,
-            }
-        }
-        # *** ODOO PURCHASE.ORDER OLUŞTURMA BİTİŞİ ***
+        for rec in self:
+            if not rec.winning_result_id:
+                raise UserError(_("Onay talep etmeden önce kazanan bir teklif seçilmelidir."))
+            rec.request_validation()
         
     def action_complete_tender(self):
         self.ensure_one()
@@ -405,39 +363,14 @@ class AkTender(models.Model):
             action = {'type': 'ir.actions.act_window_close'} # No PO to show
         return action
     
-    def action_show_approval_info(self):
-        self.ensure_one()
-        if not self.approval_user_id:
-            # Should not happen if button is correctly made invisible
-            # but as a safeguard:
-            return {
-                'type': 'ir.actions.client',
-                'tag': 'display_notification',
-                'params': {
-                    'title': _('Approval Information'),
-                    'message': _('This tender has not been approved yet.'),
-                    'sticky': False,
-                    'type': 'warning',
-                }
-            }
-
-        wizard = self.env['tender.approval.info.wizard'].create({
-            'tender_id': self.id,
-        })
-        return {
-            'name': _('Approval Information'),
-            'type': 'ir.actions.act_window',
-            'res_model': 'tender.approval.info.wizard',
-            'view_mode': 'form',
-            'res_id': wizard.id,
-            'target': 'new', # Opens in a popup/dialog
-        }
 
     @api.model
     def _read_group_state(self, *args, **kwargs):
         """Read group customization for state field: returns all states in their original order."""
         # Return all possible states in the same order as defined in the model
-        return ['draft', 'first_tender_round', 'target_price_set', 'second_tender_round',
-                'evaluation', 'approval_pending', 'approved', 'done', 'cancel']
+        return [
+            'draft', 'first_tender_round', 'target_price_set', 'second_tender_round',
+            'evaluation', 'approved', 'done', 'cancel'
+        ]
 
 

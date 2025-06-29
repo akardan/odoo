@@ -3,4 +3,5 @@
 from . import tender
 from . import tender_result
 from . import tender_result_line
+from . import tier_definition
 

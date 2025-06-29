@@ -24,10 +24,8 @@
                                 confirm="Bu işlem mevcut teklif toplama turunu sonlandıracaktır. Emin misiniz?"/>
                                 
                         <button name="action_request_approval" type="object" string="Onay Talep Et"
-                                invisible="state != 'evaluation'" class="oe_highlight"/>
+                                invisible="state != 'evaluation' or validated" class="oe_highlight"/>
                                 
-                        <button name="action_approve_tender" type="object" string="İhaleyi Onayla"
-                                invisible="state != 'approval_pending'" class="oe_highlight"/>
                                 
                         <button name="action_complete_tender" type="object" string="İhaleyi Tamamla"
                                 invisible="state != 'approved'" class="oe_highlight"/>
@@ -47,16 +45,6 @@
                                 string="SAS'lar"
                                 help="Bu ihaleden oluşturulan Satın Alma Siparişleri"
                                 invisible="purchase_order_count == 0"
-                            />
-                            <!-- Onay bilgileri için yeni buton -->
-                            <button
-                                name="action_show_approval_info"
-                                type="object"
-                                class="oe_stat_button"
-                                icon="fa-check-square-o"
-                                string="Onay Bilgileri"
-                                help="Bu ihale ile ilgili onay bilgileri"
-                                invisible="approval_user_id == False"
                             />
                             <button name="action_view_tender_results"
                                 type="object"
@@ -140,11 +128,6 @@
                                            readonly="state not in ('first_tender_round', 'target_price_set')"/>
                                     <field name="winning_result_id" readonly="1" />
                                 </group>
-                                <!-- Onay bilgileri -->
-                                <group string="Onay Bilgileri" invisible="approval_user_id == False">
-                                    <field name="approval_user_id" readonly="1"/>
-                                    <field name="approval_date" readonly="1"/>
-                                </group>
                                 <p class="oe_grey">
                                     Bu sayfa, tedarikçilerden gelen tekliflerin otomatik olarak işleneceği ve karşılaştırılacağı alan olacaktır. (Bu prototipte manuel giriş için açılmıştır, gerçek sistemde portal entegrasyonu ile dolacaktır.) Teklif turu bilgisi, hangi teklifin hangi aşamada geldiğini belirtir.
                                 </p>
@@ -160,7 +143,7 @@
             <field name="name">ak.tender.list</field>
             <field name="model">ak.tender</field>
             <field name="arch" type="xml">
-                <list string="İLKOis İhaleleri" decoration-success="state in ('approved', 'done')" decoration-info="state in ('first_tender_round', 'second_tender_round', 'evaluation')" decoration-warning="state == 'approval_pending'" decoration-danger="state == 'cancel'">
+                <list string="İLKOis İhaleleri" decoration-success="state in ('approved', 'done')" decoration-info="state in ('first_tender_round', 'second_tender_round', 'evaluation')" decoration-danger="state == 'cancel'">
                     <field name="code"/>
                     <field name="name"/>
                     <field name="erp_pr_id"/>
@@ -187,7 +170,6 @@
                     <filter name="filter_target_price_set" string="Hedef Fiyat Belirlendi" domain="[('state', '=', 'target_price_set')]"/>
                     <filter name="filter_second_round" string="2. Tur Teklif Toplama" domain="[('state', '=', 'second_tender_round')]"/>
                     <filter name="filter_evaluation" string="Değerlendirmede" domain="[('state', '=', 'evaluation')]"/>
-                    <filter name="filter_approval_pending" string="Onay Bekleyenler" domain="[('state', '=', 'approval_pending')]"/>
                     <filter name="filter_approved" string="Onaylanmış İhaleler" domain="[('state', '=', 'approved')]"/>
                     <filter name="filter_done" string="Tamamlanmış İhaleler" domain="[('state', '=', 'done')]"/>
                     <separator/>
@@ -289,7 +271,7 @@
                                                 <i class="fa fa-refresh"/> 2. Tur Başlat
                                             </button>
                                         </t>
-                                        <t t-elif="record.state.raw_value and ['second_tender_round', 'evaluation'].includes(record.state.raw_value)">
+                                        <t t-elif="record.state.raw_value and record.state.raw_value == 'evaluation'">
                                             <button class="btn btn-outline-primary btn-sm" name="action_request_approval" type="object">
                                                 <i class="fa fa-check"/> Onaya Gönder
                                             </button>
@@ -349,7 +331,6 @@
                                             record.state.raw_value == 'target_price_set' ? 'bg-warning bg-opacity-50' :
                                             record.state.raw_value == 'second_tender_round' ? 'bg-primary bg-opacity-50' :
                                             record.state.raw_value == 'evaluation' ? 'bg-warning bg-opacity-50' :
-                                            record.state.raw_value == 'approval_pending' ? 'bg-info bg-opacity-50' :
                                             record.state.raw_value == 'approved' ? 'bg-success bg-opacity-50' :
                                             record.state.raw_value == 'done' ? 'bg-success bg-opacity-50' :
                                             'bg-danger bg-opacity-50'}"
@@ -359,7 +340,6 @@
                                             record.state.raw_value == 'target_price_set' ? '37' :
                                             record.state.raw_value == 'second_tender_round' ? '50' :
                                             record.state.raw_value == 'evaluation' ? '62' :
-                                            record.state.raw_value == 'approval_pending' ? '75' :
                                             record.state.raw_value == 'approved' ? '87' :
                                             record.state.raw_value == 'done' ? '100' : '0'}%">
                                     </div>
