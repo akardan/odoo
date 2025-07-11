@@ -92,9 +92,9 @@ class TenderPortal(CustomerPortal): # Inherit from CustomerPortal for standard l
             pass
 
         # Try to find an existing bid by this partner for this tender
-        existing_bid = request.env['ak.tender.result'].search([
+        existing_order = request.env['purchase.order'].search([
             ('tender_id', '=', tender.id),
-            ('partner_id', '=', request.env.user.partner_id.id)
+            ('partner_id', '=', request.env.user.partner_id.commercial_partner_id.id)
         ], limit=1)
         
         # Fetch available payment terms
@@ -104,25 +104,25 @@ class TenderPortal(CustomerPortal): # Inherit from CustomerPortal for standard l
         form_values = {
             'tender': tender,
             'tender_lines': tender.tender_lines,
-            'existing_bid': existing_bid, # This will be an ak.tender.result recordset
+            'existing_order': existing_order, # This will be a purchase.order recordset
             'page_name': 'tender_form',
             'user': request.env.user,
             'payment_terms': payment_terms,
             # Add other necessary values
         }
         # Add existing bid line data if an existing bid is found
-        if existing_bid:
+        if existing_order:
             # Create a dictionary with tender_line_id as key for easier lookup in the template
-            bid_lines_data = {}
-            for line in existing_bid.result_lines:
+            order_lines_data = {}
+            for line in existing_order.order_line:
                 # Make sure we have the tender line ID as the key
                 tender_line_id = line.tender_line_id.id
                 if tender_line_id:
-                    bid_lines_data[tender_line_id] = {
+                    order_lines_data[tender_line_id] = {
                         'price_unit': line.price_unit,
-                        # any other fields from ak.tender.result.line you want to prefill
+                        # any other fields from purchase.order.line you want to prefill
                     }
-            form_values['bid_lines_data'] = bid_lines_data
+            form_values['order_lines_data'] = order_lines_data
 
 
         values = self._prepare_portal_layout_values()
@@ -149,53 +149,55 @@ class TenderPortal(CustomerPortal): # Inherit from CustomerPortal for standard l
         # Example: post.get('delivery_date'), post.get('payment_terms_id'), etc.
         # For lines, they might come as post['price_unit_for_line_X']
         
-        result_vals = {
+        order_vals = {
             'tender_id': tender.id,
-            'partner_id': partner.id,
-            'offer_date': fields.Datetime.now(),
-            'currency_id': tender.currency_id.id, # Or company currency
+            'partner_id': partner.commercial_partner_id.id,
+            'date_order': fields.Datetime.now(),
+            'currency_id': tender.currency_id.id,
             'delivery_date': post.get('delivery_date') or None,
-            'payment_terms': int(post.get('payment_terms')) if post.get('payment_terms') else None,
+            'payment_term_id': int(post.get('payment_terms')) if post.get('payment_terms') else None,
             'notes': post.get('notes') or None,
-            # tender_round will be set by AkTenderResult create/write method based on tender.state
+            'tender_round': 1, # Default to 1, can be adjusted based on tender state
+            'state': 'draft', # Start as a draft RFQ
         }
         
-        result_lines_vals = []
+        order_lines_vals = []
         for tender_line in tender.tender_lines:
             price_unit_str = post.get(f'price_unit_line_{tender_line.id}')
-            if price_unit_str: # Ensure price is submitted for the line
+            if price_unit_str:
                 try:
                     price_unit = float(price_unit_str)
-                    result_lines_vals.append((0, 0, {
+                    order_lines_vals.append((0, 0, {
                         'tender_line_id': tender_line.id,
+                        'product_id': tender_line.product_id.id,
+                        'name': tender_line.name,
+                        'product_qty': tender_line.quantity,
+                        'product_uom': tender_line.uom_id.id,
                         'price_unit': price_unit,
+                        'date_planned': fields.Date.today(),
                     }))
                 except ValueError:
-                    # Handle invalid price format, maybe add error to display
-                    pass # Or add specific error handling
+                    pass
 
-        if not result_lines_vals and tender.tender_lines: # Check if any prices were submitted for lines
-             # Redirect back with an error message if no prices submitted for any line
+        if not order_lines_vals and tender.tender_lines:
             return request.redirect('/my/tenders/%s?error=no_prices' % tender_id)
 
-
-        # Check if a bid already exists for this partner and tender
-        existing_bid = request.env['ak.tender.result'].search([
+        # Check if an order already exists for this partner and tender
+        existing_order = request.env['purchase.order'].search([
             ('tender_id', '=', tender.id),
-            ('partner_id', '=', partner.id)
+            ('partner_id', '=', partner.commercial_partner_id.id)
         ], limit=1)
 
         try:
-            if existing_bid:
-                # Update existing bid
-                # Clear existing lines first if you want to replace them all
-                existing_bid.result_lines.unlink() 
-                result_vals['result_lines'] = result_lines_vals
-                existing_bid.write(result_vals)
+            if existing_order:
+                # Update existing order
+                existing_order.order_line.unlink()
+                order_vals['order_line'] = order_lines_vals
+                existing_order.write(order_vals)
             else:
-                # Create new bid
-                result_vals['result_lines'] = result_lines_vals
-                request.env['ak.tender.result'].create(result_vals)
+                # Create new order
+                order_vals['order_line'] = order_lines_vals
+                request.env['purchase.order'].create(order_vals)
             
             return request.redirect(f'/my/tenders/{tender_id}?bid_submitted=1')
             

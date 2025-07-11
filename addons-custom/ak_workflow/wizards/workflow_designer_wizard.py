@@ -6,7 +6,7 @@ class WorkflowDesignerWizard(models.TransientModel):
     _description = 'Workflow Designer Wizard'
 
     workflow_id = fields.Many2one(
-        'tier.definition',
+        'ak.workflow.definition',
         string='Workflow',
         required=True,
         readonly=True

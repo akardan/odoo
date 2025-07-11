@@ -16,7 +16,13 @@ class SetTargetPriceWizard(models.TransientModel):
     def default_get(self, fields_list):
         res = super(SetTargetPriceWizard, self).default_get(fields_list)
         active_id = self.env.context.get('active_id')
-        if active_id:
+        tender_id = self.env.context.get('default_tender_id')
+        if tender_id:
+            tender = self.env['ak.tender'].browse(tender_id)
+            res['tender_id'] = tender.id
+            if tender.target_price > 0:
+                res['target_price'] = tender.target_price
+        elif active_id:
             tender = self.env['ak.tender'].browse(active_id)
             res['tender_id'] = tender.id
             if tender.target_price > 0:

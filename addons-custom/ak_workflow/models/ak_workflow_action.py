@@ -26,8 +26,7 @@ class AkWorkflowAction(models.Model):
     
     # Relations
     workflow_id = fields.Many2one(
-        'tier.definition', 'Workflow',
-        domain="[('is_workflow', '=', True)]"
+        'ak.workflow.definition', 'Workflow'
     )
     trigger_state_id = fields.Many2one('ak.workflow.state', 'Trigger State')
     transition_id = fields.Many2one('ak.workflow.transition', 'Transition')

@@ -7,14 +7,12 @@ _logger = logging.getLogger(__name__)
 
 class AkWorkflowMixin(models.AbstractModel):
     _name = 'ak.workflow.mixin'
-    _inherit = 'tier.validation'
     _description = 'Workflow Integration Mixin'
 
     # Workflow Definition
     workflow_definition_id = fields.Many2one(
-        'tier.definition',
+        'ak.workflow.definition',
         string='Workflow',
-        domain="[('model_name', '=', _name), ('is_workflow', '=', True)]",
         copy=False,
         help="The active workflow definition for this record."
     )
@@ -45,32 +43,56 @@ class AkWorkflowMixin(models.AbstractModel):
     workflow_start_date = fields.Datetime('Workflow Start Date', readonly=True, copy=False)
     workflow_end_date = fields.Datetime('Workflow End Date', readonly=True, copy=False)
 
-    # Tier Validation Integration
-    workflow_pending_transition_id = fields.Many2one(
-        'ak.workflow.transition',
-        string='Pending Transition',
-        copy=False,
-        help="The transition that is waiting for tier validation approval."
+    transition_history_ids = fields.One2many(
+        'ak.workflow.transition.history',
+        'res_id',
+        string='Transition History',
+        compute='_compute_transition_history_ids',
+        readonly=True
     )
 
-    @api.depends('workflow_current_state_id', 'review_ids', 'review_ids.status')
-    def _compute_available_transitions(self):
+    def _compute_transition_history_ids(self):
         for record in self:
+            record.transition_history_ids = self.env['ak.workflow.transition.history'].search([
+                ('res_model', '=', record._name),
+                ('res_id', '=', record.id)
+            ])
+
+    @api.depends('workflow_current_state_id')
+    def _compute_available_transitions(self):
+        _logger.info("--- Starting _compute_available_transitions ---")
+        for record in self:
+            _logger.info(f"Processing record: {record.display_name} (ID: {record.id})")
             if not record.workflow_current_state_id:
+                _logger.warning(f"Record {record.id} has no current workflow state. Setting transitions to empty.")
                 record.workflow_available_transition_ids = []
                 continue
             
+            _logger.info(f"Current state for record {record.id} is: '{record.workflow_current_state_id.name}' (ID: {record.workflow_current_state_id.id})")
+            
             all_transitions = record.workflow_current_state_id.outgoing_transition_ids
+            _logger.info(f"Found {len(all_transitions)} outgoing transitions from this state: {[t.name for t in all_transitions]}")
+
             available_transitions = self.env['ak.workflow.transition']
             
             for transition in all_transitions.filtered('active'):
+                _logger.debug(f"Checking transition '{transition.name}' (ID: {transition.id})")
+                
+                # Check user groups
                 if transition.group_ids and not any(group in self.env.user.groups_id for group in transition.group_ids):
+                    _logger.debug(f"Skipping transition '{transition.name}' due to group restrictions. User groups: {[g.name for g in self.env.user.groups_id]}")
                     continue
                 
+                # Check custom conditions
                 if transition.check_transition_conditions(record):
+                    _logger.info(f"Transition '{transition.name}' is available for record {record.id}.")
                     available_transitions |= transition
+                else:
+                    _logger.debug(f"Skipping transition '{transition.name}' because its conditions are not met.")
             
+            _logger.info(f"Final available transitions for record {record.id}: {[t.name for t in available_transitions]}")
             record.workflow_available_transition_ids = available_transitions
+        _logger.info("--- Finished _compute_available_transitions ---")
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -99,8 +121,8 @@ class AkWorkflowMixin(models.AbstractModel):
         return res
 
     def _get_default_workflow(self):
-        domain = [('model_name', '=', self._name), ('active', '=', True), ('is_workflow', '=', True)]
-        return self.env['tier.definition'].search(domain, limit=1)
+        domain = [('model_name', '=', self._name), ('active', '=', True)]
+        return self.env['ak.workflow.definition'].search(domain, limit=1)
 
     def execute_transition(self, transition_id, comment=None):
         self.ensure_one()
@@ -109,12 +131,7 @@ class AkWorkflowMixin(models.AbstractModel):
         if transition not in self.workflow_available_transition_ids:
             raise UserError(_("This transition is not available for the current state or user."))
 
-        if transition.require_tier_validation:
-            self.workflow_pending_transition_id = transition
-            self.request_validation()
-            self._log_transition(transition, self.workflow_current_state_id, 'pending_approval', comment)
-        else:
-            self._perform_transition(transition, comment)
+        self._perform_transition(transition, comment)
         return True
 
     def _perform_transition(self, transition, comment=None):
@@ -135,32 +152,27 @@ class AkWorkflowMixin(models.AbstractModel):
             action.execute_action(self)
 
     def _log_transition(self, transition, old_state, status, comment=None):
-        status_map = {'completed': '✅', 'pending_approval': '⏳', 'rejected': '❌'}
-        body = _(
-            "<strong>%(icon)s Workflow Transition</strong><br/>"
-            "From: <strong>%(from)s</strong> → To: <strong>%(to)s</strong><br/>"
-            "Transition: %(trans)s"
-        ) % {
-            'icon': status_map.get(status, ''),
-            'from': old_state.name,
-            'to': transition.to_state_id.name,
-            'trans': transition.name
-        }
+        self.env['ak.workflow.transition.history'].sudo().create({
+            'res_model': self._name,
+            'res_id': self.id,
+            'from_state_id': old_state.id,
+            'to_state_id': transition.to_state_id.id,
+            'transition_id': transition.id,
+            'comment': comment,
+        })
         if comment:
-            body += _("<br/>Comment: %s") % comment
-        self.message_post(body=body)
+            self.message_post(body=comment, subtype_xmlid='mail.mt_comment')
 
-    def _validate_tier(self, tiers):
-        res = super()._validate_tier(tiers)
-        for record in self.filtered(lambda r: r.workflow_pending_transition_id and r.validated):
-            transition = record.workflow_pending_transition_id
-            record.workflow_pending_transition_id = False
-            record._perform_transition(transition, _("Approved via tier validation"))
-        return res
+    def get_available_transitions(self):
+        self.ensure_one()
+        self._compute_available_transitions()
+        transitions = []
+        for transition in self.workflow_available_transition_ids:
+            transitions.append({
+                'id': transition.id,
+                'name': transition.button_label or transition.name,
+                'button_class': transition.button_class,
+            })
+        return transitions
 
-    def _rejected_tier(self, tier_review):
-        super()._rejected_tier(tier_review)
-        for record in self.filtered('workflow_pending_transition_id'):
-            transition = record.workflow_pending_transition_id
-            record.workflow_pending_transition_id = False
-            record._log_transition(transition, record.workflow_current_state_id, 'rejected', tier_review.review_comment)
+

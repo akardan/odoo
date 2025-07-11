@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="ak_workflow_transition_form_view" model="ir.ui.view">
+            <field name="name">ak.workflow.transition.form</field>
+            <field name="model">ak.workflow.transition</field>
+            <field name="arch" type="xml">
+                <form>
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="name"/>
+                                <field name="workflow_id"/>
+                                <field name="from_state_id"/>
+                                <field name="to_state_id"/>
+                            </group>
+                            <group>
+                                <field name="sequence"/>
+                                <field name="button_label"/>
+                                <field name="button_class"/>
+                            </group>
+                        </group>
+                        <notebook>
+                            <page string="Conditions">
+                                <group>
+                                    <field name="condition_type"/>
+                                    <field name="condition_expression" invisible="condition_type != 'python'"/>
+                                    <field name="condition_field_id" invisible="condition_type != 'field'"/>
+                                    <field name="condition_operator" invisible="condition_type != 'field'"/>
+                                    <field name="condition_value" invisible="condition_type != 'field'"/>
+                                    <field name="condition_method" invisible="condition_type != 'method'"/>
+                                    <field name="amount_threshold" invisible="condition_type != 'amount'"/>
+                                    <field name="amount_currency_id" invisible="condition_type != 'amount'"/>
+                                </group>
+                            </page>
+                            <page string="Security">
+                                <field name="group_ids" widget="many2many_tags"/>
+                            </page>
+                            <page string="Actions">
+                                <field name="action_ids"/>
+                            </page>
+                        </notebook>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_ak_workflow_transition" model="ir.actions.act_window">
+            <field name="name">Transitions</field>
+            <field name="res_model">ak.workflow.transition</field>
+            <field name="view_mode">list,form</field>
+        </record>
+    </data>
+</odoo>

@@ -6,35 +6,8 @@
             <field name="arch" type="xml">
                 <form string="İhale">
                     <header>
-                        <field name="state" widget="statusbar"
-                               statusbar_visible="draft,first_tender_round,target_price_set,second_tender_round,evaluation,approved,done"/>
-                        
-                        <button name="action_start_first_round" type="object" string="1. Teklif Toplamayı Başlat"
-                                invisible="state != 'draft'" class="oe_highlight"/>
-                        
-                        <button name="action_set_target_price" type="object" string="Hedef Fiyatı Belirle"
-                                invisible="state != 'first_tender_round'" class="oe_highlight"
-                                confirm="Hedef fiyat belirledikten sonra 1. tur teklif alımı sona erecektir. Emin misiniz?"/>
-                                
-                        <button name="action_start_second_round" type="object" string="2. Teklif Toplamayı Başlat"
-                                invisible="state != 'target_price_set'" class="oe_highlight"/>
-                                
-                        <button name="action_to_evaluation" type="object" string="Değerlendirmeye Geç"
-                                invisible="state not in ('first_tender_round', 'second_tender_round', 'target_price_set')" class="oe_highlight"
-                                confirm="Bu işlem mevcut teklif toplama turunu sonlandıracaktır. Emin misiniz?"/>
-                                
-                        <button name="action_request_approval" type="object" string="Onay Talep Et"
-                                invisible="state != 'evaluation' or validated" class="oe_highlight"/>
-                                
-                                
-                        <button name="action_complete_tender" type="object" string="İhaleyi Tamamla"
-                                invisible="state != 'approved'" class="oe_highlight"/>
-                                
-                        <button name="action_cancel_tender" type="object" string="İptal Et"
-                                invisible="state in ('cancel', 'done')"/>
-                                
-                        <button name="action_set_draft" type="object" string="Taslağa Çevir"
-                                invisible="state not in ('cancel')"/>
+                        <widget name="workflow_button_group"/>
+                        <field name="workflow_current_state_id" widget="statusbar" options="{'clickable': '0'}"/>
                     </header>
                     <sheet>
                         <div class="oe_button_box" name="button_box">
@@ -46,12 +19,12 @@
                                 help="Bu ihaleden oluşturulan Satın Alma Siparişleri"
                                 invisible="purchase_order_count == 0"
                             />
-                            <button name="action_view_tender_results"
+                            <button name="action_view_offers"
                                 type="object"
                                 class="oe_stat_button"
                                 icon="fa-balance-scale"
-                                string="Teklif Sonuçları"
-                                help="Tedarikçilerden gelen teklifler"
+                                string="Teklifler"
+                                help="Tedarikçilerden gelen teklifler (SAT)"
                             />
                         </div>
                         <div class="oe_title">
@@ -70,6 +43,7 @@
                                 <field name="erp_pr_id" placeholder="ERP SAT No" />
                                 <field name="erp_company_code" placeholder="ERP Şirket Kodu"/>
                                 <field name="erp_plant_code" placeholder="ERP Tesis Kodu"/>
+                                <field name="workflow_definition_id" options="{'no_create': True}" domain="[('model_name', '=', 'ak.tender')]"/>
                             </group>
                         </group>
 
@@ -107,30 +81,36 @@
                                 </p>
                             </page>
                             <page string="Teklif Sonuçları &amp; Değerlendirme" name="tender_results_evaluation">
-                                <field name="tender_results" nolabel="1" context="{'default_tender_id': id}">
-                                    <list editable="bottom">
-                                        <field name="sequence" widget="handle"/>
-                                        <field name="partner_id"/>
+                                <field name="purchase_order_ids" nolabel="1" context="{'default_tender_id': id, 'default_state': 'draft'}">
+                                    <list>
+                                        <field name="partner_id" domain="[('id', 'in', parent.invited_partners)]"/>
+                                        <field name="date_order"/>
                                         <field name="tender_round"/>
-                                        <field name="offer_date"/>
-                                        <field name="status"/>
-                                        <field name="delivery_date" optional="hide"/>
-                                        <field name="guarantee_period" optional="hide"/>    
-                                        <field name="payment_terms"/>
-                                        <field name="currency_id"/>
-                                        <field name="total_price" min="Min. Teklif"/>
-                                        <field name="purchase_order_id" optional="hide"/>
-                                        <button name="action_view_offer_items" type="object" icon="fa-list" string="Teklif Kalemleri" class="oe_highlight"/>
+                                        <field name="tender_offer_status"/>
+                                        <field name="amount_total" sum="Toplam Teklifler"/>
+                                        <field name="state"/>
                                     </list>
                                 </field>
                                 <group class="oe_subtotal_footer oe_right">
                                     <field name="target_price" widget="monetary" options="{'currency_field': 'currency_id'}"
-                                           readonly="state not in ('first_tender_round', 'target_price_set')"/>
-                                    <field name="winning_result_id" readonly="1" />
+                                           readonly="[('workflow_current_state_id.code', 'not in', ['first_tender_round', 'target_price_set'])]"/>
+                                    <field name="winning_order_id" readonly="1" />
                                 </group>
                                 <p class="oe_grey">
                                     Bu sayfa, tedarikçilerden gelen tekliflerin otomatik olarak işleneceği ve karşılaştırılacağı alan olacaktır. (Bu prototipte manuel giriş için açılmıştır, gerçek sistemde portal entegrasyonu ile dolacaktır.) Teklif turu bilgisi, hangi teklifin hangi aşamada geldiğini belirtir.
                                 </p>
+                            </page>
+                            <page string="Transition History">
+                                <field name="transition_history_ids" readonly="1">
+                                    <list>
+                                        <field name="transition_id"/>
+                                        <field name="from_state_id"/>
+                                        <field name="to_state_id"/>
+                                        <field name="user_id"/>
+                                        <field name="create_date" string="Date"/>
+                                        <field name="comment"/>
+                                    </list>
+                                </field>
                             </page>
                         </notebook>
                     </sheet>
@@ -143,14 +123,14 @@
             <field name="name">ak.tender.list</field>
             <field name="model">ak.tender</field>
             <field name="arch" type="xml">
-                <list string="İLKOis İhaleleri" decoration-success="state in ('approved', 'done')" decoration-info="state in ('first_tender_round', 'second_tender_round', 'evaluation')" decoration-danger="state == 'cancel'">
+                <list string="İLKOis İhaleleri" decoration-success="workflow_current_state_id.code in ('approved', 'done')" decoration-info="workflow_current_state_id.code in ('first_tender_round', 'second_tender_round', 'evaluation')" decoration-danger="workflow_current_state_id.code == 'cancel'">
                     <field name="code"/>
                     <field name="name"/>
                     <field name="erp_pr_id"/>
                     <field name="tender_type"/>
                     <field name="start_date"/>
                     <field name="end_date"/>
-                    <field name="state" widget="badge"/>
+                    <field name="workflow_current_state_id" widget="badge"/>
                 </list>
             </field>
         </record>
@@ -164,17 +144,17 @@
                     <field name="code"/>
                     <field name="erp_pr_id"/>
                     <field name="tender_type"/>
-                    <field name="state"/>
-                    <filter name="filter_draft" string="Taslak İhaleler" domain="[('state', '=', 'draft')]"/>
-                    <filter name="filter_first_round" string="1. Tur Teklif Toplama" domain="[('state', '=', 'first_tender_round')]"/>
-                    <filter name="filter_target_price_set" string="Hedef Fiyat Belirlendi" domain="[('state', '=', 'target_price_set')]"/>
-                    <filter name="filter_second_round" string="2. Tur Teklif Toplama" domain="[('state', '=', 'second_tender_round')]"/>
-                    <filter name="filter_evaluation" string="Değerlendirmede" domain="[('state', '=', 'evaluation')]"/>
-                    <filter name="filter_approved" string="Onaylanmış İhaleler" domain="[('state', '=', 'approved')]"/>
-                    <filter name="filter_done" string="Tamamlanmış İhaleler" domain="[('state', '=', 'done')]"/>
+                    <field name="workflow_current_state_id"/>
+                    <filter name="filter_draft" string="Taslak İhaleler" domain="[('workflow_current_state_id.code', '=', 'draft')]"/>
+                    <filter name="filter_first_round" string="1. Tur Teklif Toplama" domain="[('workflow_current_state_id.code', '=', 'first_tender_round')]"/>
+                    <filter name="filter_target_price_set" string="Hedef Fiyat Belirlendi" domain="[('workflow_current_state_id.code', '=', 'target_price_set')]"/>
+                    <filter name="filter_second_round" string="2. Tur Teklif Toplama" domain="[('workflow_current_state_id.code', '=', 'second_tender_round')]"/>
+                    <filter name="filter_evaluation" string="Değerlendirmede" domain="[('workflow_current_state_id.code', '=', 'evaluation')]"/>
+                    <filter name="filter_approved" string="Onaylanmış İhaleler" domain="[('workflow_current_state_id.code', '=', 'approved')]"/>
+                    <filter name="filter_done" string="Tamamlanmış İhaleler" domain="[('workflow_current_state_id.code', '=', 'done')]"/>
                     <separator/>
                     <group expand="0" string="Grup Bazında">
-                        <filter name="groupby_state" string="Durum" context="{'group_by':'state'}"/>
+                        <filter name="groupby_state" string="Durum" context="{'group_by':'workflow_current_state_id'}"/>
                         <filter name="groupby_tender_type" string="İhale Tipi" context="{'group_by':'tender_type'}"/>
                     </group>
                 </search>
@@ -185,8 +165,8 @@
             <field name="name">ak.tender.kanban</field>
             <field name="model">ak.tender</field>
             <field name="arch" type="xml">
-                <kanban default_group_by="state" class="o_kanban_dashboard o_tender_kanban" edit="false" sample="1">
-                    <field name="state"/>
+                <kanban default_group_by="workflow_current_state_id" class="o_kanban_dashboard o_tender_kanban" edit="false" sample="1">
+                    <field name="workflow_current_state_id"/>
                     <field name="name"/>
                     <field name="code"/>
                     <field name="tender_type"/>
@@ -196,9 +176,9 @@
                     <field name="invited_partners"/>
                     <field name="currency_id"/>
                     <field name="target_price"/>
-                    <field name="winning_result_id"/>
+                    <field name="winning_order_id"/>
                     <field name="purchase_order_count"/>
-                    <field name="tender_result_count"/>
+                    <field name="offer_count"/>
                     <field name="create_date"/>
                     <field name="activity_ids"/>
                     <field name="activity_state"/>
@@ -211,8 +191,8 @@
                                 <a role="menuitem" type="edit" class="dropdown-item">
                                     <i class="fa fa-fw fa-edit"/> Düzenle
                                 </a>
-                                <a role="menuitem" name="action_view_tender_results" type="object" class="dropdown-item">
-                                    <i class="fa fa-fw fa-eye"/> Teklif Sonuçları
+                                <a role="menuitem" name="action_view_offers" type="object" class="dropdown-item">
+                                    <i class="fa fa-fw fa-eye"/> Teklifleri Görüntüle
                                 </a>
                                 <t t-if="record.purchase_order_count.raw_value > 0">
                                     <a role="menuitem" name="action_view_purchase_orders" type="object" class="dropdown-item">
@@ -254,29 +234,7 @@
                             <!-- Main Content Area -->
                             <div class="row g-0 mb16 mt-1 ms-2 me-2">
                                 <div class="col-12">
-                                    <!-- Action Button based on state -->
-                                    <div class="mb-2">
-                                        <t t-if="record.state.raw_value and record.state.raw_value == 'draft'">
-                                            <button class="btn btn-outline-success btn-sm" name="action_start_first_round" type="object">
-                                                <i class="fa fa-play"/> İhaleyi Başlat
-                                            </button>
-                                        </t>
-                                        <t t-elif="record.state.raw_value and record.state.raw_value == 'first_tender_round'">
-                                            <button class="btn btn-outline-warning btn-sm" name="action_set_target_price" type="object">
-                                                <i class="fa fa-target"/> Hedef Fiyat Belirle
-                                            </button>
-                                        </t>
-                                        <t t-elif="record.state.raw_value and record.state.raw_value == 'target_price_set'">
-                                            <button class="btn btn-outline-info btn-sm" name="action_start_second_round" type="object">
-                                                <i class="fa fa-refresh"/> 2. Tur Başlat
-                                            </button>
-                                        </t>
-                                        <t t-elif="record.state.raw_value and record.state.raw_value == 'evaluation'">
-                                            <button class="btn btn-outline-primary btn-sm" name="action_request_approval" type="object">
-                                                <i class="fa fa-check"/> Onaya Gönder
-                                            </button>
-                                        </t>
-                                    </div>
+                                    <!-- Action buttons removed as they are now handled by the workflow engine in the form view -->
                                     
                                     <!-- Info List - Full Width -->
                                     <!-- SAT Info -->
@@ -310,12 +268,12 @@
                                     </div>
                                     
                                     <!-- Winning Result -->
-                                    <div class="d-flex mb-1" t-if="record.winning_result_id.raw_value">
+                                    <div class="d-flex mb-1" t-if="record.winning_order_id.raw_value">
                                         <span class="me-auto text-success o_form_label">
                                             <i class="fa fa-trophy"/> Kazanan
                                         </span>
                                         <span class="text-success fw-bold">
-                                            <field name="winning_result_id" options="{'no_open': True}"/>
+                                            <field name="winning_order_id" options="{'no_open': True}"/>
                                         </span>
                                     </div>
                                 </div>
@@ -325,42 +283,42 @@
                             <div class="mb-3 ms-2 me-2">
                                 <div class="progress" style="height: 8px;">
                                     <div class="progress-bar"
-                                        t-attf-class="progress-bar #{record.state.raw_value == null or record.state.raw_value == undefined ? 'bg-danger bg-opacity-50' :
-                                            record.state.raw_value == 'draft' ? 'bg-secondary bg-opacity-50' :
-                                            record.state.raw_value == 'first_tender_round' ? 'bg-info bg-opacity-50' :
-                                            record.state.raw_value == 'target_price_set' ? 'bg-warning bg-opacity-50' :
-                                            record.state.raw_value == 'second_tender_round' ? 'bg-primary bg-opacity-50' :
-                                            record.state.raw_value == 'evaluation' ? 'bg-warning bg-opacity-50' :
-                                            record.state.raw_value == 'approved' ? 'bg-success bg-opacity-50' :
-                                            record.state.raw_value == 'done' ? 'bg-success bg-opacity-50' :
+                                        t-attf-class="progress-bar #{!record.workflow_current_state_id.raw_value ? 'bg-danger bg-opacity-50' :
+                                            record.workflow_current_state_id.raw_value[1] == 'Taslak' ? 'bg-secondary bg-opacity-50' :
+                                            record.workflow_current_state_id.raw_value[1] == '1. Teklif Toplama' ? 'bg-info bg-opacity-50' :
+                                            record.workflow_current_state_id.raw_value[1] == 'Hedef Fiyat Belirlendi' ? 'bg-warning bg-opacity-50' :
+                                            record.workflow_current_state_id.raw_value[1] == '2. Teklif Toplama' ? 'bg-primary bg-opacity-50' :
+                                            record.workflow_current_state_id.raw_value[1] == 'Değerlendirme' ? 'bg-warning bg-opacity-50' :
+                                            record.workflow_current_state_id.raw_value[1] == 'Onaylandı' ? 'bg-success bg-opacity-50' :
+                                            record.workflow_current_state_id.raw_value[1] == 'Tamamlandı' ? 'bg-success bg-opacity-50' :
                                             'bg-danger bg-opacity-50'}"
-                                        t-attf-style="width: #{record.state.raw_value == null or record.state.raw_value == undefined ? '0' :
-                                            record.state.raw_value == 'draft' ? '12' :
-                                            record.state.raw_value == 'first_tender_round' ? '25' :
-                                            record.state.raw_value == 'target_price_set' ? '37' :
-                                            record.state.raw_value == 'second_tender_round' ? '50' :
-                                            record.state.raw_value == 'evaluation' ? '62' :
-                                            record.state.raw_value == 'approved' ? '87' :
-                                            record.state.raw_value == 'done' ? '100' : '0'}%">
+                                        t-attf-style="width: #{!record.workflow_current_state_id.raw_value ? '0' :
+                                            record.workflow_current_state_id.raw_value[1] == 'Taslak' ? '12' :
+                                            record.workflow_current_state_id.raw_value[1] == '1. Teklif Toplama' ? '25' :
+                                            record.workflow_current_state_id.raw_value[1] == 'Hedef Fiyat Belirlendi' ? '37' :
+                                            record.workflow_current_state_id.raw_value[1] == '2. Teklif Toplama' ? '50' :
+                                            record.workflow_current_state_id.raw_value[1] == 'Değerlendirme' ? '62' :
+                                            record.workflow_current_state_id.raw_value[1] == 'Onaylandı' ? '87' :
+                                            record.workflow_current_state_id.raw_value[1] == 'Tamamlandı' ? '100' : '0'}%">
                                     </div>
                                 </div>
                             </div>
 
                             <!-- Footer Stats -->
                             <div name="card_content" class="row mt-auto">
-                                <a name="action_view_tender_results" type="object" 
-                                class="d-flex flex-column align-items-center col-4 border-end">
+                                <a name="action_view_offers" type="object"
+                                   class="d-flex flex-column align-items-center col-4 border-end">
                                     <span class="fw-bold text-primary">
                                         <t t-esc="record.invited_partners.raw_value.length"/>
                                     </span>
                                     <span class="text-muted text-truncate mw-100" title="Davet Edilen">Davet Edilen</span>
                                 </a>
-                                
+
                                 <div class="d-flex flex-column align-items-center col-4 border-end">
                                     <span class="fw-bold text-success">
-                                        <field name="tender_result_count"/>
+                                        <field name="offer_count"/>
                                     </span>
-                                    <span class="text-muted text-truncate mw-100" title="Teklif Veren">Teklif Veren</span>
+                                    <span class="text-muted text-truncate mw-100" title="Teklif Sayısı">Teklif Sayısı</span>
                                 </div>
                                 
                                 <div class="d-flex flex-column align-items-center col-4">
@@ -377,50 +335,15 @@
                             </div>
 
                             <!-- Activity indicator at bottom -->
-                            <div class="position-absolute bottom-0 end-0 me-2 mb-2">
-                                <field name="activity_ids" widget="kanban_activity"/>
-                            </div>
+                           <div class="position-absolute bottom-0 end-0 me-2 mb-2">
+                               <field name="activity_ids" widget="kanban_activity"/>
+                           </div>
                         </t>
                     </templates>
                 </kanban>
             </field>
         </record>
 
-<!-- 
-        <record id="ak_tender_view_kanban" model="ir.ui.view">
-            <field name="name">ak.tender.kanban</field>
-            <field name="model">ak.tender</field>
-            <field name="arch" type="xml">
-                <kanban default_group_by="state">
-                    <field name="state"/>
-                    <field name="name"/>
-                    <field name="code"/>
-                    <field name="tender_type"/>
-                    <templates>
-                        <t t-name="kanban-box">
-                            <div t-attf-class="oe_kanban_global_click">
-                                <div class="oe_kanban_details">
-                                    <strong class="o_kanban_record_title"><field name="name"/></strong>
-                                    <ul>
-                                        <li>İhale Kodu: <field name="code"/></li>
-                                        <li>ERP SAT No: <field name="erp_pr_id"/></li>
-                                        <li>Durum: <field name="state"/></li>
-                                        <li>Başlangıç: <field name="start_date"/></li>
-                                        <li>Bitiş: <field name="end_date"/></li>
-                                    </ul>
-                                    <div class="oe_kanban_bottom_left">
-                                        <field name="invited_partners" widget="many2many_avatar_user"/>
-                                    </div>
-                                    <div class="oe_kanban_bottom_right">
-                                        <field name="tender_type" widget="badge"/>
-                                    </div>
-                                </div>
-                            </div>
-                        </t>
-                    </templates>
-                </kanban>
-            </field>
-        </record> -->
 
         <record id="ak_tender_action" model="ir.actions.act_window">
             <field name="name">İhaleler</field>
@@ -451,4 +374,5 @@
                   sequence="10"/>
 
     </data>
+
 </odoo>

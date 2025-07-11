@@ -24,11 +24,9 @@
 
     </data>
     <data>
-        <!-- Rules for tier.definition when it's a workflow -->
-        <record id="tier_definition_workflow_rule_manager" model="ir.rule">
+        <record id="ak_workflow_definition_rule_manager" model="ir.rule">
             <field name="name">Workflow Definition: Manager Access</field>
-            <field name="model_id" ref="base_tier_validation.model_tier_definition"/>
-            <field name="domain_force">[('is_workflow', '=', True)]</field>
+            <field name="model_id" ref="model_ak_workflow_definition"/>
             <field name="groups" eval="[(4, ref('group_workflow_manager'))]"/>
             <field name="perm_read" eval="1"/>
             <field name="perm_write" eval="1"/>

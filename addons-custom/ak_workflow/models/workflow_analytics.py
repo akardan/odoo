@@ -8,7 +8,7 @@ class WorkflowAnalytics(models.Model):
     _rec_name = 'workflow_name'
 
     # Dimensions
-    workflow_id = fields.Many2one('tier.definition', 'Workflow', readonly=True)
+    workflow_id = fields.Many2one('ak.workflow.definition', 'Workflow', readonly=True)
     workflow_name = fields.Char('Workflow Name', readonly=True)
     state_id = fields.Many2one('ak.workflow.state', 'State', readonly=True)
     state_name = fields.Char('State Name', readonly=True)
@@ -39,8 +39,6 @@ class WorkflowAnalytics(models.Model):
                 FROM
                     ak_workflow_state ws
                 JOIN
-                    tier_definition wd ON ws.workflow_id = wd.id
-                WHERE
-                    wd.is_workflow = true
+                    ak_workflow_definition wd ON ws.workflow_id = wd.id
             )
         """)

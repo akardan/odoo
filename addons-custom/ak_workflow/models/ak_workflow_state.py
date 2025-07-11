@@ -9,19 +9,18 @@ class AkWorkflowState(models.Model):
     _name = 'ak.workflow.state'
     _description = 'Workflow State Definition'
     _order = 'workflow_id, sequence, name'
-    _rec_name = 'display_name'
+    _rec_name = 'name'
 
     # Basic Info
     name = fields.Char('State Name', required=True, translate=True)
     code = fields.Char('State Code', required=True, 
                        help="Technical identifier unique within workflow")
     description = fields.Text('Description', translate=True)
-    display_name = fields.Char(compute='_compute_display_name', store=True)
+    display_name = fields.Char(compute='_compute_display_name')
     
     # Workflow Relation
-    workflow_id = fields.Many2one('tier.definition', 'Workflow',
-                                  required=True, ondelete='cascade',
-                                  domain="[('is_workflow', '=', True)]")
+    workflow_id = fields.Many2one('ak.workflow.definition', 'Workflow',
+                                  required=True, ondelete='cascade')
     
     # State Properties
     sequence = fields.Integer('Sequence', default=10)
@@ -45,9 +44,6 @@ class AkWorkflowState(models.Model):
                                       string='Edit Groups',
                                       help="Groups that can edit records in this state")
     
-    # Tier Validation Integration
-    tier_definition_ids = fields.One2many('tier.definition', 'workflow_state_id',
-                                          string='Tier Definitions')
     
     # Transitions
     outgoing_transition_ids = fields.One2many('ak.workflow.transition',
@@ -65,14 +61,12 @@ class AkWorkflowState(models.Model):
                                       string='Exit Actions',
                                       domain=[('trigger_event', '=', 'state_exit')])
     
-    @api.depends('name', 'workflow_id.name')
     def _compute_display_name(self):
         for state in self:
-            if state.workflow_id:
-                state.display_name = f"[{state.workflow_id.name}] {state.name}"
-            else:
-                state.display_name = state.name
+            state.display_name = state.name
     
+    def name_get(self):
+        return [(state.id, state.name) for state in self]
     @api.constrains('workflow_id', 'code')
     def _check_unique_code(self):
         """Ensure state code is unique within workflow"""

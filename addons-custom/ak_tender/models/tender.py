@@ -23,14 +23,9 @@ class AkTenderLine(models.Model):
 class AkTender(models.Model):
     _name = 'ak.tender'
     _description = _('İLKOis Tender')
-    _inherit = ['mail.thread', 'mail.activity.mixin', 'tier.validation']
-
-    # Tier Validation Settings
-    _state_field = 'state'
-    _state_from = ['evaluation']
-    _state_to = ['approved']
-    _cancel_state = 'cancel'
-    _tier_validation_manual_config = False
+    _inherit = ['ak.workflow.mixin', 'mail.thread', 'mail.activity.mixin']
+    # Dummy field to allow smooth upgrade from previous versions
+    state = fields.Char(string="State (deprecated)", help="Technical field for upgrade purpose. Not used anymore.", store=False)
 
     name = fields.Char(string=_('İhale Adı'), required=True, copy=False,
                        help=_("İhale sürecinin başlığı veya kısa adı."))
@@ -44,16 +39,6 @@ class AkTender(models.Model):
     erp_plant_code = fields.Char(string=_('ERP Tesis Kodu'), help=_("İlgili ERP Tesis Kodu (entegrasyon ile gelecek)."))
     
     # TEKLİF DOKÜMANINA GÖRE REVİZE EDİLEN DURUM ALANI
-    state = fields.Selection([
-        ('draft', _('Taslak')),
-        ('first_tender_round', _('1. Teklif Toplama')),
-        ('target_price_set', _('Hedef Fiyat Belirlendi')),
-        ('second_tender_round', _('2. Teklif Toplama')),
-        ('evaluation', _('Değerlendirme')),
-        ('approved', _('Onaylandı')),
-        ('done', _('Tamamlandı')),
-        ('cancel', _('İptal Edildi')),
-    ], string=_('Durum'), default='draft', tracking=True, group_expand='_read_group_state')
 
     tender_type = fields.Selection([
         ('standard', _('Standart İhale')), # Tek bir tur
@@ -75,10 +60,10 @@ class AkTender(models.Model):
                                        help=_("Bu ihaleye davet edilecek tedarikçiler."))
 
     # İhale Sonuçları (One2many ilişki)
-    tender_results = fields.One2many('ak.tender.result', 'tender_id', string=_('Teklif Sonuçları'))
+    purchase_order_ids = fields.One2many('purchase.order', 'tender_id', string=_('Teklifler (SAT)'))
     
     # Kazanan Teklif ve Hedef Fiyat (Raporlama için)
-    winning_result_id = fields.Many2one('ak.tender.result', string=_('Kazanan Teklif'), compute='_compute_winning_result', store=True, readonly=True)
+    winning_order_id = fields.Many2one('purchase.order', string=_('Kazanan Teklif (SAS)'), compute='_compute_winning_order', store=True, readonly=True)
     
     # TEKLİF DOKÜMANINA GÖRE KRİTİK ALAN: HEDEF FİYAT
     target_price = fields.Monetary(string=_('Hedef Fiyat'), currency_field='currency_id',
@@ -91,52 +76,69 @@ class AkTender(models.Model):
     # Akıllı Butonlar için compute field'lar
     purchase_order_count = fields.Integer(string=_('SAS Sayısı'), compute='_compute_purchase_order_count')
     
-    tender_result_count = fields.Integer(string=_('Teklif Veren Sayısı'), compute='_compute_tender_result_count')
+    offer_count = fields.Integer(string=_('Teklif Sayısı'), compute='_compute_offer_count')
 
-    @api.depends('tender_results', 'state')
-    def _compute_tender_result_count(self):
+    @api.depends('purchase_order_ids', 'workflow_current_state_id')
+    def _compute_offer_count(self):
         for tender in self:
+            state_technical_name = tender.workflow_current_state_id.technical_name if tender.workflow_current_state_id else None
             # State'e göre teklif filtreleme
-            if tender.state == 'first_tender_round':
+            if state_technical_name == 'first_tender_round':
                 # 1. tur teklifleri say
-                tender.tender_result_count = len(tender.tender_results.filtered(lambda r: r.tender_round == 'first'))
-            elif tender.state == 'second_tender_round' or tender.state == 'target_price_set':
+                tender.offer_count = len(tender.purchase_order_ids.filtered(lambda o: o.tender_round == 1))
+            elif state_technical_name in ('second_tender_round', 'target_price_set'):
                 # 2. tur teklifleri say
-                tender.tender_result_count = len(tender.tender_results.filtered(lambda r: r.tender_round == 'second'))
-            elif tender.state in ['evaluation', 'approved', 'done']:
+                tender.offer_count = len(tender.purchase_order_ids.filtered(lambda o: o.tender_round == 2))
+            elif state_technical_name in ('evaluation', 'approved', 'done'):
                 # Değerlendirme ve sonraki aşamalarda tüm teklifleri say
-                tender.tender_result_count = len(tender.tender_results)
+                tender.offer_count = len(tender.purchase_order_ids)
             else:
                 # Diğer durumlarda (draft, cancel) sıfır
-                tender.tender_result_count = 0
+                tender.offer_count = 0
 
     
-    @api.depends('tender_results')
-    def _compute_winning_result(self):
+    @api.depends('purchase_order_ids.amount_total', 'purchase_order_ids.tender_offer_status')
+    def _compute_winning_order(self):
         # Bu prototipte en düşük fiyatlı teklifi kazanan kabul edelim
         for tender in self:
-            if tender.tender_results:
+            if tender.purchase_order_ids:
                 # Sadece 'selected' (seçilmiş) veya en düşük fiyatlı teklifi bul
-                selected_result = tender.tender_results.filtered(lambda r: r.status == 'selected')
-                if selected_result:
-                    tender.winning_result_id = selected_result[0]
+                selected_order = tender.purchase_order_ids.filtered(lambda o: o.tender_offer_status == 'selected')
+                if selected_order:
+                    tender.winning_order_id = selected_order[0]
                 else: # Henüz seçilmemişse en düşüğü göster
-                    tender.winning_result_id = min(tender.tender_results, key=lambda r: r.total_price)
+                    tender.winning_order_id = min(tender.purchase_order_ids, key=lambda o: o.amount_total)
             else:
-                tender.winning_result_id = False
+                tender.winning_order_id = False
     
-    @api.depends('tender_results.purchase_order_id')
+    @api.depends('purchase_order_ids')
     def _compute_purchase_order_count(self):
         for tender in self:
-            # İhale sonuçlarına bağlı olarak oluşturulan Purchase Order sayısını hesapla
-            tender.purchase_order_count = len(tender.tender_results.mapped('purchase_order_id').filtered(lambda po: po.exists()))
+            # Bu ihale ile ilişkili Purchase Order sayısını hesapla
+            tender.purchase_order_count = len(tender.purchase_order_ids)
             
-    @api.model
-    def create(self, vals):
-        if vals.get('code', _('New')) == _('New'):
-            vals['code'] = self.env['ir.sequence'].next_by_code('ak.tender.sequence') or _('New')
-        result = super(AkTender, self).create(vals)
-        return result
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if vals.get('code', _('New')) == _('New'):
+                vals['code'] = self.env['ir.sequence'].next_by_code('ak.tender.sequence') or _('New')
+        
+        # The workflow initialization is now correctly handled by the ak.workflow.mixin's create method.
+        records = super().create(vals_list)
+        return records
+
+    @api.onchange('workflow_definition_id')
+    def _onchange_workflow_definition_id(self):
+        """
+        İş akışı tanımı değiştirildiğinde, mevcut durumu
+        yeni iş akışının başlangıç durumuna günceller.
+        """
+        if self.workflow_definition_id and self.workflow_definition_id.initial_state_id:
+            self.workflow_current_state_id = self.workflow_definition_id.initial_state_id
+            if self._origin:  # Sadece mevcut kayıtlarda başlangıç tarihini güncelle
+                self.workflow_start_date = fields.Datetime.now()
+        else:
+            self.workflow_current_state_id = False
 
     @api.constrains('start_date', 'end_date')
     def _check_dates(self):
@@ -146,39 +148,19 @@ class AkTender(models.Model):
 
     def _create_purchase_order(self):
         self.ensure_one()
-        winning_result = self.winning_result_id
-        if winning_result and winning_result.partner_id:
-            purchase_order = self.env['purchase.order'].create({
-                'partner_id': winning_result.partner_id.id,
-                'currency_id': winning_result.currency_id.id,
-                'date_order': fields.Datetime.now(),
-                'origin': self.code,
-                'company_id': self.env.company.id,
-                'payment_term_id': winning_result.payment_terms.id if winning_result.payment_terms else False,
-            })
-            for tender_line in self.tender_lines:
-                result_line_for_po = winning_result.result_lines.filtered(
-                    lambda rl: rl.tender_line_id.id == tender_line.id
-                )
-                price_unit_for_po_line = result_line_for_po.price_unit if result_line_for_po else 0.0
-                if len(result_line_for_po) > 1:
-                    price_unit_for_po_line = result_line_for_po[0].price_unit
-                self.env['purchase.order.line'].create({
-                    'order_id': purchase_order.id,
-                    'product_id': tender_line.product_id.id,
-                    'name': tender_line.name,
-                    'product_qty': tender_line.quantity,
-                    'product_uom': tender_line.uom_id.id,
-                    'price_unit': price_unit_for_po_line,
-                    'date_planned': tender_line.required_delivery_date,
-                })
-            winning_result.purchase_order_id = purchase_order.id
-            if purchase_order.state == 'draft':
-                purchase_order.button_confirm()
-            self._compute_purchase_order_count()
-            notification_message = _('İhale başarıyla onaylandı. Satın Alma Siparişi %s oluşturuldu.') % (purchase_order.name)
+        winning_order = self.winning_order_id
+        if winning_order:
+            # The winning_order is already a purchase.order, we just need to confirm it.
+            if winning_order.state in ('draft', 'sent'):
+                 winning_order.button_confirm()
+            
+            # Set other orders to 'rejected'
+            other_orders = self.purchase_order_ids.filtered(lambda o: o.id != winning_order.id)
+            other_orders.write({'tender_offer_status': 'rejected'})
+
+            notification_message = _('İhale başarıyla onaylandı. Kazanan teklif (%s) için Satın Alma Siparişi onaylandı.') % (winning_order.name)
         else:
-            notification_message = _('İhale başarıyla onaylandı. Ancak kazanan teklif bilgileri eksik olduğu için SAS oluşturulamadı.')
+            notification_message = _('İhale başarıyla onaylandı. Ancak kazanan bir teklif bulunamadığı için SAS onaylanamadı.')
         self.env['bus.bus']._sendone(
             self.env.user.partner_id,
             'display_notification',
@@ -188,189 +170,32 @@ class AkTender(models.Model):
             }
         )
 
-    def write(self, vals):
-        previous_states = {rec.id: rec.state for rec in self}
-        res = super(AkTender, self).write(vals)
-        if 'state' in vals and vals['state'] == 'approved':
-            for tender in self:
-                if previous_states.get(tender.id) != 'approved' and tender.state == 'approved':
-                    tender._create_purchase_order()
-        return res
             
-    # YENİ DURUM GEÇİŞ METOTLARI (TEKLİF DOKÜMANINA GÖRE)
+    # NOT: Durum geçiş metotları artık iş akışı (`ak.workflow.mixin`) tarafından yönetilmektedir.
+    # `action_start_first_round`, `action_complete_tender` gibi metotlar yerine
+    # iş akışı tanımında (`ak.workflow.definition`) belirtilen geçişler (`ak.workflow.transition`) kullanılır.
+    # Geçişler, sunucu aksiyonları (`ir.actions.server`) aracılığıyla tetiklenebilir
+    # ve bu aksiyonlar `execute_code` alanında bu model üzerindeki metotları çağırabilir.
+    # Örneğin, bir geçiş "Onayla" ise ve `_create_purchase_order` metodunu çağırması gerekiyorsa,
+    # bu geçişin sunucu aksiyonunda `model._create_purchase_order()` kodu yer alır.
     
-    def action_start_first_round(self):
+    def action_view_offers(self):
         self.ensure_one()
-        if self.state != 'draft':
-            raise UserError(_("İhale sadece 'Taslak' durumundayken 1. Teklif Toplama turuna başlatılabilir."))
-        if not self.tender_lines:
-            raise UserError(_("İhaleyi başlatmak için en az bir ihale kalemi tanımlanmalıdır."))
-        if not self.invited_partners:
-            raise UserError(_("İhaleyi başlatmak için en az bir tedarikçi davet edilmelidir."))
-        
-        # Bu noktada tedarikçilere davet e-postaları gönderilebilir ve portalda ilk teklif formu açılabilir.
-        self.write({'state': 'first_tender_round'})
-        return {
-            'type': 'ir.actions.client',
-            'tag': 'display_notification',
-            'params': {
-                'title': _('1. Teklif Toplama Başlatıldı'),
-                'message': _('İhale ilk teklif toplama turuna başlatıldı. Tedarikçiler tekliflerini sunmaya başlayabilir.'),
-                'sticky': False,
-            }
-        }
-
-    def action_set_target_price(self):
-        self.ensure_one()
-        if self.state != 'first_tender_round':
-            raise UserError(_("Hedef fiyat sadece '1. Teklif Toplama' aşamasında belirlenebilir."))
-        if not self.tender_results:
-            raise UserError(_("Hedef fiyat belirlemek için en az bir teklif sonucu girilmelidir."))
-            
-        # Hedef fiyat belirleme sihirbazını aç
-        return {
-            'name': _('Hedef Fiyat Belirleme'),
-            'type': 'ir.actions.act_window',
-            'res_model': 'ak.tender.set.target.price.wizard',
-            'view_mode': 'form',
-            'target': 'new',
-            'context': {'active_id': self.id}
-        }
-
-    def action_start_second_round(self):
-        self.ensure_one()
-        if self.state != 'target_price_set':
-            raise UserError(_("İkinci teklif toplama turu sadece 'Hedef Fiyat Belirlendi' aşamasında başlatılabilir."))
-        
-        # Bu noktada tedarikçilere hedef fiyat bilgisi ve revizyon linkleri gönderilebilir.
-        self.write({'state': 'second_tender_round'})
-        return {
-            'type': 'ir.actions.client',
-            'tag': 'display_notification',
-            'params': {
-                'title': _('2. Teklif Toplama Başlatıldı'),
-                'message': _('İhale ikinci teklif toplama turuna (açık eksiltme/revizyon) başlatıldı. Tedarikçiler tekliflerini revize edebilir.'),
-                'sticky': False,
-            }
-        }
-
-    def action_to_evaluation(self):
-        self.ensure_one()
-        if self.state not in ('first_tender_round', 'second_tender_round', 'target_price_set'):
-            raise UserError(_("Değerlendirme aşamasına geçiş sadece '1. Teklif Toplama', '2. Teklif Toplama' veya 'Hedef Fiyat Belirlendi' aşamasından yapılabilir."))
-        if not self.tender_results:
-            raise UserError(_("Değerlendirme aşamasına geçmek için en az bir teklif sonucu olmalıdır."))
-            
-        # Teklif toplama süresi bitmiş mi kontrol edilebilir (gerçek entegrasyon)
-        # Bu noktada tedarikçilerin teklif verme linkleri devre dışı bırakılır.
-        self.write({'state': 'evaluation'})
-        return {
-            'type': 'ir.actions.client',
-            'tag': 'display_notification',
-            'params': {
-                'title': _('Değerlendirme Aşamasında'),
-                'message': _('İhale değerlendirme aşamasına alındı. Teklifleri detaylı inceleyebilir ve kazananı belirleyebilirsiniz.'),
-                'sticky': False,
-            }
-        }
-
-    def action_request_approval(self):
-        for rec in self:
-            if not rec.winning_result_id:
-                raise UserError(_("Onay talep etmeden önce kazanan bir teklif seçilmelidir."))
-            rec.request_validation()
-        
-    def action_complete_tender(self):
-        self.ensure_one()
-        if self.state != 'approved':
-            raise UserError(_("İhale sadece 'Onaylandı' durumundayken tamamlanabilir."))
-            
-        # Burası aslında SAS oluşturma ve SAP'a gönderme işleminin ardından gerçekleşir.
-        self.write({'state': 'done'})
-        return {
-            'type': 'ir.actions.client',
-            'tag': 'display_notification',
-            'params': {
-                'title': _('İhale Tamamlandı'),
-                'message': _('İhale süreci başarıyla tamamlandı.'),
-                'sticky': False,
-            }
-        }
-
-    def action_cancel_tender(self):
-        self.ensure_one()
-        if self.state in ('approved', 'done'):
-            raise UserError(_("Onaylanmış veya tamamlanmış ihale iptal edilemez."))
-        self.write({'state': 'cancel'})
-        return {
-            'type': 'ir.actions.client',
-            'tag': 'display_notification',
-            'params': {
-                'title': _('İhale İptal Edildi'),
-                'message': _('İhale başarıyla iptal edildi.'),
-                'sticky': False,
-            }
-        }
-        
-    def action_set_draft(self):
-        self.ensure_one()
-        if self.state != 'cancel':
-            raise UserError(_("Sadece iptal edilmiş ihaleler taslak durumuna çevrilebilir."))
-        self.write({'state': 'draft'})
-        return {
-            'type': 'ir.actions.client',
-            'tag': 'display_notification',
-            'params': {
-                'title': _('İhale Taslağa Çevrildi'),
-                'message': _('İhale taslak durumuna çevrildi. Düzenlemeye devam edebilirsiniz.'),
-                'sticky': False,
-            }
-        }
-    
-    def action_view_tender_results(self):
-        self.ensure_one()
-        return {
-            'type': 'ir.actions.act_window',
-            'name': _('Teklif Sonuçları'),
-            'res_model': 'ak.tender.result',
-            'view_mode': 'list,form,pivot',
-            'domain': [('tender_id', '=', self.id)],
-            'context': {'default_tender_id': self.id},
-            'target': 'current',
-            'views': [
-                (self.env.ref('ak_tender.view_tender_result_tree').id, 'list'),
-                (self.env.ref('ak_tender.view_tender_result_form').id, 'form'),
-                (self.env.ref('ak_tender.view_tender_result_pivot').id, 'pivot'),
-            ],
-        }
+        action = self.env.ref('purchase.purchase_form_action').read()[0]
+        action['domain'] = [('tender_id', '=', self.id)]
+        action['context'] = {'default_tender_id': self.id, 'default_partner_id': False}
+        # We want to show our custom fields, so we might need a custom view
+        # For now, let's use the standard views.
+        return action
     
     def action_view_purchase_orders(self):
         self.ensure_one()
-        purchase_orders = self.tender_results.mapped('purchase_order_id').filtered(lambda po: po.exists())
+        # This action now shows the same as action_view_offers, but we can filter for confirmed orders
         action = self.env.ref('purchase.purchase_form_action').read()[0]
-        if len(purchase_orders) > 1:
-            action['domain'] = [('id', 'in', purchase_orders.ids)]
-            # Update view_mode to use list instead of tree
-            if 'view_mode' in action and 'tree' in action['view_mode']:
-                action['view_mode'] = action['view_mode'].replace('tree', 'list')
-            # Update views to use list instead of tree
-            if 'views' in action:
-                action['views'] = [(view_id, view_type.replace('tree', 'list') if view_type == 'tree' else view_type) for view_id, view_type in action['views']]
-        elif purchase_orders:
-            action['views'] = [(self.env.ref('purchase.purchase_order_form').id, 'form')]
-            action['res_id'] = purchase_orders.id
-        else:
-            action = {'type': 'ir.actions.act_window_close'} # No PO to show
+        action['domain'] = [('tender_id', '=', self.id), ('state', 'in', ['purchase', 'done'])]
         return action
     
 
-    @api.model
-    def _read_group_state(self, *args, **kwargs):
-        """Read group customization for state field: returns all states in their original order."""
-        # Return all possible states in the same order as defined in the model
-        return [
-            'draft', 'first_tender_round', 'target_price_set', 'second_tender_round',
-            'evaluation', 'approved', 'done', 'cancel'
-        ]
+
 
 

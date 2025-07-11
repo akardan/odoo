@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- Inherited Form View for Purchase Order -->
+        <record id="purchase_order_form_tender" model="ir.ui.view">
+            <field name="name">purchase.order.form.tender</field>
+            <field name="model">purchase.order</field>
+            <field name="inherit_id" ref="purchase.purchase_order_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='partner_ref']" position="after">
+                    <field name="tender_id" readonly="1" force_save="1"/>
+                    <field name="tender_round" invisible="[('tender_id', '=', False)]"/>
+                    <field name="tender_offer_status" invisible="[('tender_id', '=', False)]"/>
+                </xpath>
+                <xpath expr="//field[@name='order_line']//field[@name='product_id']" position="after">
+                    <field name="tender_line_id" readonly="1" optional="show"/>
+                </xpath>
+                 <xpath expr="//notebook" position="inside">
+                    <page string="İhale Bilgileri" name="tender_info" invisible="[('tender_id', '=', False)]">
+                        <group>
+                            <group>
+                                <field name="guarantee_period"/>
+                                <field name="delivery_date"/>
+                            </group>
+                        </group>
+                    </page>
+                </xpath>
+            </field>
+        </record>
+
+        <!-- Inherited Tree View for Purchase Order -->
+        <record id="purchase_order_tree_tender" model="ir.ui.view">
+            <field name="name">purchase.order.tree.tender</field>
+            <field name="model">purchase.order</field>
+            <field name="inherit_id" ref="purchase.purchase_order_view_tree"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='amount_total']" position="after">
+                    <field name="tender_id" optional="show"/>
+                    <field name="tender_round" optional="show"/>
+                    <field name="tender_offer_status" optional="show"/>
+                </xpath>
+            </field>
+        </record>
+
+        <!-- Inherited Search View for Purchase Order -->
+        <record id="purchase_order_search_tender" model="ir.ui.view">
+            <field name="name">purchase.order.search.tender</field>
+            <field name="model">purchase.order</field>
+            <field name="inherit_id" ref="purchase.view_purchase_order_filter"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='partner_id']" position="after">
+                    <field name="tender_id"/>
+                </xpath>
+                <xpath expr="//filter[@name='order_date']" position="after">
+                    <filter name="group_by_tender" string="İhale" context="{'group_by': 'tender_id'}"/>
+                </xpath>
+            </field>
+        </record>
+
+    </data>
+</odoo>

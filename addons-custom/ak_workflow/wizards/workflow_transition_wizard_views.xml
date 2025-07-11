@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="ak_workflow_transition_wizard_view_form" model="ir.ui.view">
+            <field name="name">ak.workflow.transition.wizard.form</field>
+            <field name="model">ak.workflow.transition.wizard</field>
+            <field name="arch" type="xml">
+                <form string="Execute Workflow Transition">
+                    <group>
+                        <field name="res_model" invisible="1"/>
+                        <field name="res_id" invisible="1"/>
+                        <field name="transition_id" invisible="1"/>
+                        <div>
+                            <span>You are about to execute the transition:</span>
+                            <strong class="ms-1"><field name="transition_id" readonly="1"/></strong>
+                            <small class="ms-1 text-muted"><field name="transition_display_info" readonly="1"/></small>
+                        </div>
+                        <field name="comment" placeholder="Add an optional comment..."/>
+                    </group>
+                    <footer>
+                        <button name="execute_transition" type="object" string="Execute" class="btn-primary"/>
+                        <button string="Cancel" class="btn-secondary" special="cancel"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+    </data>
+</odoo>

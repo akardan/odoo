@@ -15,14 +15,14 @@ class AkWorkflowTransition(models.Model):
     name = fields.Char('Transition Name', required=True, translate=True)
     code = fields.Char('Transition Code', help="Technical identifier")
     description = fields.Text('Description', translate=True)
-    display_name = fields.Char(compute='_compute_display_name', store=True)
+    display_name = fields.Char(compute='_compute_display_name')
     
     # Workflow and States
     workflow_id = fields.Many2one(
-        'tier.definition', 'Workflow',
-        required=True, ondelete='cascade',
-        domain="[('is_workflow', '=', True)]"
+        'ak.workflow.definition', 'Workflow',
+        required=True, ondelete='cascade'
     )
+    workflow_model_id = fields.Many2one(related='workflow_id.model_id', string="Workflow Model", store=True, readonly=True)
     from_state_id = fields.Many2one(
         'ak.workflow.state', 'From State',
         required=True, ondelete='cascade',
@@ -68,7 +68,7 @@ class AkWorkflowTransition(models.Model):
                                        help="Python expression that must return True")
     condition_field_id = fields.Many2one(
         'ir.model.fields', 'Field',
-        domain="[('model_id', '=', parent.workflow_id.model_id)]"
+        domain="[('model_id', '=', workflow_model_id)]"
     )
     condition_operator = fields.Selection([
         ('=', '='), ('!=', '!='), ('>', '>'), ('>=', '>='), ('<', '<'), ('<=', '<='),
@@ -83,11 +83,6 @@ class AkWorkflowTransition(models.Model):
         default=lambda self: self.env.company.currency_id
     )
     
-    # Tier Validation Integration
-    require_tier_validation = fields.Boolean(
-        'Require Tier Validation',
-        help="Use OCA tier validation for this transition"
-    )
     
     # Actions
     action_ids = fields.One2many('ak.workflow.action', 'transition_id',
@@ -97,7 +92,7 @@ class AkWorkflowTransition(models.Model):
     send_notification = fields.Boolean('Send Notification', default=True)
     notification_template_id = fields.Many2one(
         'mail.template', 'Notification Template',
-        domain="[('model_id', '=', parent.workflow_id.model_id)]"
+        domain="[('model_id', '=', workflow_model_id)]"
     )
     
     active = fields.Boolean('Active', default=True)
@@ -105,10 +100,7 @@ class AkWorkflowTransition(models.Model):
     @api.depends('name', 'from_state_id.name', 'to_state_id.name')
     def _compute_display_name(self):
         for transition in self:
-            if transition.from_state_id and transition.to_state_id:
-                transition.display_name = f"{transition.from_state_id.name} → {transition.to_state_id.name}"
-            else:
-                transition.display_name = transition.name or 'New Transition'
+            transition.display_name = transition.name or 'New Transition'
     
     @api.constrains('from_state_id', 'to_state_id')
     def _check_states_same_workflow(self):
@@ -121,4 +113,44 @@ class AkWorkflowTransition(models.Model):
 
     def check_transition_conditions(self, record):
         # This method is now on the mixin for easier access
+        return True
+
+    def _log_transition(self, record, old_state, status, comment=None):
+        status_map = {'completed': '✅'}
+        body = _(
+            "<strong>%(icon)s Workflow Transition</strong><br/>"
+            "From: <strong>%(from)s</strong> → To: <strong>%(to)s</strong><br/>"
+            "Transition: %(trans)s"
+        ) % {
+            'icon': status_map.get(status, ''),
+            'from': old_state.name,
+            'to': self.to_state_id.name,
+            'trans': self.name
+        }
+        if comment:
+            body += _("<br/>Comment: %s") % comment
+        record.message_post(body=body)
+
+    def execute_on_record(self):
+        self.ensure_one()
+        record_id = self.env.context.get('active_id')
+        model_name = self.env.context.get('active_model')
+        if not record_id or not model_name:
+            raise UserError(_("Could not find the record to execute the transition on."))
+        
+        record = self.env[model_name].browse(record_id)
+        record.ensure_one()
+        
+        # Check if the transition is available
+        if self not in record.workflow_available_transition_ids:
+            raise UserError(_("This transition is not available for the current state or user."))
+
+        comment = self.env.context.get('comment')
+        old_state = record.workflow_current_state_id
+        record.workflow_current_state_id = self.to_state_id
+        self._log_transition(record, old_state, 'completed', comment)
+        
+        for action in self.action_ids:
+            action.execute_action(record)
+        
         return True

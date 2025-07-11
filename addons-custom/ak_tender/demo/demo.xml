@@ -152,7 +152,7 @@
         <record id="tender_result_tech_solutions_1" model="ak.tender.result">
             <field name="tender_id" ref="tender_completed"/>
             <field name="partner_id" ref="supplier_tech_solutions"/>
-            <field name="tender_round">first</field>
+            <field name="tender_round">1</field>
             <field name="offer_date" eval="(DateTime.today() - relativedelta(days=45)).strftime('%Y-%m-%d %H:%M:%S')"/>
             <field name="price_unit">14500.00</field>
             <field name="delivery_date" eval="(DateTime.today() + relativedelta(days=35)).strftime('%Y-%m-%d')"/>
@@ -165,7 +165,7 @@
         <record id="tender_result_global_tech_1" model="ak.tender.result">
             <field name="tender_id" ref="tender_completed"/>
             <field name="partner_id" ref="supplier_global_tech"/>
-            <field name="tender_round">first</field>
+            <field name="tender_round">1</field>
             <field name="offer_date" eval="(DateTime.today() - relativedelta(days=44)).strftime('%Y-%m-%d %H:%M:%S')"/>
             <field name="price_unit">14200.00</field>
             <field name="delivery_date" eval="(DateTime.today() + relativedelta(days=40)).strftime('%Y-%m-%d')"/>
@@ -178,7 +178,7 @@
         <record id="tender_result_tech_solutions_2" model="ak.tender.result">
             <field name="tender_id" ref="tender_completed"/>
             <field name="partner_id" ref="supplier_tech_solutions"/>
-            <field name="tender_round">second</field>
+            <field name="tender_round">2</field>
             <field name="offer_date" eval="(DateTime.today() - relativedelta(days=30)).strftime('%Y-%m-%d %H:%M:%S')"/>
             <field name="price_unit">13800.00</field>
             <field name="delivery_date" eval="(DateTime.today() + relativedelta(days=35)).strftime('%Y-%m-%d')"/>
@@ -191,7 +191,7 @@
         <record id="tender_result_global_tech_2" model="ak.tender.result">
             <field name="tender_id" ref="tender_completed"/>
             <field name="partner_id" ref="supplier_global_tech"/>
-            <field name="tender_round">second</field>
+            <field name="tender_round">2</field>
             <field name="offer_date" eval="(DateTime.today() - relativedelta(days=29)).strftime('%Y-%m-%d %H:%M:%S')"/>
             <field name="price_unit">13500.00</field>
             <field name="delivery_date" eval="(DateTime.today() + relativedelta(days=35)).strftime('%Y-%m-%d')"/>
@@ -241,7 +241,7 @@
         <record id="tender_result_office_systems" model="ak.tender.result">
             <field name="tender_id" ref="tender_evaluation"/>
             <field name="partner_id" ref="supplier_office_systems"/>
-            <field name="tender_round">first</field>
+            <field name="tender_round">1</field>
             <field name="offer_date" eval="(DateTime.today() - relativedelta(days=5)).strftime('%Y-%m-%d %H:%M:%S')"/>
             <field name="price_unit">1150.00</field>
             <field name="delivery_date" eval="(DateTime.today() + relativedelta(days=40)).strftime('%Y-%m-%d')"/>
@@ -254,7 +254,7 @@
         <record id="tender_result_global_tech_furniture" model="ak.tender.result">
             <field name="tender_id" ref="tender_evaluation"/>
             <field name="partner_id" ref="supplier_global_tech"/>
-            <field name="tender_round">first</field>
+            <field name="tender_round">1</field>
             <field name="offer_date" eval="(DateTime.today() - relativedelta(days=4)).strftime('%Y-%m-%d %H:%M:%S')"/>
             <field name="price_unit">1180.00</field>
             <field name="delivery_date" eval="(DateTime.today() + relativedelta(days=35)).strftime('%Y-%m-%d')"/>
@@ -339,7 +339,7 @@
         <record id="tender_result_software_experts_consulting" model="ak.tender.result">
             <field name="tender_id" ref="tender_first_round"/>
             <field name="partner_id" ref="supplier_software_experts"/>
-            <field name="tender_round">first</field>
+            <field name="tender_round">1</field>
             <field name="offer_date" eval="(DateTime.today() - relativedelta(days=2)).strftime('%Y-%m-%d %H:%M:%S')"/>
             <field name="price_unit">1950.00</field>
             <field name="delivery_date" eval="(DateTime.today() + relativedelta(days=60)).strftime('%Y-%m-%d')"/>
@@ -352,7 +352,7 @@
         <record id="tender_result_tech_solutions_consulting" model="ak.tender.result">
             <field name="tender_id" ref="tender_first_round"/>
             <field name="partner_id" ref="supplier_tech_solutions"/>
-            <field name="tender_round">first</field>
+            <field name="tender_round">1</field>
             <field name="offer_date" eval="(DateTime.today() - relativedelta(days=1)).strftime('%Y-%m-%d %H:%M:%S')"/>
             <field name="price_unit">1980.00</field>
             <field name="delivery_date" eval="(DateTime.today() + relativedelta(days=55)).strftime('%Y-%m-%d')"/>
