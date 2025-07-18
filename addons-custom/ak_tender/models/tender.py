@@ -81,15 +81,15 @@ class AkTender(models.Model):
     @api.depends('purchase_order_ids', 'workflow_current_state_id')
     def _compute_offer_count(self):
         for tender in self:
-            state_technical_name = tender.workflow_current_state_id.technical_name if tender.workflow_current_state_id else None
+            state_code = tender.workflow_current_state_id.code if tender.workflow_current_state_id else None
             # State'e göre teklif filtreleme
-            if state_technical_name == 'first_tender_round':
+            if state_code == 'first_tender_round':
                 # 1. tur teklifleri say
                 tender.offer_count = len(tender.purchase_order_ids.filtered(lambda o: o.tender_round == 1))
-            elif state_technical_name in ('second_tender_round', 'target_price_set'):
+            elif state_code in ('second_tender_round', 'target_price_set'):
                 # 2. tur teklifleri say
                 tender.offer_count = len(tender.purchase_order_ids.filtered(lambda o: o.tender_round == 2))
-            elif state_technical_name in ('evaluation', 'approved', 'done'):
+            elif state_code in ('evaluation', 'approved', 'done'):
                 # Değerlendirme ve sonraki aşamalarda tüm teklifleri say
                 tender.offer_count = len(tender.purchase_order_ids)
             else:
