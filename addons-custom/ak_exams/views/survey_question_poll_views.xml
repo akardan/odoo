@@ -9,6 +9,7 @@
             <list string="Poll Categories">
                 <field name="sequence" widget="handle"/>
                 <field name="name"/>
+                <field name="job_position_ids" widget="many2many_tags"/>
                 <field name="company_id" groups="base.group_multi_company"/>
                 <field name="active" widget="boolean_toggle"/>
             </list>
@@ -25,6 +26,7 @@
                         <field name="name"/>
                         <field name="company_id" groups="base.group_multi_company"/>
                         <field name="active"/>
+                        <field name="job_position_ids" widget="many2many_tags"/>
                     </group>
                 </sheet>
             </form>
@@ -89,11 +91,8 @@
                         </page>
                     </notebook>
                 </sheet>
-                <div class="oe_chatter">
-                    <field name="message_follower_ids" widget="mail_followers"/>
-                    <field name="activity_ids" widget="mail_activity"/>
-                    <field name="message_ids" widget="mail_thread"/>
-                </div>
+                <!-- Chatter -->
+                <chatter/>
             </form>
         </field>
     </record>

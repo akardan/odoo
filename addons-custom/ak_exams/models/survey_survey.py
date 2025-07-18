@@ -1,4 +1,5 @@
 from odoo import api, fields, models, _
+from odoo.exceptions import UserError
 # import re # No longer needed for this simplified approach
 
 class SurveySurvey(models.Model):
@@ -9,12 +10,1042 @@ class SurveySurvey(models.Model):
         string=_('Company'),
         default=lambda self: self.env.company
     )
+    
+    excel_file = fields.Binary(string=_('Excel File'), help=_("Upload an Excel file to import questions."))
+    excel_file_name = fields.Char(string=_('Excel File Name'))
+    
+    def action_import_from_excel(self):
+        """
+        Import questions, participants, and their answers from Excel file.
+        Expected Excel structure:
+        - "Soru" sheet: Contains questions and answer options
+          - ID: Question ID (optional)
+          - Soru: Question text
+          - A, B, C, D: Answer options
+          - Kategori: Question category
+        - "Yanıt" sheet: Contains participant responses and correct answers
+          - Katılımcı: Participant name
+          - Takım: Team name
+          - Kategori: Category
+          - Soru: Question text
+          - Yanıt: Answer (a, b, c, d)
+          - Doğru mu: Whether the answer is correct (1 = correct)
+        - "Katılımcı" sheet: Contains participant information
+          - Katılımcı: Participant name
+          - Takım: Team name
+          - Başlama Zamanı: Start time
+          - Bitirme Zamanı: End time
+        - "TEAM" sheet: Contains brick/territory information
+          - BRICK: Brick name
+          - BRICK CODE: Brick code
+          - İL: City
+          - BÖLGE: Region
+          - PAYLAŞIM: Sharing percentage
+          - REP 1: Representative 1
+          - REP 2: Representative 2
+          - REP 3: Representative 3
+        
+        This method will:
+        1. Import questions from the "Soru" sheet
+        2. Import participants from the "Katılımcı" sheet
+        3. Import participant answers from the "Yanıt" sheet
+        4. Import team data from the "TEAM" sheet
+        """
+        self.ensure_one()
+        if not self.excel_file:
+            raise UserError(_("Please upload an Excel file first."))
+
+        try:
+            import base64
+            import io
+            from openpyxl import load_workbook
+        except ImportError:
+            raise UserError(_("The 'openpyxl' library is required to import Excel files. Please install it (pip install openpyxl)."))
+
+        try:
+            # Decode and load the Excel file
+            decoded_file = base64.b64decode(self.excel_file)
+            workbook = load_workbook(filename=io.BytesIO(decoded_file))
+            
+            # Check if required sheets exist
+            required_sheets = ["Soru", "Yanıt"]
+            for sheet_name in required_sheets:
+                if sheet_name not in workbook.sheetnames:
+                    raise UserError(_("The Excel file must contain a sheet named '%s'.") % sheet_name)
+            
+            # Check if "Katılımcı" sheet exists
+            has_participant_sheet = "Katılımcı" in workbook.sheetnames
+            
+            # Check if "TEAM" sheet exists
+            has_team_sheet = "TEAM" in workbook.sheetnames
+            
+            # First, process the "Yanıt" sheet to get correct answers for each question
+            yanit_sheet = workbook["Yanıt"]
+            
+            # Get headers for Yanıt sheet
+            yanit_headers = [cell.value for cell in yanit_sheet[1]]
+            
+            # Check required headers for Yanıt sheet
+            required_yanit_headers = ["Soru", "Yanıt", "Doğru mu"]
+            if not all(header in yanit_headers for header in required_yanit_headers):
+                raise UserError(_("The 'Yanıt' sheet must contain the following headers: Soru, Yanıt, Doğru mu."))
+            
+            # Map headers to indices for Yanıt sheet
+            yanit_header_indices = {header: idx for idx, header in enumerate(yanit_headers, 1)}
+            
+            # Create a dictionary to store correct answers for each question
+            correct_answers = {}
+            
+            # Create a set to store unique questions from the Yanıt sheet
+            unique_questions = set()
+            
+            # Process rows in Yanıt sheet
+            for row in yanit_sheet.iter_rows(min_row=2, values_only=True):
+                # Skip empty rows
+                if not any(row):
+                    continue
+                
+                # Get question text
+                question_text = row[yanit_header_indices["Soru"] - 1]
+                if not question_text:
+                    continue
+                
+                # Ensure question_text is a string
+                question_text = str(question_text) if question_text is not None else ""
+                if not question_text.strip():
+                    continue
+                
+                # Add to unique questions set
+                unique_questions.add(question_text)
+                
+                # Get answer and whether it's correct
+                answer = row[yanit_header_indices["Yanıt"] - 1]
+                is_correct = row[yanit_header_indices["Doğru mu"] - 1]
+                
+                # If the answer is correct, store it
+                if is_correct == 1:
+                    correct_answers[question_text] = str(answer).strip().lower()
+            
+            # Now process the "Soru" sheet
+            soru_sheet = workbook["Soru"]
+            
+            # Get headers for Soru sheet
+            soru_headers = [cell.value for cell in soru_sheet[1]]
+            
+            # Check required headers for Soru sheet
+            required_soru_headers = ["Soru", "A", "B", "C", "D"]
+            if not all(header in soru_headers for header in required_soru_headers):
+                raise UserError(_("The 'Soru' sheet must contain the following headers: Soru, A, B, C, D."))
+            
+            # Map headers to indices for Soru sheet
+            soru_header_indices = {header: idx for idx, header in enumerate(soru_headers, 1)}
+            
+            # Get category model
+            category_model = self.env['survey.question.poll.category']
+            
+            # Dictionary to map question text to question ID
+            question_map = {}
+            
+            # Get existing questions to avoid duplicates
+            existing_questions = {}
+            for question in self.question_ids:
+                existing_questions[question.title] = question.id
+            
+            # Fixed score calculation: 25 questions per participant, 4 points per question
+            total_questions = 25  # Fixed number of questions per participant
+            score_per_question = 4.0  # Fixed score per question (100/25 = 4)
+            
+            # Process rows in Soru sheet
+            questions_created = 0
+            questions_updated = 0
+            for row_idx, row in enumerate(soru_sheet.iter_rows(min_row=2, values_only=True), 2):
+                # Skip empty rows
+                if not any(row):
+                    continue
+                
+                # Get question text
+                question_text = row[soru_header_indices["Soru"] - 1]
+                if not question_text:
+                    continue
+                
+                # Ensure question_text is a string
+                question_text = str(question_text) if question_text is not None else ""
+                if not question_text.strip():
+                    continue
+                
+                # Get category
+                category_id = False
+                if "Kategori" in soru_header_indices and row[soru_header_indices["Kategori"] - 1]:
+                    category_name = row[soru_header_indices["Kategori"] - 1]
+                    category = category_model.search([
+                        '|',
+                        '&', ('name', '=', category_name), ('company_id', '=', self.company_id.id),
+                        '&', ('name', '=', category_name), ('company_id', '=', False)
+                    ], limit=1)
+                    
+                    if category:
+                        category_id = category.id
+                    else:
+                        # Create new category
+                        category = category_model.create({
+                            'name': category_name,
+                            'company_id': self.company_id.id
+                        })
+                        category_id = category.id
+                
+                # Create question
+                question_vals = {
+                    'title': question_text,
+                    'survey_id': self.id,
+                    'question_type': 'simple_choice',
+                    'category_id': category_id,
+                    'suggested_answer_ids': []
+                }
+                
+                # Get correct answer for this question
+                correct_answer = correct_answers.get(question_text, "").lower()
+                
+                # Add options
+                for option_letter in ["A", "B", "C", "D"]:
+                    if option_letter in soru_header_indices:
+                        option_text = row[soru_header_indices[option_letter] - 1]
+                        if option_text:
+                            # Check if this is the correct answer
+                            is_correct = correct_answer == option_letter.lower()
+                            
+                            question_vals['suggested_answer_ids'].append((0, 0, {
+                                'value': option_text,
+                                'is_correct': is_correct,
+                                'answer_score': score_per_question if is_correct else 0.0
+                            }))
+                
+                # Check if question already exists
+                if question_text in existing_questions:
+                    # Update existing question
+                    question_id = existing_questions[question_text]
+                    question = self.env['survey.question'].browse(question_id)
+                    
+                    # Prepare update values
+                    update_vals = {}
+                    
+                    # Update category if needed
+                    if category_id and question.category_id.id != category_id:
+                        update_vals['category_id'] = category_id
+                    
+                    # Update question type if needed
+                    if question.question_type != 'simple_choice':
+                        update_vals['question_type'] = 'simple_choice'
+                    
+                    # Update suggested answers if needed
+                    suggested_answers = []
+                    for option_letter in ["A", "B", "C", "D"]:
+                        if option_letter in soru_header_indices:
+                            option_text = row[soru_header_indices[option_letter] - 1]
+                            if option_text:
+                                # Check if this is the correct answer
+                                is_correct = correct_answer == option_letter.lower()
+                                
+                                # Find existing suggested answer
+                                existing_answer = False
+                                for suggested_answer in question.suggested_answer_ids:
+                                    if suggested_answer.value == option_text:
+                                        existing_answer = suggested_answer
+                                        break
+                                
+                                if existing_answer:
+                                    # Update existing answer
+                                    if existing_answer.is_correct != is_correct or existing_answer.answer_score != (score_per_question if is_correct else 0.0):
+                                        suggested_answers.append((1, existing_answer.id, {
+                                            'is_correct': is_correct,
+                                            'answer_score': score_per_question if is_correct else 0.0
+                                        }))
+                                else:
+                                    # Create new answer
+                                    suggested_answers.append((0, 0, {
+                                        'value': option_text,
+                                        'is_correct': is_correct,
+                                        'answer_score': score_per_question if is_correct else 0.0
+                                    }))
+                    
+                    if suggested_answers:
+                        update_vals['suggested_answer_ids'] = suggested_answers
+                    
+                    # Update question if needed
+                    if update_vals:
+                        question.write(update_vals)
+                    
+                    # Store the question ID with its text for later use
+                    question_map[question_text] = question.id
+                    questions_updated += 1
+                else:
+                    # Create new question
+                    if question_vals['suggested_answer_ids']:
+                        question = self.env['survey.question'].create(question_vals)
+                        questions_created += 1
+                        
+                        # Store the question ID with its text for later use
+                        question_map[question_text] = question.id
+            
+            # Read participant information from "Katılımcı" sheet if it exists
+            participant_info = {}
+            if has_participant_sheet:
+                participant_sheet = workbook["Katılımcı"]
+                
+                # Get headers for Katılımcı sheet
+                participant_headers = [cell.value for cell in participant_sheet[1]]
+                
+                # Check required headers for Katılımcı sheet
+                required_participant_headers = ["Katılımcı", "Takım"]
+                if not all(header in participant_headers for header in required_participant_headers):
+                    raise UserError(_("The 'Katılımcı' sheet must contain the following headers: Katılımcı, Takım."))
+                
+                # Map headers to indices for Katılımcı sheet
+                participant_header_indices = {header: idx for idx, header in enumerate(participant_headers, 1)}
+                
+                # Process rows in Katılımcı sheet
+                for row in participant_sheet.iter_rows(min_row=2, values_only=True):
+                    # Skip empty rows
+                    if not any(row):
+                        continue
+                    
+                    participant_name = row[participant_header_indices["Katılımcı"] - 1]
+                    if not participant_name:
+                        continue
+                    
+                    # Ensure participant_name is a string
+                    participant_name = str(participant_name) if participant_name is not None else ""
+                    if not participant_name.strip():
+                        continue
+                    
+                    team_name = row[participant_header_indices["Takım"] - 1] if "Takım" in participant_header_indices else ""
+                    
+                    # Get score if available
+                    score = None
+                    if "Puan" in participant_header_indices:
+                        score_value = row[participant_header_indices["Puan"] - 1]
+                        if score_value is not None:
+                            try:
+                                score = float(score_value)
+                            except (ValueError, TypeError):
+                                score = None
+                    
+                    # Get start and end times if available
+                    start_time = None
+                    end_time = None
+                    
+                    if "Başlama Zamanı" in participant_header_indices:
+                        start_time_value = row[participant_header_indices["Başlama Zamanı"] - 1]
+                        if start_time_value:
+                            # Convert to datetime if it's a string
+                            if isinstance(start_time_value, str):
+                                try:
+                                    from datetime import datetime
+                                    start_time = datetime.strptime(start_time_value, "%Y-%m-%d %H:%M:%S")
+                                except ValueError:
+                                    start_time = None
+                            else:
+                                start_time = start_time_value
+                    
+                    if "Bitirme Zamanı" in participant_header_indices:
+                        end_time_value = row[participant_header_indices["Bitirme Zamanı"] - 1]
+                        if end_time_value:
+                            # Convert to datetime if it's a string
+                            if isinstance(end_time_value, str):
+                                try:
+                                    from datetime import datetime
+                                    end_time = datetime.strptime(end_time_value, "%Y-%m-%d %H:%M:%S")
+                                except ValueError:
+                                    end_time = None
+                            else:
+                                end_time = end_time_value
+                    
+                    participant_info[participant_name] = {
+                        'team': team_name,
+                        'start_time': start_time,
+                        'end_time': end_time,
+                        'score': score
+                    }
+            
+            # Now import participants and their answers from the "Yanıt" sheet
+            participants_data = {}
+            
+            # Group data by participant
+            for row in yanit_sheet.iter_rows(min_row=2, values_only=True):
+                # Skip empty rows
+                if not any(row):
+                    continue
+                
+                participant_name = row[yanit_header_indices["Katılımcı"] - 1]
+                if not participant_name:
+                    continue
+                
+                # Ensure participant_name is a string
+                participant_name = str(participant_name) if participant_name is not None else ""
+                if not participant_name.strip():
+                    continue
+                
+                team_name = row[yanit_header_indices["Takım"] - 1] if "Takım" in yanit_header_indices else ""
+                question_text = row[yanit_header_indices["Soru"] - 1]
+                answer = row[yanit_header_indices["Yanıt"] - 1]
+                
+                if participant_name not in participants_data:
+                    participants_data[participant_name] = {
+                        'team': team_name,
+                        'answers': []
+                    }
+                
+                participants_data[participant_name]['answers'].append({
+                    'question_text': question_text,
+                    'answer': answer
+                })
+            
+            # Get existing participants to avoid duplicates
+            existing_participants = {}
+            for user_input in self.env['survey.user_input'].search([('survey_id', '=', self.id)]):
+                # Use email as the key for existing participants
+                if user_input.email:
+                    existing_participants[user_input.email] = user_input.id
+            
+            # Create user inputs and answers
+            participants_created = 0
+            participants_updated = 0
+            answers_created = 0
+            
+            # Find or create department "Kaya Ekibi"
+            department = self.env['hr.department'].search([
+                ('name', '=', 'Kaya Ekibi'),
+                '|', ('company_id', '=', self.company_id.id), ('company_id', '=', False)
+            ], limit=1)
+            
+            if not department:
+                department = self.env['hr.department'].create({
+                    'name': 'Kaya Ekibi',
+                    'company_id': self.company_id.id,
+                })
+            
+            # Find or create job position "Rep"
+            job_position = self.env['hr.job'].search([
+                ('name', '=', 'Rep'),
+                '|', ('company_id', '=', self.company_id.id), ('company_id', '=', False)
+            ], limit=1)
+            
+            if not job_position:
+                job_position = self.env['hr.job'].create({
+                    'name': 'Rep',
+                    'company_id': self.company_id.id,
+                    'department_id': department.id,
+                })
+            
+            # Counter for created and updated employees and users
+            employees_created = 0
+            employees_updated = 0
+            users_created = 0
+            users_updated = 0
+            
+            for participant_name, data in participants_data.items():
+                # Get participant info from Katılımcı sheet if available
+                info = participant_info.get(participant_name, {})
+                team_name = info.get('team', data.get('team', ''))
+                start_time = info.get('start_time')
+                end_time = info.get('end_time')
+                score = info.get('score')
+                
+                # Format participant name as email address
+                # Convert "First Last" to "first.last@nutricia.com"
+                if participant_name:
+                    # Replace Turkish characters with their English equivalents
+                    email_name = participant_name.lower().replace(' ', '.')
+                    email_name = email_name.replace('ı', 'i').replace('ö', 'o').replace('ü', 'u')
+                    email_name = email_name.replace('ğ', 'g').replace('ş', 's').replace('ç', 'c')
+                    email = email_name + '@nutricia.com'
+                else:
+                    # Handle None or empty participant name
+                    email = f"unknown.participant.{participants_created + 1}@nutricia.com"
+                
+                # Create or find contact (res.partner) for this participant
+                partner = self.env['res.partner'].search([
+                    ('email', '=', email),
+                    '|', ('company_id', '=', self.company_id.id), ('company_id', '=', False)
+                ], limit=1)
+                
+                if not partner:
+                    # Create new contact
+                    partner = self.env['res.partner'].create({
+                        'name': participant_name,
+                        'email': email,
+                        'company_id': self.company_id.id,
+                    })
+                
+                # Create or find user for this participant
+                user = self.env['res.users'].search([
+                    ('login', '=', email),
+                    '|', ('company_id', '=', self.company_id.id), ('company_id', '=', False)
+                ], limit=1)
+                
+                if not user:
+                    # Check if a user with this partner_id already exists
+                    user = self.env['res.users'].search([
+                        ('partner_id', '=', partner.id),
+                        '|', ('company_id', '=', self.company_id.id), ('company_id', '=', False)
+                    ], limit=1)
+                
+                if user:
+                    # Update existing user
+                    update_vals = {}
+                    
+                    if user.login != email:
+                        update_vals['login'] = email
+                    
+                    if user.name != participant_name:
+                        update_vals['name'] = participant_name
+                    
+                    if user.partner_id.id != partner.id:
+                        update_vals['partner_id'] = partner.id
+                    
+                    if update_vals:
+                        user.write(update_vals)
+                        users_updated += 1
+                else:
+                    try:
+                        # Create new user
+                        user = self.env['res.users'].create({
+                            'name': participant_name,
+                            'login': email,
+                            'partner_id': partner.id,
+                            'company_id': self.company_id.id,
+                            'company_ids': [(4, self.company_id.id)],
+                            'groups_id': [(6, 0, [self.env.ref('base.group_user').id])],  # Internal User group
+                        })
+                        users_created += 1
+                    except Exception as e:
+                        # If user creation fails, log the error but continue
+                        _logger.error(f"Failed to create user for {participant_name}: {str(e)}")
+                        user = None
+                
+                # Create or find employee for this participant
+                employee = self.env['hr.employee'].search([
+                    '|', ('work_email', '=', email), ('name', '=', participant_name),
+                    '|', ('company_id', '=', self.company_id.id), ('company_id', '=', False)
+                ], limit=1)
+                
+                if employee:
+                    # Update existing employee
+                    update_vals = {}
+                    
+                    if employee.department_id.id != department.id:
+                        update_vals['department_id'] = department.id
+                    
+                    if employee.job_id.id != job_position.id:
+                        update_vals['job_id'] = job_position.id
+                    
+                    if employee.work_email != email:
+                        update_vals['work_email'] = email
+                    
+                    if employee.name != participant_name:
+                        update_vals['name'] = participant_name
+                    
+                    # Link employee to user if user exists
+                    if user and (not employee.user_id or employee.user_id.id != user.id):
+                        update_vals['user_id'] = user.id
+                    
+                    if update_vals:
+                        employee.write(update_vals)
+                        employees_updated += 1
+                else:
+                    # Create new employee
+                    employee_vals = {
+                        'name': participant_name,
+                        'work_email': email,
+                        'department_id': department.id,
+                        'job_id': job_position.id,
+                        'company_id': self.company_id.id,
+                    }
+                    
+                    # Link employee to user if user exists
+                    if user:
+                        employee_vals['user_id'] = user.id
+                    
+                    employee = self.env['hr.employee'].create(employee_vals)
+                    employees_created += 1
+                
+                # Create the user input (participant)
+                user_input_vals = {
+                    'survey_id': self.id,
+                    'partner_id': partner.id,  # Link to the contact
+                    'email': email,  # Also store the email
+                    'state': 'done',  # Mark as completed
+                    'nickname': participant_name,  # Set nickname to participant name
+                }
+                
+                # Add start and end times if available
+                if start_time:
+                    user_input_vals['start_datetime'] = start_time
+                if end_time:
+                    user_input_vals['end_datetime'] = end_time
+                
+                # Add score if available
+                if score is not None:
+                    user_input_vals['scoring_percentage'] = score
+                
+                # Check if participant already exists using email field
+                if email in existing_participants:
+                    # Update existing participant
+                    user_input_id = existing_participants[email]
+                    user_input = self.env['survey.user_input'].browse(user_input_id)
+                    
+                    # Update partner_id, start and end times, and score if needed
+                    update_vals = {}
+                    
+                    # Always update partner_id to ensure it's linked to the contact
+                    if user_input.partner_id.id != partner.id:
+                        update_vals['partner_id'] = partner.id
+                    
+                    # Always update nickname to ensure it's set to participant name
+                    if user_input.nickname != participant_name:
+                        update_vals['nickname'] = participant_name
+                    
+                    if start_time and not user_input.start_datetime:
+                        update_vals['start_datetime'] = start_time
+                    if end_time and not user_input.end_datetime:
+                        update_vals['end_datetime'] = end_time
+                    
+                    # Update score if available
+                    if score is not None:
+                        update_vals['scoring_percentage'] = score
+                    
+                    if update_vals:
+                        user_input.write(update_vals)
+                    
+                    participants_updated += 1
+                else:
+                    # Create new participant
+                    user_input = self.env['survey.user_input'].create(user_input_vals)
+                    participants_created += 1
+                
+                # Create answers for this participant
+                for answer_data in data['answers']:
+                    question_text = answer_data['question_text']
+                    answer_letter = answer_data['answer']
+                    
+                    # Skip if question not found
+                    if question_text not in question_map:
+                        continue
+                    
+                    question_id = question_map[question_text]
+                    question = self.env['survey.question'].browse(question_id)
+                    
+                    # Find the suggested answer ID based on the letter
+                    if not answer_letter:
+                        continue  # Skip if answer_letter is None or empty
+                        
+                    answer_index = ord(answer_letter.lower()) - ord('a')
+                    if answer_index < 0 or answer_index >= len(question.suggested_answer_ids):
+                        continue
+                    
+                    suggested_answer = question.suggested_answer_ids[answer_index]
+                    
+                    # Check if answer already exists
+                    existing_answer = self.env['survey.user_input.line'].search([
+                        ('user_input_id', '=', user_input.id),
+                        ('question_id', '=', question_id)
+                    ], limit=1)
+                    
+                    if existing_answer:
+                        # Update existing answer if different
+                        if existing_answer.suggested_answer_id.id != suggested_answer.id:
+                            existing_answer.write({
+                                'suggested_answer_id': suggested_answer.id
+                            })
+                    else:
+                        # Create new answer
+                        answer_vals = {
+                            'user_input_id': user_input.id,
+                            'question_id': question_id,
+                            'answer_type': 'suggestion',
+                            'suggested_answer_id': suggested_answer.id,
+                            # Removed 'value_suggested_row' field as it doesn't exist
+                        }
+                        
+                        self.env['survey.user_input.line'].create(answer_vals)
+                        answers_created += 1
+            
+            # Process TEAM sheet if it exists
+            teams_created = 0
+            teams_updated = 0
+            bricks_created = 0
+            bricks_updated = 0
+            team_members_created = 0
+            team_members_updated = 0
+            
+            if has_team_sheet:
+                # Find or create "Kaya Ekibi" team
+                kaya_team = self.env['crm.team'].search([('name', '=', 'Kaya Ekibi')], limit=1)
+                if not kaya_team:
+                    kaya_team = self.env['crm.team'].create({
+                        'name': 'Kaya Ekibi',
+                        'team_type': 'G',  # Group type
+                    })
+                    teams_created += 1
+                else:
+                    # Update team_type if needed
+                    if kaya_team.team_type != 'G':
+                        kaya_team.write({'team_type': 'G'})
+                    teams_updated += 1
+                
+                # Dictionary to store regions and their teams
+                region_teams = {}
+                
+                # Dictionary to store representatives and their user IDs
+                rep_users = {}
+                
+                # Get TEAM sheet
+                team_sheet = workbook["TEAM"]
+                
+                # Get headers for TEAM sheet
+                team_headers = [cell.value for cell in team_sheet[1]]
+                
+                # Check required headers for TEAM sheet
+                required_team_headers = ["BRICK", "BRICK CODE", "İL", "BÖLGE", "PAYLAŞIM", "REP 1", "REP 2", "REP 3"]
+                if not all(header in team_headers for header in required_team_headers):
+                    raise UserError(_("The 'TEAM' sheet must contain the following headers: " + ", ".join(required_team_headers)))
+                
+                # Map headers to indices for TEAM sheet
+                team_header_indices = {header: idx for idx, header in enumerate(team_headers, 1)}
+                
+                # Process rows in TEAM sheet
+                for row in team_sheet.iter_rows(min_row=2, values_only=True):
+                    # Skip empty rows
+                    if not any(row):
+                        continue
+                    
+                    # Get values
+                    brick_name = row[team_header_indices["BRICK"] - 1]
+                    brick_code = row[team_header_indices["BRICK CODE"] - 1]
+                    city = row[team_header_indices["İL"] - 1]
+                    region = row[team_header_indices["BÖLGE"] - 1]
+                    sharing = row[team_header_indices["PAYLAŞIM"] - 1]
+                    rep1 = row[team_header_indices["REP 1"] - 1]
+                    rep2 = row[team_header_indices["REP 2"] - 1]
+                    rep3 = row[team_header_indices["REP 3"] - 1]
+                    
+                    # Skip if brick name or code is empty
+                    if not brick_name or not brick_code:
+                        continue
+                    
+                    # Convert sharing percentage to float
+                    if sharing and isinstance(sharing, str):
+                        sharing = sharing.replace('%', '').strip()
+                        try:
+                            sharing = float(sharing)
+                        except ValueError:
+                            sharing = 100.0
+                    else:
+                        sharing = 100.0
+                    
+                    # Find or create region team
+                    if region not in region_teams:
+                        region_team = self.env['crm.team'].search([
+                            ('name', '=', region),
+                            ('parent_id', '=', kaya_team.id)
+                        ], limit=1)
+                        
+                        if not region_team:
+                            region_team = self.env['crm.team'].create({
+                                'name': region,
+                                'parent_id': kaya_team.id,
+                                'team_type': 'R',  # Region type
+                            })
+                            teams_created += 1
+                        else:
+                            # Update team_type and parent_id if needed
+                            update_vals = {}
+                            if region_team.team_type != 'R':
+                                update_vals['team_type'] = 'R'
+                            if region_team.parent_id.id != kaya_team.id:
+                                update_vals['parent_id'] = kaya_team.id
+                            
+                            if update_vals:
+                                region_team.write(update_vals)
+                            
+                            teams_updated += 1
+                        
+                        region_teams[region] = region_team
+                    
+                    region_team = region_teams[region]
+                    
+                    # Find or create brick
+                    brick = self.env['crm.brick'].search([('code', '=', brick_code)], limit=1)
+                    
+                    # Find state by name or code
+                    state = False
+                    if city:
+                        # Try to find state by exact name
+                        state = self.env['res.country.state'].search([
+                            ('name', '=', city),
+                            ('country_id', '=', self.env.ref('base.tr').id)  # Turkey
+                        ], limit=1)
+                        
+                        if not state:
+                            # Try to find state by name containing the city
+                            state = self.env['res.country.state'].search([
+                                ('name', 'ilike', city),
+                                ('country_id', '=', self.env.ref('base.tr').id)  # Turkey
+                            ], limit=1)
+                            
+                        if not state:
+                            # Try to find state by code
+                            state = self.env['res.country.state'].search([
+                                ('code', 'ilike', city[:3]),  # First 3 characters of city
+                                ('country_id', '=', self.env.ref('base.tr').id)  # Turkey
+                            ], limit=1)
+                    
+                    state_id = state.id if state else False
+                    
+                    if not brick:
+                        brick = self.env['crm.brick'].create({
+                            'name': brick_name,
+                            'code': brick_code,
+                            'state_id': state_id,
+                            'country_id': self.env.ref('base.tr').id,  # Turkey
+                            'active': True,
+                        })
+                        bricks_created += 1
+                    else:
+                        # Update brick with missing information
+                        update_vals = {}
+                        
+                        # Update name if different
+                        if brick.name != brick_name:
+                            update_vals['name'] = brick_name
+                        
+                        # Update state_id if it's not set or different
+                        if state_id and (not brick.state_id or brick.state_id.id != state_id):
+                            update_vals['state_id'] = state_id
+                        
+                        # Update country_id if it's not set
+                        if not brick.country_id:
+                            update_vals['country_id'] = self.env.ref('base.tr').id
+                        
+                        if update_vals:
+                            brick.write(update_vals)
+                        
+                        bricks_updated += 1
+                    
+                    # Process representatives
+                    for rep_idx, rep_name in enumerate([rep1, rep2, rep3], 1):
+                        if not rep_name or rep_name == '0':
+                            continue
+                        
+                        # Find or create user for representative
+                        if rep_name not in rep_users:
+                            user = self.env['res.users'].search([('name', '=', rep_name)], limit=1)
+                            if not user:
+                                # Create partner
+                                email_name = rep_name.lower().replace(' ', '.')
+                                email_name = email_name.replace('ı', 'i').replace('ö', 'o').replace('ü', 'u')
+                                email_name = email_name.replace('ğ', 'g').replace('ş', 's').replace('ç', 'c')
+                                email = email_name + '@nutricia.com'
+                                
+                                # Check if a user with this login already exists
+                                existing_user = self.env['res.users'].search([('login', '=', email)], limit=1)
+                                if existing_user:
+                                    # Use the existing user
+                                    user = existing_user
+                                else:
+                                    # Find or create partner
+                                    partner = self.env['res.partner'].search([('email', '=', email)], limit=1)
+                                    if not partner:
+                                        partner = self.env['res.partner'].create({
+                                            'name': rep_name,
+                                            'email': email,
+                                        })
+                                    
+                                    # Create user
+                                    try:
+                                        user = self.env['res.users'].create({
+                                            'name': rep_name,
+                                            'login': email,
+                                            'partner_id': partner.id,
+                                            'groups_id': [(6, 0, [self.env.ref('base.group_user').id])],
+                                        })
+                                    except Exception as e:
+                                        # If user creation fails, use the partner's user if it exists
+                                        if partner.user_ids:
+                                            user = partner.user_ids[0]
+                                        else:
+                                            # Try with a unique login
+                                            try:
+                                                unique_login = email_name + '.' + str(rep_idx) + '@nutricia.com'
+                                                user = self.env['res.users'].create({
+                                                    'name': rep_name,
+                                                    'login': unique_login,
+                                                    'partner_id': partner.id,
+                                                    'groups_id': [(6, 0, [self.env.ref('base.group_user').id])],
+                                                })
+                                            except Exception as e2:
+                                                # Skip this representative
+                                                continue
+                            
+                            rep_users[rep_name] = user
+                        
+                        user = rep_users[rep_name]
+                        
+                        # Find or create team member
+                        team_member = self.env['crm.team.member'].search([
+                            ('user_id', '=', user.id),
+                            ('crm_team_id', '=', region_team.id),
+                        ], limit=1)
+                        
+                        if not team_member:
+                            team_member = self.env['crm.team.member'].create({
+                                'user_id': user.id,
+                                'crm_team_id': region_team.id,
+                            })
+                            team_members_created += 1
+                        else:
+                            # Update team_id if needed
+                            if team_member.crm_team_id.id != region_team.id:
+                                team_member.write({'crm_team_id': region_team.id})
+                            team_members_updated += 1
+                        
+                        # Link brick to team member
+                        brick.territory_id = team_member.id
+            
+            # Clear the file after import
+            self.excel_file = False
+            self.excel_file_name = False
+            
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'title': _('Import Successful'),
+                    'message': _('Created: %s questions, %s participants, %s answers, %s contacts, %s employees, %s users, %s teams, %s bricks, %s team members\nUpdated: %s questions, %s participants, %s employees, %s users, %s teams, %s bricks, %s team members\nFixed score: 25 questions, 4 points per question\nNote: All questions from Soru sheet are imported, but each participant only has answers for their 25 assigned questions\nParticipant scores are imported from the "Puan" column in the Katılımcı sheet\nEmployees created with Department "Kaya Ekibi" and Job Position "Rep"\nEmployees linked to users and contacts for full integration\nTeam data imported from TEAM sheet with regions under Kaya Ekibi\nReimporting updates existing records instead of creating duplicates') % (
+                        questions_created, participants_created, answers_created, len(participants_data) - participants_updated,
+                        employees_created, users_created, teams_created, bricks_created, team_members_created,
+                        questions_updated, participants_updated, employees_updated, users_updated, teams_updated, bricks_updated, team_members_updated
+                    ),
+                    'sticky': False,
+                    'type': 'success',
+                }
+            }
+            
+        except Exception as e:
+            # Clear the file after import
+            self.excel_file = False
+            self.excel_file_name = False
+            
+            # Re-raise the exception with a user-friendly message
+            raise UserError(_("Error processing Excel file: %s") % str(e))
+            raise UserError(_("Error processing Excel file: %s") % str(e))
 
     session_timeout_minutes = fields.Integer(
         string=_('Session Timeout (minutes)'),
         help=_("Automatically end the survey session after this many minutes of inactivity. Set to 0 for no timeout."),
         default=0
     )
+    
+    # Dashboard methods
+    @api.model
+    def get_dashboard_data(self, survey_id=False, team_id=False):
+        """
+        Get data for the survey dashboard
+        
+        :param survey_id: ID of the selected survey (optional)
+        :param team_id: ID of the selected team (optional)
+        :return: Dictionary with dashboard data
+        """
+        # Get surveys of type 'assessment' (exams)
+        domain = [('survey_type', '=', 'assessment')]
+        surveys = self.search_read(domain, ['id', 'title'])
+        
+        # Get teams
+        teams = self.env['crm.team'].search_read([], ['id', 'name'])
+        
+        # Filter user inputs based on survey_id and team_id
+        user_input_domain = []
+        if survey_id:
+            user_input_domain.append(('survey_id', '=', int(survey_id)))
+        
+        # Get user inputs
+        user_inputs = self.env['survey.user_input'].search(user_input_domain)
+        
+        # Filter by team if specified
+        if team_id:
+            team_id = int(team_id)
+            # Get employees in the selected team
+            team_employees = self.env['hr.employee'].search([('department_id.name', '=', 'Kaya Ekibi')])
+            team_partners = team_employees.mapped('address_home_id')
+            team_users = self.env['res.users'].search([('partner_id', 'in', team_partners.ids)])
+            
+            # Filter user inputs by team members
+            user_inputs = user_inputs.filtered(lambda ui: ui.partner_id in team_partners)
+        
+        # Get top performers (top 10 or all with full marks)
+        top_performers = []
+        for user_input in user_inputs:
+            if user_input.scoring_percentage == 100 or len(top_performers) < 10:
+                top_performers.append({
+                    'name': user_input.partner_id.name or user_input.nickname or user_input.email,
+                    'score': user_input.scoring_percentage,
+                })
+        
+        # Sort top performers by score (descending)
+        top_performers = sorted(top_performers, key=lambda p: p['score'], reverse=True)
+        
+        # Limit to top 10 if there are more than 10 performers
+        if len(top_performers) > 10:
+            top_performers = top_performers[:10]
+        
+        # Get region averages
+        region_averages = []
+        region_teams = self.env['crm.team'].search([('team_type', '=', 'R')])
+        
+        for region_team in region_teams:
+            # Get employees in this region
+            region_employees = self.env['hr.employee'].search([
+                ('department_id.name', '=', 'Kaya Ekibi'),
+                ('user_id.crm_team_id', '=', region_team.id)
+            ])
+            region_partners = region_employees.mapped('address_home_id')
+            
+            # Get user inputs for this region
+            region_user_inputs = user_inputs.filtered(lambda ui: ui.partner_id in region_partners)
+            
+            if region_user_inputs:
+                # Calculate average score for this region
+                region_average = sum(ui.scoring_percentage for ui in region_user_inputs) / len(region_user_inputs)
+                
+                region_averages.append({
+                    'name': region_team.name,
+                    'average': region_average,
+                })
+        
+        # Sort region averages by average score (descending)
+        region_averages = sorted(region_averages, key=lambda r: r['average'], reverse=True)
+        
+        # Calculate Turkey average
+        turkey_average = 0
+        if user_inputs:
+            turkey_average = sum(ui.scoring_percentage for ui in user_inputs) / len(user_inputs)
+        
+        # Create region rankings
+        region_rankings = []
+        for i, region in enumerate(region_averages):
+            region_rankings.append({
+                'name': region['name'],
+                'rank': i + 1,
+                'average': region['average'],
+            })
+        
+        return {
+            'surveys': surveys,
+            'teams': teams,
+            'top_performers': top_performers,
+            'region_averages': region_averages,
+            'region_rankings': region_rankings,
+            'turkey_average': turkey_average,
+        }
 
     full_screen_mode = fields.Boolean(
         string=_('Full Screen Mode'),

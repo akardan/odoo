@@ -1,0 +1,23 @@
+<odoo>
+    <data>
+        <!-- Survey Dashboard Client Action -->
+        <record id="action_survey_dashboard" model="ir.actions.client">
+            <field name="name">Exam Dashboard</field>
+            <field name="tag">ak_exams.survey_dashboard</field>
+        </record>
+
+        <!-- Dashboard Menu Item - Top level in Survey menu with lowest sequence -->
+        <menuitem id="menu_survey_dashboard"
+                  name="Exam Dashboard"
+                  parent="survey.menu_surveys"
+                  action="action_survey_dashboard"
+                  sequence="-100"/>
+                  
+        <!-- Make dashboard the default page for the module -->
+        <record id="survey_dashboard_default" model="ir.actions.todo">
+            <field name="action_id" ref="action_survey_dashboard"/>
+            <field name="state">open</field>
+            <field name="sequence">1</field>
+        </record>
+    </data>
+</odoo>

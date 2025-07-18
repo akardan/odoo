@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <!-- Main Dashboard Template -->
+    <t t-name="ak_exams.SurveyDashboard" owl="1">
+        <Layout className="'o_survey_dashboard h-100'" display="{ controlPanel: controlPanelProps }">
+            <div class="o_survey_dashboard_content p-3">
+                <div t-if="state.loading" class="d-flex justify-content-center align-items-center h-100">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+                <div t-else="" class="o_dashboard_items d-flex flex-wrap gap-3">
+                    <!-- Top Performers -->
+                    <DashboardItem title="'Top Performers'" size="2" className="'h-100 chart-tall'">
+                        <ChartCard type="'bar'" data="topPerformersChartData"
+                            options="{ plugins: { legend: { display: false } } }" showValues="true" />
+                    </DashboardItem>
+                    
+                    <!-- Region Averages -->
+                    <DashboardItem title="'Region Averages'" size="2" className="'h-100 chart-tall'">
+                        <ChartCard type="'bar'" data="regionAveragesChartData"
+                            options="{ plugins: { legend: { display: false } } }" showValues="true" />
+                    </DashboardItem>
+                    
+                    <!-- Region Rankings -->
+                    <DashboardItem title="'Region Rankings'" size="2" className="'h-100'">
+                        <TableCard
+                            columns="regionRankingsTableData.columns"
+                            rows="regionRankingsTableData.rows"
+                            sortable="true"
+                            defaultSort="{ column: 0, direction: 'asc' }" />
+                    </DashboardItem>
+                    
+                    <!-- Turkey Average -->
+                    <DashboardItem title="'Turkey Average'" size="1" className="'h-100'">
+                        <ChartCard type="'doughnut'" data="turkeyAverageChartData"
+                            options="{ cutout: '70%' }" />
+                    </DashboardItem>
+                </div>
+            </div>
+        </Layout>
+    </t>
+    
+    <!-- Dashboard Item Template -->
+    <t t-name="ak_exams.DashboardItem" owl="1">
+        <div class="o_dashboard_item" t-att-class="props.className" t-att-style="itemStyle">
+            <div class="card h-100">
+                <div t-if="props.title" class="card-header">
+                    <h5 class="card-title m-0">
+                        <t t-esc="props.title" />
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <t t-slot="default" />
+                </div>
+            </div>
+        </div>
+    </t>
+    
+    <!-- Number Card Template -->
+    <t t-name="ak_exams.NumberCard" owl="1">
+        <div class="o_number_card text-center">
+            <div t-if="props.title" class="o_number_card_title mb-2">
+                <t t-esc="props.title" />
+            </div>
+            <div t-att-class="'o_number_card_value alert ' + cardClass">
+                <span t-if="props.prefix" class="o_number_card_prefix">
+                    <t t-esc="props.prefix" />
+                </span>
+                <span class="o_number_card_number fs-2 fw-bold">
+                    <t t-esc="formattedValue" />
+                </span>
+                <span t-if="props.suffix" class="o_number_card_suffix">
+                    <t t-esc="props.suffix" />
+                </span>
+            </div>
+        </div>
+    </t>
+    
+    <!-- Chart Card Template -->
+    <t t-name="ak_exams.ChartCard" owl="1">
+        <div class="o_chart_card h-100">
+            <div t-if="props.title" class="o_chart_card_title mb-2 text-center">
+                <t t-esc="props.title" />
+            </div>
+            <div class="o_chart_card_chart h-100">
+                <canvas t-ref="chart" />
+            </div>
+        </div>
+    </t>
+    
+    <!-- Table Card Template -->
+    <t t-name="ak_exams.TableCard" owl="1">
+        <div class="o_table_card h-100">
+            <div t-if="props.title" class="o_table_card_title mb-2 text-center">
+                <t t-esc="props.title" />
+            </div>
+            <div class="o_table_card_table table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th t-foreach="props.columns" t-as="column" t-key="column_index"
+                                t-att-class="props.sortable ? 'cursor-pointer' : ''"
+                                t-on-click="() => props.sortable ? onColumnHeaderClick(column_index) : null">
+                                <t t-esc="column.name" />
+                                <span t-if="props.sortable" class="ms-1">
+                                    <t t-esc="getSortIndicator(column_index)" />
+                                </span>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr t-foreach="sortedRows" t-as="row" t-key="row_index">
+                            <td t-foreach="props.columns" t-as="column" t-key="column_index">
+                                <t t-esc="row[column.field]" />
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </t>
+</templates>

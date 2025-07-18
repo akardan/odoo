@@ -15,6 +15,11 @@ class SurveyQuestionPollCategory(models.Model):
         help=_("If a company is set, the category is company-specific. Otherwise, it's a global category.")
     )
     active = fields.Boolean(default=True)
+    job_position_ids = fields.Many2many(
+        'hr.job',
+        string=_('Role'),
+        help=_("Roles this question category applies to (e.g., Regional Managers, Product Representatives)")
+    )
 
     _sql_constraints = [
         ('name_company_uniq', 'unique (name, company_id)', _('Category name must be unique per company (or globally if no company is set)!'))

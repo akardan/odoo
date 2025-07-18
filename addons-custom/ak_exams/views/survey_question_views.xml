@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Inherit Form View -->
+    <record id="survey_question_form_inherit" model="ir.ui.view">
+        <field name="name">survey.question.form.inherit</field>
+        <field name="model">survey.question</field>
+        <field name="inherit_id" ref="survey.survey_question_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='title']" position="after">
+                <field name="category_id" options="{'no_create': False}" invisible="is_page"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Inherit Tree View -->
+    <record id="survey_question_tree_inherit" model="ir.ui.view">
+        <field name="name">survey.question.tree.inherit</field>
+        <field name="model">survey.question</field>
+        <field name="inherit_id" ref="survey.survey_question_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='question_type']" position="after">
+                <field name="category_id"/>
+            </xpath>
+        </field>
+    </record>
+    
+    <!-- Inherit Survey Form View to add Import From Excel button -->
+    <record id="survey_import_excel_form_inherit" model="ir.ui.view">
+        <field name="name">survey.survey.import.excel.form.inherit</field>
+        <field name="model">survey.survey</field>
+        <field name="inherit_id" ref="survey.survey_survey_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <button name="action_import_from_excel" string="Import From Excel" type="object" class="oe_highlight"/>
+            </xpath>
+            <xpath expr="//notebook" position="inside">
+                <page string="Excel Import" name="excel_import">
+                    <group>
+                        <field name="excel_file" filename="excel_file_name"/>
+                        <field name="excel_file_name" invisible="1"/>
+                    </group>
+                    <div class="alert alert-info" role="alert">
+                        <p>Upload an Excel file with the following structure:</p>
+                        <h4>Sheet 1: "Soru"</h4>
+                        <ul>
+                            <li>Headers: ID, Soru, A, B, C, D, Kategori</li>
+                            <li>Soru: Question text</li>
+                            <li>A, B, C, D: Answer options</li>
+                            <li>Kategori: Question category</li>
+                        </ul>
+                        <h4>Sheet 2: "Yanıt"</h4>
+                        <ul>
+                            <li>Headers: Katılımcı, Takım, Kategori, Soru, Yanıt, Doğru mu</li>
+                            <li>Katılımcı: Participant name</li>
+                            <li>Takım: Team name</li>
+                            <li>Soru: Question text (must match the text in the "Soru" sheet)</li>
+                            <li>Yanıt: Answer (a, b, c, d)</li>
+                            <li>Doğru mu: Whether the answer is correct (1 = correct)</li>
+                        </ul>
+                        <h4>Sheet 3: "Katılımcı" (Optional)</h4>
+                        <ul>
+                            <li>Headers: Katılımcı, Takım, Başlama Zamanı, Bitirme Zamanı, Toplam</li>
+                            <li>Katılımcı: Participant name</li>
+                            <li>Takım: Team name</li>
+                            <li>Başlama Zamanı: Start time (format: YYYY-MM-DD HH:MM:SS)</li>
+                            <li>Bitirme Zamanı: End time (format: YYYY-MM-DD HH:MM:SS)</li>
+                            <li>Toplam: Total number of questions in the survey (typically 25)</li>
+                        </ul>
+                        <p>The system will:</p>
+                        <ol>
+                            <li>Extract the unique set of questions from the "Yanıt" sheet</li>
+                            <li>Find these questions in the "Soru" sheet and import only those questions and options</li>
+                            <li>Use the "Yanıt" sheet to determine the correct answers for each question</li>
+                            <li>Import participants and their answers from the "Yanıt" sheet</li>
+                            <li>Create contacts for participants with email addresses in the format "isim.soyisim@nutricia.com"</li>
+                            <li>Replace Turkish characters in email addresses (ı→i, ö→o, ü→u, ğ→g, ş→s, ç→c)</li>
+                            <li>If "Katılımcı" sheet exists, use it to set start and end times for participants</li>
+                            <li>Set fixed scoring: 25 questions per participant, 4 points per question (total 100 points)</li>
+                        </ol>
+                    </div>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>

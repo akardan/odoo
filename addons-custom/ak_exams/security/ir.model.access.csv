@@ -2,3 +2,4 @@ id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_survey_question_poll_user,survey.question.poll.user,model_survey_question_poll,base.group_user,1,1,1,1
 access_survey_question_poll_option_user,survey.question.poll.option.user,model_survey_question_poll_option,base.group_user,1,1,1,1
 access_survey_question_poll_category_user,survey.question.poll.category.user,model_survey_question_poll_category,base.group_user,1,1,1,1
+access_survey_dashboard_user,survey.dashboard.user,model_survey_dashboard,base.group_user,1,1,1,1

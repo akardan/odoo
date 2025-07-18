@@ -10,3 +10,4 @@ from . import survey_question_poll
 from . import survey_question_poll_option
 
 from . import survey_question_poll_category
+from . import survey_dashboard

@@ -1,9 +1,23 @@
 # -*- coding: utf-8 -*-
-from odoo import models
+from odoo import models, fields, api
+from odoo.tools.translate import _
 import itertools
 
 class SurveyQuestion(models.Model):
     _inherit = 'survey.question'
+    
+    category_id = fields.Many2one(
+        'survey.question.poll.category',
+        string=_('Category'),
+        tracking=True
+    )
+    
+    @api.onchange('survey_id')
+    def _onchange_survey_id(self):
+        """Update domain of category_id based on survey_id"""
+        if self.survey_id and self.survey_id.company_id:
+            return {'domain': {'category_id': ['|', ('company_id', '=', False), ('company_id', '=', self.survey_id.company_id.id)]}}
+        return {'domain': {'category_id': []}}
 
     def _get_stats_graph_data_matrix(self, user_input_lines):
         """
