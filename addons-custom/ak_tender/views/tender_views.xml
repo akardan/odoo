@@ -209,15 +209,15 @@
                         <t t-name="card">
                             <!-- Ribbon for urgent tenders -->
                             <widget name="web_ribbon" title="Acil" bg_color="text-bg-danger"
-                                    t-if="record.end_date.raw_value and (new Date(record.end_date.raw_value) - new Date()) / (1000 * 60 * 60 * 24) &lt; 3 and record.state.raw_value and !['done', 'cancel', 'approved'].includes(record.state.raw_value)"/>
+                                    t-if="record.end_date.raw_value and (new Date(record.end_date.raw_value) - new Date()) / (1000 * 60 * 60 * 24) &lt; 3 and record.workflow_current_state_id.raw_value and !['done', 'cancel', 'approved'].includes(record.workflow_current_state_id.code)"/>
                             
                             <!-- Ribbon for completed tenders -->
                             <widget name="web_ribbon" title="Tamamlandı" bg_color="text-bg-success"
-                                    t-if="record.state.raw_value and record.state.raw_value == 'done'"/>
+                                    t-if="record.workflow_current_state_id.raw_value and record.workflow_current_state_id.code == 'done'"/>
                             
                             <!-- Ribbon for approved tenders -->
                             <widget name="web_ribbon" title="Onaylandı" bg_color="text-bg-info"
-                                    t-if="record.state.raw_value and record.state.raw_value == 'approved'"/>
+                                    t-if="record.workflow_current_state_id.raw_value and record.workflow_current_state_id.code == 'approved'"/>
 
                             <!-- Tender Title and Code -->
                             <field name="name" class="fw-bold fs-4 me-auto ms-1"/>
