@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- Configuration parameters for ak_tender module -->
+        <record id="ak_tender_max_lead_time" model="ir.config_parameter">
+            <field name="key">ak_tender_max_lead_time</field>
+            <field name="value">168</field>
+        </record>
+        
+        <record id="ak_tender_allow_alternative_products" model="ir.config_parameter">
+            <field name="key">ak_tender_allow_alternative_products</field>
+            <field name="value">True</field>
+        </record>
+        
+        <record id="ak_tender_quality_approval_required" model="ir.config_parameter">
+            <field name="key">ak_tender_quality_approval_required</field>
+            <field name="value">True</field>
+        </record>
+        
+        <record id="ak_tender_npv_interest_rate" model="ir.config_parameter">
+            <field name="key">ak_tender_npv_interest_rate</field>
+            <field name="value">10.0</field>
+        </record>
+    </data>
+</odoo>

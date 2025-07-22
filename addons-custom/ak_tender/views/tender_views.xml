@@ -10,6 +10,13 @@
                         <field name="workflow_current_state_id" widget="statusbar" options="{'clickable': '0'}"/>
                     </header>
                     <sheet>
+                        <!-- Colored header based on tender type -->
+                        <div t-attf-class="o_tender_header {{tender_type == 'direct' ? 'o_tender_type_direct' :
+                                                            tender_type == 'indirect' ? 'o_tender_type_indirect' :
+                                                            tender_type == 'mice' ? 'o_tender_type_mice' :
+                                                            tender_type == 'promotion' ? 'o_tender_type_promotion' : ''}}">
+                            <field name="tender_type" invisible="1"/>
+                        </div>
                         <div class="oe_button_box" name="button_box">
                             <button name="action_view_purchase_orders"
                                 type="object"
@@ -25,6 +32,22 @@
                                 icon="fa-balance-scale"
                                 string="Teklifler"
                                 help="Tedarikçilerden gelen teklifler (SAT)"
+                            />
+                            <button name="action_add_supplier"
+                                type="object"
+                                class="oe_stat_button"
+                                icon="fa-user-plus"
+                                string="Tedarikçi Ekle"
+                                help="İhaleye yeni tedarikçiler ekle"
+                                invisible="workflow_current_state_id.code in ('approved', 'done', 'cancel')"
+                            />
+                            <button name="action_apply_template"
+                                type="object"
+                                class="oe_stat_button"
+                                icon="fa-clipboard-list"
+                                string="Şablon Uygula"
+                                help="Seçili şablonu ihaleye uygula"
+                                invisible="service_template_id == False or workflow_current_state_id.code in ('approved', 'done', 'cancel')"
                             />
                         </div>
                         <div class="oe_title">
@@ -88,6 +111,7 @@
                                         <field name="tender_round"/>
                                         <field name="tender_offer_status"/>
                                         <field name="amount_total" sum="Toplam Teklifler"/>
+                                        <field name="total_npv" sum="Toplam NPV" column_invisible="parent.tender_type not in ('direct', 'indirect')"/>
                                         <field name="state"/>
                                     </list>
                                 </field>
@@ -96,6 +120,139 @@
                                            readonly="[('workflow_current_state_id.code', 'not in', ['first_tender_round', 'target_price_set'])]"/>
                                     <field name="winning_order_id" readonly="1" />
                                 </group>
+                                
+                                <!-- Direkt İhale Özellikleri -->
+                                <div invisible="tender_type != 'direct'">
+                                    <h3 class="mt-3 mb-2">Direkt İhale Özellikleri</h3>
+                                    <div class="alert alert-info">
+                                        <strong>Direkt İhale Kuralları:</strong>
+                                        <ul>
+                                            <li>Tüm ürünlerin ERP kodu olmalıdır</li>
+                                            <li>Tedarik süresi maksimum izin verilen değeri aşamaz</li>
+                                            <li>Muadil ürün kabul edilmez</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                
+                                <!-- Endirekt İhale Özellikleri -->
+                                <div invisible="tender_type != 'indirect'">
+                                    <h3 class="mt-3 mb-2">Endirekt İhale Özellikleri</h3>
+                                    <div class="alert alert-success">
+                                        <strong>Endirekt İhale Özellikleri:</strong>
+                                        <ul>
+                                            <li>Toplu satın alma optimizasyonu</li>
+                                            <li>Muadil ürün teklifleri (ayarlara bağlı olarak)</li>
+                                            <li>Acil talep desteği</li>
+                                        </ul>
+                                    </div>
+                                    
+                                    <!-- Toplu Satın Alma Bilgileri -->
+                                    <div invisible="is_bulk_purchase == False">
+                                        <h4 class="mt-3 mb-2">Toplu Satın Alma Bilgileri</h4>
+                                        <group>
+                                            <field name="is_bulk_purchase" invisible="1"/>
+                                            <field name="bulk_purchase_count" string="Birleştirilen SAT Sayısı"/>
+                                            <field name="related_pr_ids" string="İlişkili SAT Numaraları"/>
+                                        </group>
+                                    </div>
+                                    
+                                    <!-- Acil Talep Bilgileri -->
+                                    <div>
+                                        <h4 class="mt-3 mb-2">Acil Talep</h4>
+                                        <group>
+                                            <field name="is_urgent"/>
+                                            <field name="urgent_deadline" invisible="is_urgent == False" required="is_urgent == True"/>
+                                            <field name="urgent_reason" invisible="is_urgent == False" required="is_urgent == True" placeholder="Aciliyet nedenini açıklayın..."/>
+                                        </group>
+                                    </div>
+                                </div>
+                                
+                                <!-- MICE İhale Özellikleri -->
+                                <div invisible="tender_type != 'mice'">
+                                    <h3 class="mt-3 mb-2">MICE İhale Özellikleri</h3>
+                                    <div class="alert alert-primary">
+                                        <strong>MICE İhale Özellikleri:</strong>
+                                        <ul>
+                                            <li>Hizmet kategorisi şablonları</li>
+                                            <li>Şablon değişiklik kısıtlamaları</li>
+                                            <li>Coğrafi tedarikçi filtreleme</li>
+                                        </ul>
+                                    </div>
+                                    
+                                    <!-- Şablon Bilgileri -->
+                                    <div>
+                                        <h4 class="mt-3 mb-2">Şablon Bilgileri</h4>
+                                        <group>
+                                            <field name="service_template_id" domain="[('tender_type', '=', tender_type)]"/>
+                                            <button name="action_apply_template" string="Şablonu Uygula" type="object"
+                                                    class="btn btn-primary" invisible="service_template_id == False"/>
+                                        </group>
+                                    </div>
+                                    
+                                    <!-- Coğrafi Bilgiler -->
+                                    <div>
+                                        <h4 class="mt-3 mb-2">Coğrafi Bilgiler</h4>
+                                        <group>
+                                            <field name="country_id" options="{'no_create': True}"/>
+                                            <field name="state_id" options="{'no_create': True}" domain="[('country_id', '=', country_id)]"/>
+                                            <field name="city"/>
+                                        </group>
+                                    </div>
+                                </div>
+                                
+                                <!-- Promosyon İhale Özellikleri -->
+                                <div invisible="tender_type != 'promotion'">
+                                    <h3 class="mt-3 mb-2">Promosyon İhale Özellikleri</h3>
+                                    <div class="alert alert-warning">
+                                        <strong>Promosyon İhale Özellikleri:</strong>
+                                        <ul>
+                                            <li>Toplu satın alma optimizasyonu</li>
+                                            <li>Acil talep desteği</li>
+                                            <li>Ekonomik veri entegrasyonu</li>
+                                        </ul>
+                                    </div>
+                                    
+                                    <!-- Toplu Satın Alma Bilgileri -->
+                                    <div invisible="is_bulk_purchase == False">
+                                        <h4 class="mt-3 mb-2">Toplu Satın Alma Bilgileri</h4>
+                                        <group>
+                                            <field name="is_bulk_purchase" invisible="1"/>
+                                            <field name="bulk_purchase_count" string="Birleştirilen SAT Sayısı"/>
+                                            <field name="related_pr_ids" string="İlişkili SAT Numaraları"/>
+                                        </group>
+                                    </div>
+                                    
+                                    <!-- Acil Talep Bilgileri -->
+                                    <div>
+                                        <h4 class="mt-3 mb-2">Acil Talep</h4>
+                                        <group>
+                                            <field name="is_urgent"/>
+                                            <field name="urgent_deadline" invisible="is_urgent == False" required="is_urgent == True"/>
+                                            <field name="urgent_reason" invisible="is_urgent == False" required="is_urgent == True" placeholder="Aciliyet nedenini açıklayın..."/>
+                                        </group>
+                                    </div>
+                                    
+                                    <!-- Ekonomik Veri Entegrasyonu -->
+                                    <div>
+                                        <h4 class="mt-3 mb-2">Ekonomik Veri Entegrasyonu</h4>
+                                        <group>
+                                            <field name="use_economic_data"/>
+                                            <field name="economic_data_source" invisible="use_economic_data == False" required="use_economic_data == True"/>
+                                            <field name="exchange_rate_date" invisible="use_economic_data == False" required="use_economic_data == True"/>
+                                            <field name="inflation_rate" invisible="use_economic_data == False" required="use_economic_data == True"/>
+                                            <field name="economic_notes" invisible="use_economic_data == False" placeholder="Ekonomik değerlendirme notları..."/>
+                                        </group>
+                                        <div invisible="use_economic_data == False">
+                                            <button name="action_fetch_economic_data" string="Ekonomik Verileri Güncelle" type="object" class="btn btn-primary"
+                                                    invisible="use_economic_data == False or economic_data_source == 'manual'"/>
+                                        </div>
+                                        <div class="alert alert-info" invisible="use_economic_data == False">
+                                            <p><strong>Bilgi:</strong> Ekonomik veri entegrasyonu, ihale değerlendirmesinde döviz kurları ve enflasyon gibi ekonomik faktörleri dikkate almanızı sağlar.</p>
+                                            <p>Bu özellik, özellikle uzun vadeli promosyon ihalelerinde fiyat değişimlerini değerlendirmek için kullanışlıdır.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
                                 <p class="oe_grey">
                                     Bu sayfa, tedarikçilerden gelen tekliflerin otomatik olarak işleneceği ve karşılaştırılacağı alan olacaktır. (Bu prototipte manuel giriş için açılmıştır, gerçek sistemde portal entegrasyonu ile dolacaktır.) Teklif turu bilgisi, hangi teklifin hangi aşamada geldiğini belirtir.
                                 </p>
@@ -123,14 +280,26 @@
             <field name="name">ak.tender.list</field>
             <field name="model">ak.tender</field>
             <field name="arch" type="xml">
-                <list string="İLKOis İhaleleri" decoration-success="workflow_current_state_id.code in ('approved', 'done')" decoration-info="workflow_current_state_id.code in ('first_tender_round', 'second_tender_round', 'evaluation')" decoration-danger="workflow_current_state_id.code == 'cancel'">
+                <list string="İhaleler"
+                      decoration-success="workflow_current_state_id.code in ('approved', 'done')"
+                      decoration-info="workflow_current_state_id.code in ('first_tender_round', 'second_tender_round', 'evaluation') or tender_type == 'mice'"
+                      decoration-danger="workflow_current_state_id.code == 'cancel'"
+                      decoration-primary="tender_type == 'direct'"
+                      decoration-warning="tender_type == 'promotion'">
                     <field name="code"/>
                     <field name="name"/>
                     <field name="erp_pr_id"/>
-                    <field name="tender_type"/>
+                    <field name="tender_type" widget="badge"
+                           decoration-primary="tender_type == 'direct'"
+                           decoration-success="tender_type == 'indirect'"
+                           decoration-warning="tender_type == 'promotion'"
+                           decoration-info="tender_type == 'mice'"/>
                     <field name="start_date"/>
                     <field name="end_date"/>
                     <field name="workflow_current_state_id" widget="badge"/>
+                    <field name="is_urgent" widget="boolean_toggle"/>
+                    <field name="use_economic_data" widget="boolean_toggle" optional="hide"/>
+                    <field name="economic_data_source" optional="hide"/>
                 </list>
             </field>
         </record>
@@ -153,6 +322,9 @@
                     <filter name="filter_approved" string="Onaylanmış İhaleler" domain="[('workflow_current_state_id.code', '=', 'approved')]"/>
                     <filter name="filter_done" string="Tamamlanmış İhaleler" domain="[('workflow_current_state_id.code', '=', 'done')]"/>
                     <separator/>
+                    <filter name="filter_urgent" string="Acil Talepler" domain="[('is_urgent', '=', True)]"/>
+                    <filter name="filter_economic_data" string="Ekonomik Veri Kullanan" domain="[('use_economic_data', '=', True)]"/>
+                    <separator/>
                     <group expand="0" string="Grup Bazında">
                         <filter name="groupby_state" string="Durum" context="{'group_by':'workflow_current_state_id'}"/>
                         <filter name="groupby_tender_type" string="İhale Tipi" context="{'group_by':'tender_type'}"/>
@@ -166,7 +338,9 @@
             <field name="model">ak.tender</field>
             <field name="arch" type="xml">
                 <kanban default_group_by="workflow_current_state_id" class="o_kanban_dashboard o_tender_kanban" edit="false" sample="1">
+                    <field name="id"/>
                     <field name="workflow_current_state_id"/>
+                    <field name="workflow_state"/>
                     <field name="name"/>
                     <field name="code"/>
                     <field name="tender_type"/>
@@ -182,6 +356,8 @@
                     <field name="create_date"/>
                     <field name="activity_ids"/>
                     <field name="activity_state"/>
+                    <field name="is_urgent"/>
+                    <field name="urgent_deadline"/>
                     
                     <progressbar field="activity_state" colors='{"overdue": "danger", "today": "warning", "planned": "success"}'/>
                     
@@ -207,17 +383,19 @@
                         </t>
                         
                         <t t-name="card">
+                            <!-- Add CSS class based on tender type -->
+                            <t t-set="tender_type_class" t-value="'o_tender_type_' + record.tender_type.raw_value"/>
                             <!-- Ribbon for urgent tenders -->
                             <widget name="web_ribbon" title="Acil" bg_color="text-bg-danger"
-                                    t-if="record.end_date.raw_value and (new Date(record.end_date.raw_value) - new Date()) / (1000 * 60 * 60 * 24) &lt; 3 and record.workflow_current_state_id.raw_value and !['done', 'cancel', 'approved'].includes(record.workflow_current_state_id.code)"/>
+                                    t-if="record.is_urgent.raw_value"/>
                             
                             <!-- Ribbon for completed tenders -->
                             <widget name="web_ribbon" title="Tamamlandı" bg_color="text-bg-success"
-                                    t-if="record.workflow_current_state_id.raw_value and record.workflow_current_state_id.code == 'done'"/>
+                                    t-if="record.workflow_current_state_id.raw_value and record.workflow_state.raw_value == 'done'"/>
                             
                             <!-- Ribbon for approved tenders -->
                             <widget name="web_ribbon" title="Onaylandı" bg_color="text-bg-info"
-                                    t-if="record.workflow_current_state_id.raw_value and record.workflow_current_state_id.code == 'approved'"/>
+                                    t-if="record.workflow_current_state_id.raw_value and record.workflow_state.raw_value == 'approved'"/>
 
                             <!-- Tender Title and Code -->
                             <field name="name" class="fw-bold fs-4 me-auto ms-1"/>
@@ -226,13 +404,24 @@
                                 <span class="badge bg-light text-dark border me-2">
                                     <i class="fa fa-barcode"/> <field name="code"/>
                                 </span>
-                                <span t-attf-class="badge #{record.tender_type.raw_value == 'standard' and 'bg-light text-muted border' or record.tender_type.raw_value == 'open_auction' and 'bg-warning bg-opacity-25 text-dark border' or 'bg-info bg-opacity-25 text-dark border'}">
+                                <span t-attf-class="badge #{
+                                    record.tender_type.raw_value == 'direct' and 'bg-primary bg-opacity-25 text-primary border border-primary' or
+                                    record.tender_type.raw_value == 'indirect' and 'bg-success bg-opacity-25 text-success border border-success' or
+                                    record.tender_type.raw_value == 'mice' and 'bg-purple bg-opacity-25 text-purple border border-purple' or
+                                    record.tender_type.raw_value == 'promotion' and 'bg-warning bg-opacity-25 text-warning border border-warning' or
+                                    'bg-info bg-opacity-25 text-dark border'}">
+                                    <i t-attf-class="fa #{
+                                        record.tender_type.raw_value == 'direct' and 'fa-shopping-cart' or
+                                        record.tender_type.raw_value == 'indirect' and 'fa-cubes' or
+                                        record.tender_type.raw_value == 'mice' and 'fa-users' or
+                                        record.tender_type.raw_value == 'promotion' and 'fa-gift' or
+                                        'fa-gavel'} me-1"></i>
                                     <field name="tender_type"/>
                                 </span>
                             </div>
 
                             <!-- Main Content Area -->
-                            <div class="row g-0 mb16 mt-1 ms-2 me-2">
+                            <div t-attf-class="row g-0 mb16 mt-1 ms-2 me-2 {{tender_type_class}}">
                                 <div class="col-12">
                                     <!-- Action buttons removed as they are now handled by the workflow engine in the form view -->
                                     
@@ -284,22 +473,22 @@
                                 <div class="progress" style="height: 8px;">
                                     <div class="progress-bar"
                                         t-attf-class="progress-bar #{!record.workflow_current_state_id.raw_value ? 'bg-danger bg-opacity-50' :
-                                            record.workflow_current_state_id.raw_value[1] == 'Taslak' ? 'bg-secondary bg-opacity-50' :
-                                            record.workflow_current_state_id.raw_value[1] == '1. Teklif Toplama' ? 'bg-info bg-opacity-50' :
-                                            record.workflow_current_state_id.raw_value[1] == 'Hedef Fiyat Belirlendi' ? 'bg-warning bg-opacity-50' :
-                                            record.workflow_current_state_id.raw_value[1] == '2. Teklif Toplama' ? 'bg-primary bg-opacity-50' :
-                                            record.workflow_current_state_id.raw_value[1] == 'Değerlendirme' ? 'bg-warning bg-opacity-50' :
-                                            record.workflow_current_state_id.raw_value[1] == 'Onaylandı' ? 'bg-success bg-opacity-50' :
-                                            record.workflow_current_state_id.raw_value[1] == 'Tamamlandı' ? 'bg-success bg-opacity-50' :
+                                            record.workflow_state.raw_value == 'draft' ? 'bg-secondary bg-opacity-50' :
+                                            record.workflow_state.raw_value == 'first_tender_round' ? 'bg-info bg-opacity-50' :
+                                            record.workflow_state.raw_value == 'target_price_set' ? 'bg-warning bg-opacity-50' :
+                                            record.workflow_state.raw_value == 'second_tender_round' ? 'bg-primary bg-opacity-50' :
+                                            record.workflow_state.raw_value == 'evaluation' ? 'bg-warning bg-opacity-50' :
+                                            record.workflow_state.raw_value == 'approved' ? 'bg-success bg-opacity-50' :
+                                            record.workflow_state.raw_value == 'done' ? 'bg-success bg-opacity-50' :
                                             'bg-danger bg-opacity-50'}"
                                         t-attf-style="width: #{!record.workflow_current_state_id.raw_value ? '0' :
-                                            record.workflow_current_state_id.raw_value[1] == 'Taslak' ? '12' :
-                                            record.workflow_current_state_id.raw_value[1] == '1. Teklif Toplama' ? '25' :
-                                            record.workflow_current_state_id.raw_value[1] == 'Hedef Fiyat Belirlendi' ? '37' :
-                                            record.workflow_current_state_id.raw_value[1] == '2. Teklif Toplama' ? '50' :
-                                            record.workflow_current_state_id.raw_value[1] == 'Değerlendirme' ? '62' :
-                                            record.workflow_current_state_id.raw_value[1] == 'Onaylandı' ? '87' :
-                                            record.workflow_current_state_id.raw_value[1] == 'Tamamlandı' ? '100' : '0'}%">
+                                            record.workflow_state.raw_value == 'draft' ? '12' :
+                                            record.workflow_state.raw_value == 'first_tender_round' ? '25' :
+                                            record.workflow_state.raw_value == 'target_price_set' ? '37' :
+                                            record.workflow_state.raw_value == 'second_tender_round' ? '50' :
+                                            record.workflow_state.raw_value == 'evaluation' ? '62' :
+                                            record.workflow_state.raw_value == 'approved' ? '87' :
+                                            record.workflow_state.raw_value == 'done' ? '100' : '0'}%">
                                     </div>
                                 </div>
                             </div>

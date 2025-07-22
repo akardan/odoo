@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="res_config_settings_view_form_tender" model="ir.ui.view">
+            <field name="name">res.config.settings.view.form.inherit.tender</field>
+            <field name="model">res.config.settings</field>
+            <field name="priority" eval="30"/>
+            <field name="inherit_id" ref="purchase.res_config_settings_view_form_purchase"/>
+            <field name="arch" type="xml">
+                <xpath expr="//app[@name='purchase']" position="inside">
+                    <block title="İhale" name="tender_settings_container">
+                        <setting id="tender_lead_time_setting" help="Direkt ihale tipinde izin verilen maksimum tedarik süresi">
+                            <field name="ak_tender_max_lead_time"/>
+                            <div class="text-muted">
+                                Gün olarak maksimum tedarik süresi
+                            </div>
+                        </setting>
+                        
+                        <setting id="tender_alternative_products_setting" help="Endirekt ihale tipinde alternatif ürün tekliflerine izin verilip verilmeyeceğini belirler">
+                            <field name="ak_tender_allow_alternative_products"/>
+                            <div class="text-muted">
+                                Alternatif ürün tekliflerine izin ver
+                            </div>
+                        </setting>
+                        
+                        <setting id="tender_quality_approval_setting" help="Direkt ihale tipinde kalite onayının zorunlu olup olmadığını belirler">
+                            <field name="ak_tender_quality_approval_required"/>
+                            <div class="text-muted">
+                                Kalite onayı zorunlu
+                            </div>
+                        </setting>
+                        
+                        <setting id="tender_npv_settings" string="NPV Hesaplama Parametreleri" help="Net Bugünkü Değer (NPV) hesaplaması için parametreler">
+                            <div class="content-group">
+                                <div class="row mt16">
+                                    <label for="ak_tender_npv_interest_rate" class="col-lg-4 o_light_label"/>
+                                    <field name="ak_tender_npv_interest_rate"/>
+                                    <span>%</span>
+                                </div>
+                                <div class="text-muted mt8">
+                                    NPV hesaplamasında ödeme vadesi için Odoo'nun standart ödeme vadesi kullanılır.
+                                </div>
+                            </div>
+                        </setting>
+                        
+                        <setting id="tender_bulk_purchase_settings" string="Toplu Satın Alma Optimizasyonu" help="Endirekt ve Promosyon ihale tiplerinde toplu satın alma optimizasyonu için parametreler">
+                            <field name="ak_tender_enable_bulk_purchase"/>
+                            <div class="content-group" invisible="ak_tender_enable_bulk_purchase == False">
+                                <div class="row mt16">
+                                    <label for="ak_tender_bulk_purchase_min_items" class="col-lg-4 o_light_label"/>
+                                    <field name="ak_tender_bulk_purchase_min_items"/>
+                                    <span>kalem</span>
+                                </div>
+                                <div class="row mt8">
+                                    <label for="ak_tender_bulk_purchase_min_value" class="col-lg-4 o_light_label"/>
+                                    <field name="ak_tender_bulk_purchase_min_value"/>
+                                    <span>TL</span>
+                                </div>
+                                <div class="text-muted mt8">
+                                    Toplu satın alma optimizasyonu, belirtilen minimum kalem sayısı ve toplam değer kriterlerine göre yapılır.
+                                </div>
+                            </div>
+                        </setting>
+                    </block>
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo>

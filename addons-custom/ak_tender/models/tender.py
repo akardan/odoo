@@ -12,20 +12,57 @@ class AkTenderLine(models.Model):
 
     sequence = fields.Integer(string=_('Sıra'), default=10)
     tender_id = fields.Many2one('ak.tender', string=_('İhale'), required=True, ondelete='cascade')
-    product_id = fields.Many2one('product.product', string=_('Ürün/Malzeme'), required=True,
+    
+    # Satır Tipi (Ürün, Bölüm, Not)
+    display_type = fields.Selection([
+        ('line_section', _('Bölüm')),
+        ('line_note', _('Not')),
+        ('product', _('Ürün/Hizmet')),
+    ], default='product', string=_('Satır Tipi'))
+    
+    product_id = fields.Many2one('product.product', string=_('Ürün/Malzeme'),
+                                 required=False,
                                  help=_("İhale edilecek ürün veya malzeme."))
-    name = fields.Char(string=_('Açıklama'), related='product_id.name', readonly=True)
-    quantity = fields.Float(string=_('Miktar'), required=True, default=1.0)
-    uom_id = fields.Many2one('uom.uom', string=_('Birim'), related='product_id.uom_id', readonly=True)
+    name = fields.Text(string=_('Açıklama'))
+    quantity = fields.Float(string=_('Miktar'), default=1.0)
+    uom_id = fields.Many2one('uom.uom', string=_('Birim'))
     required_delivery_date = fields.Date(string=_('Gerekli Teslim Tarihi'),
-                                         help=_("İstenen teslimat tarihi."))
+                                          help=_("İstenen teslimat tarihi."))
+    lead_time_days = fields.Integer(string=_('Tedarik Süresi (Gün)'),
+                                   help=_("Sipariş verilmesinden teslimata kadar geçen süre."))
+    
+    # Ek Özellikler
+    required = fields.Boolean(string=_('Zorunlu'), default=False,
+                             help=_("Bu satır ihale için zorunludur."))
+    allow_alternative = fields.Boolean(string=_('Alternatif Kabul Edilir'), default=True,
+                                     help=_("Bu satır için alternatif teklifler kabul edilir."))
+    
+    @api.onchange('product_id')
+    def _onchange_product_id(self):
+        if not self.product_id:
+            return
+        
+        self.uom_id = self.product_id.uom_po_id or self.product_id.uom_id
+        if not self.name:
+            self.name = self.product_id.name
 
 class AkTender(models.Model):
     _name = 'ak.tender'
     _description = _('İLKOis Tender')
     _inherit = ['ak.workflow.mixin', 'mail.thread', 'mail.activity.mixin']
     # Dummy field to allow smooth upgrade from previous versions
-    state = fields.Char(string="State (deprecated)", help="Technical field for upgrade purpose. Not used anymore.", store=False)
+    state = fields.Char(string="State (deprecated)",
+                        help="Technical field for upgrade purpose. Not used anymore. Use workflow_state instead.",
+                        compute="_compute_legacy_state", store=False)
+    
+    @api.depends('workflow_current_state_id')
+    def _compute_legacy_state(self):
+        """Compute the legacy state field based on the current workflow state for backward compatibility."""
+        for record in self:
+            if record.workflow_current_state_id:
+                record.state = record.workflow_current_state_id.code
+            else:
+                record.state = 'draft'
 
     name = fields.Char(string=_('İhale Adı'), required=True, copy=False,
                        help=_("İhale sürecinin başlığı veya kısa adı."))
@@ -38,13 +75,58 @@ class AkTender(models.Model):
     erp_company_code = fields.Char(string=_('ERP Şirket Kodu'), help=_("İlgili ERP Şirket Kodu (entegrasyon ile gelecek)."))
     erp_plant_code = fields.Char(string=_('ERP Tesis Kodu'), help=_("İlgili ERP Tesis Kodu (entegrasyon ile gelecek)."))
     
+    # Toplu Satın Alma Optimizasyonu için alanlar
+    related_pr_ids = fields.Char(string=_('İlişkili SAT Numaraları'),
+                                help=_("Toplu satın alma optimizasyonu için birleştirilen SAT numaraları (virgülle ayrılmış)."))
+    is_bulk_purchase = fields.Boolean(string=_('Toplu Satın Alma'),
+                                     help=_("Bu ihale, toplu satın alma optimizasyonu ile oluşturulmuştur."))
+    bulk_purchase_count = fields.Integer(string=_('Birleştirilen SAT Sayısı'), compute='_compute_bulk_purchase_count')
+    
+    # Acil Talep Desteği için alanlar
+    is_urgent = fields.Boolean(string=_('Acil Talep'),
+                              help=_("Bu ihale, acil talep olarak işaretlenmiştir."))
+    urgent_reason = fields.Text(string=_('Aciliyet Nedeni'),
+                               help=_("Acil talebin nedeni."))
+    urgent_deadline = fields.Date(string=_('Acil Teslim Tarihi'),
+                                 help=_("Acil talebin teslim edilmesi gereken son tarih."))
+    
+    # Ekonomik Veri Entegrasyonu için alanlar
+    use_economic_data = fields.Boolean(string=_('Ekonomik Veri Kullan'),
+                                      help=_("Ekonomik verileri ihale değerlendirmesinde kullan."))
+    exchange_rate_date = fields.Date(string=_('Kur Tarihi'),
+                                    help=_("Döviz kurlarının alınacağı tarih."))
+    inflation_rate = fields.Float(string=_('Enflasyon Oranı (%)'),
+                                 help=_("Değerlendirmede kullanılacak yıllık enflasyon oranı."))
+    economic_data_source = fields.Selection([
+        ('tcmb', _('TCMB')),
+        ('tuik', _('TÜİK')),
+        ('manual', _('Manuel'))
+    ], string=_('Veri Kaynağı'), default='tcmb',
+        help=_("Ekonomik verilerin alınacağı kaynak."))
+    economic_notes = fields.Text(string=_('Ekonomik Değerlendirme Notları'),
+                                help=_("Ekonomik değerlendirme ile ilgili notlar."))
+    
     # TEKLİF DOKÜMANINA GÖRE REVİZE EDİLEN DURUM ALANI
 
     tender_type = fields.Selection([
-        ('standard', _('Standart İhale')), # Tek bir tur
-        ('open_auction', _('Açık Eksiltme (Açık İhale)')), # Birden fazla tur, hedef fiyat ile
-        ('sealed_bid', _('Kapalı Zarf Teklif')), # Genelde tek tur ama hedef fiyat ile revizyon olabilir
-    ], string=_('İhale Tipi'), default='standard', required=True)
+        ('direct', _('Direkt Satın Alma')),
+        ('indirect', _('Endirekt Satın Alma')),
+        ('mice', _('MICE İhaleler')),
+        ('promotion', _('Promosyon ve Kırtasiye'))
+    ], string=_('İhale Tipi'), default='direct', required=True)
+    
+    # MICE İhaleleri için Şablon
+    service_template_id = fields.Many2one('ak.tender.template', string=_('Hizmet Şablonu'),
+                                         help=_("MICE ihaleleri için kullanılacak hizmet şablonu."))
+    
+    # Coğrafi Filtreleme
+    country_id = fields.Many2one('res.country', string=_('Ülke'),
+                                help=_("İhalenin gerçekleştirileceği ülke."))
+    state_id = fields.Many2one('res.country.state', string=_('İl'),
+                              domain="[('country_id', '=', country_id)]",
+                              help=_("İhalenin gerçekleştirileceği il."))
+    city = fields.Char(string=_('Şehir'),
+                      help=_("İhalenin gerçekleştirileceği şehir."))
 
     start_date = fields.Datetime(string=_('Başlangıç Tarihi'), default=fields.Datetime.now(), required=True)
     end_date = fields.Datetime(string=_('Bitiş Tarihi'), required=True)
@@ -70,6 +152,12 @@ class AkTender(models.Model):
                                    help=_("Satın Alma Direktörü tarafından belirlenen hedef fiyat."),
                                    tracking=True) # Değişiklikleri takip et
     currency_id = fields.Many2one('res.currency', string=_('Para Birimi'), default=lambda self: self.env.company.currency_id)
+    
+    # NPV (Net Present Value) Hesaplama Alanları
+    npv_value = fields.Monetary(string=_('NPV Değeri'), currency_field='currency_id',
+                               help=_("Net Bugünkü Değer hesaplaması sonucu."), readonly=True)
+    discount_rate = fields.Float(string=_('İskonto Oranı (%)'), default=10.0,
+                                 help=_("NPV hesaplaması için kullanılacak yıllık iskonto oranı."))
     
     # Onay Mekanizması için alanlar
     
@@ -116,6 +204,15 @@ class AkTender(models.Model):
         for tender in self:
             # Bu ihale ile ilişkili Purchase Order sayısını hesapla
             tender.purchase_order_count = len(tender.purchase_order_ids)
+    
+    @api.depends('related_pr_ids')
+    def _compute_bulk_purchase_count(self):
+        """Compute the number of purchase requests combined in this tender."""
+        for tender in self:
+            if tender.related_pr_ids:
+                tender.bulk_purchase_count = len(tender.related_pr_ids.split(','))
+            else:
+                tender.bulk_purchase_count = 0
             
     @api.model_create_multi
     def create(self, vals_list):
@@ -145,8 +242,175 @@ class AkTender(models.Model):
         for record in self:
             if record.start_date and record.end_date and record.start_date > record.end_date:
                 raise ValidationError(_("Başlangıç Tarihi, Bitiş Tarihinden sonra olamaz!"))
+    
+    @api.constrains('tender_type', 'tender_lines', 'tender_lines.product_id')
+    def _check_product_erp_code(self):
+        """
+        Direkt ihale tipinde, tüm ürünlerin ERP kodu olması gereklidir.
+        Bu kısıt, direkt ihale kaydı oluştururken yeni ürün oluşturulmasını engeller.
+        """
+        for record in self:
+            if record.tender_type == 'direct':
+                for line in record.tender_lines:
+                    if not line.product_id.default_code:
+                        raise ValidationError(_(
+                            "Direkt ihale tipinde tüm ürünlerin ERP kodu olmalıdır. "
+                            "Ürün '%s' için ERP kodu bulunamadı."
+                        ) % line.product_id.name)
 
+    @api.constrains('tender_type', 'tender_lines', 'tender_lines.lead_time_days')
+    def _check_lead_time(self):
+        """
+        Direkt ihale tipinde, tedarik süresi maksimum izin verilen değeri aşamaz.
+        Bu kısıt, direkt ihale kaydı oluştururken veya güncellerken kontrol edilir.
+        """
+        for record in self:
+            if record.tender_type == 'direct':
+                # Ayarlardan maksimum tedarik süresini al
+                max_lead_time = int(self.env['ir.config_parameter'].sudo().get_param(
+                    'ak_tender_max_lead_time', default=30))
+                
+                for line in record.tender_lines:
+                    if line.lead_time_days and line.lead_time_days > max_lead_time:
+                        raise ValidationError(_(
+                            "Direkt ihale tipinde tedarik süresi %s günü aşamaz. "
+                            "Ürün '%s' için tedarik süresi %s gün olarak belirlenmiş."
+                        ) % (max_lead_time, line.product_id.name, line.lead_time_days))
+    
+    @api.constrains('tender_type', 'use_economic_data')
+    def _check_economic_data(self):
+        """
+        Check if economic data integration is allowed for the tender type.
+        Only promotion tenders can use economic data integration.
+        """
+        for record in self:
+            if record.use_economic_data and record.tender_type != 'promotion':
+                raise ValidationError(_(
+                    "Ekonomik veri entegrasyonu sadece Promosyon ihale tipi için kullanılabilir."
+                ))
+                
+            if record.use_economic_data and not record.exchange_rate_date:
+                raise ValidationError(_(
+                    "Ekonomik veri entegrasyonu için kur tarihi belirtilmelidir."
+                ))
+    
+    def fetch_economic_data(self):
+        """
+        Fetch economic data from external sources.
+        This is a simulated method for the prototype.
+        In a real implementation, this would connect to TCMB or TÜİK APIs.
+        """
+        self.ensure_one()
+        
+        if not self.use_economic_data:
+            return False
+            
+        if self.tender_type != 'promotion':
+            raise ValidationError(_("Ekonomik veri entegrasyonu sadece Promosyon ihale tipi için kullanılabilir."))
+            
+        if not self.exchange_rate_date:
+            raise ValidationError(_("Kur tarihi belirtilmelidir."))
+            
+        # Simulated data
+        exchange_rates = {
+            'USD': 28.5,
+            'EUR': 31.2,
+            'GBP': 36.8,
+            'CHF': 32.1
+        }
+        
+        inflation_data = {
+            'annual': 38.2,
+            'monthly': 3.2
+        }
+        
+        # Update the inflation rate if not manually set
+        if self.economic_data_source != 'manual' and not self.inflation_rate:
+            self.inflation_rate = inflation_data['annual']
+            
+        # Log the data fetch
+        self.message_post(
+            body=_("Ekonomik veriler güncellendi. Kur tarihi: %s, Kaynak: %s") %
+                 (self.exchange_rate_date, dict(self._fields['economic_data_source'].selection).get(self.economic_data_source)),
+            subtype_xmlid='mail.mt_note'
+        )
+        
+        return {
+            'exchange_rates': exchange_rates,
+            'inflation_data': inflation_data
+        }
+    
+    def action_fetch_economic_data(self):
+        """
+        Action to fetch economic data from external sources.
+        This is called from a button in the UI.
+        """
+        self.ensure_one()
+        
+        try:
+            data = self.fetch_economic_data()
+            if data:
+                return {
+                    'type': 'ir.actions.client',
+                    'tag': 'display_notification',
+                    'params': {
+                        'title': _('Ekonomik Veriler Güncellendi'),
+                        'message': _('Döviz kurları ve enflasyon verileri başarıyla güncellendi.'),
+                        'sticky': False,
+                        'type': 'success',
+                    }
+                }
+            else:
+                return {
+                    'type': 'ir.actions.client',
+                    'tag': 'display_notification',
+                    'params': {
+                        'title': _('Ekonomik Veri Yok'),
+                        'message': _('Ekonomik veri entegrasyonu etkin değil.'),
+                        'sticky': False,
+                        'type': 'warning',
+                    }
+                }
+        except Exception as e:
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'title': _('Hata'),
+                    'message': str(e),
+                    'sticky': True,
+                    'type': 'danger',
+                }
+            }
+    
+    @api.constrains('tender_type', 'is_urgent')
+    def _check_urgent_request(self):
+        """
+        Check if urgent request is allowed for the tender type.
+        Only indirect and promotion tenders can be marked as urgent.
+        """
+        for record in self:
+            if record.is_urgent and record.tender_type not in ('indirect', 'promotion'):
+                raise ValidationError(_(
+                    "Acil talep desteği sadece Endirekt ve Promosyon ihale tipleri için kullanılabilir."
+                ))
+                
+            if record.is_urgent and not record.urgent_reason:
+                raise ValidationError(_(
+                    "Acil talep için aciliyet nedeni belirtilmelidir."
+                ))
+                
+            if record.is_urgent and not record.urgent_deadline:
+                raise ValidationError(_(
+                    "Acil talep için acil teslim tarihi belirtilmelidir."
+                ))
     def _create_purchase_order(self):
+        """
+        This method is called when a tender is approved.
+        It confirms the winning purchase order and marks other orders as rejected.
+        
+        This method is typically called from a workflow transition action.
+        """
         self.ensure_one()
         winning_order = self.winning_order_id
         if winning_order:
@@ -161,6 +425,8 @@ class AkTender(models.Model):
             notification_message = _('İhale başarıyla onaylandı. Kazanan teklif (%s) için Satın Alma Siparişi onaylandı.') % (winning_order.name)
         else:
             notification_message = _('İhale başarıyla onaylandı. Ancak kazanan bir teklif bulunamadığı için SAS onaylanamadı.')
+        
+        # Send notification
         self.env['bus.bus']._sendone(
             self.env.user.partner_id,
             'display_notification',
@@ -168,6 +434,12 @@ class AkTender(models.Model):
                 'title': _('İhale Onaylandı'),
                 'message': notification_message,
             }
+        )
+        
+        # Post message in chatter
+        self.message_post(
+            body=notification_message,
+            subtype_xmlid='mail.mt_note'
         )
 
             
@@ -195,7 +467,149 @@ class AkTender(models.Model):
         action['domain'] = [('tender_id', '=', self.id), ('state', 'in', ['purchase', 'done'])]
         return action
     
-
-
-
-
+    @api.model
+    def create_bulk_purchase_tender(self, pr_ids, name=None, tender_type='indirect'):
+        """
+        Create a new tender by combining multiple purchase requests.
+        
+        Args:
+            pr_ids (list): List of ERP PR IDs to combine
+            name (str, optional): Name for the new tender
+            tender_type (str, optional): Type of tender ('indirect' or 'promotion')
+            
+        Returns:
+            ak.tender: The newly created tender record
+        """
+        if not pr_ids:
+            raise ValidationError(_("En az bir SAT numarası belirtilmelidir."))
+            
+        if tender_type not in ('indirect', 'promotion'):
+            raise ValidationError(_("Toplu satın alma optimizasyonu sadece Endirekt ve Promosyon ihale tipleri için kullanılabilir."))
+            
+        # Check if bulk purchase optimization is enabled
+        enable_bulk_purchase = self.env['ir.config_parameter'].sudo().get_param(
+            'ak_tender_enable_bulk_purchase', 'True') == 'True'
+            
+        if not enable_bulk_purchase:
+            raise ValidationError(_("Toplu satın alma optimizasyonu ayarlarda devre dışı bırakılmıştır."))
+            
+        # Create a new tender
+        if not name:
+            name = _("Toplu Satın Alma: %s") % ', '.join(pr_ids[:3])
+            if len(pr_ids) > 3:
+                name += _(" ve %s diğer") % (len(pr_ids) - 3)
+                
+        vals = {
+            'name': name,
+            'tender_type': tender_type,
+            'related_pr_ids': ','.join(pr_ids),
+            'is_bulk_purchase': True,
+            'start_date': fields.Datetime.now(),
+            'end_date': fields.Datetime.now() + fields.Datetime.to_timedelta(days=7),  # Default 7 days
+        }
+        
+        # Create the tender
+        tender = self.create(vals)
+        
+        # Log the creation
+        tender.message_post(
+            body=_("Bu ihale, toplu satın alma optimizasyonu ile oluşturulmuştur. İlişkili SAT numaraları: %s") %
+                 tender.related_pr_ids,
+            subtype_xmlid='mail.mt_note'
+        )
+        
+        return tender
+        
+    @api.onchange('tender_type')
+    def _onchange_tender_type(self):
+        """İhale tipi değiştiğinde ilgili alanları güncelle."""
+        if self.tender_type != 'mice':
+            self.service_template_id = False
+    
+    @api.onchange('service_template_id')
+    def _onchange_service_template_id(self):
+        """Hizmet şablonu seçildiğinde şablonu uygula."""
+        if not self.service_template_id:
+            return
+        
+        # Şablonu uygula - her ihale tipi için kendi şablonu uygulanabilir
+        
+        # Coğrafi bilgileri güncelle
+        if self.service_template_id.country_ids:
+            # Şablonda ülke kısıtlaması varsa, ilk ülkeyi seç
+            self.country_id = self.service_template_id.country_ids[0].id
+        if self.service_template_id.state_ids:
+            # Şablonda il kısıtlaması varsa ve seçilen ülkeye uygunsa, ilk ili seç
+            states = self.service_template_id.state_ids.filtered(lambda s: s.country_id.id == self.country_id.id)
+            if states:
+                self.state_id = states[0].id
+        if self.service_template_id.city:
+            self.city = self.service_template_id.city
+        
+        # Mevcut satırları temizle
+        self.tender_lines = [(5, 0, 0)]
+        
+        # Şablon satırlarını ekle
+        lines = []
+        for template_line in self.service_template_id.line_ids:
+            if template_line.display_type in ['line_section', 'line_note']:
+                # Bölüm veya not satırı
+                vals = {
+                    'display_type': template_line.display_type,
+                    'name': template_line.name,
+                    'sequence': template_line.sequence,
+                }
+                lines.append((0, 0, vals))
+            elif template_line.product_id:
+                # Ürün satırı
+                vals = {
+                    'display_type': 'product',
+                    'product_id': template_line.product_id.id,
+                    'name': template_line.name or template_line.product_id.name,
+                    'quantity': template_line.product_qty,
+                    'uom_id': template_line.product_uom_id.id,
+                    'sequence': template_line.sequence,
+                    'required': template_line.required,
+                    'allow_alternative': template_line.allow_alternative,
+                }
+                lines.append((0, 0, vals))
+        
+        self.tender_lines = lines
+    
+    def action_apply_template(self):
+        """Seçili şablonu ihaleye uygula."""
+        self.ensure_one()
+        if not self.service_template_id:
+            raise ValidationError(_("Önce bir hizmet şablonu seçmelisiniz."))
+        
+        # Şablonu uygula
+        self._onchange_service_template_id()
+        
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': _('Şablon Uygulandı'),
+                'message': _('Hizmet şablonu başarıyla uygulandı.'),
+                'sticky': False,
+                'type': 'success',
+            }
+        }
+        
+    def action_add_supplier(self):
+        """
+        Open the Add Supplier wizard.
+        This method is called from the 'Tedarikçi Ekle' button in the UI.
+        """
+        self.ensure_one()
+        
+        return {
+            'name': _('Tedarikçi Ekle'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'ak.tender.add.supplier.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {
+                'default_tender_id': self.id,
+            }
+        }

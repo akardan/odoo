@@ -1,0 +1,152 @@
+# İhale Modülü (ak_tender)
+
+## Genel Bakış
+
+Bu modül, çok aşamalı satın alma ihale süreçlerini Odoo üzerinde yönetmek için tasarlanmıştır. Modül, iş akışı (workflow) tabanlı bir yaklaşım kullanarak ihale süreçlerini yönetir.
+
+## Özellikler
+
+- ERP Entegrasyon (simülasyon)
+- Çok Aşamalı İhale Süreci (1. Teklif Toplama, Hedef Fiyat, 2. Teklif Toplama)
+- Tedarikçi Portal Entegrasyonu (veri girişi temsili)
+- Onay Mekanizması entegrasyonu (Approvals modülü ile)
+- Raporlama ve Analiz altyapısı
+- İhale Kalemleri yönetimi
+- Odoo'nun temel satın alma (purchase.order) modülü ile entegrasyon
+- Farklı ihale tipleri için görsel yönetim özellikleri (direct, indirect, mice, promotion)
+- İhale şablonları (tüm ihale tipleri için)
+- Toplu satın alma optimizasyonu (indirect ve promotion ihaleleri için)
+- Acil talep desteği (indirect ve promotion ihaleleri için)
+- Ekonomik veri entegrasyonu (promotion ihaleleri için)
+- Dinamik tedarikçi ekleme fonksiyonu
+- Coğrafi tedarikçi filtreleme
+
+## İş Akışı (Workflow) Entegrasyonu
+
+Bu modül, `ak_workflow` modülü ile entegre çalışır. İhale süreçleri, tanımlanmış iş akışları üzerinden yönetilir. Her ihale, bir iş akışı tanımına (workflow definition) sahiptir ve bu tanım üzerinden durumlar (states) ve geçişler (transitions) yönetilir.
+
+### İhale Durumları
+
+İhale sürecinde aşağıdaki durumlar bulunabilir:
+
+- `draft`: Taslak
+- `first_tender_round`: 1. Teklif Toplama
+- `target_price_set`: Hedef Fiyat Belirlendi
+- `second_tender_round`: 2. Teklif Toplama
+- `evaluation`: Değerlendirme
+- `approved`: Onaylandı
+- `done`: Tamamlandı
+- `cancel`: İptal Edildi
+
+### İş Akışı Geçişleri
+
+İhale durumları arasındaki geçişler, iş akışı tanımında belirtilen geçişler (transitions) üzerinden gerçekleştirilir. Her geçiş, belirli koşullara bağlı olabilir ve geçiş sırasında çeşitli aksiyonlar tetiklenebilir.
+
+## Teknik Notlar
+
+### Deprecated Fields
+
+- `state` alanı artık kullanılmamaktadır. Bunun yerine `workflow_current_state_id` ve `workflow_state` alanları kullanılmalıdır.
+- `tender_results` yerine `purchase_order_ids` kullanılmaktadır.
+
+### İş Akışı Kullanımı
+
+İş akışı geçişleri, `execute_transition` metodu ile gerçekleştirilir:
+
+```python
+# Örnek geçiş kodu
+transition = self.env['ak.workflow.transition'].search([
+    ('from_state_id', '=', tender.workflow_current_state_id.id),
+    ('to_state_id.code', '=', 'target_state_code')
+], limit=1)
+
+if transition:
+    tender.execute_transition(transition.id, "Geçiş açıklaması")
+```
+
+## Kurulum
+
+Bu modül, aşağıdaki bağımlılıklara sahiptir:
+
+- base
+- purchase
+- stock
+- mail
+- contacts
+- product
+- portal
+- ak_workflow
+
+## Geliştirme
+
+### Yeni Durum Ekleme
+
+Yeni bir durum eklemek için, ilgili iş akışı tanımına yeni bir durum eklenmeli ve gerekli geçişler tanımlanmalıdır.
+
+### Yeni Geçiş Ekleme
+
+Yeni bir geçiş eklemek için, ilgili iş akışı tanımına yeni bir geçiş eklenmeli ve gerekli aksiyonlar tanımlanmalıdır.
+
+## İhale Tipleri
+
+Modül, aşağıdaki ihale tiplerini desteklemektedir:
+
+- `direct`: Direkt Satın Alma
+  - ERP kodu zorunluluğu
+  - Tedarik süresi kısıtlaması
+  - Muadil ürün kabul edilmez
+
+- `indirect`: Endirekt Satın Alma
+  - Toplu satın alma optimizasyonu
+  - Muadil ürün teklifleri
+  - Acil talep desteği
+
+- `mice`: MICE İhaleler
+  - Hizmet kategorisi şablonları
+  - Şablon değişiklik kısıtlamaları
+  - Coğrafi tedarikçi filtreleme
+
+- `promotion`: Promosyon ve Kırtasiye
+  - Toplu satın alma optimizasyonu
+  - Acil talep desteği
+  - Ekonomik veri entegrasyonu
+
+## İhale Şablonları
+
+İhale şablonları, benzer ihaleler için tekrar kullanılabilir yapılar oluşturmanıza olanak tanır. Şablonlar, ihale satırlarını, coğrafi filtreleri ve diğer ayarları içerebilir.
+
+### Şablon Özellikleri
+
+- Farklı ihale tipleri için şablon oluşturma
+- Bölümler, notlar ve ürün satırları ekleme
+- Şablon kilitleme mekanizması
+- Coğrafi filtreleme (ülke, il, şehir)
+
+### Şablon Kullanımı
+
+Şablonlar, ihale formunda "Şablon Uygula" butonu ile uygulanabilir. Şablon uygulandığında, şablondaki satırlar ihaleye otomatik olarak eklenir ve coğrafi bilgiler güncellenir.
+
+```python
+# Şablon uygulama örneği
+tender.action_apply_template()
+```
+
+## Coğrafi Filtreleme
+
+Coğrafi filtreleme, ihalelerin belirli bölgelere özgü olmasını sağlar. Bu özellik, özellikle MICE ihaleleri için kullanışlıdır.
+
+- Ülke, il ve şehir bazında filtreleme
+- Şablonlarda coğrafi kısıtlama tanımlama
+- Şablon uygulandığında coğrafi bilgilerin otomatik güncellenmesi
+
+## Toplu Satın Alma Optimizasyonu
+
+Toplu satın alma optimizasyonu, birden fazla satın alma talebini tek bir ihalede birleştirmenizi sağlar. Bu özellik, indirect ve promotion ihaleleri için kullanılabilir.
+
+## Acil Talep Desteği
+
+Acil talep desteği, acil durumlar için hızlı ihale süreçleri oluşturmanızı sağlar. Bu özellik, indirect ve promotion ihaleleri için kullanılabilir.
+
+## Ekonomik Veri Entegrasyonu
+
+Ekonomik veri entegrasyonu, döviz kurları ve enflasyon gibi ekonomik faktörleri ihale değerlendirmesinde dikkate almanızı sağlar. Bu özellik, özellikle promotion ihaleleri için kullanışlıdır.

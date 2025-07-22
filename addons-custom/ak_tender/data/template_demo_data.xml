@@ -1,0 +1,304 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- MICE Tender Template: Konferans Organizasyonu -->
+        <record id="tender_template_conference" model="ak.tender.template">
+            <field name="name">Konferans Organizasyonu</field>
+            <field name="code">MICE-CONF-001</field>
+            <field name="description">Standart konferans organizasyonu için şablon. Konaklama, ulaşım, yemek ve mekan hizmetlerini içerir.</field>
+            <field name="tender_type">mice</field>
+            <field name="is_locked">False</field>
+            <field name="country_ids" eval="[(4, ref('base.tr'))]"/>
+        </record>
+
+        <!-- Conference Template Lines -->
+        <record id="tender_template_line_conf_section1" model="ak.tender.template.line">
+            <field name="template_id" ref="tender_template_conference"/>
+            <field name="sequence">10</field>
+            <field name="display_type">line_section</field>
+            <field name="name">Konaklama Hizmetleri</field>
+        </record>
+
+        <record id="tender_template_line_conf_hotel" model="ak.tender.template.line">
+            <field name="template_id" ref="tender_template_conference"/>
+            <field name="sequence">20</field>
+            <field name="display_type">product</field>
+            <field name="name">Otel Konaklama (Tek Kişilik)</field>
+            <field name="product_qty">50</field>
+            <field name="required">True</field>
+            <field name="allow_alternative">True</field>
+        </record>
+
+        <record id="tender_template_line_conf_section2" model="ak.tender.template.line">
+            <field name="template_id" ref="tender_template_conference"/>
+            <field name="sequence">30</field>
+            <field name="display_type">line_section</field>
+            <field name="name">Ulaşım Hizmetleri</field>
+        </record>
+
+        <record id="tender_template_line_conf_transport" model="ak.tender.template.line">
+            <field name="template_id" ref="tender_template_conference"/>
+            <field name="sequence">40</field>
+            <field name="display_type">product</field>
+            <field name="name">Havaalanı-Otel Transfer</field>
+            <field name="product_qty">10</field>
+            <field name="required">True</field>
+            <field name="allow_alternative">True</field>
+        </record>
+
+        <record id="tender_template_line_conf_section3" model="ak.tender.template.line">
+            <field name="template_id" ref="tender_template_conference"/>
+            <field name="sequence">50</field>
+            <field name="display_type">line_section</field>
+            <field name="name">Yemek Hizmetleri</field>
+        </record>
+
+        <record id="tender_template_line_conf_catering" model="ak.tender.template.line">
+            <field name="template_id" ref="tender_template_conference"/>
+            <field name="sequence">60</field>
+            <field name="display_type">product</field>
+            <field name="name">Konferans Yemek Hizmeti (Kişi Başı)</field>
+            <field name="product_qty">100</field>
+            <field name="required">True</field>
+            <field name="allow_alternative">True</field>
+        </record>
+
+        <record id="tender_template_line_conf_section4" model="ak.tender.template.line">
+            <field name="template_id" ref="tender_template_conference"/>
+            <field name="sequence">70</field>
+            <field name="display_type">line_section</field>
+            <field name="name">Mekan Hizmetleri</field>
+        </record>
+
+        <record id="tender_template_line_conf_venue" model="ak.tender.template.line">
+            <field name="template_id" ref="tender_template_conference"/>
+            <field name="sequence">80</field>
+            <field name="display_type">product</field>
+            <field name="name">Konferans Salonu Kiralama</field>
+            <field name="product_qty">1</field>
+            <field name="required">True</field>
+            <field name="allow_alternative">False</field>
+        </record>
+
+        <record id="tender_template_line_conf_note" model="ak.tender.template.line">
+            <field name="template_id" ref="tender_template_conference"/>
+            <field name="sequence">90</field>
+            <field name="display_type">line_note</field>
+            <field name="name">Not: Tüm hizmetler için fiyat teklifleri KDV hariç olarak verilmelidir. Konferans tarihleri kesinleştiğinde tedarikçilere bildirilecektir.</field>
+        </record>
+
+        <!-- MICE Tender Template: Fuar Organizasyonu -->
+        <record id="tender_template_exhibition" model="ak.tender.template">
+            <field name="name">Fuar Organizasyonu</field>
+            <field name="code">MICE-FAIR-001</field>
+            <field name="description">Standart fuar organizasyonu için şablon. Stand kurulumu, ekipman kiralama ve personel hizmetlerini içerir.</field>
+            <field name="tender_type">mice</field>
+            <field name="is_locked">False</field>
+            <field name="country_ids" eval="[(4, ref('base.tr'))]"/>
+        </record>
+
+        <!-- Exhibition Template Lines -->
+        <record id="tender_template_line_exh_section1" model="ak.tender.template.line">
+            <field name="template_id" ref="tender_template_exhibition"/>
+            <field name="sequence">10</field>
+            <field name="display_type">line_section</field>
+            <field name="name">Stand Kurulum Hizmetleri</field>
+        </record>
+
+        <record id="tender_template_line_exh_stand" model="ak.tender.template.line">
+            <field name="template_id" ref="tender_template_exhibition"/>
+            <field name="sequence">20</field>
+            <field name="display_type">product</field>
+            <field name="name">Stand Kurulumu (m²)</field>
+            <field name="product_qty">50</field>
+            <field name="required">True</field>
+            <field name="allow_alternative">True</field>
+        </record>
+
+        <record id="tender_template_line_exh_section2" model="ak.tender.template.line">
+            <field name="template_id" ref="tender_template_exhibition"/>
+            <field name="sequence">30</field>
+            <field name="display_type">line_section</field>
+            <field name="name">Ekipman Kiralama</field>
+        </record>
+
+        <record id="tender_template_line_exh_equipment" model="ak.tender.template.line">
+            <field name="template_id" ref="tender_template_exhibition"/>
+            <field name="sequence">40</field>
+            <field name="display_type">product</field>
+            <field name="name">Ekran ve Ses Sistemi Kiralama</field>
+            <field name="product_qty">1</field>
+            <field name="required">True</field>
+            <field name="allow_alternative">True</field>
+        </record>
+
+        <record id="tender_template_line_exh_section3" model="ak.tender.template.line">
+            <field name="template_id" ref="tender_template_exhibition"/>
+            <field name="sequence">50</field>
+            <field name="display_type">line_section</field>
+            <field name="name">Personel Hizmetleri</field>
+        </record>
+
+        <record id="tender_template_line_exh_staff" model="ak.tender.template.line">
+            <field name="template_id" ref="tender_template_exhibition"/>
+            <field name="sequence">60</field>
+            <field name="display_type">product</field>
+            <field name="name">Fuar Personeli (Kişi/Gün)</field>
+            <field name="product_qty">10</field>
+            <field name="required">True</field>
+            <field name="allow_alternative">False</field>
+        </record>
+
+        <!-- Direct Tender Template: IT Ekipman Alımı -->
+        <record id="tender_template_it_equipment" model="ak.tender.template">
+            <field name="name">IT Ekipman Alımı</field>
+            <field name="code">DIRECT-IT-001</field>
+            <field name="description">Standart IT ekipman alımı için şablon. Bilgisayar, monitör ve yazıcı alımlarını içerir.</field>
+            <field name="tender_type">direct</field>
+            <field name="is_locked">False</field>
+        </record>
+
+        <!-- IT Equipment Template Lines -->
+        <record id="tender_template_line_it_section1" model="ak.tender.template.line">
+            <field name="template_id" ref="tender_template_it_equipment"/>
+            <field name="sequence">10</field>
+            <field name="display_type">line_section</field>
+            <field name="name">Bilgisayar Ekipmanları</field>
+        </record>
+
+        <record id="tender_template_line_it_laptop" model="ak.tender.template.line">
+            <field name="template_id" ref="tender_template_it_equipment"/>
+            <field name="sequence">20</field>
+            <field name="display_type">product</field>
+            <field name="name">Dizüstü Bilgisayar</field>
+            <field name="product_qty">10</field>
+            <field name="required">True</field>
+            <field name="allow_alternative">False</field>
+        </record>
+
+        <record id="tender_template_line_it_monitor" model="ak.tender.template.line">
+            <field name="template_id" ref="tender_template_it_equipment"/>
+            <field name="sequence">30</field>
+            <field name="display_type">product</field>
+            <field name="name">Monitör</field>
+            <field name="product_qty">10</field>
+            <field name="required">True</field>
+            <field name="allow_alternative">False</field>
+        </record>
+
+        <record id="tender_template_line_it_printer" model="ak.tender.template.line">
+            <field name="template_id" ref="tender_template_it_equipment"/>
+            <field name="sequence">40</field>
+            <field name="display_type">product</field>
+            <field name="name">Yazıcı</field>
+            <field name="product_qty">5</field>
+            <field name="required">True</field>
+            <field name="allow_alternative">False</field>
+        </record>
+
+        <!-- Indirect Tender Template: Ofis Malzemeleri -->
+        <record id="tender_template_office_supplies" model="ak.tender.template">
+            <field name="name">Ofis Malzemeleri</field>
+            <field name="code">INDIRECT-OFF-001</field>
+            <field name="description">Standart ofis malzemeleri alımı için şablon. Kağıt, kalem, dosya vb. malzemeleri içerir.</field>
+            <field name="tender_type">indirect</field>
+            <field name="is_locked">False</field>
+        </record>
+
+        <!-- Office Supplies Template Lines -->
+        <record id="tender_template_line_off_section1" model="ak.tender.template.line">
+            <field name="template_id" ref="tender_template_office_supplies"/>
+            <field name="sequence">10</field>
+            <field name="display_type">line_section</field>
+            <field name="name">Kağıt Ürünleri</field>
+        </record>
+
+        <record id="tender_template_line_off_paper" model="ak.tender.template.line">
+            <field name="template_id" ref="tender_template_office_supplies"/>
+            <field name="sequence">20</field>
+            <field name="display_type">product</field>
+            <field name="name">A4 Kağıt (Paket)</field>
+            <field name="product_qty">100</field>
+            <field name="required">True</field>
+            <field name="allow_alternative">True</field>
+        </record>
+
+        <record id="tender_template_line_off_section2" model="ak.tender.template.line">
+            <field name="template_id" ref="tender_template_office_supplies"/>
+            <field name="sequence">30</field>
+            <field name="display_type">line_section</field>
+            <field name="name">Yazı Gereçleri</field>
+        </record>
+
+        <record id="tender_template_line_off_pen" model="ak.tender.template.line">
+            <field name="template_id" ref="tender_template_office_supplies"/>
+            <field name="sequence">40</field>
+            <field name="display_type">product</field>
+            <field name="name">Tükenmez Kalem (Kutu)</field>
+            <field name="product_qty">50</field>
+            <field name="required">True</field>
+            <field name="allow_alternative">True</field>
+        </record>
+
+        <!-- Promotion Tender Template: Promosyon Ürünleri -->
+        <record id="tender_template_promotional_items" model="ak.tender.template">
+            <field name="name">Promosyon Ürünleri</field>
+            <field name="code">PROMO-001</field>
+            <field name="description">Standart promosyon ürünleri alımı için şablon. Ajanda, kalem, çanta vb. ürünleri içerir.</field>
+            <field name="tender_type">promotion</field>
+            <field name="is_locked">False</field>
+        </record>
+
+        <!-- Promotional Items Template Lines -->
+        <record id="tender_template_line_promo_section1" model="ak.tender.template.line">
+            <field name="template_id" ref="tender_template_promotional_items"/>
+            <field name="sequence">10</field>
+            <field name="display_type">line_section</field>
+            <field name="name">Yazı Gereçleri</field>
+        </record>
+
+        <record id="tender_template_line_promo_pen" model="ak.tender.template.line">
+            <field name="template_id" ref="tender_template_promotional_items"/>
+            <field name="sequence">20</field>
+            <field name="display_type">product</field>
+            <field name="name">Logolu Kalem</field>
+            <field name="product_qty">1000</field>
+            <field name="required">True</field>
+            <field name="allow_alternative">True</field>
+        </record>
+
+        <record id="tender_template_line_promo_section2" model="ak.tender.template.line">
+            <field name="template_id" ref="tender_template_promotional_items"/>
+            <field name="sequence">30</field>
+            <field name="display_type">line_section</field>
+            <field name="name">Kağıt Ürünleri</field>
+        </record>
+
+        <record id="tender_template_line_promo_notebook" model="ak.tender.template.line">
+            <field name="template_id" ref="tender_template_promotional_items"/>
+            <field name="sequence">40</field>
+            <field name="display_type">product</field>
+            <field name="name">Logolu Ajanda</field>
+            <field name="product_qty">500</field>
+            <field name="required">True</field>
+            <field name="allow_alternative">True</field>
+        </record>
+
+        <record id="tender_template_line_promo_section3" model="ak.tender.template.line">
+            <field name="template_id" ref="tender_template_promotional_items"/>
+            <field name="sequence">50</field>
+            <field name="display_type">line_section</field>
+            <field name="name">Diğer Ürünler</field>
+        </record>
+
+        <record id="tender_template_line_promo_bag" model="ak.tender.template.line">
+            <field name="template_id" ref="tender_template_promotional_items"/>
+            <field name="sequence">60</field>
+            <field name="display_type">product</field>
+            <field name="name">Logolu Bez Çanta</field>
+            <field name="product_qty">300</field>
+            <field name="required">True</field>
+            <field name="allow_alternative">True</field>
+        </record>
+    </data>
+</odoo>

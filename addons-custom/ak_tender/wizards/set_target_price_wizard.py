@@ -33,18 +33,28 @@ class SetTargetPriceWizard(models.TransientModel):
         self.ensure_one()
         tender = self.tender_id
         
-        if tender.state != 'first_tender_round':
+        if not tender.workflow_current_state_id or tender.workflow_current_state_id.code != 'first_tender_round':
             raise UserError(_("Hedef fiyat sadece '1. Teklif Toplama' aşamasında belirlenebilir."))
-        if not tender.tender_results:
-            raise UserError(_("Hedef fiyat belirlemek için en az bir teklif sonucu girilmelidir."))
+        if not tender.purchase_order_ids:
+            raise UserError(_("Hedef fiyat belirlemek için en az bir teklif girilmelidir."))
         if not self.target_price or self.target_price <= 0:
             raise UserError(_("Lütfen geçerli bir hedef fiyat girin."))
         
-        # Hedef fiyatı güncelle ve durumu değiştir
+        # Hedef fiyatı güncelle
         tender.write({
             'target_price': self.target_price,
-            'state': 'target_price_set'
         })
+        
+        # Workflow geçişini bul ve uygula
+        target_price_transition = self.env['ak.workflow.transition'].search([
+            ('from_state_id', '=', tender.workflow_current_state_id.id),
+            ('to_state_id.code', '=', 'target_price_set')
+        ], limit=1)
+        
+        if target_price_transition:
+            tender.execute_transition(target_price_transition.id, _("Hedef fiyat belirlendi: %s") % self.target_price)
+        else:
+            raise UserError(_("Hedef fiyat belirleme geçişi bulunamadı. Lütfen iş akışı tanımını kontrol edin."))
         
         return {
             'type': 'ir.actions.client',

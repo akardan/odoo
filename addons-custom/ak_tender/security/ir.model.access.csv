@@ -4,3 +4,9 @@ access_ak_tender_manager,ak.tender.manager,model_ak_tender,base.group_system,1,1
 access_ak_tender_line_user,ak.tender.line.user,model_ak_tender_line,base.group_user,1,1,1,0
 access_ak_tender_line_manager,ak.tender.line.manager,model_ak_tender_line,base.group_system,1,1,1,1
 access_ak_tender_set_target_price_wizard,ak.tender.set.target.price.wizard,model_ak_tender_set_target_price_wizard,base.group_user,1,1,1,1
+access_ak_tender_bulk_purchase_wizard,ak.tender.bulk.purchase.wizard,model_ak_tender_bulk_purchase_wizard,base.group_user,1,1,1,1
+access_ak_tender_add_supplier_wizard,ak.tender.add.supplier.wizard,model_ak_tender_add_supplier_wizard,base.group_user,1,1,1,1
+access_ak_tender_template_user,ak.tender.template.user,model_ak_tender_template,base.group_user,1,0,0,0
+access_ak_tender_template_manager,ak.tender.template.manager,model_ak_tender_template,base.group_system,1,1,1,1
+access_ak_tender_template_line_user,ak.tender.template.line.user,model_ak_tender_template_line,base.group_user,1,0,0,0
+access_ak_tender_template_line_manager,ak.tender.template.line.manager,model_ak_tender_template_line,base.group_system,1,1,1,1

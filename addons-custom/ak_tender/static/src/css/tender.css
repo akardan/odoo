@@ -1,13 +1,108 @@
-.o_form_view .o_form_sheet_bg > .o_form_sheet {
-    display: flex;
-    flex-direction: column;
+/* Custom CSS for ak_tender module */
+
+/* Tender Type Colors */
+.o_tender_type_direct {
+    color: #007bff !important; /* Primary blue */
+    border-color: #007bff !important;
 }
 
-.o_form_view .o_form_sheet_bg > .o_form_sheet > .o_form_statusbar {
-    flex: 0 0 auto;
+.o_tender_type_indirect {
+    color: #28a745 !important; /* Success green */
+    border-color: #28a745 !important;
 }
 
-.o_form_view .o_form_sheet_bg > .o_form_sheet > .o_notebook {
-    flex: 1 1 auto;
-    min-height: 0;
+.o_tender_type_mice {
+    color: #6f42c1 !important; /* Purple */
+    border-color: #6f42c1 !important;
+}
+
+.o_tender_type_promotion {
+    color: #ffc107 !important; /* Warning yellow */
+    border-color: #ffc107 !important;
+}
+
+/* Background colors with opacity */
+.o_tender_type_direct_bg {
+    background-color: rgba(0, 123, 255, 0.1) !important;
+}
+
+.o_tender_type_indirect_bg {
+    background-color: rgba(40, 167, 69, 0.1) !important;
+}
+
+.o_tender_type_mice_bg {
+    background-color: rgba(111, 66, 193, 0.1) !important;
+}
+
+.o_tender_type_promotion_bg {
+    background-color: rgba(255, 193, 7, 0.1) !important;
+}
+
+/* Kanban card styling based on tender type */
+.o_kanban_record.o_tender_type_direct {
+    border-left: 5px solid #007bff !important;
+}
+
+.o_kanban_record.o_tender_type_indirect {
+    border-left: 5px solid #28a745 !important;
+}
+
+.o_kanban_record.o_tender_type_mice {
+    border-left: 5px solid #6f42c1 !important;
+}
+
+.o_kanban_record.o_tender_type_promotion {
+    border-left: 5px solid #ffc107 !important;
+}
+
+/* Icons for tender types */
+.o_tender_type_icon {
+    margin-right: 5px;
+}
+
+/* Form header styling */
+.o_tender_header {
+    height: 8px;
+    width: 100%;
+    margin-bottom: 15px;
+    border-radius: 2px;
+}
+
+.o_tender_header.o_tender_type_direct {
+    background-color: #007bff;
+}
+
+.o_tender_header.o_tender_type_indirect {
+    background-color: #28a745;
+}
+
+.o_tender_header.o_tender_type_mice {
+    background-color: #6f42c1;
+}
+
+.o_tender_header.o_tender_type_promotion {
+    background-color: #ffc107;
+}
+
+/* Hover effects for kanban cards */
+.o_kanban_record:hover .o_tender_type_direct_bg {
+    background-color: rgba(0, 123, 255, 0.2) !important;
+}
+
+.o_kanban_record:hover .o_tender_type_indirect_bg {
+    background-color: rgba(40, 167, 69, 0.2) !important;
+}
+
+.o_kanban_record:hover .o_tender_type_mice_bg {
+    background-color: rgba(111, 66, 193, 0.2) !important;
+}
+
+.o_kanban_record:hover .o_tender_type_promotion_bg {
+    background-color: rgba(255, 193, 7, 0.2) !important;
+}
+
+/* Tender kanban card minimum height */
+.o_tender_kanban .o_kanban_record {
+    min-height: 180px;
+    transition: all 0.3s ease;
 }
