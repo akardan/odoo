@@ -135,12 +135,50 @@ class AkWorkflowMixin(models.AbstractModel):
         return True
 
     def _perform_transition(self, transition, comment=None):
-        old_state = self.workflow_current_state_id
-        self.workflow_current_state_id = transition.to_state_id
-        self._log_transition(transition, old_state, 'completed', comment)
+        self.ensure_one()
+        if not transition:
+            raise UserError(_("Cannot perform transition: No transition provided"))
         
-        for action in transition.action_ids:
-            action.execute_action(self)
+        if not transition.to_state_id:
+            raise UserError(_("Cannot perform transition: Destination state is not defined"))
+        
+        old_state = self.workflow_current_state_id
+        if not old_state:
+            raise UserError(_("Cannot perform transition: Record has no current state"))
+        
+        # Log the transition start
+        _logger.info(f"Starting transition '{transition.name}' for {self._name} (ID: {self.id})")
+        _logger.info(f"From state: {old_state.name} ({old_state.code}) to {transition.to_state_id.name} ({transition.to_state_id.code})")
+        
+        try:
+            # Execute exit actions for the old state
+            self._execute_state_actions('exit', state=old_state)
+            
+            # Update the state
+            self.workflow_current_state_id = transition.to_state_id
+            
+            # Log the transition
+            self._log_transition(transition, old_state, 'completed', comment)
+            
+            # Execute entry actions for the new state
+            self._execute_state_actions('entry')
+            
+            # Execute transition actions
+            for action in transition.action_ids:
+                try:
+                    action.execute_action(self)
+                except Exception as e:
+                    _logger.error(f"Error executing action {action.name} during transition: {str(e)}")
+                    # Continue with other actions even if one fails
+            
+            _logger.info(f"Transition '{transition.name}' completed successfully")
+            
+        except Exception as e:
+            _logger.error(f"Error during transition '{transition.name}': {str(e)}")
+            # Log the failed transition
+            self._log_transition(transition, old_state, 'failed', f"Error: {str(e)}")
+            # Re-raise the exception
+            raise UserError(_("Error during workflow transition: %s") % str(e))
 
     def _execute_state_actions(self, trigger_event, state=None):
         state_to_process = state or self.workflow_current_state_id
@@ -152,18 +190,35 @@ class AkWorkflowMixin(models.AbstractModel):
             action.execute_action(self)
 
     def _log_transition(self, transition, old_state, status, comment=None):
-        self.env['ak.workflow.transition.history'].sudo().create({
+        # Create transition history record
+        history = self.env['ak.workflow.transition.history'].sudo().create({
             'res_model': self._name,
             'res_id': self.id,
             'from_state_id': old_state.id,
             'to_state_id': transition.to_state_id.id,
             'transition_id': transition.id,
+            'status': status,  # Add status field to track success/failure
             'comment': comment,
         })
+        
+        # Post message in chatter
+        message = ""
+        if status == 'completed':
+            message = _("Workflow transition: %s → %s") % (old_state.name, transition.to_state_id.name)
+        elif status == 'failed':
+            message = _("Failed workflow transition: %s → %s") % (old_state.name, transition.to_state_id.name)
+        
         if comment:
-            self.message_post(body=comment, subtype_xmlid='mail.mt_comment')
+            message += "<br/>" + comment
+            
+        if message:
+            self.message_post(body=message, subtype_xmlid='mail.mt_note')
+            
+        return history
 
     def get_available_transitions(self):
+        if not self:
+            return []
         self.ensure_one()
         self._compute_available_transitions()
         transitions = []

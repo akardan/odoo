@@ -12,4 +12,9 @@ class AkWorkflowTransitionHistory(models.Model):
     to_state_id = fields.Many2one('ak.workflow.state', string='To State', required=True)
     transition_id = fields.Many2one('ak.workflow.transition', string='Transition', required=True)
     user_id = fields.Many2one('res.users', string='User', default=lambda self: self.env.user)
+    status = fields.Selection([
+        ('completed', 'Completed'),
+        ('failed', 'Failed'),
+    ], string='Status', default='completed', required=True, store=False,
+       help="Status of the transition execution")
     comment = fields.Text(string='Comment')

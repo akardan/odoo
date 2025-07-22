@@ -12,53 +12,64 @@ class AkWorkflowState(models.Model):
     _rec_name = 'name'
 
     # Basic Info
-    name = fields.Char('State Name', required=True, translate=True)
-    code = fields.Char('State Code', required=True, 
-                       help="Technical identifier unique within workflow")
-    description = fields.Text('Description', translate=True)
+    name = fields.Char(_('State Name'), required=True, translate=True)
+    code = fields.Char(_('State Code'), required=True,
+                       help=_("Technical identifier unique within workflow"))
+    technical_name = fields.Char(_('Technical Name'), compute='_compute_technical_name', store=False,
+                                help=_("Alias for code field, provided for backward compatibility"))
+    description = fields.Text(_('Description'), translate=True)
     display_name = fields.Char(compute='_compute_display_name')
     
+    @api.depends('code')
+    def _compute_technical_name(self):
+        for state in self:
+            state.technical_name = state.code
+    
     # Workflow Relation
-    workflow_id = fields.Many2one('ak.workflow.definition', 'Workflow',
+    workflow_id = fields.Many2one('ak.workflow.definition', _('Workflow'),
                                   required=True, ondelete='cascade')
     
     # State Properties
-    sequence = fields.Integer('Sequence', default=10)
-    is_initial = fields.Boolean('Initial State',
-                                help="Workflow starts from this state")
-    is_final = fields.Boolean('Final State',
-                              help="Workflow ends at this state")
+    sequence = fields.Integer(_('Sequence'), default=10)
+    is_initial = fields.Boolean(_('Initial State'),
+                                help=_("Workflow starts from this state"))
+    is_final = fields.Boolean(_('Final State'),
+                              help=_("Workflow ends at this state"))
     
     # Behavior Configuration
-    allow_edit = fields.Boolean('Allow Edit', default=True,
-                                help="Records can be edited in this state")
+    allow_edit = fields.Boolean(_('Allow Edit'), default=True,
+                                help=_("Records can be edited in this state"))
     
     # UI Configuration
-    color = fields.Integer('Color Index', default=0,
-                           help="Color for kanban/calendar views (0-11)")
-    icon = fields.Char('Icon', help="FontAwesome icon class",
+    color = fields.Integer(_('Color Index'), default=0,
+                           help=_("Color for kanban/calendar views (0-11)"))
+    icon = fields.Char(_('Icon'), help=_("FontAwesome icon class"),
                        default="fa-circle-o")
+    
+    # Time Configuration
+    default_duration_days = fields.Integer(_('Default Duration (Days)'), default=0, store=False,
+                                         help=_("Default duration for this state in days"))
     
     # Security and Permissions
     edit_group_ids = fields.Many2many('res.groups', 'state_edit_groups_rel',
-                                      string='Edit Groups',
-                                      help="Groups that can edit records in this state")
+                                      string=_('Edit Groups'),
+                                      help=_("Groups that can edit records in this state"))
     
     
     # Transitions
     outgoing_transition_ids = fields.One2many('ak.workflow.transition',
                                               'from_state_id',
-                                              string='Outgoing Transitions')
+                                              string=_('Outgoing Transitions'))
     incoming_transition_ids = fields.One2many('ak.workflow.transition',
                                               'to_state_id',
-                                              string='Incoming Transitions')
+                                              string=_('Incoming Transitions'))
     
     # Actions
     entry_action_ids = fields.One2many('ak.workflow.action', 'trigger_state_id',
-                                       string='Entry Actions',
+                                       string=_('Entry Actions'),
                                        domain=[('trigger_event', '=', 'state_entry')])
     exit_action_ids = fields.One2many('ak.workflow.action', 'trigger_state_id',
-                                      string='Exit Actions',
+                                      string=_('Exit Actions'),
                                       domain=[('trigger_event', '=', 'state_exit')])
     
     def _compute_display_name(self):
