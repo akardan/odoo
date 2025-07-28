@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Dashboard Configuration Form View -->
+    <record id="view_superset_dashboard_form" model="ir.ui.view">
+        <field name="name">superset.dashboard.form</field>
+        <field name="model">superset.dashboard</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="get_embedded_url" string="Test Connection" 
+                            type="object" class="btn-primary"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="dashboard_id"/>
+                            <field name="superset_url"/>
+                            <field name="active"/>
+                        </group>
+                        <group>
+                            <field name="jwt_secret" password="True"/>
+                            <field name="allowed_groups" widget="many2many_tags"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Dashboard List View -->
+    <record id="view_superset_dashboard_tree" model="ir.ui.view">
+        <field name="name">superset.dashboard.tree</field>
+        <field name="model">superset.dashboard</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name"/>
+                <field name="dashboard_id"/>
+                <field name="superset_url"/>
+                <field name="active"/>
+                <button name="get_embedded_url" string="View Dashboard" 
+                        type="object" class="btn-primary"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Dashboard Action -->
+    <record id="action_superset_dashboard" model="ir.actions.act_window">
+        <field name="name">Superset Dashboards</field>
+        <field name="res_model">superset.dashboard</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <!-- Dashboard Display Template -->
+    <template id="dashboard_view" name="Superset Dashboard View">
+        <t t-call="web.layout">
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-12">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h2 t-esc="dashboard.name"/>
+                            <button class="btn btn-secondary" onclick="refreshDashboard()">
+                                <i class="fa fa-refresh"/> Refresh
+                            </button>
+                        </div>
+                        
+                        <div id="dashboard-container" style="height: calc(100vh - 150px);">
+                            <iframe 
+                                id="superset-iframe"
+                                t-att-src="embedded_url"
+                                width="100%" 
+                                height="100%"
+                                frameborder="0"
+                                style="border: 1px solid #ddd; border-radius: 4px;">
+                            </iframe>
+                        </div>
+                        
+                        <div id="loading-overlay" class="text-center" style="display: none;">
+                            <div class="spinner-border" role="status">
+                                <span class="sr-only">Loading...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <script>
+                function refreshDashboard() {
+                    const iframe = document.getElementById('superset-iframe');
+                    const overlay = document.getElementById('loading-overlay');
+                    
+                    overlay.style.display = 'block';
+                    iframe.style.display = 'none';
+                    
+                    // JWT token'ı yenile
+                    fetch('/superset/api/refresh_token', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            params: {
+                                dashboard_id: <t t-esc="dashboard.id"/>
+                            }
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.result && data.result.embedded_url) {
+                            iframe.src = data.result.embedded_url;
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error refreshing token:', error);
+                        alert('Dashboard yenilenemedi. Lütfen tekrar deneyin.');
+                    })
+                    .finally(() => {
+                        setTimeout(() => {
+                            overlay.style.display = 'none';
+                            iframe.style.display = 'block';
+                        }, 1000);
+                    });
+                }
+                
+                // Token süresi dolmadan önce otomatik yenileme (50 dakikada bir)
+                setInterval(refreshDashboard, 50 * 60 * 1000);
+                
+                // Iframe yüklendiğinde loading'i gizle
+                document.getElementById('superset-iframe').onload = function() {
+                    document.getElementById('loading-overlay').style.display = 'none';
+                };
+            </script>
+        </t>
+    </template>
+</odoo>
