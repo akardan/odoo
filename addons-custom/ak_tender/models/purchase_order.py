@@ -19,17 +19,11 @@ class PurchaseOrder(models.Model):
     # result_lines are now order_line
     # total_price is amount_total in purchase.order
 
-    delivery_date = fields.Date(string='Teslim Tarihi', help="Tedarikçinin taahhüt ettiği teslim tarihi.")
     # payment_terms_id is already in purchase.order
     guarantee_period = fields.Char(string='Garanti Süresi', help="Tedarikçinin sunduğu garanti süresi (örn: 2 Yıl).")
     # notes is notes in purchase.order
     
-    # status is state in purchase.order. We might need to map these.
-    tender_offer_status = fields.Selection([
-        ('received', 'Alındı'),
-        ('rejected', 'Reddedildi'),
-        ('selected', 'Seçildi'),
-    ], string='Teklif Durumu', default='received', tracking=True)
+    # status is state in purchase.order
 
     # purchase_order_id is self.id now.
     
@@ -48,6 +42,7 @@ class PurchaseOrder(models.Model):
             state_code = record.tender_id.workflow_current_state_id.code if record.tender_id.workflow_current_state_id else None
             if state_code == 'second_tender_round' and record.tender_round == 1:
                 record.is_readonly = True
+    
     
     @api.constrains('tender_id', 'order_line', 'order_line.alternative_product')
     def _check_alternative_products(self):
@@ -87,6 +82,7 @@ class PurchaseOrder(models.Model):
     # The original logic was creating 'ak.tender.result.line' for each 'ak.tender.line'.
     # Now we need to create 'purchase.order.line' for each 'ak.tender.line'.
     def create_lines_from_tender(self):
+        """Create purchase order lines from tender lines"""
         self.ensure_one()
         if not self.tender_id or not self.tender_id.tender_lines:
             return
@@ -96,45 +92,66 @@ class PurchaseOrder(models.Model):
         
         lines_to_create = []
         for tender_line in self.tender_id.tender_lines:
-            lines_to_create.append((0, 0, {
-                'product_id': tender_line.product_id.id,
-                'name': tender_line.name,
-                'product_qty': tender_line.quantity,
-                'product_uom': tender_line.uom_id.id,
-                'price_unit': 0, # Price will be filled by the supplier
-                'date_planned': self.date_planned or fields.Date.today(),
-                # Link back to the tender line
-                'tender_line_id': tender_line.id,
-            }))
+            # Skip lines without product for product type lines
+            if tender_line.display_type == 'product' and not tender_line.product_id:
+                continue
+                
+            # Create line based on type
+            if tender_line.display_type == 'line_section':
+                # Section line
+                line_vals = {
+                    'display_type': 'line_section',
+                    'name': tender_line.name or '',
+                    'tender_line_id': tender_line.id,
+                }
+            elif tender_line.display_type == 'line_note':
+                # Note line
+                line_vals = {
+                    'display_type': 'line_note',
+                    'name': tender_line.name or '',
+                    'tender_line_id': tender_line.id,
+                }
+            else:
+                # Product line
+                line_vals = {
+                    'product_id': tender_line.product_id.id,
+                    'name': tender_line.name or tender_line.product_id.name or '',
+                    'product_qty': tender_line.quantity or 1.0,
+                    'product_uom': tender_line.uom_id.id or tender_line.product_id.uom_id.id,
+                    'price_unit': 0,  # Price will be filled by the supplier
+                    'date_planned': tender_line.required_delivery_date or self.tender_id.required_delivery_date or fields.Date.today(),
+                    'tender_line_id': tender_line.id,
+                }
+            
+            lines_to_create.append((0, 0, line_vals))
         
-        self.order_line = lines_to_create
+        # Create all lines at once
+        if lines_to_create:
+            self.order_line = lines_to_create
 
     @api.model
     def create(self, vals):
-        # If a tender_id is provided, we might want to auto-create lines
+        # Create the order first
         order = super(PurchaseOrder, self).create(vals)
+        
+        # If a tender_id is provided, auto-create lines
         if order.tender_id:
             order.create_lines_from_tender()
+        
         return order
     
     def calculate_total_npv(self):
         """
         Calculate the total NPV value for the order based on the NPV values of its lines.
-        This method should be called after all lines have calculated their individual NPV values.
         """
         for order in self:
-            # First ensure all lines have calculated their NPV values
+            # Calculate NPV for each line
             for line in order.order_line:
-                line.calculate_npv()
+                if hasattr(line, 'calculate_npv'):
+                    line.calculate_npv()
             
             # Sum up the NPV values of all lines
-            order.total_npv = sum(line.npv_value for line in order.order_line)
-            
-            # Log the calculation
-            order.message_post(
-                body=_("Toplam NPV hesaplandı: %s") % order.total_npv,
-                subtype_xmlid='mail.mt_note'
-            )
+            order.total_npv = sum(line.npv_value for line in order.order_line if hasattr(line, 'npv_value'))
         
         return True
     

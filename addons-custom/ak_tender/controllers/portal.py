@@ -154,7 +154,6 @@ class TenderPortal(CustomerPortal): # Inherit from CustomerPortal for standard l
             'partner_id': partner.commercial_partner_id.id,
             'date_order': fields.Datetime.now(),
             'currency_id': tender.currency_id.id,
-            'delivery_date': post.get('delivery_date') or None,
             'payment_term_id': int(post.get('payment_terms')) if post.get('payment_terms') else None,
             'notes': post.get('notes') or None,
             'tender_round': 1, # Default to 1, can be adjusted based on tender state
@@ -174,7 +173,7 @@ class TenderPortal(CustomerPortal): # Inherit from CustomerPortal for standard l
                         'product_qty': tender_line.quantity,
                         'product_uom': tender_line.uom_id.id,
                         'price_unit': price_unit,
-                        'date_planned': fields.Date.today(),
+                        'date_planned': post.get('delivery_date') and fields.Date.from_string(post.get('delivery_date')) or tender_line.required_delivery_date or tender.required_delivery_date or fields.Date.today(),
                     }))
                 except ValueError:
                     pass

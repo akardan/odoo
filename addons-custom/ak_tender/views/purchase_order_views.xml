@@ -10,18 +10,17 @@
             <field name="arch" type="xml">
                 <xpath expr="//field[@name='partner_ref']" position="after">
                     <field name="tender_id" readonly="1" force_save="1"/>
-                    <field name="tender_round" invisible="[('tender_id', '=', False)]"/>
-                    <field name="tender_offer_status" invisible="[('tender_id', '=', False)]"/>
+                    <field name="tender_round" invisible="tender_id == False"/>
                 </xpath>
                 <xpath expr="//field[@name='order_line']//field[@name='product_id']" position="after">
                     <field name="tender_line_id" readonly="1" optional="show"/>
                 </xpath>
-                 <xpath expr="//notebook" position="inside">
-                    <page string="İhale Bilgileri" name="tender_info" invisible="[('tender_id', '=', False)]">
+                
+                <xpath expr="//notebook" position="inside">
+                    <page string="İhale Bilgileri" name="tender_info" invisible="tender_id == False">
                         <group>
                             <group>
                                 <field name="guarantee_period"/>
-                                <field name="delivery_date"/>
                             </group>
                         </group>
                     </page>
@@ -38,7 +37,6 @@
                 <xpath expr="//field[@name='amount_total']" position="after">
                     <field name="tender_id" optional="show"/>
                     <field name="tender_round" optional="show"/>
-                    <field name="tender_offer_status" optional="show"/>
                 </xpath>
             </field>
         </record>

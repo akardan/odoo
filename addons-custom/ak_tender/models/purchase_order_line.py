@@ -8,7 +8,7 @@ class PurchaseOrderLine(models.Model):
     # Fields from ak.tender.result.line
     # 'result_id' is now 'order_id' which is already on the model.
     
-    tender_line_id = fields.Many2one('ak.tender.line', string='İhale Kalemi', ondelete='restrict')
+    tender_line_id = fields.Many2one('ak.tender.line', string='İhale Kalemi', ondelete='set null')
     
     # Multi-currency support
     currency_id = fields.Many2one('res.currency', string='Para Birimi',
@@ -34,10 +34,11 @@ class PurchaseOrderLine(models.Model):
     # We can ensure that the description and UoM are linked to the tender line if it exists.
     @api.onchange('tender_line_id')
     def _onchange_tender_line_id(self):
+        """Update line fields based on tender line"""
         if self.tender_line_id:
-            self.name = self.tender_line_id.name
-            self.product_uom = self.tender_line_id.uom_id.id
-            self.product_qty = self.tender_line_id.quantity
+            self.name = self.tender_line_id.name or ''
+            self.product_uom = self.tender_line_id.uom_id.id if self.tender_line_id.uom_id else (self.product_id.uom_id.id if self.product_id else False)
+            self.product_qty = self.tender_line_id.quantity or 1.0
 
     # price_unit is a standard field.
     # price_subtotal is a standard field.
@@ -51,39 +52,29 @@ class PurchaseOrderLine(models.Model):
         Calculate Net Present Value (NPV) based on the line amount, discount rate, and payment term.
         
         NPV = Amount / (1 + (discount_rate/100)/365)^payment_term_days
-        
-        This method calculates the present value of a future payment based on the payment term
-        from the purchase order and the annual discount rate.
         """
-        self.ensure_one()
+        for line in self:
+            # Get the line amount
+            amount = line.price_subtotal or 0.0
+            
+            # Get payment term days
+            payment_term_days = 0
+            if line.order_id and line.order_id.payment_term_id and line.order_id.payment_term_id.line_ids:
+                for term_line in line.order_id.payment_term_id.line_ids:
+                    if term_line.value == 'balance':
+                        payment_term_days = term_line.days
+                        break
+            
+            # If no amount to calculate or no payment term, set NPV to zero
+            if not amount or not payment_term_days or not line.discount_rate:
+                line.npv_value = 0.0
+                continue
+            
+            # Calculate NPV
+            daily_rate = (line.discount_rate / 100) / 365
+            line.npv_value = amount / ((1 + daily_rate) ** payment_term_days)
         
-        # Get the line amount
-        amount = self.price_subtotal
-        
-        # Get payment term days from the purchase order's payment term
-        payment_term_days = 0
-        if self.order_id.payment_term_id:
-            # Get the first line of the payment term (simplified approach)
-            for line in self.order_id.payment_term_id.line_ids:
-                if line.value == 'balance':
-                    payment_term_days = line.days
-                    break
-        
-        # If no amount to calculate or no payment term, set NPV to zero
-        if not amount or not payment_term_days or not self.discount_rate:
-            self.npv_value = 0.0
-            return
-        
-        # Calculate daily discount rate
-        daily_rate = (self.discount_rate / 100) / 365
-        
-        # Calculate NPV
-        npv = amount / ((1 + daily_rate) ** payment_term_days)
-        
-        # Update the NPV value
-        self.npv_value = npv
-        
-        return npv
+        return True
     
     @api.model
     def create(self, vals):
@@ -102,15 +93,16 @@ class PurchaseOrderLine(models.Model):
                 vals['name'] = _('Product Description')
                 
         line = super(PurchaseOrderLine, self).create(vals)
+        
         # Calculate NPV when creating a line
-        if line.price_subtotal and line.order_id.payment_term_id and line.discount_rate:
+        if line.price_subtotal and line.order_id and line.order_id.payment_term_id and line.discount_rate:
             line.calculate_npv()
+        
         return line
     
     def write(self, vals):
         result = super(PurchaseOrderLine, self).write(vals)
         # Recalculate NPV when updating relevant fields
         if any(field in vals for field in ['price_unit', 'product_qty', 'discount_rate']):
-            for line in self:
-                line.calculate_npv()
+            self.calculate_npv()
         return result

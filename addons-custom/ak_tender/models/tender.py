@@ -27,7 +27,8 @@ class AkTenderLine(models.Model):
     quantity = fields.Float(string=_('Miktar'), default=1.0)
     uom_id = fields.Many2one('uom.uom', string=_('Birim'))
     required_delivery_date = fields.Date(string=_('Gerekli Teslim Tarihi'),
-                                          help=_("İstenen teslimat tarihi."))
+                                           help=_("İstenen teslimat tarihi."),
+                                           default=lambda self: self.tender_id.required_delivery_date)
     lead_time_days = fields.Integer(string=_('Tedarik Süresi (Gün)'),
                                    help=_("Sipariş verilmesinden teslimata kadar geçen süre."))
     
@@ -130,6 +131,8 @@ class AkTender(models.Model):
 
     start_date = fields.Datetime(string=_('Başlangıç Tarihi'), default=fields.Datetime.now(), required=True)
     end_date = fields.Datetime(string=_('Bitiş Tarihi'), required=True)
+    required_delivery_date = fields.Date(string=_('Gerekli Teslim Tarihi'),
+                              help=_("Satın alma siparişlerinde kullanılacak gerekli teslim tarihi."))
     description = fields.Html(string=_('İhale Açıklaması'),
                               help=_("İhale ile ilgili detaylı bilgiler ve şartnameler."))
     
@@ -185,13 +188,13 @@ class AkTender(models.Model):
                 tender.offer_count = 0
 
     
-    @api.depends('purchase_order_ids.amount_total', 'purchase_order_ids.tender_offer_status')
+    @api.depends('purchase_order_ids.amount_total', 'purchase_order_ids.state')
     def _compute_winning_order(self):
         # Bu prototipte en düşük fiyatlı teklifi kazanan kabul edelim
         for tender in self:
             if tender.purchase_order_ids:
-                # Sadece 'selected' (seçilmiş) veya en düşük fiyatlı teklifi bul
-                selected_order = tender.purchase_order_ids.filtered(lambda o: o.tender_offer_status == 'selected')
+                # Sadece onaylanmış veya en düşük fiyatlı teklifi bul
+                selected_order = tender.purchase_order_ids.filtered(lambda o: o.state == 'purchase')
                 if selected_order:
                     tender.winning_order_id = selected_order[0]
                 else: # Henüz seçilmemişse en düşüğü göster
@@ -418,9 +421,9 @@ class AkTender(models.Model):
             if winning_order.state in ('draft', 'sent'):
                  winning_order.button_confirm()
             
-            # Set other orders to 'rejected'
+            # Cancel other orders
             other_orders = self.purchase_order_ids.filtered(lambda o: o.id != winning_order.id)
-            other_orders.write({'tender_offer_status': 'rejected'})
+            other_orders.button_cancel()
 
             notification_message = _('İhale başarıyla onaylandı. Kazanan teklif (%s) için Satın Alma Siparişi onaylandı.') % (winning_order.name)
         else:
@@ -455,16 +458,28 @@ class AkTender(models.Model):
         self.ensure_one()
         action = self.env.ref('purchase.purchase_form_action').read()[0]
         action['domain'] = [('tender_id', '=', self.id)]
-        action['context'] = {'default_tender_id': self.id, 'default_partner_id': False}
-        # We want to show our custom fields, so we might need a custom view
-        # For now, let's use the standard views.
+        action['context'] = {
+            'default_tender_id': self.id,
+            'default_partner_id': False,
+        }
+        # Use standard views to avoid any issues
+        action['views'] = [(self.env.ref('purchase.purchase_order_view_tree').id, 'list'),
+                          (self.env.ref('purchase.purchase_order_form').id, 'form')]
         return action
+    
     
     def action_view_purchase_orders(self):
         self.ensure_one()
         # This action now shows the same as action_view_offers, but we can filter for confirmed orders
         action = self.env.ref('purchase.purchase_form_action').read()[0]
         action['domain'] = [('tender_id', '=', self.id), ('state', 'in', ['purchase', 'done'])]
+        action['context'] = {
+            'default_tender_id': self.id,
+            'default_partner_id': False,
+        }
+        # Use standard views to avoid any issues
+        action['views'] = [(self.env.ref('purchase.purchase_order_view_tree').id, 'list'),
+                          (self.env.ref('purchase.purchase_order_form').id, 'form')]
         return action
     
     @api.model
@@ -525,6 +540,14 @@ class AkTender(models.Model):
         """İhale tipi değiştiğinde ilgili alanları güncelle."""
         if self.tender_type != 'mice':
             self.service_template_id = False
+            
+    @api.onchange('required_delivery_date')
+    def _onchange_required_delivery_date(self):
+        """Gerekli teslim tarihi değiştiğinde tüm ihale kalemlerini güncelle."""
+        if self.required_delivery_date and self.tender_lines:
+            for line in self.tender_lines:
+                if not line.required_delivery_date:
+                    line.required_delivery_date = self.required_delivery_date
     
     @api.onchange('service_template_id')
     def _onchange_service_template_id(self):
@@ -611,5 +634,76 @@ class AkTender(models.Model):
             'target': 'new',
             'context': {
                 'default_tender_id': self.id,
+            }
+        }
+        
+    def create_purchase_orders_for_suppliers(self):
+        """
+        Create purchase orders for all invited suppliers.
+        This method creates a purchase order for each invited supplier
+        with all tender items included.
+        """
+        self.ensure_one()
+        
+        if not self.invited_partners:
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'title': _('Uyarı'),
+                    'message': _('Davetli tedarikçi bulunamadı. Lütfen önce tedarikçi ekleyin.'),
+                    'sticky': False,
+                    'type': 'warning',
+                }
+            }
+            
+        if not self.tender_lines.filtered(lambda l: l.display_type == 'product'):
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'title': _('Uyarı'),
+                    'message': _('İhale kalemi bulunamadı. Lütfen önce ihale kalemi ekleyin.'),
+                    'sticky': False,
+                    'type': 'warning',
+                }
+            }
+            
+        # Count existing purchase orders for this tender
+        existing_pos = self.env['purchase.order'].search([
+            ('tender_id', '=', self.id)
+        ])
+        existing_supplier_ids = existing_pos.mapped('partner_id.id')
+        
+        # Create purchase orders for suppliers that don't have one yet
+        created_count = 0
+        
+        for supplier in self.invited_partners:
+            if supplier.id in existing_supplier_ids:
+                continue
+                
+            # Create purchase order
+            po_vals = {
+                'partner_id': supplier.id,
+                'tender_id': self.id,
+                'date_order': self.end_date,  # Use tender end date as order deadline
+                'tender_round': 1,  # First round by default
+                'company_id': self.env.company.id,
+                'currency_id': self.currency_id.id,
+            }
+            
+            new_po = self.env['purchase.order'].create(po_vals)
+            created_count += 1
+        # Purchase orders created successfully
+        
+            
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': _('Başarılı'),
+                'message': _('%s tedarikçi için satın alma talebi oluşturuldu.') % created_count,
+                'sticky': False,
+                'type': 'success',
             }
         }
