@@ -60,24 +60,7 @@ If the Odoo module is working but you can't connect to Superset:
 
 If dashboards don't display correctly:
 
-1. **Iframe Issues**
-   - Some browsers or security settings might block iframes
-   - Check browser console for any iframe-related errors
-   - Ensure the Superset server has the correct embedding settings enabled
-   - If you're experiencing authentication issues within the iframe, check that the sandbox attribute is properly set to allow authentication:
-     ```xml
-     sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-top-navigation"
-     ```
-   - The module includes automatic token refresh functionality that will attempt to reload the iframe with a fresh token if authentication issues are detected
-
-2. **Navigation Within Superset Iframe**
-   - When viewing a Superset dashboard in an iframe, the JWT token is only valid for the specific dashboard URL
-   - If you click on Superset navigation elements like "Back to home" or other menu items, you will be taken to the Superset login page
-   - This is expected behavior because navigating away from the authenticated dashboard URL invalidates the JWT authentication
-   - To return to Odoo, use the browser's back button or the Odoo navigation menu
-   - If you need to view different Superset dashboards, return to the Odoo dashboard list and select another dashboard
-
-2. **Dashboard ID**
+1. **Dashboard ID**
    - Verify that the Dashboard ID in the configuration matches the actual ID in Superset
    - The Dashboard ID can be found in the URL when viewing the dashboard in Superset
 
@@ -121,12 +104,13 @@ If you see a Superset login page when viewing a dashboard:
    - Check if the user has the necessary permissions in Superset to view the dashboard
 
 6. **URL Format**
-    - The URL format for accessing Superset dashboards with JWT authentication may vary depending on your Superset installation
-    - The module currently uses:
-      ```
-      https://your-superset-domain.com/superset/dashboard/{dashboard_id}/?jwt=your_jwt_token
-      ```
-    - If this doesn't work, you may need to try other formats as described in the "URL Format Issues" section below
+     - The URL format for accessing Superset dashboards with JWT authentication may vary depending on your Superset installation
+     - The module currently uses:
+       ```
+       https://your-superset-domain.com/superset/dashboard/{dashboard_id}/?jwt=your_jwt_token&standalone=2
+       ```
+     - The `standalone=2` parameter is important as it configures Superset to display the dashboard in standalone mode without the Superset navigation elements
+     - If this doesn't work, you may need to try other formats as described in the "URL Format Issues" section below
 
 7. **Restart Superset and Odoo**
    - After making configuration changes, restart both Superset and Odoo
@@ -149,12 +133,12 @@ If you encounter "Not Found" or 404 errors when trying to access dashboards:
 
 1. **Check the URL Format**
    - Different Superset installations may use different URL formats
-   - The module uses the same URL format for both viewing methods:
-      - For both "New Window" view and iframe embedding: `/superset/dashboard/{dashboard_id}/?jwt={token}`
+   - The module uses the following URL format for opening dashboards in a new window:
+      - `/superset/dashboard/{dashboard_id}/?jwt={token}&standalone=2`
    - If this doesn't work, you may need to try other formats such as:
-      - `/dashboard/{dashboard_id}/?jwt={token}`
+      - `/dashboard/{dashboard_id}/?jwt={token}&standalone=2`
       - `/login/?jwt={token}&dashboard_id={dashboard_id}`
-   - You can modify the URL formats in the `get_embedded_url` and `get_embedded_url_for_iframe` methods in `superset_dashboard.py`
+   - You can modify the URL format in the `get_embedded_url` method in `superset_dashboard.py`
 
 2. **Verify Dashboard ID**
    - Make sure the Dashboard ID in the configuration matches the actual ID in Superset
@@ -164,28 +148,25 @@ If you encounter "Not Found" or 404 errors when trying to access dashboards:
    - Ensure that the Superset server is properly configured for JWT authentication
    - The CustomSSOSecurityManager should be set up to handle JWT tokens
 
-## Viewing Method Issues
+## New Window View Issues
 
-The module provides two different methods for viewing dashboards:
+If the dashboard doesn't open correctly in a new window:
 
-1. **Iframe View Issues**
-   - Iframe view is the default method but may have issues due to browser security restrictions
-   - Check that the sandbox attribute is properly set to allow authentication
-   - Look for CORS errors in the browser console
-   - Some Superset configurations may not work with iframe embedding at all
-   - Be aware that navigating within Superset (clicking on Superset menus, "Back to home", etc.) will cause you to lose authentication and see the login page
+1. **Browser Pop-up Blocker**
+   - Check that pop-ups are not being blocked by your browser
+   - Look for a notification in your browser about blocked pop-ups
+   - Add your Odoo domain to the allowed sites for pop-ups
 
-2. **New Window View Issues**
-   - If the new window view doesn't work, check that pop-ups are not being blocked by your browser
+2. **Authentication Issues**
    - Ensure the JWT token is being generated correctly
    - Check that the Superset URL is correct and accessible
+   - Verify that the `standalone=2` parameter is included in the URL
 
 ## Debugging Tips
 
-1. **Try Different Viewing Methods**
-   - If one viewing method doesn't work, try the other
-   - The new window view is generally more reliable
-   - The iframe view keeps you within Odoo but may have authentication issues
+1. **Check Browser Settings**
+   - Ensure that your browser allows pop-ups from your Odoo domain
+   - Check if there are any browser extensions that might be interfering with the authentication
 
 2. **Enable Developer Mode in Odoo**
    - This will provide more detailed error messages

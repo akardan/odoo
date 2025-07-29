@@ -63,10 +63,11 @@ CORS_OPTIONS = {
     'supports_credentials': True
 }
 
-# Embedding settings
+# Feature flags
 FEATURE_FLAGS = {
-    "EMBEDDED_SUPERSET": True,
     "DASHBOARD_CROSS_FILTERS": True,
+    "DASHBOARD_NATIVE_FILTERS": True,
+    "DASHBOARD_STANDALONE_MODE": True,
 }
 
 # HTTP Headers
@@ -122,24 +123,18 @@ These values are taken from the Superset user credentials configured in the dash
 
 ## URL Format
 
-The module uses different URL formats for different viewing methods:
+The module uses the following URL format for opening dashboards in a new window:
 
-1. **For "New Window" view**:
 ```
-https://your-superset-domain.com/superset/dashboard/your_dashboard_id/?jwt=your_jwt_token
-```
-
-2. **For iframe embedding**:
-```
-https://your-superset-domain.com/dashboard/your_dashboard_id/?jwt=your_jwt_token
+https://your-superset-domain.com/superset/dashboard/your_dashboard_id/?jwt=your_jwt_token&standalone=2
 ```
 
-Example for "New Window" view:
+Example:
 ```
-https://superset.example.com/superset/dashboard/14/?jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImFkbWluIiwiZW1haWwiOiJhZG1pbkBleGFtcGxlLmNvbSIsImZpcnN0X25hbWUiOiJBZG1pbiIsImxhc3RfbmFtZSI6IlVzZXIiLCJleHAiOjE3NTM3MjAyNzl9.r1QZ3XbbkYEgHbHAH4sqDAZffNVsyOaeGhLaCMwb3cQ
+https://superset.example.com/superset/dashboard/14/?jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImFkbWluIiwiZW1haWwiOiJhZG1pbkBleGFtcGxlLmNvbSIsImZpcnN0X25hbWUiOiJBZG1pbiIsImxhc3RfbmFtZSI6IlVzZXIiLCJleHAiOjE3NTM3MjAyNzl9.r1QZ3XbbkYEgHbHAH4sqDAZffNVsyOaeGhLaCMwb3cQ&standalone=2
 ```
 
-**Note**: The exact URL formats may vary depending on your Superset installation. If the above formats don't work, you may need to try different URL patterns such as `/login/?jwt=your_jwt_token&dashboard_id=your_dashboard_id`. The module is designed to use different URL formats for different viewing methods because some Superset installations may require different URL patterns for direct access versus iframe embedding.
+**Note**: The exact URL format may vary depending on your Superset installation. If the above format doesn't work, you may need to try different URL patterns such as `/login/?jwt=your_jwt_token&dashboard_id=your_dashboard_id`. The `standalone=2` parameter is important as it configures Superset to display the dashboard in standalone mode without the Superset navigation elements.
 
 **Important**: This URL format is critical for the JWT authentication to work properly. The Odoo module is configured to use this exact format. If your Superset instance requires a different URL format, you will need to modify the `get_embedded_url` method in the `superset_dashboard.py` file.
 
@@ -151,7 +146,7 @@ https://superset.example.com/superset/dashboard/14/?jwt=eyJhbGciOiJIUzI1NiIsInR5
 4. Redis is recommended for caching but can be replaced with other caching options
 5. After making changes to the Superset configuration, restart the Superset server
 6. The CustomSSOSecurityManager class is essential for JWT authentication to work
-7. CORS settings must include your Odoo domain to allow iframe embedding
+7. CORS settings must include your Odoo domain to allow cross-origin requests
 8. The WTF_CSRF_ENABLED = False setting is necessary for JWT authentication to work properly
 
 ## Testing JWT Authentication
@@ -175,8 +170,7 @@ payload = {
 
 token = jwt.encode(payload, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
 print(f"Test token: {token}")
-print(f"\nTest URL for New Window: https://your-superset-domain.com/superset/dashboard/your_dashboard_id/?jwt={token}")
-print(f"\nTest URL for Iframe: https://your-superset-domain.com/dashboard/your_dashboard_id/?jwt={token}")
+print(f"\nTest URL: https://your-superset-domain.com/superset/dashboard/your_dashboard_id/?jwt={token}&standalone=2")
 ```
 
 ## Troubleshooting
