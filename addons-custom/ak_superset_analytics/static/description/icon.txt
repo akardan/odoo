@@ -1,9 +1,0 @@
-For the module icon, please download or create a square PNG image (128x128 pixels) 
-that represents analytics or dashboards.
-
-Suggested icon ideas:
-1. A chart or graph icon
-2. A dashboard with multiple charts
-3. The Apache Superset logo with Odoo integration elements
-
-Save the image as "icon.png" in this directory (static/description/).

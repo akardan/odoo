@@ -11,15 +11,4 @@
               parent="menu_superset_main"
               action="action_superset_dashboard"
               sequence="10"/>
-    
-    <!-- Individual Dashboard Menus (Bu menüler dashboard'lar oluşturulduktan sonra dinamik olarak eklenebilir) -->
-    <menuitem id="menu_sales_dashboard" 
-              name="Sales Dashboard" 
-              parent="menu_superset_main"
-              sequence="20"/>
-              
-    <menuitem id="menu_financial_dashboard" 
-              name="Financial Dashboard" 
-              parent="menu_superset_main"
-              sequence="30"/>
 </odoo>

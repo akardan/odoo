@@ -1,6 +1,6 @@
 {
     'name': 'Superset Analytics Integration',
-    'version': '16.0.1.0.0',
+    'version': '18.0.1.0.0',
     'category': 'Reporting',
     'summary': 'Embed Apache Superset dashboards with SSO authentication',
     'description': """
@@ -9,11 +9,9 @@
         
         This module provides seamless integration between Odoo and Apache Superset:
         
-        * Embed Superset dashboards directly in Odoo
+        * Open Superset dashboards in new windows with SSO authentication
         * Single Sign-On (SSO) authentication via JWT
         * Role-based access control
-        * Automatic token refresh
-        * Responsive iframe integration
         
         Perfect for business intelligence and advanced analytics needs.
     """,
@@ -25,9 +23,7 @@
         'views/superset_dashboard_views.xml',
         'views/menu_items.xml',
     ],
-    'external_dependencies': {
-        'python': ['PyJWT'],
-    },
+    # Removed iframe-related assets as they are no longer needed
     'installable': True,
     'auto_install': False,
     'application': True,

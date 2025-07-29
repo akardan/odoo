@@ -7,10 +7,20 @@
         <field name="arch" type="xml">
             <form>
                 <header>
-                    <button name="get_embedded_url" string="Test Connection" 
-                            type="object" class="btn-primary"/>
+                    <button name="get_embedded_url" string="Test Connection"
+                            type="object" class="btn-primary"
+                            context="{'from_button': True}"/>
+                    <button name="install_pyjwt" string="Install PyJWT"
+                            type="object" class="btn-secondary"
+                            help="Install the PyJWT package required for SSO authentication"/>
+                    <button name="view_dashboard_new_window" string="View Dashboard (New Window)"
+                            type="object" class="btn-success"
+                            help="Open the dashboard directly in a new window"/>
                 </header>
                 <sheet>
+                    <div class="alert alert-info" role="alert">
+                        <p><strong>Note:</strong> The PyJWT package is required for SSO authentication. If it's not installed, you can install it by clicking the "Install PyJWT" button above.</p>
+                    </div>
                     <group>
                         <group>
                             <field name="name"/>
@@ -23,24 +33,94 @@
                             <field name="allowed_groups" widget="many2many_tags"/>
                         </group>
                     </group>
+                    <group string="Superset User Credentials">
+                        <group>
+                            <field name="superset_username"/>
+                            <field name="superset_first_name"/>
+                        </group>
+                        <group>
+                            <field name="superset_email"/>
+                            <field name="superset_last_name"/>
+                        </group>
+                    </group>
                 </sheet>
             </form>
         </field>
     </record>
 
     <!-- Dashboard List View -->
-    <record id="view_superset_dashboard_tree" model="ir.ui.view">
-        <field name="name">superset.dashboard.tree</field>
+    <record id="view_superset_dashboard_list" model="ir.ui.view">
+        <field name="name">superset.dashboard.list</field>
         <field name="model">superset.dashboard</field>
         <field name="arch" type="xml">
-            <tree>
+            <list>
                 <field name="name"/>
                 <field name="dashboard_id"/>
                 <field name="superset_url"/>
                 <field name="active"/>
-                <button name="get_embedded_url" string="View Dashboard" 
+                <button name="view_dashboard_new_window" string="Görüntüle"
                         type="object" class="btn-primary"/>
-            </tree>
+            </list>
+        </field>
+    </record>
+    
+    <!-- Dashboard Kanban View - Final Clean Version -->
+    <record id="view_superset_dashboard_kanban" model="ir.ui.view">
+        <field name="name">superset.dashboard.kanban</field>
+        <field name="model">superset.dashboard</field>
+        <field name="arch" type="xml">
+            <kanban string="Dashboard Overview" class="o_dashboard_kanban" edit="false" sample="1" style="min-height: 220px;">
+                <field name="id"/>
+                <field name="name"/>
+                <field name="dashboard_id"/>
+                <field name="superset_url"/>
+                <field name="active"/>
+                <field name="create_date"/>
+                <field name="write_date"/>
+                <field name="create_uid"/>
+                <templates>
+                    <t t-name="menu">
+                        <div class="o_kanban_dashboard_card_manage_pane">
+                            <a role="menuitem" name="view_dashboard_new_window" class="dropdown-item" type="object">Dashboard'ı Aç</a>
+                            <a role="menuitem" type="open" class="dropdown-item">Düzenle</a>
+                        </div>
+                    </t>
+                    <t t-name="card">
+                        <widget name="web_ribbon" title="Arşivlenmiş" bg_color="text-bg-danger" invisible="active"/>
+                        <widget name="web_ribbon" title="Aktif" bg_color="text-bg-success" invisible="not active"/>
+                        
+                        <field name="name" class="fw-bold fs-4 me-auto ms-1"/>
+                        
+                        <div style="min-height: 40px;"></div>
+                        
+                        <div name="card_content" class="row mt-auto">
+                            <a t-if="record.active.raw_value" 
+                            name="view_dashboard_new_window" 
+                            type="object" 
+                            class="d-flex flex-column align-items-center col-6">
+                                <i class="fa fa-eye fa-2x text-success"/>
+                                <span class="fw-bold text-truncate mw-100" title="Görüntüle">Görüntüle</span>
+                            </a>
+                            <a t-if="!record.active.raw_value" 
+                            class="d-flex flex-column align-items-center col-6 text-muted">
+                                <i class="fa fa-pause-circle fa-2x"/>
+                                <span class="fw-bold text-truncate mw-100" title="Pasif">Pasif</span>
+                            </a>
+                            <div class="col-6">
+                                <div class="row">
+                                    <a name="edit" type="edit" class="d-flex flex-column align-items-center col-6 border-start">
+                                        <i class="fa fa-edit fa-2x text-primary"/>
+                                        <span class="text-muted text-truncate mw-100" title="Düzenle">Düzenle</span>
+                                    </a>
+                                    <div class="d-flex flex-column align-items-center col-6">
+                                        <field name="create_uid" widget="many2one_avatar_user"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
         </field>
     </record>
 
@@ -48,88 +128,7 @@
     <record id="action_superset_dashboard" model="ir.actions.act_window">
         <field name="name">Superset Dashboards</field>
         <field name="res_model">superset.dashboard</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">kanban,list,form</field>
     </record>
 
-    <!-- Dashboard Display Template -->
-    <template id="dashboard_view" name="Superset Dashboard View">
-        <t t-call="web.layout">
-            <div class="container-fluid">
-                <div class="row">
-                    <div class="col-12">
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <h2 t-esc="dashboard.name"/>
-                            <button class="btn btn-secondary" onclick="refreshDashboard()">
-                                <i class="fa fa-refresh"/> Refresh
-                            </button>
-                        </div>
-                        
-                        <div id="dashboard-container" style="height: calc(100vh - 150px);">
-                            <iframe 
-                                id="superset-iframe"
-                                t-att-src="embedded_url"
-                                width="100%" 
-                                height="100%"
-                                frameborder="0"
-                                style="border: 1px solid #ddd; border-radius: 4px;">
-                            </iframe>
-                        </div>
-                        
-                        <div id="loading-overlay" class="text-center" style="display: none;">
-                            <div class="spinner-border" role="status">
-                                <span class="sr-only">Loading...</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <script>
-                function refreshDashboard() {
-                    const iframe = document.getElementById('superset-iframe');
-                    const overlay = document.getElementById('loading-overlay');
-                    
-                    overlay.style.display = 'block';
-                    iframe.style.display = 'none';
-                    
-                    // JWT token'ı yenile
-                    fetch('/superset/api/refresh_token', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            params: {
-                                dashboard_id: <t t-esc="dashboard.id"/>
-                            }
-                        })
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.result && data.result.embedded_url) {
-                            iframe.src = data.result.embedded_url;
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error refreshing token:', error);
-                        alert('Dashboard yenilenemedi. Lütfen tekrar deneyin.');
-                    })
-                    .finally(() => {
-                        setTimeout(() => {
-                            overlay.style.display = 'none';
-                            iframe.style.display = 'block';
-                        }, 1000);
-                    });
-                }
-                
-                // Token süresi dolmadan önce otomatik yenileme (50 dakikada bir)
-                setInterval(refreshDashboard, 50 * 60 * 1000);
-                
-                // Iframe yüklendiğinde loading'i gizle
-                document.getElementById('superset-iframe').onload = function() {
-                    document.getElementById('loading-overlay').style.display = 'none';
-                };
-            </script>
-        </t>
-    </template>
 </odoo>
