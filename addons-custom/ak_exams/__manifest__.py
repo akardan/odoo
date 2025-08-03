@@ -39,8 +39,9 @@ Exam Management System for customers that isolates based on company
         'views/survey_exam_features_view.xml',
         'views/survey_full_screen_template.xml',
         'views/survey_question_poll_views.xml',
+        'views/survey_question_poll_import_wizard_views.xml',
+        'views/survey_question_pool_wizard_views.xml',
         'views/survey_question_views.xml',
-        'views/survey_dashboard_view.xml',
     ],
     'assets': {
         'web.assets_frontend': [
@@ -48,15 +49,6 @@ Exam Management System for customers that isolates based on company
             'ak_exams/static/src/js/survey_security_minimal.js',
         ],
         'web.assets_backend': [
-            # Dashboard assets
-            'ak_exams/static/src/dashboard/survey_dashboard.scss',
-            'ak_exams/static/src/dashboard/survey_dashboard_service.js',
-            'ak_exams/static/src/dashboard/components/dashboard_item.js',
-            'ak_exams/static/src/dashboard/components/number_card.js',
-            'ak_exams/static/src/dashboard/components/chart_card.js',
-            'ak_exams/static/src/dashboard/components/table_card.js',
-            'ak_exams/static/src/dashboard/survey_dashboard.js',
-            'ak_exams/static/src/dashboard/survey_dashboard_templates.xml',
         ],
     },
     'installable': True,

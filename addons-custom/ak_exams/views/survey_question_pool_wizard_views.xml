@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Form View -->
+    <record id="view_survey_question_pool_wizard_form" model="ir.ui.view">
+        <field name="name">survey.question.pool.wizard.form</field>
+        <field name="model">survey.question.pool.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Add Questions from Question Pool">
+                <sheet>
+                    <group>
+                        <field name="survey_id" invisible="1"/>
+                        <field name="company_id" invisible="1"/>
+                        <field name="job_position_id"/>
+                        <field name="category_id"/>
+                    </group>
+                    <field name="question_poll_ids" nolabel="1" options="{'no_create': True}"/>
+                </sheet>
+                <footer>
+                    <button name="action_add_questions" string="Add Questions" type="object" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action -->
+    <record id="action_survey_question_pool_wizard" model="ir.actions.act_window">
+        <field name="name">Add from Question Pool</field>
+        <field name="res_model">survey.question.pool.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="binding_model_id" ref="survey.model_survey_survey"/>
+        <field name="binding_view_types">form</field>
+    </record>
+</odoo>

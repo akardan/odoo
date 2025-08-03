@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Form View -->
+    <record id="view_survey_question_poll_import_wizard_form" model="ir.ui.view">
+        <field name="name">survey.question.poll.import.wizard.form</field>
+        <field name="model">survey.question.poll.import.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Import Poll Questions from Excel">
+                <sheet>
+                    <div class="alert alert-info" role="alert">
+                        <p>
+                            <strong>Instructions:</strong>
+                        </p>
+                        <ul>
+                            <li>Upload an Excel file with poll questions, options, and categories.</li>
+                            <li>The Excel file should have headers: KATEGORİ, ID, SORU, A, B, C, D, CEVAP.</li>
+                            <li>Existing records will be updated to prevent duplication.</li>
+                        </ul>
+                    </div>
+                    <group>
+                        <field name="excel_file" filename="excel_file_name"/>
+                        <field name="excel_file_name" invisible="1"/>
+                        <field name="company_id" groups="base.group_multi_company"/>
+                    </group>
+                </sheet>
+                <footer>
+                    <button name="action_import" string="Import" type="object" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action -->
+    <record id="action_survey_question_poll_import_wizard" model="ir.actions.act_window">
+        <field name="name">Import Poll Questions</field>
+        <field name="res_model">survey.question.poll.import.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <!-- Menu Item -->
+    <menuitem id="menu_survey_question_poll_import_wizard"
+              name="Import Poll Questions"
+              action="action_survey_question_poll_import_wizard"
+              parent="menu_survey_question_poll_config"
+              sequence="30"/>
+</odoo>
