@@ -29,11 +29,13 @@
         'views/purchase_order_views.xml',
         'views/tender_views.xml',
         'views/portal_templates.xml',
+        'views/assets.xml',
         'views/set_target_price_wizard_views.xml',
         'views/res_config_settings_views.xml',
         'views/bulk_purchase_wizard_views.xml',
         'views/add_supplier_wizard_views.xml',
         'views/tender_template_views.xml',
+        'report/vendor_comparison_report.xml',
     ],
     'demo': [
         'demo/demo.xml',
@@ -47,6 +49,9 @@
     'assets': {
         'web.assets_backend': [
             'ak_tender/static/src/css/tender.css',
+        ],
+        'web.assets_frontend': [
+            'ak_tender/static/src/js/portal_purchase_edit.js',
         ],
     },
 }

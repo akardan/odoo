@@ -172,4 +172,312 @@
 
     <!-- No need for a menu record as we're using template inheritance for the portal menu -->
 
+    <!-- Removed the purchase_order_portal_content_inherit template as it's no longer needed -->
+    
+    <!-- JavaScript is now included via assets.xml -->
+    
+    <!-- Copy of purchase.purchase_order_portal_content -->
+    <template id="ak_purchase_order_portal_content" name="AK Purchase Order Portal Content">
+        <!-- Visible indicator to show this is our custom template -->
+        <div class="alert alert-info">
+            <strong>AK Tender Custom Template Active</strong> - Editable fields are enabled
+        </div>
+        
+        <!-- Intro -->
+        <div id="introduction" class="mt-5 mt-lg-0 pb-2 pt-0">
+            <h2 class="my-0">
+                <t t-if="order.state in ['draft', 'sent']">Request for Quotation</t>
+                <t t-else="1">
+                    Purchase Order
+                </t>
+                <em t-esc="order.name"/>
+            </h2>
+        </div>
+
+        <div class="container-fluid px-0 mx-0">
+            <!-- Informations -->
+            <div id="informations">
+                <div class="row" id="po_date">
+                    <div class="mb-3 col-6">
+                        <t t-if="order.state in ['draft', 'sent']">
+                            <strong>Request For Quotation Date:</strong>
+                        </t>
+                        <t t-if="order.state in ['purchase', 'done', 'cancel']">
+                            <strong>Order Date:</strong>
+                        </t>
+                        <span t-field="order.date_order" t-options='{"widget": "date"}'/>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-lg-6">
+                        <strong class="d-block mb-1">From:</strong>
+                        <address t-field="order.company_id.partner_id" t-options='{"widget": "contact", "fields": ["address", "name"], "no_marker": True}'/>
+                        <strong>Confirmation Date:</strong> <span t-field="order.date_approve" t-options='{"widget": "date"}'/><br/>
+                        <div t-att-class="'d-inline' if order.date_planned else 'd-none'">
+                            <strong>Receipt Date:</strong><span class="ms-1" t-field="order.date_planned" t-options='{"widget": "date"}'/>
+                        </div>
+                    </div>
+                </div>
+
+                <t t-set="invoices" t-value="[i for i in order.invoice_ids if i.state not in ['draft', 'cancel']]"/>
+                <div t-if="invoices" class="row">
+                    <div class="col">
+                        <strong class="d-block mb-1">Invoices</strong>
+                        <ul class="list-group mb-4">
+                            <t t-foreach="invoices" t-as="i">
+                                <t t-set="report_url" t-value="i.get_portal_url(report_type='pdf', download=True)"/>
+                                <div class="d-flex flex-wrap align-items-center justify-content-between">
+                                    <div>
+                                        <a t-att-href="report_url">
+                                            <span t-esc="i.name"/>
+                                        </a>
+                                        <div class="small d-lg-inline-block">Date: <span class="text-muted" t-field="i.invoice_date"/></div>
+                                    </div>
+                                    <span t-if="i.payment_state in ('paid', 'in_payment')" class="badge rounded-pill text-bg-success small"><i class="fa fa-fw fa-check"/>Paid</span>
+                                    <span t-elif="i.payment_state == 'reversed'" class="badge rounded-pill text-bg-success small"><i class="fa fa-fw fa-check"/>Reversed</span>
+                                    <span t-else="" class="small badge rounded-pill text-bg-primary"><i class="fa fa-fw fa-clock-o"/>Waiting Payment</span>
+                                </div>
+                            </t>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <section id="details" style="page-break-inside: auto;" class="mt32">
+                <h3 id="details">Pricing</h3>
+
+                <div class="table-responsive w-100">
+                    <table t-att-data-order-id="order.id" t-att-data-token="order.access_token" class="table table-sm w-100" id="purchase_order_table">
+                        <t t-set="display_price_and_taxes" t-value="not update_dates and order.state in ['sent', 'purchase', 'done']"/>
+                        <thead class="bg-100">
+                            <tr>
+                                <th class="text-start" style="width: 35%;">Products</th>
+                                <th class="text-center" style="width: 30px;"><i class="fa fa-info-circle"></i></th>
+                                <th class="text-end">Miktar</th>
+                                <th t-if="update_dates" class="text-end">Scheduled Date</th>
+                                <th t-if="display_price_and_taxes" t-attf-class="text-end {{ 'd-none d-sm-table-cell' if report_type == 'html' else '' }}">Birim Fiyatı</th>
+                                <th t-if="display_price_and_taxes" t-attf-class="text-end {{ 'd-none d-md-table-cell' if report_type == 'html' else '' }}">
+                                    <span>Vergiler</span>
+                                </th>
+                                <th t-if="display_price_and_taxes" t-attf-class="text-end {{ 'd-none d-sm-table-cell' if report_type == 'html' else '' }}">İndirim %</th>
+                                <th class="text-end" t-if="not update_dates and order.state in ['purchase', 'done']" >
+                                    <span>Amount</span>
+                                </th>
+                                <!-- Additional columns for editable fields -->
+                                <th class="text-end" style="width: 10%;">Teslimat Tarihi</th>
+                                <th class="text-end">Garanti Süresi</th>
+                            </tr>
+                        </thead>
+                        <tbody class="purchase_tbody">
+
+                            <t t-set="current_subtotal" t-value="0"/>
+
+                            <t t-foreach="order.order_line" t-as="line">
+
+                                <t t-set="current_subtotal" t-value="current_subtotal + line.price_subtotal"/>
+
+                                <tr t-att-class="'fw-bold o_line_section' if line.display_type == 'line_section' else 'fst-italic text-break' if line.display_type == 'line_note' else ''">
+                                    <t t-if="not line.display_type">
+                                        <td id="product_name">
+                                            <div class="d-flex">
+                                                <img t-att-src="image_data_uri(resize_to_48(line.product_id.image_1024))" alt="Product" class="d-none d-lg-inline"/>
+                                                <span t-field="line.product_id.display_name"/>
+                                            </div>
+                                            
+                                            <!-- Purchase Description field (initially hidden) -->
+                                            <div t-attf-id="description_{{line.id}}" class="mt-2 mb-2 description-field" style="display: none;">
+                                                <div class="border p-2 bg-light" style="width: 280%;">
+                                                    <strong>Satınalma Açıklaması:</strong>
+                                                    <div class="mt-1" style="padding-left: 15px; font-size: 12px;">
+                                                        <t t-if="line.product_id.description_purchase">
+                                                            <t t-foreach="line.product_id.description_purchase.split('\n')" t-as="desc_line">
+                                                                <t t-if="desc_line.strip()">
+                                                                    <div t-esc="desc_line"/>
+                                                                </t>
+                                                            </t>
+                                                        </t>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <!-- Alternative Materials (moved below product) -->
+                                            <div class="mt-2">
+                                                <textarea t-attf-name="alt_materials_line_{{line.id}}"
+                                                    class="form-control form-control-sm editable-field"
+                                                    style="font-size: 1em;"
+                                                    placeholder="Alternatif Malzeme"
+                                                    rows="2"><t t-esc="line.alt_materials or ''"/></textarea>
+                                            </div>
+                                            
+                                            <!-- Hidden Supplier Reference field -->
+                                            <input type="hidden"
+                                                t-attf-name="supplier_ref_line_{{line.id}}"
+                                                t-att-value="line.supplier_ref or ''" />
+                                        </td>
+                                        
+                                        <!-- Info icon column -->
+                                        <td class="text-center">
+                                            <a href="#" t-attf-class="info-toggle" t-attf-data-line-id="{{line.id}}">
+                                                <i class="fa fa-info-circle"></i>
+                                            </a>
+                                        </td>
+                                        
+                                        <td class="text-end">
+                                            <div id="quote_qty">
+                                                <span t-field="line.product_qty"/>
+                                                <span t-field="line.product_uom" groups="uom.group_uom"/>
+                                            </div>
+                                        </td>
+                                        <td t-if="update_dates" class="text-end">
+                                            <div class="container">
+                                                <div class="mb-3">
+                                                    <div class="input-group date">
+                                                        <input type="text"
+                                                            class="form-control datetimepicker-input o-purchase-datetimepicker text-end"
+                                                            t-att-data-access-token="order.access_token"
+                                                            t-att-data-order-id="order.id"
+                                                            t-att-data-line-id="line.id"
+                                                            t-att-data-value="line.date_planned.isoformat()"
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td t-if="display_price_and_taxes" t-attf-class="text-end {{ 'd-none d-sm-table-cell' if report_type == 'html' else '' }}">
+                                            <!-- Editable unit price field -->
+                                            <input type="number"
+                                                t-attf-name="price_unit_line_{{line.id}}"
+                                                class="form-control form-control-sm text-end editable-field"
+                                                style="width: 100%; font-size: 1em;"
+                                                step="0.01"
+                                                min="0"
+                                                t-att-value="line.price_unit" />
+                                        </td>
+                                        <td t-if="display_price_and_taxes" t-attf-class="text-end {{ 'd-none d-md-table-cell' if report_type == 'html' else '' }}">
+                                            <!-- Create a unique list of tax rates -->
+                                            <t t-set="unique_tax_rates" t-value="[]"/>
+                                            <t t-set="unique_tax_ids" t-value="{}"/>
+                                            <t t-foreach="request.env['account.tax'].sudo().search([('type_tax_use', '=', 'purchase')])" t-as="tax">
+                                                <t t-set="tax_rate" t-value="int(abs(tax.amount)) if abs(tax.amount) == int(abs(tax.amount)) else abs(tax.amount)"/>
+                                                <t t-if="tax_rate not in unique_tax_rates">
+                                                    <t t-set="unique_tax_rates" t-value="unique_tax_rates + [tax_rate]"/>
+                                                    <t t-set="unique_tax_ids" t-value="dict(unique_tax_ids, **{str(tax_rate): tax.id})"/>
+                                                </t>
+                                            </t>
+                                            
+                                            <select t-attf-name="taxes_line_{{line.id}}"
+                                                class="form-select form-select-sm editable-field"
+                                                style="font-size: 1em;">
+                                                <t t-foreach="sorted(unique_tax_rates)" t-as="rate">
+                                                    <option t-att-value="unique_tax_ids[str(rate)]" t-att-selected="unique_tax_ids[str(rate)] in line.taxes_id.ids">
+                                                        <t t-esc="str(rate)"/>
+                                                    </option>
+                                                </t>
+                                            </select>
+                                        </td>
+                                        <td t-if="display_price_and_taxes" t-attf-class="text-end {{ 'd-none d-sm-table-cell' if report_type == 'html' else '' }}">
+                                            <input type="number"
+                                                t-attf-name="discount_line_{{line.id}}"
+                                                class="form-control form-control-sm editable-field"
+                                                style="font-size: 1em;"
+                                                step="0.01"
+                                                min="0"
+                                                max="100"
+                                                t-att-value="line.discount or '0.00'" />
+                                        </td>
+                                        <td class="text-end" t-if="not update_dates and order.state in ['purchase', 'done']">
+                                            <span class="oe_order_line_price_subtotal" t-field="line.price_subtotal"/>
+                                        </td>
+                                        
+                                        <!-- Additional editable fields -->
+                                        <!-- Delivery Date -->
+                                        <td class="text-end">
+                                            <input type="date"
+                                                t-attf-name="delivery_date_line_{{line.id}}"
+                                                class="form-control form-control-sm editable-field"
+                                                style="font-size: 1em; width: 100%;"
+                                                t-att-value="line.date_planned and line.date_planned.strftime('%Y-%m-%d') or ''"/>
+                                        </td>
+                                        
+                                        <!-- Warranty Period -->
+                                        <td class="text-end">
+                                            <select t-attf-name="warranty_period_line_{{line.id}}"
+                                                class="form-control form-control-sm editable-field"
+                                                style="font-size: 1em;">
+                                                <option value="">Seçiniz</option>
+                                                <option value="1" t-att-selected="line.warranty_period == 1">1 Ay</option>
+                                                <option value="3" t-att-selected="line.warranty_period == 3">3 Ay</option>
+                                                <option value="6" t-att-selected="line.warranty_period == 6">6 Ay</option>
+                                                <option value="12" t-att-selected="line.warranty_period == 12">12 Ay</option>
+                                                <option value="24" t-att-selected="line.warranty_period == 24">24 Ay</option>
+                                            </select>
+                                        </td>
+                                    </t>
+                                    <t t-if="line.display_type == 'line_section'">
+                                        <td colspan="99">
+                                            <span t-field="line.name"/>
+                                        </td>
+                                        <t t-set="current_section" t-value="line"/>
+                                        <t t-set="current_subtotal" t-value="0"/>
+                                    </t>
+                                    <t t-if="line.display_type == 'line_note'">
+                                        <td colspan="99">
+                                            <span t-field="line.name"/>
+                                        </td>
+                                    </t>
+                                </tr>
+
+                                <t t-if="current_section and (line_last or order.order_line[line_index+1].display_type == 'line_section') and order.state in ['purchase', 'done']">
+                                    <tr class="is-subtotal text-end">
+                                        <td colspan="99">
+                                            <strong class="mr16">Subtotal</strong>
+                                            <span
+                                                t-esc="current_subtotal"
+                                                t-options='{"widget": "monetary", "display_currency": order.currency_id}'
+                                            />
+                                        </td>
+                                    </tr>
+                                </t>
+                            </t>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Document-level save button -->
+                <div class="row mb-4">
+                    <div class="col-12 text-end">
+                        <button id="save-all-btn" class="btn btn-primary">
+                            <i class="fa fa-save"></i> Tüm Değişiklikleri Kaydet
+                        </button>
+                    </div>
+                </div>
+
+                <div id="total" t-if="order.state in ['purchase', 'done']" class="row" name="total" style="page-break-inside: avoid;">
+                    <div t-attf-class="#{'col-4' if report_type != 'html' else 'col-sm-7 col-md-5'} ms-auto">
+                        <t t-call="purchase.purchase_order_portal_content_totals_table"/>
+                    </div>
+                </div>
+            </section>
+
+            <section id="terms" class="mt-5" t-if="order.notes">
+                <h3 class="">Terms &amp; Conditions</h3>
+                <hr class="mt-0 mb-1"/>
+                <em t-field="order.notes"/>
+            </section>
+
+            <section class="mt-5" t-if="order.payment_term_id">
+                <h3 class="">Payment terms</h3>
+                <hr class="mt-0 mb-1"/>
+                <span t-field="order.payment_term_id"/>
+            </section>
+        </div>
+    </template>
+    
+    <!-- Override the portal_my_purchase_order template to use our custom template -->
+    <template id="portal_my_purchase_order_inherit" name="Custom Purchase Order Portal" inherit_id="purchase.portal_my_purchase_order">
+        <xpath expr="//div[@id='portal_purchase_content']" position="replace">
+            <div id="portal_purchase_content" class="container-fluid px-0 mx-0 w-100" style="max-width: 100%;">
+                <div t-call="ak_tender.ak_purchase_order_portal_content"/>
+            </div>
+        </xpath>
+    </template>
 </odoo>

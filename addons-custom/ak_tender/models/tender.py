@@ -456,16 +456,66 @@ class AkTender(models.Model):
     
     def action_view_offers(self):
         self.ensure_one()
-        action = self.env.ref('purchase.purchase_form_action').read()[0]
-        action['domain'] = [('tender_id', '=', self.id)]
-        action['context'] = {
-            'default_tender_id': self.id,
-            'default_partner_id': False,
+        # Open the vendor comparison report
+        return self.env.ref('ak_tender.action_report_vendor_comparison').report_action(self)
+        
+    def get_comparison_data(self):
+        """
+        Get data for the vendor comparison widget.
+        
+        Returns:
+            dict: A dictionary containing vendors and tender lines data
+        """
+        self.ensure_one()
+        
+        # Get vendors (purchase orders)
+        vendors = []
+        for po in self.purchase_order_ids:
+            vendors.append({
+                'id': po.id,
+                'partner_id': po.partner_id.id,
+                'partner_name': po.partner_id.name,
+            })
+        
+        # Get tender lines with vendor data
+        tender_lines = []
+        for line in self.tender_lines:
+            line_data = {
+                'id': line.id,
+                'name': line.name,
+                'display_type': line.display_type,
+                'product_id': line.product_id.id if line.product_id else False,
+                'product_name': line.product_id.display_name if line.product_id else line.name,
+                'product_description': line.product_id.description_purchase if line.product_id else '',
+                'required_delivery_date': line.required_delivery_date.strftime('%Y-%m-%d') if line.required_delivery_date else False,
+                'vendor_lines': [],
+            }
+            
+            # Add vendor-specific data for this line
+            for po in self.purchase_order_ids:
+                po_line = po.order_line.filtered(lambda l: l.tender_line_id.id == line.id)
+                if po_line:
+                    po_line = po_line[0]  # Take the first one if multiple
+                    line_data['vendor_lines'].append({
+                        'vendor_id': po.id,
+                        'product_qty': po_line.product_qty,
+                        'product_uom_name': po_line.product_uom.name if po_line.product_uom else '',
+                        'alternative_product': po_line.alternative_product if hasattr(po_line, 'alternative_product') else '',
+                        'discount': po_line.discount,
+                        'price_subtotal': po_line.price_subtotal,
+                        'currency_name': po_line.currency_id.name if po_line.currency_id else '',
+                        'npv_value': po_line.npv_value if hasattr(po_line, 'npv_value') else 0,
+                        'date_planned': po_line.date_planned.strftime('%Y-%m-%d') if po_line.date_planned else '',
+                        'warranty_period': po_line.warranty_period if hasattr(po_line, 'warranty_period') else '',
+                        'alt_materials': po_line.alt_materials if hasattr(po_line, 'alt_materials') else '',
+                    })
+            
+            tender_lines.append(line_data)
+        
+        return {
+            'vendors': vendors,
+            'tender_lines': tender_lines,
         }
-        # Use standard views to avoid any issues
-        action['views'] = [(self.env.ref('purchase.purchase_order_view_tree').id, 'list'),
-                          (self.env.ref('purchase.purchase_order_form').id, 'form')]
-        return action
     
     
     def action_view_purchase_orders(self):

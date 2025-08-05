@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-from odoo import http, fields
+import logging
+from odoo import http, fields, _
 from odoo.http import request
 from odoo.addons.portal.controllers.portal import CustomerPortal, pager as portal_pager
 
@@ -208,3 +209,259 @@ class TenderPortal(CustomerPortal): # Inherit from CustomerPortal for standard l
         # This is a basic structure. You'll need to add QWeb templates
         # (portal_my_tenders_list.xml, portal_tender_bid_form.xml)
         # and refine the logic, validation, and error handling.
+        
+    @http.route(['/my/purchase/update_supplier_order'], type='json', auth="public", website=True)
+    def portal_update_supplier_order(self, order_id, access_token=None, lines=None, line_id=None, **kw):
+        """
+        Update the supplier's purchase order from the portal.
+        This method allows suppliers to update various fields of their purchase order:
+        - price_unit: Unit price
+        - date_planned: Delivery date
+        - warranty_period: Warranty period in months
+        - supplier_ref: Supplier reference
+        - alt_materials: Alternative materials
+        
+        Can handle both single line updates and multiple line updates:
+        - Single line: line_id, price_unit, etc. are passed directly
+        - Multiple lines: lines parameter contains a list of line data
+        """
+        try:
+            # Log the request parameters for debugging
+            _logger = logging.getLogger(__name__)
+            _logger.info(f"Update supplier order request: order_id={order_id}, access_token={access_token}, lines={lines}, line_id={line_id}, kw={kw}")
+            
+            # Check access to the order
+            order_sudo = self._document_check_access('purchase.order', order_id, access_token)
+            if not order_sudo:
+                _logger.warning(f"Invalid order access: order_id={order_id}")
+                return {'error': 'Invalid Order'}
+                
+            # Check if the order is in a state that allows editing (draft or sent)
+            if order_sudo.state not in ['draft', 'sent']:
+                _logger.warning(f"Order in non-editable state: {order_sudo.state}")
+                return {'error': 'This order cannot be edited anymore.'}
+            
+            # Handle multiple lines update
+            if lines:
+                _logger.info(f"Processing multiple lines: {len(lines)}")
+                results = []
+                
+                for line_data in lines:
+                    line_id = line_data.get('line_id')
+                    if not line_id:
+                        continue
+                    
+                    # Find the line
+                    line = request.env['purchase.order.line'].sudo().browse(int(line_id))
+                    if not line:
+                        _logger.warning(f"Line not found: line_id={line_id}")
+                        continue
+                        
+                    if line.order_id.id != order_sudo.id:
+                        _logger.warning(f"Line belongs to different order: line.order_id.id={line.order_id.id}, order_sudo.id={order_sudo.id}")
+                        continue
+                    
+                    # Prepare values to update
+                    vals = {}
+                    
+                    # Handle price_unit update
+                    if 'price_unit' in line_data:
+                        try:
+                            price_unit = float(line_data.get('price_unit'))
+                            _logger.info(f"Updating price: old={line.price_unit}, new={price_unit}")
+                            vals['price_unit'] = price_unit
+                        except (ValueError, TypeError) as e:
+                            _logger.warning(f"Invalid price_unit value: {line_data.get('price_unit')}, error: {str(e)}")
+                            continue
+                    
+                    # Handle discount update
+                    if 'discount' in line_data:
+                        try:
+                            discount = float(line_data.get('discount'))
+                            if discount < 0 or discount > 100:
+                                _logger.warning(f"Invalid discount value (must be between 0-100): {discount}")
+                                continue
+                            _logger.info(f"Updating discount: old={line.discount}, new={discount}")
+                            vals['discount'] = discount
+                        except (ValueError, TypeError) as e:
+                            _logger.warning(f"Invalid discount value: {line_data.get('discount')}, error: {str(e)}")
+                            continue
+                    
+                    # Handle date_planned update
+                    if 'date_planned' in line_data:
+                        try:
+                            date_planned = line_data.get('date_planned')
+                            _logger.info(f"Updating delivery date: old={line.date_planned}, new={date_planned}")
+                            vals['date_planned'] = date_planned
+                        except Exception as e:
+                            _logger.warning(f"Invalid date_planned value: {line_data.get('date_planned')}, error: {str(e)}")
+                            continue
+                    
+                    # Handle warranty_period update
+                    if 'warranty_period' in line_data:
+                        try:
+                            warranty_period = int(line_data.get('warranty_period'))
+                            _logger.info(f"Updating warranty period: old={line.warranty_period if hasattr(line, 'warranty_period') else 'N/A'}, new={warranty_period}")
+                            vals['warranty_period'] = warranty_period
+                        except (ValueError, TypeError) as e:
+                            _logger.warning(f"Invalid warranty_period value: {line_data.get('warranty_period')}, error: {str(e)}")
+                            continue
+                    
+                    # Handle supplier_ref update
+                    if 'supplier_ref' in line_data:
+                        supplier_ref = line_data.get('supplier_ref')
+                        _logger.info(f"Updating supplier reference: old={line.supplier_ref if hasattr(line, 'supplier_ref') else 'N/A'}, new={supplier_ref}")
+                        vals['supplier_ref'] = supplier_ref
+                    
+                    # Handle alt_materials update
+                    if 'alt_materials' in line_data:
+                        alt_materials = line_data.get('alt_materials')
+                        _logger.info(f"Updating alternative materials: old={line.alt_materials if hasattr(line, 'alt_materials') else 'N/A'}, new={alt_materials}")
+                        vals['alt_materials'] = alt_materials
+                    
+                    # Handle name update
+                    if 'name' in line_data:
+                        name = line_data.get('name')
+                        _logger.info(f"Updating purchase description: old={line.name}, new={name}")
+                        vals['name'] = name
+                    
+                    # Handle taxes_id update
+                    if 'taxes_id' in line_data:
+                        taxes_id = line_data.get('taxes_id')
+                        _logger.info(f"Updating taxes: old={line.taxes_id}, new={taxes_id}")
+                        vals['taxes_id'] = taxes_id
+                    
+                    # Update the line with all the values
+                    if vals:
+                        _logger.info(f"Writing values to line: {vals}")
+                        line.write(vals)
+                        results.append({
+                            'line_id': line_id,
+                            'success': True
+                        })
+                
+                # Recompute the order totals
+                order_sudo._amount_all()
+                
+                # Return updated values
+                return {
+                    'success': True,
+                    'lines_updated': len(results),
+                    'amount_total': request.env['ir.qweb.field.monetary'].value_to_html(
+                        order_sudo.amount_total, {'display_currency': order_sudo.currency_id}),
+                }
+            
+            # Handle single line update (backward compatibility)
+            elif line_id:
+                # Find the line
+                line = request.env['purchase.order.line'].sudo().browse(int(line_id))
+                if not line:
+                    _logger.warning(f"Line not found: line_id={line_id}")
+                    return {'error': 'Invalid Order Line - Not found'}
+                    
+                if line.order_id.id != order_sudo.id:
+                    _logger.warning(f"Line belongs to different order: line.order_id.id={line.order_id.id}, order_sudo.id={order_sudo.id}")
+                    return {'error': 'Invalid Order Line - Wrong order'}
+                
+                # Prepare values to update
+                vals = {}
+                
+                # Handle price_unit update
+                if 'price_unit' in kw:
+                    try:
+                        price_unit = float(kw.get('price_unit'))
+                        _logger.info(f"Updating price: old={line.price_unit}, new={price_unit}")
+                        vals['price_unit'] = price_unit
+                    except (ValueError, TypeError) as e:
+                        _logger.warning(f"Invalid price_unit value: {kw.get('price_unit')}, error: {str(e)}")
+                        return {'error': 'Invalid price value'}
+                
+                # Handle discount update
+                if 'discount' in kw:
+                    try:
+                        discount = float(kw.get('discount'))
+                        if discount < 0 or discount > 100:
+                            _logger.warning(f"Invalid discount value (must be between 0-100): {discount}")
+                            return {'error': 'Invalid discount value (must be between 0-100)'}
+                        _logger.info(f"Updating discount: old={line.discount}, new={discount}")
+                        vals['discount'] = discount
+                    except (ValueError, TypeError) as e:
+                        _logger.warning(f"Invalid discount value: {kw.get('discount')}, error: {str(e)}")
+                        return {'error': 'Invalid discount value'}
+                
+                # Handle date_planned update
+                if 'date_planned' in kw:
+                    try:
+                        date_planned = kw.get('date_planned')
+                        _logger.info(f"Updating delivery date: old={line.date_planned}, new={date_planned}")
+                        vals['date_planned'] = date_planned
+                    except Exception as e:
+                        _logger.warning(f"Invalid date_planned value: {kw.get('date_planned')}, error: {str(e)}")
+                        return {'error': 'Invalid delivery date value'}
+                
+                # Handle warranty_period update
+                if 'warranty_period' in kw:
+                    try:
+                        warranty_period = int(kw.get('warranty_period'))
+                        _logger.info(f"Updating warranty period: old={line.warranty_period if hasattr(line, 'warranty_period') else 'N/A'}, new={warranty_period}")
+                        vals['warranty_period'] = warranty_period
+                    except (ValueError, TypeError) as e:
+                        _logger.warning(f"Invalid warranty_period value: {kw.get('warranty_period')}, error: {str(e)}")
+                        return {'error': 'Invalid warranty period value'}
+                
+                # Handle supplier_ref update
+                if 'supplier_ref' in kw:
+                    supplier_ref = kw.get('supplier_ref')
+                    _logger.info(f"Updating supplier reference: old={line.supplier_ref if hasattr(line, 'supplier_ref') else 'N/A'}, new={supplier_ref}")
+                    vals['supplier_ref'] = supplier_ref
+                
+                # Handle alt_materials update
+                if 'alt_materials' in kw:
+                    alt_materials = kw.get('alt_materials')
+                    _logger.info(f"Updating alternative materials: old={line.alt_materials if hasattr(line, 'alt_materials') else 'N/A'}, new={alt_materials}")
+                    vals['alt_materials'] = alt_materials
+                
+                # Handle name update
+                if 'name' in kw:
+                    name = kw.get('name')
+                    _logger.info(f"Updating purchase description: old={line.name}, new={name}")
+                    vals['name'] = name
+                
+                # Handle taxes_id update
+                if 'taxes_id' in kw:
+                    taxes_id = kw.get('taxes_id')
+                    _logger.info(f"Updating taxes: old={line.taxes_id}, new={taxes_id}")
+                    vals['taxes_id'] = taxes_id
+                
+                # Update the line with all the values
+                if vals:
+                    _logger.info(f"Writing values to line: {vals}")
+                    line.write(vals)
+                    
+                    # Recompute the order if price or discount was updated
+                    if 'price_unit' in vals or 'discount' in vals:
+                        order_sudo._amount_all()
+                
+                # Return updated values
+                result = {
+                    'success': True,
+                }
+                
+                # Add price-related values if price or discount was updated
+                if 'price_unit' in vals or 'discount' in vals:
+                    result.update({
+                        'price_subtotal': request.env['ir.qweb.field.monetary'].value_to_html(
+                            line.price_subtotal, {'display_currency': order_sudo.currency_id}),
+                        'amount_total': request.env['ir.qweb.field.monetary'].value_to_html(
+                            order_sudo.amount_total, {'display_currency': order_sudo.currency_id}),
+                    })
+                
+                return result
+            
+            else:
+                return {'error': 'No line data provided'}
+            
+        except Exception as e:
+            _logger = logging.getLogger(__name__)
+            _logger.exception(f"Error updating supplier order: {str(e)}")
+            return {'error': str(e)}

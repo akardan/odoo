@@ -20,6 +20,22 @@ class PurchaseOrderLine(models.Model):
                                      help="Eğer teklif edilen ürün talep edilenden farklı ise, "
                                           "muadil ürün bilgilerini buraya giriniz (marka, model, kod vb.).")
     
+    # Additional fields for supplier portal editing
+    warranty_period = fields.Integer(
+        string='Garanti Süresi (Ay)',
+        help='Tedarikçi tarafından sunulan garanti süresi (ay olarak)'
+    )
+    
+    supplier_ref = fields.Char(
+        string='Tedarikçi Referansı',
+        help='Bu ürün için tedarikçinin referans veya parça numarası'
+    )
+    
+    alt_materials = fields.Text(
+        string='Alternatif Malzemeler',
+        help='Tedarikçi tarafından önerilen alternatif malzemeler veya ürünler'
+    )
+    
     # NPV calculation fields
     discount_rate = fields.Float(string='İskonto Oranı (%)',
                                  default=lambda self: float(self.env['ir.config_parameter'].sudo().get_param('ak_tender_npv_interest_rate', '10.0')),
