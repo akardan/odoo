@@ -3,6 +3,7 @@
     'version': '18.0.1.0.0',
     'category': 'Extra Tools',
     'summary': 'Advanced Generic Workflow Engine',
+    'license': 'OPL-1',
     'description': '''
         AK Workflow - Standalone Generic Multi-Model Workflow Engine
         ===========================================================

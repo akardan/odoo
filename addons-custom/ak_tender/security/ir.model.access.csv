@@ -10,3 +10,4 @@ access_ak_tender_template_user,ak.tender.template.user,model_ak_tender_template,
 access_ak_tender_template_manager,ak.tender.template.manager,model_ak_tender_template,base.group_system,1,1,1,1
 access_ak_tender_template_line_user,ak.tender.template.line.user,model_ak_tender_template_line,base.group_user,1,0,0,0
 access_ak_tender_template_line_manager,ak.tender.template.line.manager,model_ak_tender_template_line,base.group_system,1,1,1,1
+access_import_hotel_wizard,access.import.hotel.wizard,model_import_hotel_wizard,base.group_user,1,1,1,1

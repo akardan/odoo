@@ -20,6 +20,10 @@ Bu modül, çok aşamalı satın alma ihale süreçlerini Odoo üzerinde yönetm
 - Ekonomik veri entegrasyonu (promotion ihaleleri için)
 - Dinamik tedarikçi ekleme fonksiyonu
 - Coğrafi tedarikçi filtreleme
+- Tedarikçi Karşılaştırma Raporu (en düşük fiyat vurgulama ve NPV hesaplama)
+- Gelişmiş Portal Arayüzü (tedarikçiler için teklif düzenleme)
+- NPV (Net Bugünkü Değer) hesaplamaları
+- Garanti süresi yönetimi
 
 ## İş Akışı (Workflow) Entegrasyonu
 
@@ -150,3 +154,34 @@ Acil talep desteği, acil durumlar için hızlı ihale süreçleri oluşturmanı
 ## Ekonomik Veri Entegrasyonu
 
 Ekonomik veri entegrasyonu, döviz kurları ve enflasyon gibi ekonomik faktörleri ihale değerlendirmesinde dikkate almanızı sağlar. Bu özellik, özellikle promotion ihaleleri için kullanışlıdır.
+
+## Tedarikçi Karşılaştırma Raporu
+
+Tedarikçi karşılaştırma raporu, farklı tedarikçilerden gelen teklifleri yan yana karşılaştırmanızı sağlar. Bu rapor, aşağıdaki özelliklere sahiptir:
+
+- Ürün bazında fiyat karşılaştırması
+- En düşük fiyatlı tekliflerin otomatik vurgulanması
+- NPV (Net Bugünkü Değer) hesaplamaları
+- Teslimat tarihi ve garanti süresi karşılaştırması
+- Alternatif malzeme önerilerinin görüntülenmesi
+- Toplam fiyat karşılaştırması ve otomatik seçim önerisi
+
+## Gelişmiş Portal Arayüzü
+
+Tedarikçiler için geliştirilmiş portal arayüzü, aşağıdaki özelliklere sahiptir:
+
+- Teklif fiyatlarını doğrudan portal üzerinden düzenleme
+- Teslimat tarihlerini belirleme
+- Garanti süresi seçimi
+- İndirim oranı belirtme
+- Alternatif malzeme önerileri sunma
+- Vergi seçimi yapabilme
+- Toplu değişiklik kaydetme
+
+## NPV Hesaplamaları
+
+NPV (Net Bugünkü Değer) hesaplamaları, farklı tedarikçilerden gelen tekliflerin finansal karşılaştırmasını yapmak için kullanılır. Bu özellik, aşağıdaki avantajları sağlar:
+
+- Farklı ödeme koşullarının etkisini değerlendirme
+- Uzun vadeli satın almalarda gerçek maliyeti hesaplama
+- İskonto oranı belirleme ve ekonomik faktörleri dikkate alma

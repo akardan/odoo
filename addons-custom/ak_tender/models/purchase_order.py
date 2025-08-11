@@ -44,7 +44,7 @@ class PurchaseOrder(models.Model):
                 record.is_readonly = True
     
     
-    @api.constrains('tender_id', 'order_line', 'order_line.alternative_product')
+    @api.constrains('tender_id', 'order_line', 'order_line.alt_materials')
     def _check_alternative_products(self):
         """
         İhale tipine göre muadil ürün kontrolü yapar.
@@ -57,7 +57,7 @@ class PurchaseOrder(models.Model):
                 
             # Direkt ihale tipinde muadil ürün kabul edilmez
             if record.tender_id.tender_type == 'direct':
-                alternative_lines = record.order_line.filtered(lambda l: l.alternative_product)
+                alternative_lines = record.order_line.filtered(lambda l: l.alt_materials)
                 if alternative_lines:
                     raise ValidationError(_(
                         "Direkt ihale tipinde muadil ürün kabul edilmez. "
@@ -71,7 +71,7 @@ class PurchaseOrder(models.Model):
                     'ak_tender_allow_alternative_products', 'True').lower() in ('true', '1', 't')
                 
                 if not allow_alternative:
-                    alternative_lines = record.order_line.filtered(lambda l: l.alternative_product)
+                    alternative_lines = record.order_line.filtered(lambda l: l.alt_materials)
                     if alternative_lines:
                         raise ValidationError(_(
                             "Endirekt ihale tipinde muadil ürün kabul edilmemektedir. "

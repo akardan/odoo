@@ -12,8 +12,11 @@
                     <field name="tender_id" readonly="1" force_save="1"/>
                     <field name="tender_round" invisible="tender_id == False"/>
                 </xpath>
-                <xpath expr="//field[@name='order_line']//field[@name='product_id']" position="after">
+                <xpath expr="//field[@name='order_line']//field[@name='product_id']" position="before">
                     <field name="tender_line_id" readonly="1" optional="show"/>
+                </xpath>
+                <xpath expr="//field[@name='order_line']//field[@name='product_qty']" position="before">
+                    <field name="alt_materials" readonly="1" optional="show"/>
                 </xpath>
                 
                 <xpath expr="//notebook" position="inside">

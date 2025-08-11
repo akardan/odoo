@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="product_template_form_view_tender" model="ir.ui.view">
+        <field name="name">product.template.form.tender</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_form_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='purchase']/group[@name='purchase']/group[@name='bill']" position="after">
+                <group string="İhale Bilgileri" name="tender_info">
+                    <field name="is_hotel_accommodation"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+</odoo>

@@ -62,18 +62,19 @@
                     </group>
                     <notebook>
                         <page string="Şablon Satırları" name="template_lines">
-                            <field name="line_ids" readonly="is_locked == True">
+                            <field name="line_ids" readonly="is_locked == True" widget="section_and_note_one2many">
                                 <list editable="bottom">
                                     <field name="sequence" widget="handle"/>
-                                    <field name="display_type" invisible="1"/>
-                                    <field name="product_id" required="display_type == 'product'" invisible="display_type != 'product'"/>
-                                    <field name="name" required="display_type in ('line_section', 'line_note')"/>
-                                    <field name="product_qty" invisible="display_type != 'product'"/>
-                                    <field name="product_uom_id" invisible="display_type != 'product'"/>
-                                    <field name="product_uom_category_id" invisible="1"/>
-                                    <field name="price_unit" invisible="display_type != 'product'"/>
-                                    <field name="required" invisible="display_type != 'product'"/>
-                                    <field name="allow_alternative" invisible="display_type != 'product'"/>
+                                    <field name="display_type" column_invisible="True"/>
+                                    <field name="product_uom_category_id" column_invisible="True"/>
+                                    <field name="product_id" required="display_type == 'product'"/>
+                                    <field name="name"/>
+                                    <field name="days" column_invisible="parent.tender_type != 'mice'"/>
+                                    <field name="product_qty"/>
+                                    <field name="product_uom_id"/>
+                                    <field name="price_unit"/>
+                                    <field name="required"/>
+                                    <field name="allow_alternative"/>
                                     <control>
                                         <create string="Ürün Ekle" context="{'default_display_type': 'product'}"/>
                                         <create string="Bölüm Ekle" context="{'default_display_type': 'line_section'}"/>

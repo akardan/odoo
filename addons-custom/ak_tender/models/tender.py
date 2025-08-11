@@ -22,8 +22,20 @@ class AkTenderLine(models.Model):
     
     product_id = fields.Many2one('product.product', string=_('Ürün/Malzeme'),
                                  required=False,
+                                 domain="['|', ('purchase_ok', '=', True), ('type', '=', 'service')]",
                                  help=_("İhale edilecek ürün veya malzeme."))
+    
+    # Otel seçimi için
+    hotel_partner_id = fields.Many2one(
+        'res.partner',
+        string=_("Otel"),
+        domain=[('is_hotel', '=', True)],
+        help=_("Konaklama için otel seçin")
+    )
+    
     name = fields.Text(string=_('Açıklama'))
+    days = fields.Integer(string=_('Gün'), default=1,
+                         help=_("Konaklama gibi hizmetler için gün sayısı."))
     quantity = fields.Float(string=_('Miktar'), default=1.0)
     uom_id = fields.Many2one('uom.uom', string=_('Birim'))
     required_delivery_date = fields.Date(string=_('Gerekli Teslim Tarihi'),
@@ -36,7 +48,31 @@ class AkTenderLine(models.Model):
     required = fields.Boolean(string=_('Zorunlu'), default=False,
                              help=_("Bu satır ihale için zorunludur."))
     allow_alternative = fields.Boolean(string=_('Alternatif Kabul Edilir'), default=True,
-                                     help=_("Bu satır için alternatif teklifler kabul edilir."))
+                                      help=_("Bu satır için alternatif teklifler kabul edilir."))
+    
+    # Hedef Fiyat ve Para Birimi
+    currency_id = fields.Many2one(related='tender_id.currency_id',
+                                 string=_('Para Birimi'),
+                                 readonly=True,
+                                 store=True)
+    target_price = fields.Monetary(string=_('Hedef Fiyat'),
+                                   currency_field='currency_id',
+                                   help=_("Bu kalem için belirlenen hedef fiyat."))
+    # We don't need these fields anymore since we're using the standard product configurator
+    
+    # Computed field to access product's is_hotel_accommodation
+    is_hotel_accommodation = fields.Boolean(
+        string=_('Otel Konaklaması'),
+        compute='_compute_is_hotel_accommodation',
+        store=False,
+        help=_("Bu ürün otel konaklaması mı?")
+    )
+    
+    @api.depends('product_id')
+    def _compute_is_hotel_accommodation(self):
+        for line in self:
+            line.is_hotel_accommodation = line.product_id.is_hotel_accommodation if line.product_id else False
+    
     
     @api.onchange('product_id')
     def _onchange_product_id(self):
@@ -45,7 +81,87 @@ class AkTenderLine(models.Model):
         
         self.uom_id = self.product_id.uom_po_id or self.product_id.uom_id
         if not self.name:
-            self.name = self.product_id.name
+            self.name = self.product_id.get_product_multiline_description_sale()
+        
+        # Calculate target price based on days and quantity
+        if self.product_id and self.product_id.list_price:
+            if self.tender_id.tender_type == 'mice' and self.days > 0:
+                self.target_price = self.product_id.list_price * self.quantity * self.days
+            else:
+                self.target_price = self.product_id.list_price * self.quantity
+        
+        # Otel konaklaması ürünü seçildiğinde
+        self._onchange_product_id_hotel()
+    
+    @api.onchange('product_id')
+    def _onchange_product_id_hotel(self):
+        """Otel konaklaması ürünü seçildiğinde"""
+        if self.product_id and self.product_id.is_hotel_accommodation:
+            # Varsayılan değerler
+            if not self.days:
+                self.days = 1
+            if not self.quantity:
+                self.quantity = 1
+            if not self.uom_id or not self.uom_id.name:
+                # Uygun bir birim bul veya varsayılan olarak "Single-BB" kullan
+                uom = self.env['uom.uom'].search([('name', '=', 'Single-BB')], limit=1)
+                if uom:
+                    self.uom_id = uom.id
+            
+            # Name alanını temizle, otel seçilince dolacak
+            if not self.hotel_partner_id:
+                self.name = _("Otel seçiniz...")
+    
+    @api.onchange('hotel_partner_id')
+    def _onchange_hotel_partner_id(self):
+        """Otel seçildiğinde name alanını güncelle"""
+        if self.product_id and self.product_id.is_hotel_accommodation and self.hotel_partner_id:
+            # Name alanına otel bilgilerini yaz
+            hotel_name = self.hotel_partner_id.name
+            if self.hotel_partner_id.hotel_star_rating:
+                hotel_name += f" {self.hotel_partner_id.hotel_star_rating}*"
+            
+            # Mevcut name alanını güncelle
+            self.name = hotel_name
+    
+    @api.onchange('uom_id', 'days', 'quantity')
+    def _onchange_hotel_calculation_fields(self):
+        """Hesaplama alanları değiştiğinde hedef toplam güncelle"""
+        if self.product_id and self.product_id.is_hotel_accommodation:
+            # Target price'ı birim fiyat olarak kullan
+            # Toplam hedef: gün × adet × birim fiyat
+            if self.target_price and self.days and self.quantity:
+                total_target = self.days * self.quantity * self.target_price
+                # Bu değeri göstermek için computed field eklenebilir
+    
+    def _get_lang(self):
+        """
+        Get the language for the current record.
+        This method is used by the product configurator.
+        """
+        return self.tender_id._get_lang()
+
+@api.constrains('days', 'product_id', 'tender_id.tender_type')
+def _check_days_for_accommodation(self):
+    """
+    Validate that accommodation products (for MICE tender type) have a days value greater than 0.
+    This is important for hotel bookings and similar services where duration matters.
+    """
+    for line in self:
+        if line.tender_id.tender_type == 'mice' and line.product_id and line.product_id.type == 'service':
+            # Check if the product name or category contains accommodation-related keywords
+            accommodation_keywords = ['hotel', 'konaklama', 'accommodation', 'room', 'oda']
+            product_name_lower = line.product_id.name.lower() if line.product_id.name else ''
+            category_name_lower = line.product_id.categ_id.name.lower() if line.product_id.categ_id else ''
+            
+            is_accommodation = any(keyword in product_name_lower or keyword in category_name_lower
+                                  for keyword in accommodation_keywords)
+            
+            if is_accommodation and line.days <= 0:
+                raise ValidationError(_(
+                    "Konaklama ürünleri için gün sayısı 0'dan büyük olmalıdır. "
+                    "Lütfen '%s' ürünü için gün sayısını belirtin."
+                ) % line.product_id.name)
 
 class AkTender(models.Model):
     _name = 'ak.tender'
@@ -131,8 +247,9 @@ class AkTender(models.Model):
 
     start_date = fields.Datetime(string=_('Başlangıç Tarihi'), default=fields.Datetime.now(), required=True)
     end_date = fields.Datetime(string=_('Bitiş Tarihi'), required=True)
+    tender_round = fields.Integer(string=_('Teklif Turu'), default=1, help=_("Bu ihalenin hangi turda olduğu (1, 2, 3...)."))
     required_delivery_date = fields.Date(string=_('Gerekli Teslim Tarihi'),
-                              help=_("Satın alma siparişlerinde kullanılacak gerekli teslim tarihi."))
+                               help=_("Satın alma siparişlerinde kullanılacak gerekli teslim tarihi."))
     description = fields.Html(string=_('İhale Açıklaması'),
                               help=_("İhale ile ilgili detaylı bilgiler ve şartnameler."))
     
@@ -152,9 +269,11 @@ class AkTender(models.Model):
     
     # TEKLİF DOKÜMANINA GÖRE KRİTİK ALAN: HEDEF FİYAT
     target_price = fields.Monetary(string=_('Hedef Fiyat'), currency_field='currency_id',
-                                   help=_("Satın Alma Direktörü tarafından belirlenen hedef fiyat."),
-                                   tracking=True) # Değişiklikleri takip et
+                                   help=_("Satın Alma Direktörü tarafından belirlenen hedef fiyat."))
     currency_id = fields.Many2one('res.currency', string=_('Para Birimi'), default=lambda self: self.env.company.currency_id)
+    company_id = fields.Many2one('res.company', string=_('Şirket'), default=lambda self: self.env.company)
+    pricelist_id = fields.Many2one('product.pricelist', string=_('Fiyat Listesi'),
+                                  default=lambda self: self.env['product.pricelist'].search([], limit=1))
     
     # NPV (Net Present Value) Hesaplama Alanları
     npv_value = fields.Monetary(string=_('NPV Değeri'), currency_field='currency_id',
@@ -217,6 +336,14 @@ class AkTender(models.Model):
             else:
                 tender.bulk_purchase_count = 0
             
+    @api.model_create_multi
+    def _get_lang(self):
+        """
+        Get the language for the current record.
+        This method is used by the product configurator.
+        """
+        return self.env.lang or 'en_US'
+        
     @api.model_create_multi
     def create(self, vals_list):
         for vals in vals_list:
@@ -500,7 +627,7 @@ class AkTender(models.Model):
                         'vendor_id': po.id,
                         'product_qty': po_line.product_qty,
                         'product_uom_name': po_line.product_uom.name if po_line.product_uom else '',
-                        'alternative_product': po_line.alternative_product if hasattr(po_line, 'alternative_product') else '',
+                        'alt_materials': po_line.alt_materials if hasattr(po_line, 'alt_materials') else '',
                         'discount': po_line.discount,
                         'price_subtotal': po_line.price_subtotal,
                         'currency_name': po_line.currency_id.name if po_line.currency_id else '',
@@ -639,6 +766,7 @@ class AkTender(models.Model):
                     'display_type': 'product',
                     'product_id': template_line.product_id.id,
                     'name': template_line.name or template_line.product_id.name,
+                    'days': template_line.days,
                     'quantity': template_line.product_qty,
                     'uom_id': template_line.product_uom_id.id,
                     'sequence': template_line.sequence,

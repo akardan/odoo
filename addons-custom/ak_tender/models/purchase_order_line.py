@@ -10,15 +10,20 @@ class PurchaseOrderLine(models.Model):
     
     tender_line_id = fields.Many2one('ak.tender.line', string='İhale Kalemi', ondelete='set null')
     
+    # Otel seçimi için
+    hotel_partner_id = fields.Many2one(
+        'res.partner',
+        string=_("Otel"),
+        domain=[('is_hotel', '=', True)],
+        help=_("Konaklama için otel seçin")
+    )
+    
     # Multi-currency support
     currency_id = fields.Many2one('res.currency', string='Para Birimi',
                                  help="Teklif kaleminin para birimi. Farklı para birimlerinde teklif verebilmek için kullanılır.",
                                  default=lambda self: self.env.company.currency_id)
     
-    # Alternative product support - simplified approach
-    alternative_product = fields.Char(string='Muadil Ürün Bilgisi',
-                                     help="Eğer teklif edilen ürün talep edilenden farklı ise, "
-                                          "muadil ürün bilgilerini buraya giriniz (marka, model, kod vb.).")
+    # Alternative product support is handled by alt_materials field
     
     # Additional fields for supplier portal editing
     warranty_period = fields.Integer(
@@ -51,10 +56,20 @@ class PurchaseOrderLine(models.Model):
     @api.onchange('tender_line_id')
     def _onchange_tender_line_id(self):
         """Update line fields based on tender line"""
-        if self.tender_line_id:
-            self.name = self.tender_line_id.name or ''
-            self.product_uom = self.tender_line_id.uom_id.id if self.tender_line_id.uom_id else (self.product_id.uom_id.id if self.product_id else False)
-            self.product_qty = self.tender_line_id.quantity or 1.0
+        if not self.tender_line_id:
+            return
+            
+        self.name = self.tender_line_id.name or ''
+        self.product_uom = self.tender_line_id.uom_id.id if self.tender_line_id.uom_id else (self.product_id.uom_id.id if self.product_id else False)
+        self.product_qty = self.tender_line_id.quantity or 1.0
+        
+        # Otel bilgilerini kopyala
+        if self.tender_line_id.product_id and self.tender_line_id.product_id.is_hotel_accommodation:
+            self.hotel_partner_id = self.tender_line_id.hotel_partner_id
+            
+            # Oda-pansiyon bilgisini name sonuna ekle
+            if self.tender_line_id.uom_id and self.tender_line_id.uom_id.name:
+                self.name = f"{self.name} - {self.tender_line_id.uom_id.name}"
 
     # price_unit is a standard field.
     # price_subtotal is a standard field.

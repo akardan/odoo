@@ -106,19 +106,21 @@
                                         <t t-else="">
                                             <!-- Product row -->
                                             <tr class="product-row">
-                                                <td class="product-col" t-att-rowspan="9">
+                                                <td class="product-col" t-att-rowspan="8">
                                                     <div><strong t-field="tender_line.product_id.display_name"/></div>
                                                     <t t-if="tender_line.product_id.description_purchase">
                                                         <div class="mt-2" style="padding-left: 15px; font-size: 12px;">
                                                             <strong>Satınalma Açıklaması:</strong>
                                                         </div>
-                                                        <div class="mt-1" style="padding-left: 15px; font-size: 12px;">
+                                                        <div class="mt-1" style="padding-left: 15px; font-size: 12px; max-height: 220px; overflow: hidden;">
                                                             <t t-if="tender_line.product_id.description_purchase">
-                                                                <t t-foreach="tender_line.product_id.description_purchase.split('\n')" t-as="line">
-                                                                    <t t-if="line.strip()">
-                                                                        <div t-esc="line"/>
+                                                                <div style="display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis;">
+                                                                    <t t-foreach="tender_line.product_id.description_purchase.split('\n')" t-as="line">
+                                                                        <t t-if="line.strip()">
+                                                                            <div t-esc="line" style="overflow: hidden; text-overflow: ellipsis;"/>
+                                                                        </t>
                                                                     </t>
-                                                                </t>
+                                                                </div>
                                                             </t>
                                                         </div>
                                                     </t>
@@ -173,7 +175,7 @@
                                                     </t>
                                                     
                                                     <td class="vendor-col">
-                                                        <span t-if="vendor_line and vendor_line.alternative_product" t-field="vendor_line.alternative_product"/>
+                                                        <span t-if="vendor_line and vendor_line.alt_materials" t-field="vendor_line.alt_materials"/>
                                                         <span t-else="">-</span>
                                                     </td>
                                                 </t>
@@ -329,45 +331,6 @@
                                                 </t>
                                             </tr>
                                             
-                                            <!-- Selection row -->
-                                            <tr>
-                                                <td class="field-col">Seçim:</td>
-                                                
-                                                <!-- First collect all non-zero amounts for this product -->
-                                                <t t-set="product_amounts" t-value="[]"/>
-                                                <t t-foreach="o.purchase_order_ids" t-as="vendor_collect">
-                                                    <t t-set="vendor_line_collect" t-value="False"/>
-                                                    <t t-foreach="vendor_collect.order_line" t-as="line_collect">
-                                                        <t t-if="line_collect.tender_line_id and line_collect.tender_line_id.id == tender_line.id">
-                                                            <t t-set="vendor_line_collect" t-value="line_collect"/>
-                                                        </t>
-                                                    </t>
-                                                    <t t-if="vendor_line_collect and vendor_line_collect.price_subtotal > 0">
-                                                        <t t-set="product_amounts" t-value="product_amounts + [vendor_line_collect.price_subtotal]"/>
-                                                    </t>
-                                                </t>
-                                                <!-- Find minimum non-zero amount -->
-                                                <t t-set="min_product_amount" t-value="min(product_amounts) if product_amounts else 0"/>
-                                                
-                                                <t t-foreach="o.purchase_order_ids" t-as="vendor">
-                                                    <t t-set="vendor_line" t-value="False"/>
-                                                    <t t-foreach="vendor.order_line" t-as="line">
-                                                        <t t-if="line.tender_line_id and line.tender_line_id.id == tender_line.id">
-                                                            <t t-set="vendor_line" t-value="line"/>
-                                                        </t>
-                                                    </t>
-                                                    
-                                                    <td class="vendor-col text-center">
-                                                        <!-- Auto-check if this vendor has the lowest non-zero amount -->
-                                                        <t t-if="vendor_line and vendor_line.price_subtotal > 0 and vendor_line.price_subtotal == min_product_amount">
-                                                            <input type="checkbox" name="vendor_selection" t-att-value="vendor.id" class="form-check-input" checked="checked"/>
-                                                        </t>
-                                                        <t t-else="">
-                                                            <input type="checkbox" name="vendor_selection" t-att-value="vendor.id" class="form-check-input"/>
-                                                        </t>
-                                                    </td>
-                                                </t>
-                                            </tr>
                                         </t>
                                     </t>
                                     

@@ -19,7 +19,7 @@
     'category': 'Purchases',
     'version': '0.5', # Versiyon yükseltildi
     'sequence': -225,
-    'depends': ['base', 'purchase', 'stock', 'mail', 'contacts', 'product', 'portal', 'ak_workflow'],
+    'depends': ['base', 'purchase', 'stock', 'mail', 'contacts', 'product', 'portal', 'ak_workflow', 'sale'],
     'data': [
         'security/ir.model.access.csv',
         'data/config_data.xml',
@@ -35,6 +35,8 @@
         'views/bulk_purchase_wizard_views.xml',
         'views/add_supplier_wizard_views.xml',
         'views/tender_template_views.xml',
+        'views/product_views.xml',
+        'wizards/import_hotel_wizard_views.xml',
         'report/vendor_comparison_report.xml',
     ],
     'demo': [

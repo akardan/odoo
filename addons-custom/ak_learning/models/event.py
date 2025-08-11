@@ -5,12 +5,12 @@ class EventEvent(models.Model):
     
     training_id = fields.Many2one(
         'slide.channel',
-        string=_('Training'),
-        help=_('Select the training channel for this event')
+        string=_("Training"),
+        help=_("Select the training channel for this event")
     )
     
     is_training_event = fields.Boolean(
-        string=_('Is Training Event'), 
+        string=_("Is Training Event"),
         compute='_compute_is_training_event',
         store=True
     )

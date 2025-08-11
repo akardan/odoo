@@ -8,5 +8,6 @@
             </xpath>
         </template>
         
+        <!-- Include JavaScript for product configurator -->
     </data>
 </odoo>

@@ -18,20 +18,13 @@
                             <field name="tender_type" invisible="1"/>
                         </div>
                         <div class="oe_button_box" name="button_box">
-                            <button name="action_view_purchase_orders"
+                            <button name="action_apply_template"
                                 type="object"
                                 class="oe_stat_button"
-                                icon="fa-shopping-cart"
-                                string="SAS'lar"
-                                help="Bu ihaleden oluşturulan Satın Alma Siparişleri"
-                                invisible="purchase_order_count == 0"
-                            />
-                            <button name="action_view_offers"
-                                type="object"
-                                class="oe_stat_button"
-                                icon="fa-balance-scale"
-                                string="Teklifler"
-                                help="Tedarikçilerden gelen teklifler (SAT)"
+                                icon="fa-clipboard-list"
+                                string="Şablon Uygula"
+                                help="Seçili şablonu ihaleye uygula"
+                                invisible="service_template_id == False or workflow_current_state_id.code in ('approved', 'done', 'cancel')"
                             />
                             <button name="action_add_supplier"
                                 type="object"
@@ -49,29 +42,37 @@
                                 help="Davetli tedarikçilerin hepsi için satın alma talebi oluştur"
                                 invisible="workflow_current_state_id.code in ('approved', 'done', 'cancel')"
                             />
-                            <button name="action_apply_template"
+                            <button name="action_view_offers"
                                 type="object"
                                 class="oe_stat_button"
-                                icon="fa-clipboard-list"
-                                string="Şablon Uygula"
-                                help="Seçili şablonu ihaleye uygula"
-                                invisible="service_template_id == False or workflow_current_state_id.code in ('approved', 'done', 'cancel')"
+                                icon="fa-balance-scale"
+                                string="Teklif Karşılaştır"
+                                help="Tedarikçilerden gelen teklifleri (SAT) karşılaştır"
+                            />
+                            <button name="action_view_purchase_orders"
+                                type="object"
+                                class="oe_stat_button"
+                                icon="fa-shopping-cart"
+                                string="SAS'lar"
+                                help="Bu ihaleden oluşturulan Satın Alma Siparişleri"
+                                invisible="purchase_order_count == 0"
                             />
                         </div>
                         <div class="oe_title">
                             <h1>
                                 <field name="name" placeholder="İhale Adı" />
                             </h1>
-                            <field name="code" readonly="1" class="oe_inline"/>
                         </div>
                         <group>
                             <group>
+                                <field name="code" readonly="1"/>
                                 <field name="tender_type" />
                                 <field name="start_date" />
                                 <field name="end_date" />
                                 <field name="required_delivery_date" />
                             </group>
                             <group>
+                                <field name="tender_round" readonly="1"/>
                                 <field name="erp_pr_id" placeholder="ERP SAT No" />
                                 <field name="erp_company_code" placeholder="ERP Şirket Kodu"/>
                                 <field name="erp_plant_code" placeholder="ERP Tesis Kodu"/>
@@ -81,22 +82,69 @@
 
                         <notebook>
                             <page string="İhale Kalemleri" name="tender_lines">
-                                <field name="tender_lines" nolabel="1">
+                                <field name="tender_lines" nolabel="1" widget="section_and_note_one2many">
                                     <list editable="bottom">
                                         <field name="sequence" widget="handle"/>
-                                        <field name="product_id" />
-                                        <field name="name" />
-                                        <field name="quantity" />
-                                        <field name="uom_id" />
+                                        <field name="display_type" column_invisible="True"/>
+                                        <field name="product_id"
+                                               optional="show"
+                                               domain="[('purchase_ok', '=', True)]"
+                                               widget="many2one"
+                                               placeholder="Type to find a product..."/>
+                                        <field name="hotel_partner_id"
+                                               optional="show"
+                                               widget="many2one"
+                                               options="{'no_create': True, 'no_open': True}"
+                                               column_invisible="parent.tender_type != 'mice'"
+                                               invisible="is_hotel_accommodation != True"/>
+                                        <field name="name"/>
+                                        <field name="days" column_invisible="parent.tender_type != 'mice'" />
+                                        <field name="quantity"/>
+                                        <field name="uom_id"/>
                                         <field name="required_delivery_date" />
+                                        <field name="target_price" widget="monetary" options="{'currency_field': 'currency_id'}" />
+                                        <control>
+                                            <create string="Ürün Ekle" context="{'default_display_type': 'product'}"/>
+                                            <create string="Bölüm Ekle" context="{'default_display_type': 'line_section'}"/>
+                                            <create string="Not Ekle" context="{'default_display_type': 'line_note'}"/>
+                                        </control>
                                     </list>
                                     <form>
-                                        <group>
-                                            <field name="product_id"/>
-                                            <field name="quantity"/>
-                                            <field name="uom_id"/>
-                                            <field name="required_delivery_date"/>
+                                        <field name="sequence" invisible="1"/>
+                                        <field name="display_type" invisible="1"/>
+                                        <group invisible="display_type">
+                                            <group>
+                                                <field name="product_id" required="not display_type"/>
+                                                <field name="days" invisible="parent.tender_type != 'mice'"/>
+                                                <field name="quantity"/>
+                                                <field name="uom_id"/>
+                                                <field name="required_delivery_date"/>
+                                                <field name="target_price" widget="monetary" options="{'currency_field': 'currency_id'}"/>
+                                            </group>
                                         </group>
+                                        
+                                        <!-- İhale Bilgileri grubu -->
+                                        <group string="İhale Bilgileri" name="tender_info">
+                                            <field name="is_hotel_accommodation"/>
+                                        </group>
+                                        
+                                        <!-- Otel seçimi için grup -->
+                                        <group invisible="is_hotel_accommodation != True">
+                                            <field name="hotel_partner_id"
+                                                   options="{'no_create': True, 'no_open': True}"
+                                                   required="is_hotel_accommodation == True"/>
+                                        </group>
+                                        <notebook colspan="4" name="description">
+                                            <page string="Description" name="order_description" invisible="display_type">
+                                                <field name="name" />
+                                            </page>
+                                            <page string="Section" name="order_section" invisible="display_type != 'line_section'">
+                                                <field name="name" />
+                                            </page>
+                                            <page string="Note" name="order_note" invisible="display_type != 'line_note'">
+                                                <field name="name" />
+                                            </page>
+                                        </notebook>
                                     </form>
                                 </field>
                                 <p class="oe_grey">
