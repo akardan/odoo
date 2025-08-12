@@ -6,7 +6,7 @@ from . import purchase_order_line
 from . import product
 from . import res_config_settings
 from . import res_partner
-from . import service_category_template
+# from . import service_category_template  # Deprecated: replaced by tender_template
 from . import tender
 from . import tender_template
 from . import tier_definition

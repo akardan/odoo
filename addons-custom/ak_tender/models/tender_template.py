@@ -38,7 +38,7 @@ class TenderTemplate(models.Model):
                        help=_("Bu şablonun geçerli olduğu şehir. Boş bırakılırsa tüm şehirler için geçerlidir."))
     
     # İlişkili İhaleler
-    tender_ids = fields.One2many('ak.tender', 'service_template_id', string=_('İhaleler'))
+    tender_ids = fields.One2many('ak.tender', 'tender_template_id', string=_('İhaleler'))
     tender_count = fields.Integer(string=_('İhale Sayısı'), compute='_compute_tender_count')
     
     # İhale Tipi
@@ -104,8 +104,8 @@ class TenderTemplate(models.Model):
         """View tenders using this template."""
         self.ensure_one()
         action = self.env.ref('ak_tender.action_ak_tender').read()[0]
-        action['domain'] = [('service_template_id', '=', self.id)]
-        action['context'] = {'default_service_template_id': self.id, 'default_tender_type': self.tender_type}
+        action['domain'] = [('tender_template_id', '=', self.id)]
+        action['context'] = {'default_tender_template_id': self.id, 'default_tender_type': self.tender_type}
         return action
     
     def action_duplicate_template(self):

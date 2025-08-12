@@ -233,8 +233,8 @@ class AkTender(models.Model):
     ], string=_('İhale Tipi'), default='direct', required=True)
     
     # MICE İhaleleri için Şablon
-    service_template_id = fields.Many2one('ak.tender.template', string=_('Hizmet Şablonu'),
-                                         help=_("MICE ihaleleri için kullanılacak hizmet şablonu."))
+    tender_template_id = fields.Many2one('ak.tender.template', string=_('İhale Şablonu'),
+                                         help=_("MICE ve diğer ihaleler için kullanılacak ihale şablonu."))
     
     # Coğrafi Filtreleme
     country_id = fields.Many2one('res.country', string=_('Ülke'),
@@ -716,7 +716,7 @@ class AkTender(models.Model):
     def _onchange_tender_type(self):
         """İhale tipi değiştiğinde ilgili alanları güncelle."""
         if self.tender_type != 'mice':
-            self.service_template_id = False
+            self.tender_template_id = False
             
     @api.onchange('required_delivery_date')
     def _onchange_required_delivery_date(self):
@@ -726,32 +726,32 @@ class AkTender(models.Model):
                 if not line.required_delivery_date:
                     line.required_delivery_date = self.required_delivery_date
     
-    @api.onchange('service_template_id')
-    def _onchange_service_template_id(self):
-        """Hizmet şablonu seçildiğinde şablonu uygula."""
-        if not self.service_template_id:
+    @api.onchange('tender_template_id')
+    def _onchange_tender_template_id(self):
+        """İhale şablonu seçildiğinde şablonu uygula."""
+        if not self.tender_template_id:
             return
         
         # Şablonu uygula - her ihale tipi için kendi şablonu uygulanabilir
         
         # Coğrafi bilgileri güncelle
-        if self.service_template_id.country_ids:
+        if self.tender_template_id.country_ids:
             # Şablonda ülke kısıtlaması varsa, ilk ülkeyi seç
-            self.country_id = self.service_template_id.country_ids[0].id
-        if self.service_template_id.state_ids:
+            self.country_id = self.tender_template_id.country_ids[0].id
+        if self.tender_template_id.state_ids:
             # Şablonda il kısıtlaması varsa ve seçilen ülkeye uygunsa, ilk ili seç
-            states = self.service_template_id.state_ids.filtered(lambda s: s.country_id.id == self.country_id.id)
+            states = self.tender_template_id.state_ids.filtered(lambda s: s.country_id.id == self.country_id.id)
             if states:
                 self.state_id = states[0].id
-        if self.service_template_id.city:
-            self.city = self.service_template_id.city
+        if self.tender_template_id.city:
+            self.city = self.tender_template_id.city
         
         # Mevcut satırları temizle
         self.tender_lines = [(5, 0, 0)]
         
         # Şablon satırlarını ekle
         lines = []
-        for template_line in self.service_template_id.line_ids:
+        for template_line in self.tender_template_id.line_ids:
             if template_line.display_type in ['line_section', 'line_note']:
                 # Bölüm veya not satırı
                 vals = {
@@ -780,11 +780,11 @@ class AkTender(models.Model):
     def action_apply_template(self):
         """Seçili şablonu ihaleye uygula."""
         self.ensure_one()
-        if not self.service_template_id:
-            raise ValidationError(_("Önce bir hizmet şablonu seçmelisiniz."))
+        if not self.tender_template_id:
+            raise ValidationError(_("Önce bir ihale şablonu seçmelisiniz."))
         
         # Şablonu uygula
-        self._onchange_service_template_id()
+        self._onchange_tender_template_id()
         
         return {
             'type': 'ir.actions.client',
