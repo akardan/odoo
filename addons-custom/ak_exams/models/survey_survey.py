@@ -122,9 +122,13 @@ class SurveySurvey(models.Model):
                 answer = row[yanit_header_indices["Yanıt"] - 1]
                 is_correct = row[yanit_header_indices["Doğru mu"] - 1]
                 
-                # If the answer is correct, store it
+                # If the answer is correct, store it in a list of correct answers
                 if is_correct == 1:
-                    correct_answers[question_text] = str(answer).strip().lower()
+                    answer_str = str(answer).strip().lower()
+                    if question_text not in correct_answers:
+                        correct_answers[question_text] = []
+                    if answer_str not in correct_answers[question_text]:
+                        correct_answers[question_text].append(answer_str)
             
             # Now process the "Soru" sheet
             soru_sheet = workbook["Soru"]
@@ -202,16 +206,16 @@ class SurveySurvey(models.Model):
                     'suggested_answer_ids': []
                 }
                 
-                # Get correct answer for this question
-                correct_answer = correct_answers.get(question_text, "").lower()
+                # Get correct answers for this question (now a list)
+                correct_answer_list = correct_answers.get(question_text, [])
                 
                 # Add options
                 for option_letter in ["A", "B", "C", "D"]:
                     if option_letter in soru_header_indices:
                         option_text = row[soru_header_indices[option_letter] - 1]
                         if option_text:
-                            # Check if this is the correct answer
-                            is_correct = correct_answer == option_letter.lower()
+                            # Check if this option letter is in the list of correct answers
+                            is_correct = option_letter.lower() in correct_answer_list
                             
                             question_vals['suggested_answer_ids'].append((0, 0, {
                                 'value': option_text,
@@ -238,12 +242,16 @@ class SurveySurvey(models.Model):
                     
                     # Update suggested answers if needed
                     suggested_answers = []
+                    
+                    # Get correct answers for this question (now a list)
+                    correct_answer_list = correct_answers.get(question_text, [])
+                    
                     for option_letter in ["A", "B", "C", "D"]:
                         if option_letter in soru_header_indices:
                             option_text = row[soru_header_indices[option_letter] - 1]
                             if option_text:
-                                # Check if this is the correct answer
-                                is_correct = correct_answer == option_letter.lower()
+                                # Check if this option letter is in the list of correct answers
+                                is_correct = option_letter.lower() in correct_answer_list
                                 
                                 # Find existing suggested answer
                                 existing_answer = False
@@ -411,15 +419,15 @@ class SurveySurvey(models.Model):
             participants_updated = 0
             answers_created = 0
             
-            # Find or create department "Kaya Ekibi"
+            # Find or create department based on team_name
             department = self.env['hr.department'].search([
-                ('name', '=', 'Kaya Ekibi'),
+                ('name', '=', team_name),
                 '|', ('company_id', '=', self.company_id.id), ('company_id', '=', False)
             ], limit=1)
             
             if not department:
                 department = self.env['hr.department'].create({
-                    'name': 'Kaya Ekibi',
+                    'name': team_name,
                     'company_id': self.company_id.id,
                 })
             
@@ -678,18 +686,29 @@ class SurveySurvey(models.Model):
             team_members_updated = 0
             
             if has_team_sheet:
-                # Find or create "Kaya Ekibi" team
-                kaya_team = self.env['crm.team'].search([('name', '=', 'Kaya Ekibi')], limit=1)
-                if not kaya_team:
-                    kaya_team = self.env['crm.team'].create({
-                        'name': 'Kaya Ekibi',
+                # Get the main team name from the Katılımcı sheet
+                # Use the first non-empty team name from participant_info
+                main_team_name = ""
+                for p_info in participant_info.values():
+                    if p_info.get('team'):
+                        main_team_name = p_info.get('team')
+                        break
+                
+                if not main_team_name:
+                    raise UserError(_("No team name found in the Katılımcı sheet. Please ensure the 'Takım' column is filled."))
+                
+                # Find or create team based on main_team_name
+                group_team = self.env['crm.team'].search([('name', '=', main_team_name)], limit=1)
+                if not group_team:
+                    group_team = self.env['crm.team'].create({
+                        'name': main_team_name,
                         'team_type': 'G',  # Group type
                     })
                     teams_created += 1
                 else:
                     # Update team_type if needed
-                    if kaya_team.team_type != 'G':
-                        kaya_team.write({'team_type': 'G'})
+                    if group_team.team_type != 'G':
+                        group_team.write({'team_type': 'G'})
                     teams_updated += 1
                 
                 # Dictionary to store regions and their teams
@@ -718,18 +737,18 @@ class SurveySurvey(models.Model):
                     if not any(row):
                         continue
                     
-                    # Get values
-                    brick_name = row[team_header_indices["BRICK"] - 1]
-                    brick_code = row[team_header_indices["BRICK CODE"] - 1]
-                    city = row[team_header_indices["İL"] - 1]
-                    region = row[team_header_indices["BÖLGE"] - 1]
-                    sharing = row[team_header_indices["PAYLAŞIM"] - 1]
-                    rep1 = row[team_header_indices["REP 1"] - 1]
-                    rep2 = row[team_header_indices["REP 2"] - 1]
-                    rep3 = row[team_header_indices["REP 3"] - 1]
+                    # Get values (safely handle missing columns)
+                    brick_name = row[team_header_indices.get("BRICK", 0) - 1] if "BRICK" in team_header_indices else ""
+                    brick_code = row[team_header_indices.get("BRICK CODE", 0) - 1] if "BRICK CODE" in team_header_indices else ""
+                    city = row[team_header_indices.get("İL", 0) - 1] if "İL" in team_header_indices else ""
+                    region = row[team_header_indices["BÖLGE"] - 1]  # BÖLGE is required
+                    sharing = row[team_header_indices.get("PAYLAŞIM", 0) - 1] if "PAYLAŞIM" in team_header_indices else ""
+                    rep1 = row[team_header_indices["REP 1"] - 1]  # REP 1 is required
+                    rep2 = row[team_header_indices.get("REP 2", 0) - 1] if "REP 2" in team_header_indices else ""
+                    rep3 = row[team_header_indices.get("REP 3", 0) - 1] if "REP 3" in team_header_indices else ""
                     
-                    # Skip if brick name or code is empty
-                    if not brick_name or not brick_code:
+                    # Skip if region is empty (only check required fields)
+                    if not region:
                         continue
                     
                     # Convert sharing percentage to float
@@ -746,13 +765,13 @@ class SurveySurvey(models.Model):
                     if region not in region_teams:
                         region_team = self.env['crm.team'].search([
                             ('name', '=', region),
-                            ('parent_id', '=', kaya_team.id)
+                            ('parent_id', '=', group_team.id)
                         ], limit=1)
                         
                         if not region_team:
                             region_team = self.env['crm.team'].create({
                                 'name': region,
-                                'parent_id': kaya_team.id,
+                                'parent_id': group_team.id,
                                 'team_type': 'R',  # Region type
                             })
                             teams_created += 1
@@ -761,8 +780,8 @@ class SurveySurvey(models.Model):
                             update_vals = {}
                             if region_team.team_type != 'R':
                                 update_vals['team_type'] = 'R'
-                            if region_team.parent_id.id != kaya_team.id:
-                                update_vals['parent_id'] = kaya_team.id
+                            if region_team.parent_id.id != group_team.id:
+                                update_vals['parent_id'] = group_team.id
                             
                             if update_vals:
                                 region_team.write(update_vals)
@@ -773,54 +792,57 @@ class SurveySurvey(models.Model):
                     
                     region_team = region_teams[region]
                     
-                    # Find or create brick
-                    brick = self.env['crm.brick'].search([('code', '=', brick_code)], limit=1)
-                    
-                    # Find state by name or code
-                    state = False
-                    if city:
-                        # Try to find state by exact name
-                        state = self.env['res.country.state'].search([
-                            ('name', '=', city),
-                            ('country_id', '=', self.env.ref('base.tr').id)  # Turkey
-                        ], limit=1)
+                    # Process brick information if available
+                    brick = None
+                    if brick_code:
+                        # Find or create brick
+                        brick = self.env['crm.brick'].search([('code', '=', brick_code)], limit=1)
                         
-                        if not state:
-                            # Try to find state by name containing the city
+                        # Find state by name or code
+                        state = False
+                        if city:
+                            # Try to find state by exact name
                             state = self.env['res.country.state'].search([
-                                ('name', 'ilike', city),
+                                ('name', '=', city),
                                 ('country_id', '=', self.env.ref('base.tr').id)  # Turkey
                             ], limit=1)
                             
-                        if not state:
-                            # Try to find state by code
-                            state = self.env['res.country.state'].search([
-                                ('code', 'ilike', city[:3]),  # First 3 characters of city
-                                ('country_id', '=', self.env.ref('base.tr').id)  # Turkey
-                            ], limit=1)
-                    
-                    state_id = state.id if state else False
-                    
-                    if not brick:
-                        brick = self.env['crm.brick'].create({
-                            'name': brick_name,
-                            'code': brick_code,
-                            'state_id': state_id,
-                            'country_id': self.env.ref('base.tr').id,  # Turkey
-                            'active': True,
-                        })
-                        bricks_created += 1
-                    else:
-                        # Update brick with missing information
-                        update_vals = {}
+                            if not state:
+                                # Try to find state by name containing the city
+                                state = self.env['res.country.state'].search([
+                                    ('name', 'ilike', city),
+                                    ('country_id', '=', self.env.ref('base.tr').id)  # Turkey
+                                ], limit=1)
+                                
+                            if not state:
+                                # Try to find state by code
+                                state = self.env['res.country.state'].search([
+                                    ('code', 'ilike', city[:3]),  # First 3 characters of city
+                                    ('country_id', '=', self.env.ref('base.tr').id)  # Turkey
+                                ], limit=1)
                         
-                        # Update name if different
-                        if brick.name != brick_name:
-                            update_vals['name'] = brick_name
+                        state_id = state.id if state else False
                         
-                        # Update state_id if it's not set or different
-                        if state_id and (not brick.state_id or brick.state_id.id != state_id):
-                            update_vals['state_id'] = state_id
+                        if not brick:
+                            brick = self.env['crm.brick'].create({
+                                'name': brick_name or brick_code,  # Use code as name if name is empty
+                                'code': brick_code,
+                                'state_id': state_id,
+                                'country_id': self.env.ref('base.tr').id,  # Turkey
+                                'active': True,
+                            })
+                            bricks_created += 1
+                        else:
+                            # Update brick with missing information
+                            update_vals = {}
+                            
+                            # Update name if different and not empty
+                            if brick_name and brick.name != brick_name:
+                                update_vals['name'] = brick_name
+                            
+                            # Update state_id if it's not set or different
+                            if state_id and (not brick.state_id or brick.state_id.id != state_id):
+                                update_vals['state_id'] = state_id
                         
                         # Update country_id if it's not set
                         if not brick.country_id:
@@ -908,8 +930,9 @@ class SurveySurvey(models.Model):
                                 team_member.write({'crm_team_id': region_team.id})
                             team_members_updated += 1
                         
-                        # Link brick to team member
-                        brick.territory_id = team_member.id
+                        # Link brick to team member if brick exists
+                        if brick:
+                            brick.territory_id = team_member.id
             
             # Clear the file after import
             self.excel_file = False
@@ -920,7 +943,7 @@ class SurveySurvey(models.Model):
                 'tag': 'display_notification',
                 'params': {
                     'title': _('Import Successful'),
-                    'message': _('Created: %s questions, %s participants, %s answers, %s contacts, %s employees, %s users, %s teams, %s bricks, %s team members\nUpdated: %s questions, %s participants, %s employees, %s users, %s teams, %s bricks, %s team members\nFixed score: 25 questions, 4 points per question\nNote: All questions from Soru sheet are imported, but each participant only has answers for their 25 assigned questions\nParticipant scores are imported from the "Puan" column in the Katılımcı sheet\nEmployees created with Department "Kaya Ekibi" and Job Position "Rep"\nEmployees linked to users and contacts for full integration\nTeam data imported from TEAM sheet with regions under Kaya Ekibi\nReimporting updates existing records instead of creating duplicates') % (
+                    'message': _('Created: %s questions, %s participants, %s answers, %s contacts, %s employees, %s users, %s teams, %s bricks, %s team members\nUpdated: %s questions, %s participants, %s employees, %s users, %s teams, %s bricks, %s team members\nFixed score: 25 questions, 4 points per question\nNote: All questions from Soru sheet are imported, but each participant only has answers for their 25 assigned questions\nParticipant scores are imported from the "Puan" column in the Katılımcı sheet\nEmployees created with Department based on team name and Job Position "Rep"\nEmployees linked to users and contacts for full integration\nTeam data imported from TEAM sheet with regions\nReimporting updates existing records instead of creating duplicates') % (
                         questions_created, participants_created, answers_created, len(participants_data) - participants_updated,
                         employees_created, users_created, teams_created, bricks_created, team_members_created,
                         questions_updated, participants_updated, employees_updated, users_updated, teams_updated, bricks_updated, team_members_updated
@@ -945,107 +968,6 @@ class SurveySurvey(models.Model):
         default=0
     )
     
-    # Dashboard methods
-    @api.model
-    def get_dashboard_data(self, survey_id=False, team_id=False):
-        """
-        Get data for the survey dashboard
-        
-        :param survey_id: ID of the selected survey (optional)
-        :param team_id: ID of the selected team (optional)
-        :return: Dictionary with dashboard data
-        """
-        # Get surveys of type 'assessment' (exams)
-        domain = [('survey_type', '=', 'assessment')]
-        surveys = self.search_read(domain, ['id', 'title'])
-        
-        # Get teams
-        teams = self.env['crm.team'].search_read([], ['id', 'name'])
-        
-        # Filter user inputs based on survey_id and team_id
-        user_input_domain = []
-        if survey_id:
-            user_input_domain.append(('survey_id', '=', int(survey_id)))
-        
-        # Get user inputs
-        user_inputs = self.env['survey.user_input'].search(user_input_domain)
-        
-        # Filter by team if specified
-        if team_id:
-            team_id = int(team_id)
-            # Get employees in the selected team
-            team_employees = self.env['hr.employee'].search([('department_id.name', '=', 'Kaya Ekibi')])
-            team_partners = team_employees.mapped('address_home_id')
-            team_users = self.env['res.users'].search([('partner_id', 'in', team_partners.ids)])
-            
-            # Filter user inputs by team members
-            user_inputs = user_inputs.filtered(lambda ui: ui.partner_id in team_partners)
-        
-        # Get top performers (top 10 or all with full marks)
-        top_performers = []
-        for user_input in user_inputs:
-            if user_input.scoring_percentage == 100 or len(top_performers) < 10:
-                top_performers.append({
-                    'name': user_input.partner_id.name or user_input.nickname or user_input.email,
-                    'score': user_input.scoring_percentage,
-                })
-        
-        # Sort top performers by score (descending)
-        top_performers = sorted(top_performers, key=lambda p: p['score'], reverse=True)
-        
-        # Limit to top 10 if there are more than 10 performers
-        if len(top_performers) > 10:
-            top_performers = top_performers[:10]
-        
-        # Get region averages
-        region_averages = []
-        region_teams = self.env['crm.team'].search([('team_type', '=', 'R')])
-        
-        for region_team in region_teams:
-            # Get employees in this region
-            region_employees = self.env['hr.employee'].search([
-                ('department_id.name', '=', 'Kaya Ekibi'),
-                ('user_id.crm_team_id', '=', region_team.id)
-            ])
-            region_partners = region_employees.mapped('address_home_id')
-            
-            # Get user inputs for this region
-            region_user_inputs = user_inputs.filtered(lambda ui: ui.partner_id in region_partners)
-            
-            if region_user_inputs:
-                # Calculate average score for this region
-                region_average = sum(ui.scoring_percentage for ui in region_user_inputs) / len(region_user_inputs)
-                
-                region_averages.append({
-                    'name': region_team.name,
-                    'average': region_average,
-                })
-        
-        # Sort region averages by average score (descending)
-        region_averages = sorted(region_averages, key=lambda r: r['average'], reverse=True)
-        
-        # Calculate Turkey average
-        turkey_average = 0
-        if user_inputs:
-            turkey_average = sum(ui.scoring_percentage for ui in user_inputs) / len(user_inputs)
-        
-        # Create region rankings
-        region_rankings = []
-        for i, region in enumerate(region_averages):
-            region_rankings.append({
-                'name': region['name'],
-                'rank': i + 1,
-                'average': region['average'],
-            })
-        
-        return {
-            'surveys': surveys,
-            'teams': teams,
-            'top_performers': top_performers,
-            'region_averages': region_averages,
-            'region_rankings': region_rankings,
-            'turkey_average': turkey_average,
-        }
 
     full_screen_mode = fields.Boolean(
         string=_('Full Screen Mode'),
@@ -1194,6 +1116,12 @@ class SurveyUserInput(models.Model):
     devtools_attempt_count = fields.Integer(string=_("Dev Tools Attempt Count"), default=0, readonly=True)
     print_screen_attempt_count = fields.Integer(string=_("Print Screen Attempt Count"), default=0, readonly=True)
     # copy_paste_attempt_count - Harder to track distinct "attempts" if successfully blocked.
+    
+    exclude_from_statistics = fields.Boolean(
+        string=_('Exclude from Statistics'),
+        help=_("If checked, this participant will be excluded from region average calculations"),
+        default=False
+    )
 
     total_security_violations = fields.Integer(
         string=_('Total Security Violations'),

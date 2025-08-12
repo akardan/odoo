@@ -111,6 +111,7 @@
                                 <field name="total_security_violations"/>
                                 <field name="accumulated_penalty_points"/>
                                 <field name="is_terminated"/>
+                                <field name="exclude_from_statistics"/>
                             </group>
                         </group>
                     </page>
@@ -126,6 +127,7 @@
         <field name="arch" type="xml">
             <xpath expr="//field[@name='state']" position="after">
                 <field name="is_terminated" optional="show"/>
+                <field name="exclude_from_statistics" optional="show"/>
                 <field name="total_security_violations" optional="show"/>
                 <field name="accumulated_penalty_points" optional="show"/>
                 <field name="fullscreen_violation_count" optional="hide"/>
