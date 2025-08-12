@@ -69,7 +69,7 @@
         <field name="name">superset.dashboard.kanban</field>
         <field name="model">superset.dashboard</field>
         <field name="arch" type="xml">
-            <kanban string="Dashboard Overview" class="o_dashboard_kanban" edit="false" sample="1" style="min-height: 220px;">
+            <kanban string="Dashboard Overview" class="o_dashboard_kanban" edit="false"  create="0" can_open="0" sample="1" style="min-height: 220px;">
                 <field name="id"/>
                 <field name="name"/>
                 <field name="dashboard_id"/>
