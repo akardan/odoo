@@ -103,6 +103,7 @@ class PurchaseOrder(models.Model):
                     'display_type': 'line_section',
                     'name': tender_line.name or '',
                     'tender_line_id': tender_line.id,
+                    'product_qty': 0.0,  # Set a default quantity for section lines
                 }
             elif tender_line.display_type == 'line_note':
                 # Note line
@@ -110,6 +111,7 @@ class PurchaseOrder(models.Model):
                     'display_type': 'line_note',
                     'name': tender_line.name or '',
                     'tender_line_id': tender_line.id,
+                    'product_qty': 0.0,  # Set a default quantity for note lines
                 }
             else:
                 # Product line
