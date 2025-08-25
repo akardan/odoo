@@ -795,9 +795,16 @@ class SurveySurvey(models.Model):
                     # Process brick information if available
                     brick = None
                     if brick_code:
+                        # Ensure brick_code is a string and pad to 7 digits with leading zeros
+                        # Convert to string if it's not already
+                        if not isinstance(brick_code, str):
+                            brick_code = str(int(brick_code))  # Convert to int first to remove any decimal part
+                        # Pad with leading zeros to make it 7 digits
+                        brick_code = brick_code.zfill(7)
+                       
                         # Find or create brick
                         brick = self.env['crm.brick'].search([('code', '=', brick_code)], limit=1)
-                        
+
                         # Find state by name or code
                         state = False
                         if city:
