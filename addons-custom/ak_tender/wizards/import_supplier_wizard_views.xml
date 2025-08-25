@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_import_supplier_wizard_form" model="ir.ui.view">
+        <field name="name">import.supplier.wizard.form</field>
+        <field name="model">import.supplier.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Tedarikçileri İçe Aktar">
+                <sheet>
+                    <div class="alert alert-info" role="alert">
+                        <p>Excel dosyasında aşağıdaki sayfalar olmalıdır:</p>
+                        <p><strong>SATICIANAVERI:</strong> Tedarikçi ana verileri</p>
+                        <p><strong>SATICIBANKA:</strong> Tedarikçi banka hesapları</p>
+                        <p><strong>MAILADRESI:</strong> Tedarikçi e-posta adresleri</p>
+                    </div>
+                    <group>
+                        <field name="import_mode" widget="radio"/>
+                        <field name="update_existing"/>
+                        <field name="excel_file" filename="file_name"/>
+                        <field name="file_name" invisible="1"/>
+                    </group>
+                </sheet>
+                <footer>
+                    <button name="action_import_suppliers" string="İçe Aktar" type="object" class="btn-primary"/>
+                    <button string="İptal" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Server Action for Import Suppliers -->
+    <record id="action_import_suppliers" model="ir.actions.server">
+        <field name="name">Tedarikçileri İçe Aktar</field>
+        <field name="model_id" ref="base.model_res_partner"/>
+        <field name="binding_model_id" ref="base.model_res_partner"/>
+        <field name="binding_view_types">list</field>
+        <field name="state">code</field>
+        <field name="code">
+            action = {
+                'name': 'Tedarikçileri İçe Aktar',
+                'type': 'ir.actions.act_window',
+                'res_model': 'import.supplier.wizard',
+                'view_mode': 'form',
+                'target': 'new',
+                'context': {'default_file_name': 'tedarikciler.xlsx'},
+            }
+        </field>
+    </record>
+</odoo>

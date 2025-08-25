@@ -37,6 +37,8 @@
         'views/tender_template_views.xml',
         'views/product_views.xml',
         'wizards/import_hotel_wizard_views.xml',
+        'wizards/import_supplier_wizard_views.xml',
+        'wizards/tender_template_selection_wizard_views.xml',
         'report/vendor_comparison_report.xml',
     ],
     'demo': [

@@ -140,6 +140,31 @@ class AkTenderLine(models.Model):
         This method is used by the product configurator.
         """
         return self.tender_id._get_lang()
+        
+    def action_view_purchase_history(self):
+        """
+        Show purchase history for the product in this tender line.
+        This method is called when the user clicks on the 'Purchase History' button.
+        """
+        self.ensure_one()
+        if not self.product_id:
+            raise ValidationError(_("Satınalma geçmişini görüntülemek için bir ürün seçmelisiniz."))
+            
+        # Search for purchase order lines with this product
+        domain = [('product_id', '=', self.product_id.id)]
+        
+        # Create an action to show the purchase order lines
+        action = {
+            'name': _('Satınalma Geçmişi: %s') % self.product_id.name,
+            'type': 'ir.actions.act_window',
+            'res_model': 'purchase.order.line',
+            'view_mode': 'list,form',
+            'domain': domain,
+            'context': {'create': False},
+            'target': 'new',
+        }
+        
+        return action
 
 @api.constrains('days', 'product_id', 'tender_id.tender_type')
 def _check_days_for_accommodation(self):
@@ -353,6 +378,20 @@ class AkTender(models.Model):
         # The workflow initialization is now correctly handled by the ak.workflow.mixin's create method.
         records = super().create(vals_list)
         return records
+        
+    def increment_tender_round(self):
+        """
+        Increment the tender round counter.
+        This method is called from workflow transition action when
+        'Yeni Teklif Turu Başlat' button is clicked.
+        """
+        self.ensure_one()
+        self.tender_round += 1
+        self.message_post(
+            body=_("Teklif turu %s olarak güncellendi.") % self.tender_round,
+            subtype_xmlid='mail.mt_note'
+        )
+        return True
 
     @api.onchange('workflow_definition_id')
     def _onchange_workflow_definition_id(self):
@@ -881,6 +920,75 @@ class AkTender(models.Model):
             'params': {
                 'title': _('Başarılı'),
                 'message': _('%s tedarikçi için satın alma talebi oluşturuldu.') % created_count,
+                'sticky': False,
+                'type': 'success',
+            }
+        }
+        
+    def action_add_from_template(self):
+        """Open wizard to select a template and add its items to the tender."""
+        self.ensure_one()
+        
+        # Check if there are templates available for this tender type
+        templates = self.env['ak.tender.template'].search([
+            ('tender_type', '=', self.tender_type),
+            ('active', '=', True)
+        ])
+        
+        if not templates:
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'title': _('Uygun Şablon Bulunamadı'),
+                    'message': _('Bu ihale tipi için uygun şablon bulunamadı.'),
+                    'sticky': False,
+                    'type': 'warning',
+                }
+            }
+        
+        # Open the template selection wizard
+        return {
+            'name': _('Şablon Seçimi'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'ak.tender.template.selection.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {
+                'default_tender_id': self.id,
+            }
+        }
+        
+    def apply_template_items(self, template):
+        """Add items from the selected template to the tender."""
+        self.ensure_one()
+        
+        # Create new lines from template
+        for template_line in template.line_ids:
+            vals = template_line._prepare_tender_line_values()
+            
+            # Map field names correctly
+            if 'product_qty' in vals:
+                vals['quantity'] = vals.pop('product_qty')
+                
+            if 'product_uom_id' in vals:
+                vals['uom_id'] = vals.pop('product_uom_id')
+                
+            # Remove price_unit and set target_price to 0
+            if 'price_unit' in vals:
+                vals.pop('price_unit')
+            
+            vals['target_price'] = 0.0
+            vals['tender_id'] = self.id
+            self.env['ak.tender.line'].create(vals)
+            
+        # Show success message
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': _('Şablon Uygulandı'),
+                'message': _('Şablondan %s kalem eklendi.') % len(template.line_ids),
                 'sticky': False,
                 'type': 'success',
             }

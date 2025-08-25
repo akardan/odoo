@@ -480,4 +480,25 @@
             </div>
         </xpath>
     </template>
+
+    <!-- Copy of purchase.portal_my_purchase_order with "Connect with your software!" button hidden -->
+    <template id="portal_my_purchase_order_sidebar" name="Custom Purchase Order Sidebar" inherit_id="purchase.portal_my_purchase_order">
+        <xpath expr="//button[@id='portal_connect_software_modal_btn']/.." position="replace">
+            <!-- Removed "Connect with your software!" button -->
+            <div style="display: none;">
+                <button id="portal_connect_software_modal_btn" type="button" class="btn btn-primary d-none">
+                    Connect with your software!
+                </button>
+            </div>
+        </xpath>
+    </template>
+
+    <!-- Replace "Powered by Odoo" with "Powered by KARDAN.DX" in portal sidebar -->
+    <template id="portal_record_sidebar_inherit" name="Custom Footer" inherit_id="portal.portal_record_sidebar">
+        <xpath expr="//div[contains(@class, 'd-none d-lg-block mt-5 small text-center text-muted')]" position="replace">
+            <div class="d-none d-lg-block mt-5 small text-center text-muted">
+                Powered by <a href="#" class="text-decoration-none">KARDAN.DX</a>
+            </div>
+        </xpath>
+    </template>
 </odoo>
