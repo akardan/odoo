@@ -33,8 +33,8 @@ class SetTargetPriceWizard(models.TransientModel):
         self.ensure_one()
         tender = self.tender_id
         
-        if not tender.workflow_current_state_id or tender.workflow_current_state_id.code != 'first_tender_round':
-            raise UserError(_("Hedef fiyat sadece '1. Teklif Toplama' aşamasında belirlenebilir."))
+        if not tender.workflow_current_state_id or tender.workflow_current_state_id.code != 'target_price_set':
+            raise UserError(_("Hedef fiyat sadece 'Hedef Fiyat Belirleme' aşamasında belirlenebilir."))
         if not tender.purchase_order_ids:
             raise UserError(_("Hedef fiyat belirlemek için en az bir teklif girilmelidir."))
         if not self.target_price or self.target_price <= 0:
@@ -45,23 +45,39 @@ class SetTargetPriceWizard(models.TransientModel):
             'target_price': self.target_price,
         })
         
-        # Workflow geçişini bul ve uygula
-        target_price_transition = self.env['ak.workflow.transition'].search([
-            ('from_state_id', '=', tender.workflow_current_state_id.id),
-            ('to_state_id.code', '=', 'target_price_set')
-        ], limit=1)
-        
-        if target_price_transition:
-            tender.execute_transition(target_price_transition.id, _("Hedef fiyat belirlendi: %s") % self.target_price)
+        # Hedef fiyat belirleme durumundayız, sadece fiyatı güncelle
+        if tender.workflow_current_state_id.code == 'target_price_set':
+            # Sadece mesaj gönder
+            tender.message_post(
+                body=_("Hedef fiyat güncellendi: %s") % self.target_price,
+                subtype_xmlid='mail.mt_note'
+            )
         else:
-            raise UserError(_("Hedef fiyat belirleme geçişi bulunamadı. Lütfen iş akışı tanımını kontrol edin."))
+            # Workflow geçişini bul ve uygula
+            target_price_transition = self.env['ak.workflow.transition'].search([
+                ('from_state_id', '=', tender.workflow_current_state_id.id),
+                ('to_state_id.code', '=', 'target_price_set')
+            ], limit=1)
+            
+            if target_price_transition:
+                tender.execute_transition(target_price_transition.id, _("Hedef fiyat belirlendi: %s") % self.target_price)
+            else:
+                raise UserError(_("Hedef fiyat belirleme geçişi bulunamadı. Lütfen iş akışı tanımını kontrol edin."))
         
+        # Başarı mesajını duruma göre ayarla
+        if tender.workflow_current_state_id.code == 'target_price_set':
+            title = _('Hedef Fiyat Güncellendi')
+            message = _('İhale için hedef fiyat güncellendi.')
+        else:
+            title = _('Hedef Fiyat Belirlendi')
+            message = _('İhale için hedef fiyat belirlendi. Yeni bir teklif toplama turu için hazır.')
+            
         return {
             'type': 'ir.actions.client',
             'tag': 'display_notification',
             'params': {
-                'title': _('Hedef Fiyat Belirlendi'),
-                'message': _('İhale için hedef fiyat belirlendi. İkinci teklif toplama turu için hazır.'),
+                'title': title,
+                'message': message,
                 'sticky': False,
             }
         }

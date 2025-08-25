@@ -293,9 +293,10 @@ class AkTender(models.Model):
     winning_order_id = fields.Many2one('purchase.order', string=_('Kazanan Teklif (SAS)'), compute='_compute_winning_order', store=True, readonly=True)
     
     # TEKLİF DOKÜMANINA GÖRE KRİTİK ALAN: HEDEF FİYAT
+    currency_id = fields.Many2one('res.currency', string=_('Para Birimi'), default=lambda self: self.env.company.currency_id)
     target_price = fields.Monetary(string=_('Hedef Fiyat'), currency_field='currency_id',
                                    help=_("Satın Alma Direktörü tarafından belirlenen hedef fiyat."))
-    currency_id = fields.Many2one('res.currency', string=_('Para Birimi'), default=lambda self: self.env.company.currency_id)
+    
     company_id = fields.Many2one('res.company', string=_('Şirket'), default=lambda self: self.env.company)
     pricelist_id = fields.Many2one('product.pricelist', string=_('Fiyat Listesi'),
                                   default=lambda self: self.env['product.pricelist'].search([], limit=1))
@@ -332,17 +333,20 @@ class AkTender(models.Model):
                 tender.offer_count = 0
 
     
-    @api.depends('purchase_order_ids.amount_total', 'purchase_order_ids.state')
+    @api.depends('purchase_order_ids.amount_total', 'purchase_order_ids.state', 'workflow_current_state_id')
     def _compute_winning_order(self):
-        # Bu prototipte en düşük fiyatlı teklifi kazanan kabul edelim
         for tender in self:
-            if tender.purchase_order_ids:
-                # Sadece onaylanmış veya en düşük fiyatlı teklifi bul
-                selected_order = tender.purchase_order_ids.filtered(lambda o: o.state == 'purchase')
-                if selected_order:
-                    tender.winning_order_id = selected_order[0]
-                else: # Henüz seçilmemişse en düşüğü göster
-                    tender.winning_order_id = min(tender.purchase_order_ids, key=lambda o: o.amount_total)
+            # Sadece onaylanmış siparişleri göster
+            selected_order = tender.purchase_order_ids.filtered(lambda o: o.state == 'purchase')
+            
+            # Eğer onaylanmış sipariş varsa, onu göster
+            if selected_order:
+                tender.winning_order_id = selected_order[0]
+            # Eğer ihale 'approved' veya 'done' durumundaysa ve onaylanmış sipariş yoksa
+            # en düşük fiyatlı teklifi göster
+            elif tender.workflow_current_state_id.code in ('approved', 'done') and tender.purchase_order_ids:
+                tender.winning_order_id = min(tender.purchase_order_ids, key=lambda o: o.amount_total)
+            # Diğer durumlarda kazanan teklif gösterme
             else:
                 tender.winning_order_id = False
     
