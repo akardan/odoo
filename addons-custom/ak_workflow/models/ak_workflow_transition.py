@@ -112,7 +112,94 @@ class AkWorkflowTransition(models.Model):
                 ))
 
     def check_transition_conditions(self, record):
-        # This method is now on the mixin for easier access
+        """
+        Check if the transition conditions are met for the given record.
+        """
+        self.ensure_one()
+        
+        # If no condition is set, return True
+        if self.condition_type == 'none':
+            return True
+            
+        # Python expression condition
+        if self.condition_type == 'python' and self.condition_expression:
+            try:
+                eval_context = {'record': record, 'env': self.env, 'user': self.env.user}
+                result = eval(self.condition_expression, eval_context)
+                return bool(result)
+            except Exception as e:
+                _logger.error(f"Error evaluating Python expression: {str(e)}")
+                return False
+                
+        # Field condition
+        if self.condition_type == 'field' and self.condition_field_id:
+            field_name = self.condition_field_id.name
+            if not hasattr(record, field_name):
+                _logger.error(f"Field {field_name} not found on record {record}")
+                return False
+                
+            field_value = getattr(record, field_name)
+            _logger.info(f"Checking field condition: {field_name} {self.condition_operator} {self.condition_value}")
+            _logger.info(f"Current field value: {field_value}")
+            
+            # Handle special operators
+            if self.condition_operator == 'set':
+                return bool(field_value)
+            if self.condition_operator == 'not set':
+                return not bool(field_value)
+                
+            # Convert condition value to appropriate type
+            try:
+                if self.condition_field_id.ttype in ('float', 'monetary'):
+                    condition_value = float(self.condition_value)
+                elif self.condition_field_id.ttype == 'integer':
+                    condition_value = int(self.condition_value)
+                elif self.condition_field_id.ttype == 'boolean':
+                    condition_value = self.condition_value.lower() in ('true', '1', 'yes')
+                else:
+                    condition_value = self.condition_value
+            except (ValueError, TypeError):
+                _logger.error(f"Error converting condition value {self.condition_value} to type {self.condition_field_id.ttype}")
+                return False
+                
+            # Perform the comparison
+            if self.condition_operator == '=':
+                return field_value == condition_value
+            elif self.condition_operator == '!=':
+                return field_value != condition_value
+            elif self.condition_operator == '>':
+                return field_value > condition_value
+            elif self.condition_operator == '>=':
+                return field_value >= condition_value
+            elif self.condition_operator == '<':
+                return field_value < condition_value
+            elif self.condition_operator == '<=':
+                return field_value <= condition_value
+            elif self.condition_operator == 'in':
+                values = [v.strip() for v in condition_value.split(',')]
+                return field_value in values
+            elif self.condition_operator == 'not in':
+                values = [v.strip() for v in condition_value.split(',')]
+                return field_value not in values
+                
+        # Method condition
+        if self.condition_type == 'method' and self.condition_method:
+            if hasattr(record, self.condition_method):
+                try:
+                    return bool(getattr(record, self.condition_method)())
+                except Exception as e:
+                    _logger.error(f"Error calling method {self.condition_method}: {str(e)}")
+                    return False
+            else:
+                _logger.error(f"Method {self.condition_method} not found on record {record}")
+                return False
+                
+        # Amount threshold condition
+        if self.condition_type == 'amount':
+            # Implement amount threshold logic here
+            return True
+            
+        # Default fallback
         return True
 
     def _log_transition(self, record, old_state, status, comment=None):
@@ -143,7 +230,23 @@ class AkWorkflowTransition(models.Model):
         
         # Check if the transition is available
         if self not in record.workflow_available_transition_ids:
-            raise UserError(_("This transition is not available for the current state or user."))
+            # Check if it's because of a condition failure
+            if not self.check_transition_conditions(record):
+                # Show specific error message based on condition type
+                if self.condition_type == 'field' and self.condition_field_id:
+                    field_name = self.condition_field_id.name
+                    field_label = self.condition_field_id.field_description
+                    field_value = getattr(record, field_name, None)
+                    
+                    raise UserError(_(
+                        "Geçiş koşulu karşılanmadı: '%s' alanı koşulu sağlamıyor.\n"
+                        "Mevcut değer: %s\n"
+                        "Beklenen koşul: %s %s"
+                    ) % (field_label, field_value, self.condition_operator, self.condition_value))
+                else:
+                    raise UserError(_("Bu geçiş için gerekli koşullar sağlanmıyor."))
+            else:
+                raise UserError(_("Bu geçiş mevcut durum veya kullanıcı için uygun değil."))
 
         comment = self.env.context.get('comment')
         old_state = record.workflow_current_state_id

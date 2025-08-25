@@ -386,11 +386,25 @@ class AkTender(models.Model):
         'Yeni Teklif Turu Başlat' button is clicked.
         """
         self.ensure_one()
+        _logger = logging.getLogger(__name__)
+        _logger.info(f"increment_tender_round called for tender {self.name} (ID: {self.id})")
+        
+        old_round = self.tender_round
         self.tender_round += 1
+        _logger.info(f"Tender round incremented from {old_round} to {self.tender_round}")
+        
+        # Force write to ensure changes are committed
+        self.write({'tender_round': self.tender_round})
+        
         self.message_post(
             body=_("Teklif turu %s olarak güncellendi.") % self.tender_round,
             subtype_xmlid='mail.mt_note'
         )
+        
+        # Flush changes to database
+        self.env.cr.commit()
+        
+        _logger.info(f"increment_tender_round completed successfully")
         return True
 
     @api.onchange('workflow_definition_id')
