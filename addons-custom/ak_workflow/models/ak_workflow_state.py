@@ -47,8 +47,8 @@ class AkWorkflowState(models.Model):
                        default="fa-circle-o")
     
     # Time Configuration
-    default_duration_days = fields.Integer(_('Default Duration (Days)'), default=0, store=False,
-                                         help=_("Default duration for this state in days"))
+    default_duration_days = fields.Integer(_('Default Duration (Days)'), default=0, store=True,
+                                          help=_("Default duration for this state in days"))
     
     # Security and Permissions
     edit_group_ids = fields.Many2many('res.groups', 'state_edit_groups_rel',
