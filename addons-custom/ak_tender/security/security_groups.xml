@@ -8,13 +8,11 @@
             <field name="sequence">20</field>
         </record>
 
-        <!-- Tender Manager Group -->
-        <record id="group_tender_manager" model="res.groups">
-            <field name="name">Tender Manager</field>
+        <!-- Tender Requester Group -->
+        <record id="group_tender_requester" model="res.groups">
+            <field name="name">Tender Requester</field>
             <field name="category_id" ref="module_category_tender"/>
-            <field name="implied_ids" eval="[(4, ref('group_tender_user'))]"/>
-            <field name="users" eval="[(4, ref('base.user_root')), (4, ref('base.user_admin'))]"/>
-            <field name="comment">İhale yöneticileri tüm ihale süreçlerini yönetebilir ve onaylayabilir.</field>
+            <field name="comment">İhale talep edicileri yeni ihale talepleri oluşturabilir.</field>
         </record>
 
         <!-- Tender User Group -->
@@ -25,11 +23,13 @@
             <field name="comment">İhale kullanıcıları ihale süreçlerini görüntüleyebilir ve düzenleyebilir.</field>
         </record>
 
-        <!-- Tender Requester Group -->
-        <record id="group_tender_requester" model="res.groups">
-            <field name="name">Tender Requester</field>
+        <!-- Tender Manager Group -->
+        <record id="group_tender_manager" model="res.groups">
+            <field name="name">Tender Manager</field>
             <field name="category_id" ref="module_category_tender"/>
-            <field name="comment">İhale talep edicileri yeni ihale talepleri oluşturabilir.</field>
+            <field name="implied_ids" eval="[(4, ref('group_tender_user'))]"/>
+            <field name="users" eval="[(4, ref('base.user_root')), (4, ref('base.user_admin'))]"/>
+            <field name="comment">İhale yöneticileri tüm ihale süreçlerini yönetebilir ve onaylayabilir.</field>
         </record>
     </data>
 </odoo>
