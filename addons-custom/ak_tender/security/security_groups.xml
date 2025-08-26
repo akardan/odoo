@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Security Category for Tender -->
+        <record id="module_category_tender" model="ir.module.category">
+            <field name="name">İhale</field>
+            <field name="description">İhale yönetimi için güvenlik grupları</field>
+            <field name="sequence">20</field>
+        </record>
+
+        <!-- Tender Manager Group -->
+        <record id="group_tender_manager" model="res.groups">
+            <field name="name">Tender Manager</field>
+            <field name="category_id" ref="module_category_tender"/>
+            <field name="implied_ids" eval="[(4, ref('group_tender_user'))]"/>
+            <field name="users" eval="[(4, ref('base.user_root')), (4, ref('base.user_admin'))]"/>
+            <field name="comment">İhale yöneticileri tüm ihale süreçlerini yönetebilir ve onaylayabilir.</field>
+        </record>
+
+        <!-- Tender User Group -->
+        <record id="group_tender_user" model="res.groups">
+            <field name="name">Tender User</field>
+            <field name="category_id" ref="module_category_tender"/>
+            <field name="implied_ids" eval="[(4, ref('group_tender_requester'))]"/>
+            <field name="comment">İhale kullanıcıları ihale süreçlerini görüntüleyebilir ve düzenleyebilir.</field>
+        </record>
+
+        <!-- Tender Requester Group -->
+        <record id="group_tender_requester" model="res.groups">
+            <field name="name">Tender Requester</field>
+            <field name="category_id" ref="module_category_tender"/>
+            <field name="comment">İhale talep edicileri yeni ihale talepleri oluşturabilir.</field>
+        </record>
+    </data>
+</odoo>

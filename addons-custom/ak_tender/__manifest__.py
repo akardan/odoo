@@ -21,6 +21,8 @@
     'sequence': -225,
     'depends': ['base', 'purchase', 'stock', 'mail', 'contacts', 'product', 'portal', 'ak_workflow', 'sale'],
     'data': [
+        'security/security_groups.xml',
+        'security/security_rules.xml',
         'security/ir.model.access.csv',
         'data/config_data.xml',
         'data/workflow_templates.xml',
