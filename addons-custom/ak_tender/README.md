@@ -24,6 +24,29 @@ Bu modül, çok aşamalı satın alma ihale süreçlerini Odoo üzerinde yönetm
 - Gelişmiş Portal Arayüzü (tedarikçiler için teklif düzenleme)
 - NPV (Net Bugünkü Değer) hesaplamaları
 - Garanti süresi yönetimi
+- Rol tabanlı erişim kontrolü (RBAC) ile güvenlik yönetimi
+
+## Güvenlik Grupları
+
+Modül, aşağıdaki güvenlik gruplarını içerir:
+
+### Tender Requester (İhale Talep Edici)
+- Kendi oluşturduğu ihaleleri görüntüleyebilir
+- Yeni ihale talepleri oluşturabilir
+- Mevcut ihaleleri düzenleyemez veya silemez
+- Kendi ihalelerine ait ihale kalemlerini oluşturabilir
+
+### Tender User (İhale Kullanıcısı)
+- Kendi oluşturduğu ihaleleri görüntüleyebilir ve düzenleyebilir
+- Yeni ihale oluşturabilir
+- İhaleleri silemez
+- Tender Requester grubunun tüm yetkilerine sahiptir
+
+### Tender Manager (İhale Yöneticisi)
+- Tüm ihaleleri görüntüleyebilir, düzenleyebilir ve silebilir
+- Tüm ihale kalemlerini yönetebilir
+- İhale süreçlerini onaylayabilir
+- Tender User grubunun tüm yetkilerine sahiptir
 
 ## İş Akışı (Workflow) Entegrasyonu
 
@@ -80,6 +103,7 @@ Bu modül, aşağıdaki bağımlılıklara sahiptir:
 - product
 - portal
 - ak_workflow
+- sale
 
 ## Geliştirme
 
@@ -90,6 +114,15 @@ Yeni bir durum eklemek için, ilgili iş akışı tanımına yeni bir durum ekle
 ### Yeni Geçiş Ekleme
 
 Yeni bir geçiş eklemek için, ilgili iş akışı tanımına yeni bir geçiş eklenmeli ve gerekli aksiyonlar tanımlanmalıdır.
+
+### Güvenlik Grupları ve Kuralları Ekleme
+
+Yeni güvenlik grupları veya kuralları eklemek için:
+
+1. `security/security_groups.xml` dosyasında yeni gruplar tanımlanır
+2. `security/security_rules.xml` dosyasında yeni kurallar tanımlanır
+3. `security/ir.model.access.csv` dosyasında erişim hakları tanımlanır
+4. `__manifest__.py` dosyasında bu dosyalar data listesine eklenir
 
 ## İhale Tipleri
 
