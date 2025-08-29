@@ -1,5 +1,8 @@
 from odoo import api, fields, models, _
 from odoo.exceptions import UserError
+import logging
+
+_logger = logging.getLogger(__name__)
 # import re # No longer needed for this simplified approach
 
 class SurveySurvey(models.Model):
@@ -457,6 +460,11 @@ class SurveySurvey(models.Model):
                 start_time = info.get('start_time')
                 end_time = info.get('end_time')
                 score = info.get('score')
+
+                # Skip participant if they don't have a start time
+                if not start_time:
+                    _logger.info("Skipping participant %s: no start time found", participant_name)
+                    continue
                 
                 # Format participant name as email address
                 # Convert "First Last" to "first.last@nutricia.com"
@@ -591,9 +599,17 @@ class SurveySurvey(models.Model):
                 if end_time:
                     user_input_vals['end_datetime'] = end_time
                 
-                # Add score if available
+                # Add score if available - convert to percentage if it's a raw score
                 if score is not None:
-                    user_input_vals['scoring_percentage'] = score
+                    # If score is between 0 and 100, it's likely already a percentage
+                    if 0 <= score <= 100:
+                        user_input_vals['scoring_percentage'] = score
+                    else:
+                        # For scores outside the 0-100 range, treat as raw score
+                        # Calculate percentage based on expected total (25 questions × 4 points = 100)
+                        expected_total = total_questions * score_per_question  # 25 * 4 = 100
+                        percentage_score = (score / expected_total) * 100
+                        user_input_vals['scoring_percentage'] = round(percentage_score, 2)
                 
                 # Check if participant already exists using email field
                 if email in existing_participants:
@@ -617,9 +633,18 @@ class SurveySurvey(models.Model):
                     if end_time and not user_input.end_datetime:
                         update_vals['end_datetime'] = end_time
                     
-                    # Update score if available
+                    # Update score if available - convert to percentage if it's a raw score
                     if score is not None:
-                        update_vals['scoring_percentage'] = score
+                        # If score is greater than 100, it's likely a raw score that needs conversion to percentage
+                        # If score is between 0 and 100, it's likely already a percentage
+                        if 0 <= score <= 100:
+                            update_vals['scoring_percentage'] = score
+                        else:
+                            # For scores outside the 0-100 range, treat as raw score
+                            # Calculate percentage based on expected total (25 questions × 4 points = 100)
+                            expected_total = total_questions * score_per_question  # 25 * 4 = 100
+                            percentage_score = (score / expected_total) * 100
+                            update_vals['scoring_percentage'] = round(percentage_score, 2)
                     
                     if update_vals:
                         user_input.write(update_vals)

@@ -42,6 +42,7 @@ Exam Management System for customers that isolates based on company
         'views/survey_question_poll_import_wizard_views.xml',
         'views/survey_question_pool_wizard_views.xml',
         'views/survey_question_views.xml',
+        'views/survey_user_input_views.xml',
     ],
     'assets': {
         'web.assets_frontend': [
