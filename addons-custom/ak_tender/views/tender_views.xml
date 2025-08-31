@@ -24,7 +24,6 @@
                                 icon="fa-user-plus"
                                 string="Tedarikçi Ekle"
                                 help="İhaleye yeni tedarikçiler ekle"
-                                invisible="workflow_current_state_id.code in ('approved', 'done', 'cancel')"
                             />
                             <button name="create_purchase_orders_for_suppliers"
                                 type="object"
@@ -32,7 +31,6 @@
                                 icon="fa-file-text-o"
                                 string="Tedarikçiler İçin SAT Oluştur"
                                 help="Davetli tedarikçilerin hepsi için satın alma talebi oluştur"
-                                invisible="workflow_current_state_id.code in ('approved', 'done', 'cancel')"
                             />
                             <button name="action_view_offers"
                                 type="object"
@@ -172,8 +170,10 @@
                                         <field name="partner_id" domain="[('id', 'in', parent.invited_partners)]"/>
                                         <field name="date_order"/>
                                         <field name="tender_round"/>
-                                        <field name="amount_total"/>
-                                        <field name="total_npv"/>
+                                        <field name="amount_untaxed" widget="monetary" options="{'currency_field': 'currency_id'}" optional="show"/>
+                                        <field name="payment_term_id" optional="show"/>
+                                        <field name="total_npv" widget="monetary" options="{'currency_field': 'currency_id'}"/>
+                                        <field name="amount_total" widget="monetary" options="{'currency_field': 'currency_id'}" optional="hide"/>
                                         <field name="state"/>
                                     </list>
                                 </field>
@@ -182,6 +182,20 @@
                                            readonly="[('workflow_current_state_id.code', 'not in', ['first_tender_round', 'target_price_set'])]"/>
                                     <field name="winning_order_id" readonly="1" />
                                 </group>
+                                
+                                <!-- NPV Hesaplama Alanları -->
+                                <div>
+                                    <h4 class="mt-3 mb-2">NPV Hesaplama Ayarları</h4>
+                                    <group>
+                                        <field name="npv_rate" />
+                                        <field name="discount_rate" />
+                                        <field name="npv_value" widget="monetary" options="{'currency_field': 'currency_id'}" readonly="1" />
+                                    </group>
+                                    <div class="alert alert-info">
+                                        <p><strong>Bilgi:</strong> NPV (Net Bugünkü Değer) hesaplaması için kullanılacak oranı belirleyebilirsiniz.</p>
+                                        <p>NPV Oranı, gelecekteki nakit akışlarının bugünkü değerini hesaplamak için kullanılır.</p>
+                                    </div>
+                                </div>
                                 
                                 <!-- Direkt İhale Özellikleri -->
                                 <div invisible="tender_type != 'direct'">
@@ -612,16 +626,6 @@
             </field>
         </record>
 
-        <menuitem id="ak_tender_menu_root"
-                  name="İhaleler"
-                  sequence="10"
-                  web_icon="ak_tender,static/description/icon.png"/>
-
-        <menuitem id="ak_tender_menu_tender_list"
-                  name="Tüm İhaleler"
-                  parent="ak_tender_menu_root"
-                  action="ak_tender_action"
-                  sequence="10"/>
 
     </data>
 

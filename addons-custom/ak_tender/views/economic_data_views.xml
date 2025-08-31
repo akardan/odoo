@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Form View -->
+    <record id="view_ak_tender_economic_data_form" model="ir.ui.view">
+        <field name="name">ak.tender.economic.data.form</field>
+        <field name="model">ak.tender.economic.data</field>
+        <field name="arch" type="xml">
+            <form string="Ekonomik Veriler">
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" placeholder="Tanım"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="active" widget="boolean_toggle"/>
+                            <field name="npv_rate"/>
+                            <field name="inflation_rate"/>
+                            <field name="interest_rate"/>
+                        </group>
+                        <group>
+                            <field name="data_source"/>
+                            <field name="date_from"/>
+                            <field name="date_to"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Notlar" name="notes">
+                            <field name="notes" placeholder="Ekonomik veriler hakkında notlar..."/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- List View -->
+    <record id="view_ak_tender_economic_data_tree" model="ir.ui.view">
+        <field name="name">ak.tender.economic.data.list</field>
+        <field name="model">ak.tender.economic.data</field>
+        <field name="arch" type="xml">
+            <list string="Ekonomik Veriler">
+                <field name="name"/>
+                <field name="npv_rate"/>
+                <field name="inflation_rate"/>
+                <field name="interest_rate"/>
+                <field name="data_source"/>
+                <field name="date_from"/>
+                <field name="date_to"/>
+                <field name="active" widget="boolean_toggle"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Search View -->
+    <record id="view_ak_tender_economic_data_search" model="ir.ui.view">
+        <field name="name">ak.tender.economic.data.search</field>
+        <field name="model">ak.tender.economic.data</field>
+        <field name="arch" type="xml">
+            <search string="Ekonomik Veriler">
+                <field name="name"/>
+                <field name="data_source"/>
+                <filter string="Aktif" name="active" domain="[('active', '=', True)]"/>
+                <filter string="Arşivlenmiş" name="inactive" domain="[('active', '=', False)]"/>
+                <group expand="0" string="Grupla">
+                    <filter string="Veri Kaynağı" name="groupby_data_source" context="{'group_by': 'data_source'}"/>
+                    <filter string="Geçerlilik Başlangıç" name="groupby_date_from" context="{'group_by': 'date_from'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Action -->
+    <record id="action_ak_tender_economic_data" model="ir.actions.act_window">
+            <field name="name">Ekonomik Veriler</field>
+            <field name="res_model">ak.tender.economic.data</field>
+            <field name="view_mode">list,form</field>
+            <field name="search_view_id" ref="view_ak_tender_economic_data_search"/>
+            <field name="context">{'search_default_active': 1}</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    İlk ekonomik veri kaydınızı oluşturun!
+                </p>
+                <p>
+                    Ekonomik veriler, NPV hesaplamaları ve diğer finansal değerlendirmeler için kullanılacak oranları içerir.
+                </p>
+            </field>
+        </record>
+
+</odoo>

@@ -115,9 +115,16 @@ class PurchaseOrder(models.Model):
                 }
             else:
                 # Product line
+                # Use product's purchase description if available
+                description = tender_line.name
+                if not description and tender_line.product_id and tender_line.product_id.description_purchase:
+                    description = tender_line.product_id.description_purchase
+                elif not description and tender_line.product_id:
+                    description = tender_line.product_id.name
+                
                 line_vals = {
                     'product_id': tender_line.product_id.id,
-                    'name': tender_line.name or tender_line.product_id.name or '',
+                    'name': description or '',
                     'product_qty': tender_line.quantity or 1.0,
                     'product_uom': tender_line.uom_id.id or tender_line.product_id.uom_id.id,
                     'price_unit': 0,  # Price will be filled by the supplier
@@ -146,14 +153,21 @@ class PurchaseOrder(models.Model):
         """
         Calculate the total NPV value for the order based on the NPV values of its lines.
         """
+        import logging
+        _logger = logging.getLogger(__name__)
+        
         for order in self:
+            _logger.info('Calculating NPV for order: %s', order.name)
+            
             # Calculate NPV for each line
             for line in order.order_line:
-                if hasattr(line, 'calculate_npv'):
-                    line.calculate_npv()
+                line.calculate_npv()
             
             # Sum up the NPV values of all lines
-            order.total_npv = sum(line.npv_value for line in order.order_line if hasattr(line, 'npv_value'))
+            total_npv = sum(line.npv_value for line in order.order_line)
+            order.total_npv = total_npv
+            
+            _logger.info('Total NPV calculated for order %s: %s', order.name, total_npv)
         
         return True
     

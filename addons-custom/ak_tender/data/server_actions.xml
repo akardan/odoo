@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Server Action for NPV Calculation -->
+        <record id="action_calculate_all_npv_values" model="ir.actions.server">
+            <field name="name">NPV Değerlerini Hesapla</field>
+            <field name="model_id" ref="model_ak_tender"/>
+            <field name="binding_model_id" ref="model_ak_tender"/>
+            <field name="binding_view_types">form,list</field>
+            <field name="state">code</field>
+            <field name="code">
+if records:
+    for record in records:
+        record.calculate_all_npv_values()
+</field>
+        </record>
+    </data>
+</odoo>

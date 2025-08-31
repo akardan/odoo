@@ -32,11 +32,5 @@
             <field name="target">new</field>
         </record>
 
-        <!-- Add menu item under Tenders -->
-        <menuitem id="menu_bulk_purchase_wizard"
-                  name="Toplu Satın Alma Oluştur"
-                  action="action_bulk_purchase_wizard"
-                  parent="ak_tender_menu_root"
-                  sequence="20"/>
     </data>
 </odoo>

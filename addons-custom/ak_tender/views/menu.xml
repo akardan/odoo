@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Ana Menü -->
+    <menuitem id="ak_tender_menu_root"
+              name="İhaleler"
+              sequence="10"
+              web_icon="ak_tender,static/description/icon.png"/>
+
+    <!-- İhale Listesi Menüsü -->
+    <menuitem id="ak_tender_menu_tender_list"
+              name="Tüm İhaleler"
+              parent="ak_tender_menu_root"
+              action="ak_tender_action"
+              sequence="10"/>
+              
+    <!-- Ayarlar Menüsü -->
+    <menuitem id="menu_ak_tender_configuration"
+              name="Ayarlar"
+              parent="ak_tender_menu_root"
+              sequence="100"/>
+
+    <!-- İhale Şablonları Menüsü -->
+    <menuitem id="menu_tender_template"
+              name="İhale Şablonları"
+              parent="menu_ak_tender_configuration"
+              action="action_tender_template"
+              sequence="10"/>
+
+    <!-- Ekonomik Veriler Menüsü -->
+    <menuitem id="menu_ak_tender_economic_data"
+              name="Ekonomik Veriler"
+              parent="menu_ak_tender_configuration"
+              action="action_ak_tender_economic_data"
+              sequence="30"/>
+</odoo>

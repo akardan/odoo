@@ -138,11 +138,4 @@
         </field>
     </record>
 
-    <!-- Menu Item -->
-    <menuitem id="menu_tender_template"
-              name="İhale Şablonları"
-              parent="ak_tender_menu_root"
-              action="action_tender_template"
-              sequence="20"/>
-
 </odoo>

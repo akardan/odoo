@@ -8,40 +8,82 @@
                     <div class="page">
                             <h4 class="mt-3 mb-3">İhale No: <span t-field="o.code"/> | <span t-field="o.name"/></h4>
 
-                            <div class="row mt-4">
-                                <div class="col-4">
-                                    <strong>İhale Tipi:</strong> <span t-field="o.tender_type"/>
-                                </div>
-                                <div class="col-4">
-                                    <strong>Başlangıç Tarihi:</strong>
-                                    <span t-field="o.start_date" t-options='{"format": "dd/MM/yyyy HH:mm"}'/>
-                                </div>
-                                <div class="col-4">
-                                    <strong>Bitiş Tarihi:</strong>
-                                    <span t-field="o.end_date" t-options='{"format": "dd/MM/yyyy HH:mm"}'/>
-                                </div>
-                            </div>
-                            
-                            <div class="row mt-2">
-                                <div class="col-4">
-                                    <strong>Durum:</strong> <span t-field="o.workflow_current_state_id"/>
-                                </div>
-                                <!-- <div class="col-4">
-                                    <strong>Para Birimi:</strong> <span t-field="o.currency_id"/>
-                                </div> -->
-                                <div class="col-4">
-                                    <strong>Hedef Fiyat:</strong> <span t-field="o.target_price"/>
-                                </div>
-                            </div>
+                            <style>
+                                .label-col {
+                                    text-align: left;
+                                    padding-right: 5px !important;
+                                    white-space: nowrap;
+                                    width: 120px;
+                                }
+                                .order-button {
+                                    width: 220px;
+                                    display: inline-block;
+                                }
+                                .colon-col {
+                                    width: 10px;
+                                    padding-left: 0 !important;
+                                    padding-right: 5px !important;
+                                }
+                                .value-col {
+                                    padding-left: 0 !important;
+                                }
+                                .header-table td {
+                                    padding: 2px !important;
+                                }
+                            </style>
+                            <table class="table table-borderless mt-4 header-table" style="margin-bottom: 10px;">
+                                <tr>
+                                    <td class="label-col"><strong>İhale Tipi</strong></td>
+                                    <td class="colon-col">:</td>
+                                    <td class="value-col"><span t-field="o.tender_type"/></td>
+                                    
+                                    <td class="label-col"><strong>Başlangıç Tarihi</strong></td>
+                                    <td class="colon-col">:</td>
+                                    <td class="value-col"><span t-field="o.start_date" t-options='{"format": "dd/MM/yyyy HH:mm"}'/></td>
+                                    
+                                    <td class="label-col"><strong>Durum</strong></td>
+                                    <td class="colon-col">:</td>
+                                    <td class="value-col"><span t-field="o.workflow_current_state_id"/></td>
+                                    
+                                    <td style="text-align: right;">
+                                        <button type="button" class="btn btn-sm btn-primary order-button" onclick="createOrderFromSelection(this)" t-att-disabled="o.workflow_current_state_id.code != 'order'">
+                                            Seçimlerden Sipariş oluştur
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="label-col"><strong>Teklif Turu</strong></td>
+                                    <td class="colon-col">:</td>
+                                    <td class="value-col"><span t-field="o.tender_round"/></td>
+                                    
+                                    <td class="label-col"><strong>Bitiş Tarihi</strong></td>
+                                    <td class="colon-col">:</td>
+                                    <td class="value-col"><span t-field="o.end_date" t-options='{"format": "dd/MM/yyyy HH:mm"}'/></td>
+                                    
+                                    <td class="label-col"><strong>Hedef Fiyat</strong></td>
+                                    <td class="colon-col">:</td>
+                                    <td class="value-col"><span t-field="o.target_price"/></td>
+                                    
+                                    <td style="text-align: right;">
+
+                                        <button type="button" class="btn btn-sm btn-secondary order-button" onclick="createOrderFromTotalSelection(this)" t-att-disabled="o.workflow_current_state_id.code != 'order'">
+                                            Toplamdan Sipariş oluştur
+                                        </button>
+                                    </td>
+                                </tr>
+                            </table>
                             
                             <!-- <h3 class="mt-4">Tedarikçi Karşılaştırma</h3> -->
                             
                             <!-- Comparison Table -->
                             <style>
                                 .comparison-table th, .comparison-table td {
-                                    padding: 8px;
-                                    font-size: 14px;
+                                    padding: 3px;
+                                    font-size: 12px;
                                     vertical-align: middle;
+                                    line-height: 1.1;
+                                    height: auto !important;
+                                    max-height: none !important;
                                 }
                                 .comparison-table th {
                                     background-color: #f5f5f5;
@@ -69,7 +111,7 @@
                                     background-color: #f9f9f9;
                                 }
                             </style>
-                            <table class="table table-bordered comparison-table mt-3">
+                            <table class="table table-bordered comparison-table mt-3" t-att-data-tender-id="o.id">
                                 <thead>
                                     <tr>
                                         <!-- Product Information Column -->
@@ -78,19 +120,74 @@
                                         <!-- Field Column -->
                                         <th class="field-col"></th>
                                         
-                                        <!-- Vendor Columns -->
-                                        <t t-foreach="o.purchase_order_ids" t-as="vendor">
+                                        <!-- Define vendors_to_show at the beginning -->
+                                        <t t-set="latest_round_pos" t-value="o.purchase_order_ids.filtered(lambda po: po.tender_round == o.tender_round)"/>
+                                        <t t-set="vendors_to_show" t-value="latest_round_pos if latest_round_pos else o.purchase_order_ids"/>
+                                        
+                                        <!-- Vendor Columns - Only show latest round -->
+                                        <t t-foreach="vendors_to_show" t-as="vendor">
                                             <th class="vendor-col" t-esc="vendor.partner_id.name"/>
                                         </t>
                                     </tr>
                                 </thead>
+                                <script type="text/javascript">
+                                    function createOrderFromSelection(button) {
+                                        // Get the selected checkboxes for product selections
+                                        var selectedProducts = document.querySelectorAll('input[name="vendor_product_selection"]:checked');
+                                        var selections = [];
+                                        
+                                        selectedProducts.forEach(function(checkbox) {
+                                            selections.push(checkbox.value);
+                                        });
+                                        
+                                        if (selections.length > 0) {
+                                            // Call the server action to create orders
+                                            odoo.jsonRpc("/web/dataset/call_kw/ak.tender/create_orders_from_selections", 'call', {
+                                                model: 'ak.tender',
+                                                method: 'create_orders_from_selections',
+                                                args: [parseInt(button.closest('table').dataset.tenderId), selections],
+                                                kwargs: {},
+                                            }).then(function(result) {
+                                                alert("Siparişler oluşturuldu!");
+                                                location.reload();
+                                            });
+                                        } else {
+                                            alert("Lütfen en az bir ürün seçin!");
+                                        }
+                                    }
+                                    
+                                    function createOrderFromTotalSelection(button) {
+                                        // Get the selected checkboxes for total selections
+                                        var selectedVendors = document.querySelectorAll('input[name="vendor_total_selection"]:checked');
+                                        var vendorIds = [];
+                                        
+                                        selectedVendors.forEach(function(checkbox) {
+                                            vendorIds.push(parseInt(checkbox.value));
+                                        });
+                                        
+                                        if (vendorIds.length > 0) {
+                                            // Call the server action to create orders
+                                            odoo.jsonRpc("/web/dataset/call_kw/ak.tender/create_orders_from_total_selection", 'call', {
+                                                model: 'ak.tender',
+                                                method: 'create_orders_from_total_selection',
+                                                args: [parseInt(button.closest('table').dataset.tenderId), vendorIds],
+                                                kwargs: {},
+                                            }).then(function(result) {
+                                                alert("Toplam siparişler oluşturuldu!");
+                                                location.reload();
+                                            });
+                                        } else {
+                                            alert("Lütfen en az bir tedarikçi seçin!");
+                                        }
+                                    }
+                                </script>
                                 <tbody>
                                     <!-- For each product in the tender -->
                                     <t t-foreach="o.tender_lines" t-as="tender_line">
                                         <t t-if="tender_line.display_type == 'line_section'">
                                             <!-- Section header -->
                                             <tr>
-                                                <td t-att-colspan="2 + len(o.purchase_order_ids)" class="table-active">
+                                                <td t-att-colspan="2 + len(vendors_to_show)" class="table-active">
                                                     <strong t-field="tender_line.name"/>
                                                 </td>
                                             </tr>
@@ -98,7 +195,7 @@
                                         <t t-elif="tender_line.display_type == 'line_note'">
                                             <!-- Note -->
                                             <tr>
-                                                <td t-att-colspan="2 + len(o.purchase_order_ids)" class="fst-italic">
+                                                <td t-att-colspan="2 + len(vendors_to_show)" class="fst-italic">
                                                     <span t-field="tender_line.name"/>
                                                 </td>
                                             </tr>
@@ -106,7 +203,7 @@
                                         <t t-else="">
                                             <!-- Product row -->
                                             <tr class="product-row">
-                                                <td class="product-col" t-att-rowspan="8">
+                                                <td class="product-col" t-att-rowspan="11">
                                                     <div><strong t-field="tender_line.product_id.display_name"/></div>
                                                     <t t-if="tender_line.product_id.description_purchase">
                                                         <div class="mt-2" style="padding-left: 15px; font-size: 12px;">
@@ -127,8 +224,9 @@
                                                 </td>
                                                 <td class="field-col">Gerekli Tarih:</td>
                                                 
-                                                <!-- For each vendor, add their data for this product -->
-                                                <t t-foreach="o.purchase_order_ids" t-as="vendor">
+                                                <!-- For each vendor in the latest round, add their data for this product -->
+                                                
+                                                <t t-foreach="vendors_to_show" t-as="vendor">
                                                     <t t-set="vendor_line" t-value="False"/>
                                                     <t t-foreach="vendor.order_line" t-as="line">
                                                         <t t-if="line.tender_line_id and line.tender_line_id.id == tender_line.id">
@@ -146,7 +244,7 @@
                                             <!-- Miktar ve Birim row -->
                                             <tr>
                                                 <td class="field-col">Miktar:</td>
-                                                <t t-foreach="o.purchase_order_ids" t-as="vendor">
+                                                <t t-foreach="vendors_to_show" t-as="vendor">
                                                     <t t-set="vendor_line" t-value="False"/>
                                                     <t t-foreach="vendor.order_line" t-as="line">
                                                         <t t-if="line.tender_line_id and line.tender_line_id.id == tender_line.id">
@@ -166,7 +264,7 @@
                                             <!-- Alternatif Malzeme row -->
                                             <tr>
                                                 <td class="field-col">Alternatif Malzeme:</td>
-                                                <t t-foreach="o.purchase_order_ids" t-as="vendor">
+                                                <t t-foreach="vendors_to_show" t-as="vendor">
                                                     <t t-set="vendor_line" t-value="False"/>
                                                     <t t-foreach="vendor.order_line" t-as="line">
                                                         <t t-if="line.tender_line_id and line.tender_line_id.id == tender_line.id">
@@ -180,11 +278,29 @@
                                                     </td>
                                                 </t>
                                             </tr>
-                                            
+
+                                            <!-- Birim Fiyat row -->
+                                            <tr>
+                                                <td class="field-col">Birim Fiyat:</td>
+                                                <t t-foreach="vendors_to_show" t-as="vendor">
+                                                    <t t-set="vendor_line" t-value="False"/>
+                                                    <t t-foreach="vendor.order_line" t-as="line">
+                                                        <t t-if="line.tender_line_id and line.tender_line_id.id == tender_line.id">
+                                                            <t t-set="vendor_line" t-value="line"/>
+                                                        </t>
+                                                    </t>
+
+                                                    <td class="vendor-col">
+                                                        <span t-if="vendor_line" t-field="vendor_line.price_unit" t-options='{"widget": "monetary", "display_currency": vendor_line.currency_id}'/>
+                                                        <span t-else="">-</span>
+                                                    </td>
+                                                </t>
+                                            </tr>
+
                                             <!-- İndirim % row -->
                                             <tr>
                                                 <td class="field-col">İndirim %:</td>
-                                                <t t-foreach="o.purchase_order_ids" t-as="vendor">
+                                                <t t-foreach="vendors_to_show" t-as="vendor">
                                                     <t t-set="vendor_line" t-value="False"/>
                                                     <t t-foreach="vendor.order_line" t-as="line">
                                                         <t t-if="line.tender_line_id and line.tender_line_id.id == tender_line.id">
@@ -199,12 +315,31 @@
                                                 </t>
                                             </tr>
                                             
+                                            <!-- Ödeme Vadesi row -->
+                                            <tr>
+                                                <td class="field-col">Ödeme Vadesi:</td>
+                                                <t t-foreach="vendors_to_show" t-as="vendor">
+                                                    <t t-set="vendor_line" t-value="False"/>
+                                                    <t t-foreach="vendor.order_line" t-as="line">
+                                                        <t t-if="line.tender_line_id and line.tender_line_id.id == tender_line.id">
+                                                            <t t-set="vendor_line" t-value="line"/>
+                                                        </t>
+                                                    </t>
+                                                    
+                                                    <td class="vendor-col">
+                                                        <span t-if="vendor.payment_term_id" t-field="vendor.payment_term_id.name"/>
+                                                        <span t-else="">-</span>
+                                                    </td>
+                                                </t>
+                                            </tr>
+                                            
+                                            
                                             <!-- Tutar row -->
                                             <tr>
                                                 <td class="field-col">Tutar:</td>
                                                 <!-- First collect all non-zero amounts -->
                                                 <t t-set="amounts" t-value="[]"/>
-                                                <t t-foreach="o.purchase_order_ids" t-as="vendor_collect">
+                                                <t t-foreach="vendors_to_show" t-as="vendor_collect">
                                                     <t t-set="vendor_line_collect" t-value="False"/>
                                                     <t t-foreach="vendor_collect.order_line" t-as="line_collect">
                                                         <t t-if="line_collect.tender_line_id and line_collect.tender_line_id.id == tender_line.id">
@@ -218,7 +353,7 @@
                                                 <!-- Find minimum non-zero amount -->
                                                 <t t-set="min_amount" t-value="min(amounts) if amounts else 0"/>
                                                 
-                                                <t t-foreach="o.purchase_order_ids" t-as="vendor">
+                                                <t t-foreach="vendors_to_show" t-as="vendor">
                                                     <t t-set="vendor_line" t-value="False"/>
                                                     <t t-foreach="vendor.order_line" t-as="line">
                                                         <t t-if="line.tender_line_id and line.tender_line_id.id == tender_line.id">
@@ -260,7 +395,8 @@
                                             <!-- NPV row -->
                                             <tr>
                                                 <td class="field-col">NPV:</td>
-                                                <t t-foreach="o.purchase_order_ids" t-as="vendor">
+                                                
+                                                <t t-foreach="vendors_to_show" t-as="vendor">
                                                     <t t-set="vendor_line" t-value="False"/>
                                                     <t t-foreach="vendor.order_line" t-as="line">
                                                         <t t-if="line.tender_line_id and line.tender_line_id.id == tender_line.id">
@@ -276,7 +412,8 @@
                                                                     <t t-set="has_npv" t-value="True"/>
                                                                 </t>
                                                             </t>
-                                                            <span t-if="has_npv" t-field="vendor_line.npv_value"/>
+                                                            <!-- Simply show NPV value -->
+                                                            <span t-if="has_npv" t-field="vendor_line.npv_value" t-options='{"widget": "monetary", "display_currency": vendor_line.currency_id}'/>
                                                             <span t-else="">-</span>
                                                         </t>
                                                         <span t-else="">-</span>
@@ -287,7 +424,7 @@
                                             <!-- Teslimat Tarihi row -->
                                             <tr>
                                                 <td class="field-col">Teslimat Tarihi:</td>
-                                                <t t-foreach="o.purchase_order_ids" t-as="vendor">
+                                                <t t-foreach="vendors_to_show" t-as="vendor">
                                                     <t t-set="vendor_line" t-value="False"/>
                                                     <t t-foreach="vendor.order_line" t-as="line">
                                                         <t t-if="line.tender_line_id and line.tender_line_id.id == tender_line.id">
@@ -305,7 +442,7 @@
                                             <!-- Garanti Süresi row -->
                                             <tr>
                                                 <td class="field-col">Garanti Süresi:</td>
-                                                <t t-foreach="o.purchase_order_ids" t-as="vendor">
+                                                <t t-foreach="vendors_to_show" t-as="vendor">
                                                     <t t-set="vendor_line" t-value="False"/>
                                                     <t t-foreach="vendor.order_line" t-as="line">
                                                         <t t-if="line.tender_line_id and line.tender_line_id.id == tender_line.id">
@@ -331,6 +468,50 @@
                                                 </t>
                                             </tr>
                                             
+                                            <!-- Ürün Seçim row -->
+                                            <tr>
+                                                <td class="field-col">Seçim:</td>
+                                                
+                                                <!-- First collect all non-zero prices for this product -->
+                                                <t t-set="product_amounts" t-value="[]"/>
+                                                <t t-foreach="vendors_to_show" t-as="vendor_collect">
+                                                    <t t-set="vendor_line_collect" t-value="False"/>
+                                                    <t t-foreach="vendor_collect.order_line" t-as="line_collect">
+                                                        <t t-if="line_collect.tender_line_id and line_collect.tender_line_id.id == tender_line.id">
+                                                            <t t-set="vendor_line_collect" t-value="line_collect"/>
+                                                        </t>
+                                                    </t>
+                                                    <t t-if="vendor_line_collect and vendor_line_collect.price_subtotal > 0">
+                                                        <t t-set="product_amounts" t-value="product_amounts + [vendor_line_collect.price_subtotal]"/>
+                                                    </t>
+                                                </t>
+                                                <!-- Find minimum non-zero amount for this product -->
+                                                <t t-set="min_product_amount" t-value="min(product_amounts) if product_amounts else 0"/>
+                                                
+                                                <t t-foreach="vendors_to_show" t-as="vendor">
+                                                    <t t-set="vendor_line" t-value="False"/>
+                                                    <t t-foreach="vendor.order_line" t-as="line">
+                                                        <t t-if="line.tender_line_id and line.tender_line_id.id == tender_line.id">
+                                                            <t t-set="vendor_line" t-value="line"/>
+                                                        </t>
+                                                    </t>
+                                                    
+                                                    <td class="vendor-col text-center">
+                                                        <t t-if="vendor_line">
+                                                            <!-- Auto-check if this vendor has the lowest non-zero price for this product -->
+                                                            <t t-if="vendor_line.price_subtotal > 0 and vendor_line.price_subtotal == min_product_amount">
+                                                                <input type="checkbox" name="vendor_product_selection" t-att-value="str(vendor.id) + '_' + str(tender_line.id)" class="form-check-input" checked="checked"/>
+                                                            </t>
+                                                            <t t-else="">
+                                                                <input type="checkbox" name="vendor_product_selection" t-att-value="str(vendor.id) + '_' + str(tender_line.id)" class="form-check-input"/>
+                                                            </t>
+                                                        </t>
+                                                        <span t-else="">-</span>
+                                                    </td>
+                                                </t>
+                                                
+                                            </tr>
+                                            
                                         </t>
                                     </t>
                                     
@@ -341,7 +522,9 @@
                                         
                                         <!-- First collect all non-zero total amounts -->
                                         <t t-set="total_amounts" t-value="[]"/>
-                                        <t t-foreach="o.purchase_order_ids" t-as="vendor_collect">
+                                        <t t-set="vendors_to_collect" t-value="vendors_to_show"/>
+                                        
+                                        <t t-foreach="vendors_to_collect" t-as="vendor_collect">
                                             <t t-set="vendor_total" t-value="0"/>
                                             <t t-foreach="vendor_collect.order_line" t-as="line">
                                                 <t t-if="line.tender_line_id and not line.display_type">
@@ -355,7 +538,7 @@
                                         <!-- Find minimum non-zero total amount -->
                                         <t t-set="min_total_amount" t-value="min(total_amounts) if total_amounts else 0"/>
                                         
-                                        <t t-foreach="o.purchase_order_ids" t-as="vendor">
+                                        <t t-foreach="vendors_to_show" t-as="vendor">
                                             <!-- Calculate total amount (Tutar) -->
                                             <t t-set="total_amount" t-value="0"/>
                                             <t t-foreach="vendor.order_line" t-as="line">
@@ -379,7 +562,9 @@
                                         
                                         <!-- First collect all non-zero total NPV values -->
                                         <t t-set="total_npvs" t-value="[]"/>
-                                        <t t-foreach="o.purchase_order_ids" t-as="vendor_collect">
+                                        <t t-set="vendors_to_collect" t-value="vendors_to_show"/>
+                                        
+                                        <t t-foreach="vendors_to_collect" t-as="vendor_collect">
                                             <t t-set="has_npv" t-value="False"/>
                                             <t t-set="vendor_total_npv" t-value="0"/>
                                             <t t-foreach="vendor_collect.order_line" t-as="line">
@@ -399,7 +584,8 @@
                                         <!-- Find minimum non-zero total NPV -->
                                         <t t-set="min_total_npv" t-value="min(total_npvs) if total_npvs else 0"/>
                                         
-                                        <t t-foreach="o.purchase_order_ids" t-as="vendor">
+                                        
+                                        <t t-foreach="vendors_to_show" t-as="vendor">
                                             <!-- Calculate total NPV -->
                                             <t t-set="has_npv" t-value="False"/>
                                             <t t-set="total_npv" t-value="0"/>
@@ -431,7 +617,8 @@
                                     <tr class="table-active">
                                         <td class="field-col">Seçim:</td>
                                         
-                                        <t t-foreach="o.purchase_order_ids" t-as="vendor">
+                                        
+                                        <t t-foreach="vendors_to_show" t-as="vendor">
                                             <!-- Calculate total amount for this vendor -->
                                             <t t-set="total_amount" t-value="0"/>
                                             <t t-foreach="vendor.order_line" t-as="line">
@@ -450,6 +637,7 @@
                                                 </t>
                                             </td>
                                         </t>
+                                        
                                     </tr>
                                 </tbody>
                             </table>

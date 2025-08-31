@@ -42,11 +42,17 @@ class PurchaseOrderLine(models.Model):
     )
     
     # NPV calculation fields
-    discount_rate = fields.Float(string='İskonto Oranı (%)',
-                                 default=lambda self: float(self.env['ir.config_parameter'].sudo().get_param('ak_tender_npv_interest_rate', '10.0')),
-                                 help="NPV hesaplaması için kullanılacak yıllık iskonto oranı.")
-    npv_value = fields.Monetary(string='NPV Değeri', currency_field='currency_id',
-                                help="Net Bugünkü Değer hesaplaması sonucu.", readonly=True)
+    discount_rate = fields.Float(
+        string='İskonto Oranı (%)',
+        default=lambda self: float(self.env['ir.config_parameter'].sudo().get_param('ak_tender_npv_interest_rate', '10.0')),
+        help="İhale sürecinde kullanılacak iskonto oranı."
+    )
+    npv_value = fields.Monetary(
+        string='NPV Değeri',
+        currency_field='currency_id',
+        help="Net Bugünkü Değer hesaplaması sonucu.",
+        readonly=True
+    )
     
     # The following fields are already on purchase.order.line, but we are adding them
     # to show the link and in case any properties needed to be modified.
@@ -80,30 +86,64 @@ class PurchaseOrderLine(models.Model):
     
     def calculate_npv(self):
         """
-        Calculate Net Present Value (NPV) based on the line amount, discount rate, and payment term.
+        Calculate Net Present Value (NPV) based on the line amount, NPV rate (inflation rate), and payment term.
         
-        NPV = Amount / (1 + (discount_rate/100)/365)^payment_term_days
+        NPV = Amount / (1 + (npv_rate/100)/365)^payment_term_days
+        
+        This uses the inflation rate from the tender to calculate the present value of future payments.
         """
         for line in self:
             # Get the line amount
             amount = line.price_subtotal or 0.0
             
-            # Get payment term days
-            payment_term_days = 0
-            if line.order_id and line.order_id.payment_term_id and line.order_id.payment_term_id.line_ids:
-                for term_line in line.order_id.payment_term_id.line_ids:
-                    if term_line.value == 'balance':
-                        payment_term_days = term_line.days
-                        break
+            # Import logging at the beginning of the method
+            import logging
+            _logger = logging.getLogger(__name__)
             
-            # If no amount to calculate or no payment term, set NPV to zero
-            if not amount or not payment_term_days or not line.discount_rate:
+            # Get payment term days
+            payment_term_days = 30  # Default to 30 days if no payment term is defined
+            if line.order_id and line.order_id.payment_term_id:
+                _logger.info('Payment term found: %s', line.order_id.payment_term_id.name)
+                if line.order_id.payment_term_id.line_ids:
+                    # İlk ödeme koşulu satırını kullan
+                    term_line = line.order_id.payment_term_id.line_ids[0]
+                    _logger.info('Payment term line: value=%s, nb_days=%s', term_line.value, term_line.nb_days)
+                    payment_term_days = term_line.nb_days
+                    _logger.info('Using payment term days: %s', payment_term_days)
+                else:
+                    _logger.warning('Payment term has no lines: %s', line.order_id.payment_term_id.name)
+            else:
+                _logger.info('No payment term defined, using default: %s days', payment_term_days)
+            
+            # Get NPV rate from tender
+            npv_rate = 10.0  # Default value
+            if line.order_id and line.order_id.tender_id:
+                # İhale üzerindeki NPV oranını kullan
+                npv_rate = line.order_id.tender_id.npv_rate or 10.0
+                _logger.info('Using tender NPV rate: %s', npv_rate)
+            
+            # If no amount to calculate, set NPV to zero
+            if not amount:
                 line.npv_value = 0.0
                 continue
+                
+            # Ensure npv_rate is not zero to avoid division by zero
+            if npv_rate <= 0:
+                _logger.warning('NPV rate is zero or negative, using default value 0.1')
+                npv_rate = 0.1  # Use a small positive value instead of zero
+                
+            # Log calculation parameters for debugging
+            _logger.info('NPV Calculation - Line: %s, Amount: %s, NPV Rate: %s, Payment Term Days: %s',
+                        line.name, amount, npv_rate, payment_term_days)
             
-            # Calculate NPV
-            daily_rate = (line.discount_rate / 100) / 365
-            line.npv_value = amount / ((1 + daily_rate) ** payment_term_days)
+            # Calculate NPV using inflation rate (npv_rate)
+            daily_rate = (npv_rate / 100) / 365
+            npv_value = amount / ((1 + daily_rate) ** payment_term_days)
+            line.npv_value = npv_value
+            
+            # Log calculation details
+            _logger.info('NPV Calculation Details - Daily Rate: %s, Formula: %s / ((1 + %s) ^ %s) = %s',
+                        daily_rate, amount, daily_rate, payment_term_days, npv_value)
         
         return True
     
