@@ -1,0 +1,152 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+# 	* ak_tender
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 18.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-08-31 16:38+0000\n"
+"PO-Revision-Date: 2025-08-31 16:38+0000\n"
+"Last-Translator: \n"
+"Language-Team: Turkish\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: \n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"Language: tr\n"
+
+#. module: ak_tender
+#: model:ir.ui.view,arch_db:ak_tender.ak_purchase_order_portal_content
+msgid "AK Tender Custom Template Active"
+msgstr "AK İhale Özel Şablonu Aktif"
+
+#. module: ak_tender
+#: model:ir.ui.view,arch_db:ak_tender.ak_purchase_order_portal_content
+msgid "Editable fields are enabled"
+msgstr "Düzenlenebilir alanlar etkinleştirildi"
+
+#. module: ak_tender
+#: model:ir.ui.view,arch_db:ak_tender.ak_purchase_order_portal_content
+msgid "Request for Quotation"
+msgstr "Teklif Talebi"
+
+#. module: ak_tender
+#: model:ir.ui.view,arch_db:ak_tender.ak_purchase_order_portal_content
+msgid "Purchase Order"
+msgstr "Satın Alma Siparişi"
+
+#. module: ak_tender
+#: model:ir.ui.view,arch_db:ak_tender.ak_purchase_order_portal_content
+msgid "Request For Quotation Date:"
+msgstr "Teklif Talebi Tarihi:"
+
+#. module: ak_tender
+#: model:ir.ui.view,arch_db:ak_tender.ak_purchase_order_portal_content
+msgid "Order Date:"
+msgstr "Sipariş Tarihi:"
+
+#. module: ak_tender
+#: model:ir.ui.view,arch_db:ak_tender.ak_purchase_order_portal_content
+msgid "From:"
+msgstr "Gönderen:"
+
+#. module: ak_tender
+#: model:ir.ui.view,arch_db:ak_tender.ak_purchase_order_portal_content
+msgid "Confirmation Date:"
+msgstr "Onay Tarihi:"
+
+#. module: ak_tender
+#: model:ir.ui.view,arch_db:ak_tender.ak_purchase_order_portal_content
+msgid "Receipt Date:"
+msgstr "Alım Tarihi:"
+
+#. module: ak_tender
+#: model:ir.ui.view,arch_db:ak_tender.ak_purchase_order_portal_content
+msgid "Invoices"
+msgstr "Faturalar"
+
+#. module: ak_tender
+#: model:ir.ui.view,arch_db:ak_tender.ak_purchase_order_portal_content
+msgid "Date:"
+msgstr "Tarih:"
+
+#. module: ak_tender
+#: model:ir.ui.view,arch_db:ak_tender.ak_purchase_order_portal_content
+msgid "Paid"
+msgstr "Ödendi"
+
+#. module: ak_tender
+#: model:ir.ui.view,arch_db:ak_tender.ak_purchase_order_portal_content
+msgid "Reversed"
+msgstr "İptal Edildi"
+
+#. module: ak_tender
+#: model:ir.ui.view,arch_db:ak_tender.ak_purchase_order_portal_content
+msgid "Waiting Payment"
+msgstr "Ödeme Bekleniyor"
+
+#. module: ak_tender
+#: model:ir.ui.view,arch_db:ak_tender.ak_purchase_order_portal_content
+msgid "Pricing"
+msgstr "Fiyatlandırma"
+
+#. module: ak_tender
+#: model:ir.ui.view,arch_db:ak_tender.ak_purchase_order_portal_content
+msgid "Products"
+msgstr "Ürünler"
+
+#. module: ak_tender
+#: model:ir.ui.view,arch_db:ak_tender.ak_purchase_order_portal_content
+msgid "Amount"
+msgstr "Tutar"
+
+#. module: ak_tender
+#: model:ir.ui.view,arch_db:ak_tender.ak_purchase_order_portal_content
+msgid "Target Price:"
+msgstr "Hedef Fiyat:"
+
+#. module: ak_tender
+#: model:ir.ui.view,arch_db:ak_tender.ak_purchase_order_portal_content
+msgid "Birim Fiyatı"
+msgstr "Birim Fiyatı"
+
+#. module: ak_tender
+#: model:ir.ui.view,arch_db:ak_tender.ak_purchase_order_portal_content
+msgid "Kur"
+msgstr "Kur"
+
+#. module: ak_tender
+#: model:ir.ui.view,arch_db:ak_tender.ak_purchase_order_portal_content
+msgid "Vergiler"
+msgstr "Vergiler"
+
+#. module: ak_tender
+#: model:ir.ui.view,arch_db:ak_tender.ak_purchase_order_portal_content
+msgid "İndirim %"
+msgstr "İndirim %"
+
+#. module: ak_tender
+#: model:ir.ui.view,arch_db:ak_tender.ak_purchase_order_portal_content
+msgid "Teslimat Tarihi"
+msgstr "Teslimat Tarihi"
+
+#. module: ak_tender
+#: model:ir.ui.view,arch_db:ak_tender.ak_purchase_order_portal_content
+msgid "Garanti Süresi"
+msgstr "Garanti Süresi"
+
+#. module: ak_tender
+#: model:ir.ui.view,arch_db:ak_tender.ak_purchase_order_portal_content
+msgid "Tüm Değişiklikleri Kaydet"
+msgstr "Tüm Değişiklikleri Kaydet"
+
+#. module: ak_tender
+#: model:ir.ui.view,arch_db:ak_tender.ak_purchase_order_portal_content
+msgid "Terms & Conditions"
+msgstr "Şartlar ve Koşullar"
+
+#. module: ak_tender
+#: model:ir.ui.view,arch_db:ak_tender.ak_purchase_order_portal_content
+msgid "Payment terms"
+msgstr "Ödeme Koşulları"

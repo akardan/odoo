@@ -9,7 +9,7 @@
                 <t t-set="title">My Tenders</t>
             </t>
 
-            <h3>Open Tenders</h3>
+            <h4>Open Tenders</h4>
             <t t-if="not tenders">
                 <div class="alert alert-info" role="alert">
                     You currently have no open tenders to bid on.
@@ -55,7 +55,7 @@
     <template id="portal_tender_bid_form" name="Tender Bid Form">
         <t t-call="portal.portal_layout">
             <div class="container">
-                <h3>Submit Bid for Tender: <span t-field="tender.name"/> (<span t-field="tender.code"/>)</h3>
+                <h4>Submit Bid for Tender: <span t-field="tender.name"/> (<span t-field="tender.code"/>)</h4>
                 <p>End Date: <span t-field="tender.end_date" t-options='{"widget": "datetime"}'/></p>
                 <p>Status: <span t-field="tender.state" class="badge"/></p>
 
@@ -179,19 +179,19 @@
     <!-- Copy of purchase.purchase_order_portal_content -->
     <template id="ak_purchase_order_portal_content" name="AK Purchase Order Portal Content">
         <!-- Visible indicator to show this is our custom template -->
-        <div class="alert alert-info">
+        <!-- <div class="alert alert-info">
             <strong>AK Tender Custom Template Active</strong> - Editable fields are enabled
-        </div>
+        </div> -->
         
         <!-- Intro -->
         <div id="introduction" class="mt-5 mt-lg-0 pb-2 pt-0">
-            <h2 class="my-0">
-                <t t-if="order.state in ['draft', 'sent']">Request for Quotation</t>
+            <h3 class="my-0" style="font-size: 1.5rem;">
+                <t t-if="order.state in ['draft', 'sent']">Satınalma Teklif Talebi</t>
                 <t t-else="1">
-                    Purchase Order
+                    Satınalma Siparişi
                 </t>
-                <em t-esc="order.name"/>
-            </h2>
+                <em t-esc="order.name" style="font-size: 1.3rem;"/>
+            </h3>
         </div>
 
         <div class="container-fluid px-0 mx-0">
@@ -244,28 +244,25 @@
             </div>
 
             <section id="details" style="page-break-inside: auto;" class="mt32">
-                <h3 id="details">Pricing</h3>
+                <h4 id="details">Fiyatlama</h4>
 
-                <div class="table-responsive w-100">
-                    <table t-att-data-order-id="order.id" t-att-data-token="order.access_token" class="table table-sm w-100" id="purchase_order_table">
+                <div class="table-responsive">
+                    <table t-att-data-order-id="order.id" t-att-data-token="order.access_token" class="table table-sm" id="purchase_order_table">
                         <t t-set="display_price_and_taxes" t-value="not update_dates and order.state in ['sent', 'purchase', 'done']"/>
                         <thead class="bg-100">
                             <tr>
-                                <th class="text-start" style="width: 35%;">Products</th>
-                                <th class="text-center" style="width: 30px;"><i class="fa fa-info-circle"></i></th>
-                                <th class="text-end">Miktar</th>
-                                <th t-if="update_dates" class="text-end">Scheduled Date</th>
-                                <th t-if="display_price_and_taxes" t-attf-class="text-end {{ 'd-none d-sm-table-cell' if report_type == 'html' else '' }}">Birim Fiyatı</th>
-                                <th t-if="display_price_and_taxes" t-attf-class="text-end {{ 'd-none d-md-table-cell' if report_type == 'html' else '' }}">
-                                    <span>Vergiler</span>
-                                </th>
-                                <th t-if="display_price_and_taxes" t-attf-class="text-end {{ 'd-none d-sm-table-cell' if report_type == 'html' else '' }}">İndirim %</th>
-                                <th class="text-end" t-if="not update_dates and order.state in ['purchase', 'done']" >
-                                    <span>Amount</span>
-                                </th>
+                                <th class="text-start" style="width: 30%;">Products</th>
+                                <th class="text-center" style="width: 3%;"><i class="fa fa-info-circle"></i></th>
+                                <th class="text-end" style="width: 6%;">Miktar</th>
+                                <th t-if="update_dates" class="text-end" style="width: 10%;">Scheduled Date</th>
+                                <th t-if="display_price_and_taxes" t-attf-class="text-end {{ 'd-none d-sm-table-cell' if report_type == 'html' else '' }}" style="width: 12%;">Birim Fiyatı</th>
+                                <th t-if="display_price_and_taxes" t-attf-class="text-end {{ 'd-none d-sm-table-cell' if report_type == 'html' else '' }}" style="width: 6%;">Kur</th>
+                                <th t-if="display_price_and_taxes" t-attf-class="text-end {{ 'd-none d-sm-table-cell' if report_type == 'html' else '' }}" style="width: 8%;">İnd.%</th>
+                                <th t-if="display_price_and_taxes" t-attf-class="text-end {{ 'd-none d-md-table-cell' if report_type == 'html' else '' }}" style="width: 8%;">KDV</th>
+                                <th class="text-end" t-if="not update_dates and order.state in ['purchase', 'done']" style="width: 8%;">Amount</th>
                                 <!-- Additional columns for editable fields -->
-                                <th class="text-end" style="width: 10%;">Teslimat Tarihi</th>
-                                <th class="text-end">Garanti Süresi</th>
+                                <th class="text-end" style="width: 7%;">Teslimat Tar.</th>
+                                <th class="text-end" style="width: 6%;">Garanti</th>
                             </tr>
                         </thead>
                         <tbody class="purchase_tbody">
@@ -286,7 +283,7 @@
                                             
                                             <!-- Purchase Description field (initially hidden) -->
                                             <div t-attf-id="description_{{line.id}}" class="mt-2 mb-2 description-field" style="display: none;">
-                                                <div class="border p-2 bg-light" style="width: 280%;">
+                                                <div class="border p-2 bg-light" style="width: 100%;">
                                                     <strong>Satınalma Açıklaması:</strong>
                                                     <div class="mt-1" style="padding-left: 15px; font-size: 12px;">
                                                         <t t-if="line.product_id.description_purchase">
@@ -303,7 +300,7 @@
                                             <div class="mt-2">
                                                 <textarea t-attf-name="alt_materials_line_{{line.id}}"
                                                     class="form-control form-control-sm editable-field"
-                                                    style="font-size: 1em;"
+                                                    style="font-size: 0.9em; width: 100%;"
                                                     placeholder="Alternatif Malzeme"
                                                     rows="2"><t t-esc="line.alt_materials or ''"/></textarea>
                                             </div>
@@ -315,7 +312,7 @@
                                         </td>
                                         
                                         <!-- Info icon column -->
-                                        <td class="text-center">
+                                        <td class="text-center" style="padding-left: 0; padding-right: 0;">
                                             <a href="#" t-attf-class="info-toggle" t-attf-data-line-id="{{line.id}}">
                                                 <i class="fa fa-info-circle"></i>
                                             </a>
@@ -347,10 +344,39 @@
                                             <input type="number"
                                                 t-attf-name="price_unit_line_{{line.id}}"
                                                 class="form-control form-control-sm text-end editable-field"
-                                                style="width: 100%; font-size: 1em;"
+                                                style="width: 100%; font-size: 0.9em;"
                                                 step="0.01"
                                                 min="0"
                                                 t-att-value="line.price_unit" />
+                                            
+                                            <!-- Target price (read-only) with currency symbol only -->
+                                            <div class="mt-1 small text-muted" t-if="line.tender_line_id and line.tender_line_id.target_price">
+                                                <strong>Hedef Fiyat:</strong>
+                                                <span t-field="line.tender_line_id.target_price"
+                                                      t-options='{"widget": "monetary", "display_currency": line.tender_line_id.currency_id}'/>
+                                            </div>
+                                        </td>
+                                        <!-- Currency selection field -->
+                                        <td t-if="display_price_and_taxes" t-attf-class="text-end {{ 'd-none d-sm-table-cell' if report_type == 'html' else '' }}">
+                                            <select t-attf-name="currency_line_{{line.id}}"
+                                                class="form-select form-select-sm editable-field"
+                                                style="font-size: 0.9em; width: 100%; min-width: 80px;">
+                                                <t t-foreach="request.env['res.currency'].sudo().search([])" t-as="currency">
+                                                    <option t-att-value="currency.id" t-att-selected="currency.id == line.currency_id.id">
+                                                        <t t-esc="currency.name"/>
+                                                    </option>
+                                                </t>
+                                            </select>
+                                        </td>
+                                        <td t-if="display_price_and_taxes" t-attf-class="text-end {{ 'd-none d-sm-table-cell' if report_type == 'html' else '' }}">
+                                            <input type="number"
+                                                t-attf-name="discount_line_{{line.id}}"
+                                                class="form-control form-control-sm editable-field"
+                                                style="font-size: 0.9em; width: 100%;"
+                                                step="0.01"
+                                                min="0"
+                                                max="100"
+                                                t-att-value="line.discount or '0.00'" />
                                         </td>
                                         <td t-if="display_price_and_taxes" t-attf-class="text-end {{ 'd-none d-md-table-cell' if report_type == 'html' else '' }}">
                                             <!-- Create a unique list of tax rates -->
@@ -366,23 +392,13 @@
                                             
                                             <select t-attf-name="taxes_line_{{line.id}}"
                                                 class="form-select form-select-sm editable-field"
-                                                style="font-size: 1em;">
+                                                style="font-size: 0.9em; width: 100%;">
                                                 <t t-foreach="sorted(unique_tax_rates)" t-as="rate">
                                                     <option t-att-value="unique_tax_ids[str(rate)]" t-att-selected="unique_tax_ids[str(rate)] in line.taxes_id.ids">
                                                         <t t-esc="str(rate)"/>
                                                     </option>
                                                 </t>
                                             </select>
-                                        </td>
-                                        <td t-if="display_price_and_taxes" t-attf-class="text-end {{ 'd-none d-sm-table-cell' if report_type == 'html' else '' }}">
-                                            <input type="number"
-                                                t-attf-name="discount_line_{{line.id}}"
-                                                class="form-control form-control-sm editable-field"
-                                                style="font-size: 1em;"
-                                                step="0.01"
-                                                min="0"
-                                                max="100"
-                                                t-att-value="line.discount or '0.00'" />
                                         </td>
                                         <td class="text-end" t-if="not update_dates and order.state in ['purchase', 'done']">
                                             <span class="oe_order_line_price_subtotal" t-field="line.price_subtotal"/>
@@ -394,7 +410,7 @@
                                             <input type="date"
                                                 t-attf-name="delivery_date_line_{{line.id}}"
                                                 class="form-control form-control-sm editable-field"
-                                                style="font-size: 1em; width: 100%;"
+                                                style="font-size: 0.9em; width: 100%;"
                                                 t-att-value="line.date_planned and line.date_planned.strftime('%Y-%m-%d') or ''"/>
                                         </td>
                                         
@@ -402,7 +418,7 @@
                                         <td class="text-end">
                                             <select t-attf-name="warranty_period_line_{{line.id}}"
                                                 class="form-control form-control-sm editable-field"
-                                                style="font-size: 1em;">
+                                                style="font-size: 0.9em; width: 100%;">
                                                 <option value="">Seçiniz</option>
                                                 <option value="1" t-att-selected="line.warranty_period == 1">1 Ay</option>
                                                 <option value="3" t-att-selected="line.warranty_period == 3">3 Ay</option>
@@ -459,15 +475,27 @@
             </section>
 
             <section id="terms" class="mt-5" t-if="order.notes">
-                <h3 class="">Terms &amp; Conditions</h3>
+                <h4 class="">Terms &amp; Conditions</h4>
                 <hr class="mt-0 mb-1"/>
                 <em t-field="order.notes"/>
             </section>
 
-            <section class="mt-5" t-if="order.payment_term_id">
-                <h3 class="">Payment terms</h3>
+            <section class="mt-5">
+                <h4 class="">Ödeme Koşulu</h4>
                 <hr class="mt-0 mb-1"/>
-                <span t-field="order.payment_term_id"/>
+                <div class="row">
+                    <div class="col-md-6">
+                        <select t-attf-name="payment_term_id" class="form-select form-select-sm editable-field" style="font-size: 0.9em; width: 100%;">
+                            <option value="">Seçiniz</option>
+                            <t t-foreach="request.env['account.payment.term'].sudo().search([])" t-as="term">
+                                <option t-att-value="term.id" t-att-selected="order.payment_term_id and order.payment_term_id.id == term.id">
+                                    <t t-esc="term.name"/>
+                                </option>
+                            </t>
+                            <option value="cash" t-att-selected="order.payment_term_id and order.payment_term_id.name == 'Peşin Ödeme'">Peşin Ödeme</option>
+                        </select>
+                    </div>
+                </div>
             </section>
         </div>
     </template>
@@ -475,7 +503,7 @@
     <!-- Override the portal_my_purchase_order template to use our custom template -->
     <template id="portal_my_purchase_order_inherit" name="Custom Purchase Order Portal" inherit_id="purchase.portal_my_purchase_order">
         <xpath expr="//div[@id='portal_purchase_content']" position="replace">
-            <div id="portal_purchase_content" class="container-fluid px-0 mx-0 w-100" style="max-width: 100%;">
+            <div id="portal_purchase_content" class="container-fluid px-0 mx-0">
                 <div t-call="ak_tender.ak_purchase_order_portal_content"/>
             </div>
         </xpath>

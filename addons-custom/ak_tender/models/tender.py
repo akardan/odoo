@@ -3,8 +3,11 @@
 # ak_tender/models/tender.py
 
 from odoo import models, fields, api, _
+from datetime import datetime
 from odoo.exceptions import ValidationError, UserError
 import logging
+
+_logger = logging.getLogger(__name__)
 
 class AkTenderLine(models.Model):
     _name = 'ak.tender.line'
@@ -52,13 +55,14 @@ class AkTenderLine(models.Model):
                                       help=_("Bu satır için alternatif teklifler kabul edilir."))
     
     # Hedef Fiyat ve Para Birimi
-    currency_id = fields.Many2one(related='tender_id.currency_id',
-                                 string=_('Para Birimi'),
-                                 readonly=True,
-                                 store=True)
+    currency_id = fields.Many2one('res.currency',
+                                  string=_('Para Birimi'),
+                                  default=lambda self: self.tender_id.currency_id or self.env.company.currency_id,
+                                  required=True,
+                                  store=True)
     target_price = fields.Monetary(string=_('Hedef Fiyat'),
-                                   currency_field='currency_id',
-                                   help=_("Bu kalem için belirlenen hedef fiyat."))
+                                    currency_field='currency_id',
+                                    help=_("Bu kalem için belirlenen hedef fiyat."))
     # We don't need these fields anymore since we're using the standard product configurator
     
     # Computed field to access product's is_hotel_accommodation
@@ -97,6 +101,12 @@ class AkTenderLine(models.Model):
         
         # Otel konaklaması ürünü seçildiğinde
         self._onchange_product_id_hotel()
+        
+    @api.onchange('tender_id')
+    def _onchange_tender_id(self):
+        """Update currency when tender changes"""
+        if self.tender_id and self.tender_id.currency_id:
+            self.currency_id = self.tender_id.currency_id
     
     @api.onchange('product_id')
     def _onchange_product_id_hotel(self):
@@ -317,30 +327,32 @@ class AkTender(models.Model):
     discount_rate = fields.Float(string=_('İskonto Oranı (%)'), default=10.0,
                                  help=_("İhale sürecinde kullanılacak iskonto oranı."))
                                  
-    @api.onchange('workflow_current_state_id')
+    @api.onchange('workflow_current_state_id', 'currency_id')
     def _onchange_workflow_current_state_id_for_npv(self):
         """
-        İş akışı durumu değiştiğinde, ekonomik verilerden NPV oranını güncelle
+        İş akışı durumu veya para birimi değiştiğinde, ekonomik verilerden NPV oranını güncelle
         """
         # Ekonomik verilerden NPV oranını al
         try:
             economic_data_model = self.env['ak.tender.economic.data']
             if economic_data_model:
-                self.npv_rate = economic_data_model.get_default_npv_rate()
+                # Para birimine özgü NPV oranını al
+                self.npv_rate = economic_data_model.get_default_npv_rate(self.currency_id.id if self.currency_id else None)
         except Exception:
             # Tablo henüz oluşturulmamış olabilir, varsayılan değeri kullan
             pass
                                  
-    @api.onchange('workflow_current_state_id')
+    @api.onchange('workflow_current_state_id', 'currency_id')
     def _onchange_workflow_current_state_id(self):
         """
-        İş akışı durumu değiştiğinde, ekonomik verilerden NPV oranını güncelle
+        İş akışı durumu veya para birimi değiştiğinde, ekonomik verilerden NPV oranını güncelle
         """
         # Ekonomik verilerden NPV oranını al
         try:
             economic_data_model = self.env['ak.tender.economic.data']
             if economic_data_model:
-                self.npv_rate = economic_data_model.get_default_npv_rate()
+                # Para birimine özgü NPV oranını al
+                self.npv_rate = economic_data_model.get_default_npv_rate(self.currency_id.id if self.currency_id else None)
         except Exception:
             # Tablo henüz oluşturulmamış olabilir, varsayılan değeri kullan
             pass
@@ -349,35 +361,29 @@ class AkTender(models.Model):
         """
         Tüm Purchase Order'lar için NPV değerlerini hesapla
         """
-        import logging
-        _logger = logging.getLogger(__name__)
-        
         self.ensure_one()
-        _logger.info('Calculating NPV values for all purchase orders in tender: %s', self.name)
         
-        # Ekonomik verilerden NPV oranını güncelle
+        # Ekonomik verilerden para birimine özgü NPV oranını güncelle
         try:
-            economic_data = self.env['ak.tender.economic.data'].search([], limit=1)
-            if economic_data and economic_data.npv_rate > 0:
-                self.npv_rate = economic_data.npv_rate
-                _logger.info('Updated NPV rate from economic data: %s', self.npv_rate)
-            else:
-                _logger.warning('No valid economic data found, using default NPV rate: %s', self.npv_rate)
-        except Exception as e:
-            _logger.error('Error updating NPV rate from economic data: %s', e)
+            economic_data_model = self.env['ak.tender.economic.data']
+            model_count = self.env['ak.tender.economic.data'].search_count([])
+            currency_id = self.currency_id.id if self.currency_id else None
+            
+            # Directly use the model's method without any conditions
+            if model_count > 0:  # Only try to get economic data if there are records
+                self.npv_rate = self.env['ak.tender.economic.data'].get_default_npv_rate(currency_id)
+        except Exception:
+            # Tablo henüz oluşturulmamış olabilir, varsayılan değeri kullan
+            pass
         
         # Tüm Purchase Order'lar için NPV değerlerini hesapla
         total_calculated = 0
         for po in self.purchase_order_ids:
-            _logger.info('Processing purchase order: %s (Payment Term: %s)',
-                        po.name, po.payment_term_id.name if po.payment_term_id else 'None')
             po.calculate_total_npv()
             total_calculated += 1
             
         # Hesaplanan toplam NPV değerlerini topla
         total_calculated_npv = sum(po.total_npv for po in self.purchase_order_ids)
-        _logger.info('Total NPV calculated for all purchase orders: %s (Using NPV Rate: %s)',
-                    total_calculated_npv, self.npv_rate)
         
         # Kullanıcıya detaylı bildirim göster
         return {
@@ -397,6 +403,38 @@ class AkTender(models.Model):
     purchase_order_count = fields.Integer(string=_('SAS Sayısı'), compute='_compute_purchase_order_count')
     
     offer_count = fields.Integer(string=_('Teklif Sayısı'), compute='_compute_offer_count')
+    
+    def action_review_offers(self):
+        """
+        Open a list view of all purchase orders related to this tender.
+        Uses the standard purchase order tree view with additional context.
+        The list is grouped by tender_round and sorted by total_npv and amount_untaxed.
+        Filters out purchase orders with 0 amount.
+        """
+        self.ensure_one()
+        
+        # Use the standard tree view with our extensions
+        tree_view_id = self.env.ref('ak_tender.purchase_order_tree_tender').id
+        search_view_id = self.env.ref('ak_tender.purchase_order_search_tender').id
+
+        return {
+            'name': _('Teklifleri İncele'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'purchase.order',
+            'view_mode': 'list,form',
+            'views': [(tree_view_id, 'list'), (False, 'form')],
+            'search_view_id': [search_view_id, 'search'],
+            'domain': [
+                ('tender_id', '=', self.id),
+            ],
+            'context': {
+                'default_tender_id': self.id,
+                'search_default_non_zero_amount': 1,  # Automatically apply the non-zero filter
+                'search_default_group_by_tender_round': 1,  # Group by tender round
+                'order': 'tender_round desc, total_npv asc, amount_untaxed asc',  # Sort by round, NPV, and amount
+            },
+            'target': 'current',
+        }
 
     @api.depends('purchase_order_ids', 'workflow_current_state_id')
     def _compute_offer_count(self):
@@ -472,14 +510,34 @@ class AkTender(models.Model):
         Increment the tender round counter.
         This method is called from workflow transition action when
         'Yeni Teklif Turu Başlat' button is clicked.
+        
+        Before incrementing, it checks if there are any purchase orders
+        for the current round. If not, it shows a warning and does not increment.
         """
         self.ensure_one()
-        _logger = logging.getLogger(__name__)
-        _logger.info(f"increment_tender_round called for tender {self.name} (ID: {self.id})")
+        
+        # Check if there are any purchase orders for the current round
+        current_round_pos = self.env['purchase.order'].search([
+            ('tender_id', '=', self.id),
+            ('tender_round', '=', self.tender_round)
+        ])
+        
+        # If there are no purchase orders for the current round, show a warning and don't increment
+        if not current_round_pos:
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'title': _('Uyarı'),
+                    'message': _('Mevcut teklif turu (%s) için henüz teklif oluşturulmamış. '
+                                'Lütfen önce tedarikçi tekliflerini oluşturun.') % self.tender_round,
+                    'sticky': True,
+                    'type': 'warning',
+                }
+            }
         
         old_round = self.tender_round
         self.tender_round += 1
-        _logger.info(f"Tender round incremented from {old_round} to {self.tender_round}")
         
         # Force write to ensure changes are committed
         self.write({'tender_round': self.tender_round})
@@ -489,7 +547,6 @@ class AkTender(models.Model):
             subtype_xmlid='mail.mt_note'
         )
         
-        _logger.info(f"increment_tender_round completed successfully")
         return True
 
     @api.onchange('workflow_definition_id')
@@ -864,6 +921,15 @@ class AkTender(models.Model):
                 if not line.required_delivery_date:
                     line.required_delivery_date = self.required_delivery_date
     
+    @api.onchange('currency_id')
+    def _onchange_currency_id(self):
+        """
+        Update currency on all tender lines when the tender's currency changes.
+        """
+        if self.currency_id and self.tender_lines:
+            for line in self.tender_lines:
+                line.currency_id = self.currency_id
+    
     @api.onchange('tender_template_id')
     def _onchange_tender_template_id(self):
         """İhale şablonu seçildiğinde şablonu uygula."""
@@ -963,9 +1029,26 @@ class AkTender(models.Model):
         but only for suppliers who have submitted offers (total amount > 0).
         """
         self.ensure_one()
-        _logger = logging.getLogger(__name__)
-        _logger.info(f"Creating purchase orders for tender {self.name} (ID: {self.id}), round: {self.tender_round}")
         
+        # Validate preconditions
+        validation_result = self._validate_purchase_order_creation()
+        if validation_result:
+            return validation_result
+        
+        # Get suppliers to process
+        suppliers_to_process = self._get_suppliers_to_process()
+        
+        # Create purchase orders for each supplier
+        created_count = self._create_purchase_orders(suppliers_to_process)
+        
+        # Return success notification
+        return self._get_success_notification(created_count)
+    
+    def _validate_purchase_order_creation(self):
+        """
+        Validate that all preconditions for purchase order creation are met.
+        Returns a notification dictionary if validation fails, None otherwise.
+        """
         if not self.invited_partners:
             return {
                 'type': 'ir.actions.client',
@@ -990,113 +1073,316 @@ class AkTender(models.Model):
                 }
             }
         
+        return None
+    
+    def _get_suppliers_to_process(self):
+        """
+        Determine which suppliers need purchase orders created.
+        Returns a list of supplier information dictionaries.
+        """
+        suppliers_to_process = []
+        
+        if self.tender_round == 1:
+            # First round: Process all invited suppliers that don't have an order yet
+            suppliers_to_process = self._get_first_round_suppliers()
+        else:
+            # Subsequent rounds: Copy from previous round for suppliers with valid offers
+            suppliers_to_process = self._get_subsequent_round_suppliers()
+        
+        return suppliers_to_process
+    
+    def _get_first_round_suppliers(self):
+        """
+        Get suppliers for the first tender round.
+        Returns a list of supplier information dictionaries.
+        """
+        suppliers_to_process = []
+        
+        # Count existing purchase orders for this tender
+        existing_pos = self.env['purchase.order'].search([
+            ('tender_id', '=', self.id),
+            ('tender_round', '=', 1)
+        ])
+        existing_supplier_ids = existing_pos.mapped('partner_id.id')
+        
+        # Create purchase orders for suppliers that don't have one yet
+        for supplier in self.invited_partners:
+            if supplier.id not in existing_supplier_ids:
+                suppliers_to_process.append({
+                    'partner_id': supplier.id,
+                    'prev_po': None,  # No previous PO for first round
+                    'round': 1
+                })
+        
+        return suppliers_to_process
+    
+    def _get_subsequent_round_suppliers(self):
+        """
+        Get suppliers for subsequent tender rounds.
+        Returns a list of supplier information dictionaries.
+        """
+        suppliers_to_process = []
+        previous_round = self.tender_round - 1
+        
+        # Get purchase orders from the previous round
+        previous_pos = self.env['purchase.order'].search([
+            ('tender_id', '=', self.id),
+            ('tender_round', '=', previous_round)
+        ])
+        
+        # Only copy purchase orders with total amount > 0 (supplier has submitted an offer)
+        valid_previous_pos = previous_pos.filtered(lambda po: po.amount_total > 0)
+        
+        for prev_po in valid_previous_pos:
+            # Check if a purchase order already exists for this supplier in the current round
+            existing_po = self.env['purchase.order'].search([
+                ('tender_id', '=', self.id),
+                ('partner_id', '=', prev_po.partner_id.id),
+                ('tender_round', '=', self.tender_round)
+            ], limit=1)
+            
+            if not existing_po:
+                suppliers_to_process.append({
+                    'partner_id': prev_po.partner_id.id,
+                    'prev_po': prev_po,  # Store previous PO for copying lines
+                    'round': self.tender_round
+                })
+        
+        return suppliers_to_process
+    
+    def _create_purchase_orders(self, suppliers_to_process):
+        """
+        Create purchase orders for the specified suppliers.
+        Returns the count of created purchase orders.
+        """
         created_count = 0
         
-        # If this is the first round, create new purchase orders for all invited suppliers
-        if self.tender_round == 1:
-            # Count existing purchase orders for this tender
-            existing_pos = self.env['purchase.order'].search([
-                ('tender_id', '=', self.id),
-                ('tender_round', '=', 1)
-            ])
-            existing_supplier_ids = existing_pos.mapped('partner_id.id')
+        for supplier_info in suppliers_to_process:
+            # Create purchase order
+            new_po = self._create_purchase_order(supplier_info)
             
-            # Create purchase orders for suppliers that don't have one yet
-            for supplier in self.invited_partners:
-                if supplier.id in existing_supplier_ids:
-                    continue
-                    
-                # Create purchase order
-                po_vals = {
-                    'partner_id': supplier.id,
-                    'tender_id': self.id,
-                    'date_order': self.end_date,  # Use tender end date as order deadline
-                    'tender_round': 1,  # First round
-                    'company_id': self.env.company.id,
-                    'currency_id': self.currency_id.id,
-                }
-                
-                new_po = self.env['purchase.order'].create(po_vals)
-                created_count += 1
-                _logger.info(f"Created new PO for supplier {supplier.name} (ID: {supplier.id}), round 1")
+            # Create purchase order lines
+            self._create_purchase_order_lines(new_po, supplier_info)
+            
+            created_count += 1
         
-        # If this is a subsequent round, copy offers from previous round
+        return created_count
+    
+    def _create_purchase_order(self, supplier_info):
+        """
+        Create a purchase order for the specified supplier.
+        Returns the created purchase order.
+        """
+        po_vals = {
+            'partner_id': supplier_info['partner_id'],
+            'tender_id': self.id,
+            'date_order': self.end_date,
+            'tender_round': supplier_info['round'],
+            'company_id': self.env.company.id,
+            'currency_id': self.currency_id.id,
+        }
+        
+        # If this is a subsequent round, copy payment terms from the previous purchase order
+        prev_po = supplier_info.get('prev_po')
+        if prev_po and hasattr(prev_po, 'payment_term_id'):
+            po_vals['payment_term_id'] = prev_po.payment_term_id.id if prev_po.payment_term_id else False
+        
+        # Create the purchase order with a context to prevent auto-creation of lines
+        return self.env['purchase.order'].with_context(from_tender=True).create(po_vals)
+    
+    def _create_purchase_order_lines(self, purchase_order, supplier_info):
+        """
+        Create purchase order lines for the specified purchase order.
+        """
+        prev_po = supplier_info['prev_po']
+        
+        if prev_po:
+            # Copy lines from previous purchase order (subsequent rounds)
+            for prev_line in prev_po.order_line:
+                self._create_line_from_previous(purchase_order, prev_line)
         else:
-            previous_round = self.tender_round - 1
-            _logger.info(f"Looking for previous round {previous_round} purchase orders")
+            # Create new lines from tender lines (first round)
+            for tender_line in self.tender_lines:
+                self._create_line_from_tender(purchase_order, tender_line)
+    
+    def _create_line_from_previous(self, purchase_order, prev_line):
+        """
+        Create a purchase order line from a previous purchase order line.
+        Returns the created purchase order line.
+        """
+        if prev_line.display_type in ('line_section', 'line_note'):
+            return self._create_section_or_note_line(
+                purchase_order,
+                prev_line.name,
+                prev_line.display_type,
+                prev_line.sequence
+            )
+        else:
+            # Product line - copy values from previous round
+            product_qty = prev_line.product_qty
+            if not product_qty or product_qty <= 0:
+                product_qty = 1.0
+                
+            product_uom = prev_line.product_uom.id
+            if not product_uom and prev_line.product_id:
+                product_uom = prev_line.product_id.uom_po_id.id or prev_line.product_id.uom_id.id
             
-            # Get purchase orders from the previous round
-            previous_pos = self.env['purchase.order'].search([
-                ('tender_id', '=', self.id),
-                ('tender_round', '=', previous_round)
-            ])
+            if not product_uom:
+                product_uom = self.env['uom.uom'].search([], limit=1).id
+                
+            date_planned = prev_line.date_planned or fields.Date.today()
             
-            # Only copy purchase orders with total amount > 0 (supplier has submitted an offer)
-            valid_previous_pos = previous_pos.filtered(lambda po: po.amount_total > 0)
-            _logger.info(f"Found {len(valid_previous_pos)} valid previous purchase orders")
+            line_vals = {
+                'order_id': purchase_order.id,
+                'product_id': prev_line.product_id.id,
+                'name': prev_line.name or prev_line.product_id.name,
+                'product_qty': product_qty,
+                'product_uom': product_uom,
+                'price_unit': prev_line.price_unit or 0.0,
+                'date_planned': date_planned,
+                'taxes_id': [(6, 0, prev_line.taxes_id.ids)],
+                'tender_line_id': prev_line.tender_line_id.id if prev_line.tender_line_id else False,
+                'sequence': prev_line.sequence,
+                'alt_materials': prev_line.alt_materials if hasattr(prev_line, 'alt_materials') else False,
+                'discount': prev_line.discount if hasattr(prev_line, 'discount') else 0.0,
+            }
             
-            for prev_po in valid_previous_pos:
-                # Check if a purchase order already exists for this supplier in the current round
-                existing_po = self.env['purchase.order'].search([
-                    ('tender_id', '=', self.id),
-                    ('partner_id', '=', prev_po.partner_id.id),
-                    ('tender_round', '=', self.tender_round)
-                ], limit=1)
-                
-                if existing_po:
-                    _logger.info(f"PO already exists for supplier {prev_po.partner_id.name} in round {self.tender_round}")
-                    continue
-                
-                # Create a new purchase order for the current round
-                new_po_vals = {
-                    'partner_id': prev_po.partner_id.id,
-                    'tender_id': self.id,
-                    'date_order': self.end_date,
-                    'tender_round': self.tender_round,
-                    'company_id': self.env.company.id,
-                    'currency_id': self.currency_id.id,
-                }
-                
-                new_po = self.env['purchase.order'].create(new_po_vals)
-                
-                # Copy line items from the previous purchase order
-                for prev_line in prev_po.order_line:
-                    if prev_line.display_type in ('line_section', 'line_note'):
-                        # Copy section and note lines as is
-                        new_line_vals = {
-                            'order_id': new_po.id,
-                            'name': prev_line.name,
-                            'display_type': prev_line.display_type,
-                            'sequence': prev_line.sequence,
-                        }
-                    else:
-                        # Copy product lines with their values
-                        new_line_vals = {
-                            'order_id': new_po.id,
-                            'product_id': prev_line.product_id.id,
-                            'name': prev_line.name,
-                            'product_qty': prev_line.product_qty,
-                            'product_uom': prev_line.product_uom.id,
-                            'price_unit': prev_line.price_unit,
-                            'date_planned': prev_line.date_planned,
-                            'taxes_id': [(6, 0, prev_line.taxes_id.ids)],
-                            'tender_line_id': prev_line.tender_line_id.id if prev_line.tender_line_id else False,
-                            'sequence': prev_line.sequence,
-                            'alt_materials': prev_line.alt_materials if hasattr(prev_line, 'alt_materials') else False,
-                            'discount': prev_line.discount if hasattr(prev_line, 'discount') else 0.0,
-                        }
-                    
-                    self.env['purchase.order.line'].create(new_line_vals)
-                
-                created_count += 1
-                _logger.info(f"Created new PO for supplier {prev_po.partner_id.name} in round {self.tender_round}")
+            return self.env['purchase.order.line'].create(line_vals)
+    
+    def _create_line_from_tender(self, purchase_order, tender_line):
+        """
+        Create a purchase order line from a tender line.
+        Returns the created purchase order line.
+        """
+        if tender_line.display_type in ('line_section', 'line_note'):
+            return self._create_section_or_note_line(
+                purchase_order,
+                tender_line.name or 'Section/Note',
+                tender_line.display_type,
+                tender_line.sequence
+            )
+        elif tender_line.display_type == 'product' and tender_line.product_id:
+            # Product line
+            product_uom = tender_line.uom_id.id
+            if not product_uom and tender_line.product_id:
+                product_uom = tender_line.product_id.uom_po_id.id or tender_line.product_id.uom_id.id
             
+            if not product_uom:
+                product_uom = self.env['uom.uom'].search([], limit=1).id
+                
+            quantity = tender_line.quantity
+            if not quantity or quantity <= 0:
+                quantity = 1.0
+                
+            date_planned = tender_line.required_delivery_date or self.required_delivery_date or fields.Date.today()
+            
+            line_vals = {
+                'order_id': purchase_order.id,
+                'product_id': tender_line.product_id.id,
+                'name': tender_line.name or tender_line.product_id.name,
+                'product_qty': quantity,
+                'product_uom': product_uom,
+                'price_unit': tender_line.target_price or 0.0,
+                'date_planned': date_planned,
+                'tender_line_id': tender_line.id,
+            }
+            
+            return self.env['purchase.order.line'].create(line_vals)
+        
+        return None
+    
+    def _create_section_or_note_line(self, purchase_order, name, display_type, sequence):
+        """
+        Create a section or note line for a purchase order.
+        Returns the created purchase order line.
+        """
+        line_vals = {
+            'order_id': purchase_order.id,
+            'name': name,
+            'display_type': display_type,
+            'sequence': sequence,
+            # For non-accountable lines, these fields should be NULL
+            'product_id': False,
+            'product_qty': 0.0,
+            'product_uom': False,
+            'price_unit': 0.0,
+            'date_planned': fields.Date.today(),
+        }
+        
+        return self.env['purchase.order.line'].create(line_vals)
+    
+    def _get_success_notification(self, created_count):
+        """
+        Get the success notification for purchase order creation.
+        Returns a notification dictionary.
+        """
         return {
             'type': 'ir.actions.client',
             'tag': 'display_notification',
             'params': {
                 'title': _('Başarılı'),
                 'message': _('%s tedarikçi için satın alma talebi oluşturuldu.') % created_count,
+                'sticky': False,
+                'type': 'success',
+            }
+        }
+    
+    def action_send_bulk_emails(self):
+        """
+        Send emails to all suppliers with purchase orders for the current tender round.
+        This method finds all purchase orders for the current round of the tender
+        and triggers the email sending action for each one.
+        """
+        self.ensure_one()
+        
+        # Find all purchase orders for this tender and current round
+        purchase_orders = self.env['purchase.order'].search([
+            ('tender_id', '=', self.id),
+            ('tender_round', '=', self.tender_round),  # Only current round
+            ('state', 'not in', ['cancel'])
+        ])
+        
+        if not purchase_orders:
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'title': _('Uyarı'),
+                    'message': _('Gönderilecek teklif bulunamadı. Lütfen önce tedarikçiler için SAT oluşturun.'),
+                    'sticky': False,
+                    'type': 'warning',
+                }
+            }
+        
+        # Get the mail template for purchase orders
+        template = self.env.ref('purchase.email_template_edi_purchase')
+        if not template:
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'title': _('Hata'),
+                    'message': _('E-posta şablonu bulunamadı.'),
+                    'sticky': True,
+                    'type': 'danger',
+                }
+            }
+        
+        # Send email for each purchase order
+        sent_count = 0
+        for po in purchase_orders:
+            try:
+                template.send_mail(po.id, force_send=True)
+                sent_count += 1
+            except Exception as e:
+                _logger.error("Failed to send email for purchase order %s: %s", po.name, str(e))
+        
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': _('Başarılı'),
+                'message': _('%s tedarikçi için e-posta gönderildi.') % sent_count,
                 'sticky': False,
                 'type': 'success',
             }

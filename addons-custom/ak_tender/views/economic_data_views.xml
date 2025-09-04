@@ -15,6 +15,7 @@
                     <group>
                         <group>
                             <field name="active" widget="boolean_toggle"/>
+                            <field name="currency_id" options="{'no_create': True}"/>
                             <field name="npv_rate"/>
                             <field name="inflation_rate"/>
                             <field name="interest_rate"/>
@@ -43,6 +44,7 @@
         <field name="arch" type="xml">
             <list string="Ekonomik Veriler">
                 <field name="name"/>
+                <field name="currency_id"/>
                 <field name="npv_rate"/>
                 <field name="inflation_rate"/>
                 <field name="interest_rate"/>
@@ -61,10 +63,12 @@
         <field name="arch" type="xml">
             <search string="Ekonomik Veriler">
                 <field name="name"/>
+                <field name="currency_id"/>
                 <field name="data_source"/>
                 <filter string="Aktif" name="active" domain="[('active', '=', True)]"/>
                 <filter string="Arşivlenmiş" name="inactive" domain="[('active', '=', False)]"/>
                 <group expand="0" string="Grupla">
+                    <filter string="Para Birimi" name="groupby_currency" context="{'group_by': 'currency_id'}"/>
                     <filter string="Veri Kaynağı" name="groupby_data_source" context="{'group_by': 'data_source'}"/>
                     <filter string="Geçerlilik Başlangıç" name="groupby_date_from" context="{'group_by': 'date_from'}"/>
                 </group>

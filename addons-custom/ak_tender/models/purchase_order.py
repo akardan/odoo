@@ -16,7 +16,6 @@ class PurchaseOrder(models.Model):
     
     # currency_id is already in purchase.order
     
-    # result_lines are now order_line
     # total_price is amount_total in purchase.order
 
     # payment_terms_id is already in purchase.order
@@ -44,7 +43,7 @@ class PurchaseOrder(models.Model):
                 record.is_readonly = True
     
     
-    @api.constrains('tender_id', 'order_line', 'order_line.alt_materials')
+    @api.constrains('tender_id', 'order_line')
     def _check_alternative_products(self):
         """
         İhale tipine göre muadil ürün kontrolü yapar.
@@ -143,8 +142,10 @@ class PurchaseOrder(models.Model):
         # Create the order first
         order = super(PurchaseOrder, self).create(vals)
         
-        # If a tender_id is provided, auto-create lines
-        if order.tender_id:
+        # If a tender_id is provided and skip_create_lines is not in context, auto-create lines
+        # We're now handling line creation in create_purchase_orders_for_suppliers
+        # so we'll skip the automatic creation here
+        if order.tender_id and not self.env.context.get('skip_create_lines') and not self.env.context.get('from_tender'):
             order.create_lines_from_tender()
         
         return order
@@ -153,12 +154,7 @@ class PurchaseOrder(models.Model):
         """
         Calculate the total NPV value for the order based on the NPV values of its lines.
         """
-        import logging
-        _logger = logging.getLogger(__name__)
-        
         for order in self:
-            _logger.info('Calculating NPV for order: %s', order.name)
-            
             # Calculate NPV for each line
             for line in order.order_line:
                 line.calculate_npv()
@@ -166,8 +162,6 @@ class PurchaseOrder(models.Model):
             # Sum up the NPV values of all lines
             total_npv = sum(line.npv_value for line in order.order_line)
             order.total_npv = total_npv
-            
-            _logger.info('Total NPV calculated for order %s: %s', order.name, total_npv)
         
         return True
     

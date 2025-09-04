@@ -9,9 +9,18 @@ class AkTenderEconomicData(models.Model):
     name = fields.Char(string=_('Tanım'), required=True)
     active = fields.Boolean(string=_('Aktif'), default=True)
     
+    # Para Birimi İlişkisi
+    currency_id = fields.Many2one(
+        'res.currency',
+        string=_('Para Birimi'),
+        required=True,
+        default=lambda self: self.env.company.currency_id,
+        help=_("Bu ekonomik verilerin geçerli olduğu para birimi.")
+    )
+    
     # NPV Hesaplama Oranı
     npv_rate = fields.Float(
-        string=_('NPV Oranı (%)'), 
+        string=_('NPV Oranı (%)'),
         default=10.0,
         required=True,
         help=_("NPV hesaplaması için kullanılacak yıllık oran.")
@@ -59,25 +68,83 @@ class AkTenderEconomicData(models.Model):
     )
     
     _sql_constraints = [
-        ('name_uniq', 'unique(name, company_id)', _('Bu tanım zaten mevcut!'))
+        ('name_currency_uniq', 'unique(name, currency_id, company_id)', _('Bu para birimi için bu tanım zaten mevcut!'))
     ]
     
     @api.model
-    def get_default_npv_rate(self):
+    def get_default_npv_rate(self, currency_id=None):
         """
         Varsayılan NPV oranını döndürür.
         Aktif ve geçerli bir ekonomik veri kaydı varsa onun NPV oranını,
         yoksa varsayılan değeri (10.0) döndürür.
+        
+        :param currency_id: Para birimi ID'si
+        :return: NPV oranı
         """
         today = fields.Date.context_today(self)
-        economic_data = self.search([
-            ('active', '=', True),
-            ('date_from', '<=', today),
-            '|',
-            ('date_to', '>=', today),
-            ('date_to', '=', False)
-        ], limit=1, order='date_from desc')
+        
+        # Use a simpler domain to ensure we find records
+        domain = [
+            ('active', '=', True)
+        ]
+        
+        # Para birimi belirtilmişse, o para birimine özgü verileri ara
+        if currency_id:
+            domain.append(('currency_id', '=', currency_id))
+        
+        # Perform the search
+        economic_data = self.search(domain, limit=1, order='date_from desc')
         
         if economic_data:
             return economic_data.npv_rate
+        
+        # Belirtilen para birimi için veri bulunamazsa, şirket para birimi için ara
+        if currency_id and currency_id != self.env.company.currency_id.id:
+            return self.get_default_npv_rate(self.env.company.currency_id.id)
+        
+        # Hiçbir veri bulunamazsa varsayılan değeri döndür
         return 10.0
+    
+    @api.model
+    def get_economic_data_for_currency(self, currency_id):
+        """
+        Belirli bir para birimi için ekonomik verileri döndürür.
+        
+        :param currency_id: Para birimi ID'si
+        :return: Ekonomik veriler sözlüğü
+        """
+        today = fields.Date.context_today(self)
+        
+        # Use a simpler domain to ensure we find records
+        domain = [
+            ('active', '=', True)
+        ]
+        
+        # Para birimi belirtilmişse, o para birimine özgü verileri ara
+        if currency_id:
+            domain.append(('currency_id', '=', currency_id))
+        
+        # Perform the search
+        economic_data = self.search(domain, limit=1, order='date_from desc')
+        
+        if economic_data:
+            return {
+                'npv_rate': economic_data.npv_rate,
+                'inflation_rate': economic_data.inflation_rate,
+                'interest_rate': economic_data.interest_rate,
+                'currency_id': economic_data.currency_id.id,
+                'currency_name': economic_data.currency_id.name
+            }
+        
+        # Belirtilen para birimi için veri bulunamazsa, şirket para birimi için ara
+        if currency_id and currency_id != self.env.company.currency_id.id:
+            return self.get_economic_data_for_currency(self.env.company.currency_id.id)
+        
+        # Hiçbir veri bulunamazsa varsayılan değerleri döndür
+        return {
+            'npv_rate': 10.0,
+            'inflation_rate': 0.0,
+            'interest_rate': 0.0,
+            'currency_id': self.env.company.currency_id.id,
+            'currency_name': self.env.company.currency_id.name
+        }

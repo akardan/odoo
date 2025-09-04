@@ -27,6 +27,7 @@
         'data/config_data.xml',
         'data/workflow_templates.xml',
         'data/server_actions.xml',
+        'data/economic_data.xml',
         'views/tender_sequence.xml',
         'views/purchase_order_line_views.xml',
         'views/purchase_order_views.xml',

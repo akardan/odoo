@@ -32,6 +32,20 @@
                                 string="Tedarikçiler İçin SAT Oluştur"
                                 help="Davetli tedarikçilerin hepsi için satın alma talebi oluştur"
                             />
+                            <button name="action_send_bulk_emails"
+                                type="object"
+                                class="oe_stat_button"
+                                icon="fa-envelope-o"
+                                string="Toplu E-posta Gönder"
+                                help="Mevcut turdaki tüm tedarikçilere SAT tekliflerini e-posta ile gönder"
+                            />
+                            <button name="action_review_offers"
+                                type="object"
+                                class="oe_stat_button"
+                                icon="fa-list"
+                                string="Teklifleri İncele"
+                                help="Tedarikçilerden gelen teklifleri listele ve incele"
+                            />
                             <button name="action_view_offers"
                                 type="object"
                                 class="oe_stat_button"
@@ -57,14 +71,21 @@
                             <group>
                                 <field name="code" readonly="1"/>
                                 <field name="tender_type" />
-                                <field name="start_date" />
-                                <field name="end_date" />
+                                <label for="start_date" string="İhale Tarihleri"/>
+                                <div name="dates" class="o_row">
+                                    <field name="start_date" widget="daterange" options="{'related_end_date': 'end_date'}"/>
+                                    <i class="fa fa-long-arrow-right mx-2" aria-label="Arrow icon" title="Arrow"/>
+                                    <field name="end_date" widget="daterange" options="{'related_start_date': 'start_date'}"/>
+                                </div>
                                 <field name="required_delivery_date" />
-                                <field name="target_price" widget="monetary" options="{'currency_field': 'currency_id'}" />
-                                <field name="currency_id" invisible="1" />
+                                <label for="target_price"/>
+                                <div class="d-flex align-items-center">
+                                    <field name="target_price" widget="monetary" options="{'currency_field': 'currency_id'}" class="me-2" nolabel="1" />
+                                    <field name="currency_id" nolabel="1" />
+                                </div>
                             </group>
                             <group>
-                                <field name="tender_round" readonly="1"/>
+                                <field name="tender_round" readonly="0"/>
                                 <field name="erp_pr_id" placeholder="ERP SAT No" />
                                 <field name="erp_company_code" placeholder="ERP Şirket Kodu"/>
                                 <field name="erp_plant_code" placeholder="ERP Tesis Kodu"/>
@@ -95,6 +116,7 @@
                                         <field name="uom_id"/>
                                         <field name="required_delivery_date" />
                                         <field name="target_price" widget="monetary" options="{'currency_field': 'currency_id'}" />
+                                        <field name="currency_id" string=" " />
                                         <button name="action_view_purchase_history"
                                                 type="object"
                                                 icon="fa-history"
@@ -115,7 +137,11 @@
                                                 <field name="quantity"/>
                                                 <field name="uom_id"/>
                                                 <field name="required_delivery_date"/>
-                                                <field name="target_price" widget="monetary" options="{'currency_field': 'currency_id'}"/>
+                                                <label for="target_price"/>
+                                                <div class="d-flex align-items-center">
+                                                    <field name="target_price" widget="monetary" options="{'currency_field': 'currency_id'}" class="me-2" nolabel="1" />
+                                                    <field name="currency_id" nolabel="1" />
+                                                </div>
                                                 <button name="action_view_purchase_history"
                                                         type="object"
                                                         icon="fa-history"
@@ -165,8 +191,9 @@
                                 </p>
                             </page>
                             <page string="Teklif Sonuçları &amp; Değerlendirme" name="tender_results_evaluation">
-                                <field name="purchase_order_ids" nolabel="1" context="{'default_tender_id': id, 'default_state': 'draft'}">
-                                    <list>
+                                <field name="purchase_order_ids" nolabel="1" context="{'default_tender_id': id, 'default_state': 'draft', 'group_by': 'tender_round'}">
+                                    <list default_group_by="tender_round">
+                                        <field name="currency_id" column_invisible="True"/>
                                         <field name="partner_id" domain="[('id', 'in', parent.invited_partners)]"/>
                                         <field name="date_order"/>
                                         <field name="tender_round"/>
@@ -355,7 +382,7 @@
             <field name="arch" type="xml">
                 <list string="İhaleler"
                       decoration-success="workflow_current_state_id.code in ('approved', 'done')"
-                      decoration-info="workflow_current_state_id.code in ('first_tender_round', 'second_tender_round', 'evaluation') or tender_type == 'mice'"
+                      decoration-info="workflow_current_state_id.code in ('first_tender_round', 'new_tender_round', 'evaluation') or tender_type == 'mice'"
                       decoration-danger="workflow_current_state_id.code == 'cancel'"
                       decoration-primary="tender_type == 'direct'"
                       decoration-warning="tender_type == 'promotion'">
@@ -392,7 +419,7 @@
                     <filter name="filter_draft" string="Taslak İhaleler" domain="[('workflow_current_state_id.code', '=', 'draft')]"/>
                     <filter name="filter_first_round" string="1. Tur Teklif Toplama" domain="[('workflow_current_state_id.code', '=', 'first_tender_round')]"/>
                     <filter name="filter_target_price_set" string="Hedef Fiyat Belirlendi" domain="[('workflow_current_state_id.code', '=', 'target_price_set')]"/>
-                    <filter name="filter_second_round" string="2. Tur Teklif Toplama" domain="[('workflow_current_state_id.code', '=', 'second_tender_round')]"/>
+                    <filter name="filter_second_round" string="Yeni Tur Teklif Toplama" domain="[('workflow_current_state_id.code', '=', 'new_tender_round')]"/>
                     <filter name="filter_evaluation" string="Değerlendirmede" domain="[('workflow_current_state_id.code', '=', 'evaluation')]"/>
                     <filter name="filter_approved" string="Onaylanmış İhaleler" domain="[('workflow_current_state_id.code', '=', 'approved')]"/>
                     <filter name="filter_done" string="Tamamlanmış İhaleler" domain="[('workflow_current_state_id.code', '=', 'done')]"/>
@@ -551,7 +578,7 @@
                                             record.workflow_state.raw_value == 'draft' ? 'bg-secondary bg-opacity-50' :
                                             record.workflow_state.raw_value == 'first_tender_round' ? 'bg-info bg-opacity-50' :
                                             record.workflow_state.raw_value == 'target_price_set' ? 'bg-warning bg-opacity-50' :
-                                            record.workflow_state.raw_value == 'second_tender_round' ? 'bg-primary bg-opacity-50' :
+                                            record.workflow_state.raw_value == 'new_tender_round' ? 'bg-primary bg-opacity-50' :
                                             record.workflow_state.raw_value == 'evaluation' ? 'bg-warning bg-opacity-50' :
                                             record.workflow_state.raw_value == 'approved' ? 'bg-success bg-opacity-50' :
                                             record.workflow_state.raw_value == 'done' ? 'bg-success bg-opacity-50' :
@@ -560,7 +587,7 @@
                                             record.workflow_state.raw_value == 'draft' ? '12' :
                                             record.workflow_state.raw_value == 'first_tender_round' ? '25' :
                                             record.workflow_state.raw_value == 'target_price_set' ? '37' :
-                                            record.workflow_state.raw_value == 'second_tender_round' ? '50' :
+                                            record.workflow_state.raw_value == 'new_tender_round' ? '50' :
                                             record.workflow_state.raw_value == 'evaluation' ? '62' :
                                             record.workflow_state.raw_value == 'approved' ? '87' :
                                             record.workflow_state.raw_value == 'done' ? '100' : '0'}%">

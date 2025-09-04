@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- Economic Data for TRY (Turkish Lira) -->
+        <record id="economic_data_try" model="ak.tender.economic.data">
+            <field name="name">Türk Lirası Ekonomik Veriler</field>
+            <field name="currency_id" ref="base.TRY"/>
+            <field name="npv_rate">35.0</field>
+            <field name="inflation_rate">40.0</field>
+            <field name="interest_rate">30.0</field>
+            <field name="data_source">tcmb</field>
+            <field name="date_from" eval="time.strftime('%Y-01-01')"/>
+            <field name="active" eval="True"/>
+        </record>
+        
+        <!-- Economic Data for USD (US Dollar) -->
+        <record id="economic_data_usd" model="ak.tender.economic.data">
+            <field name="name">US Dollar Economic Data</field>
+            <field name="currency_id" ref="base.USD"/>
+            <field name="npv_rate">5.0</field>
+            <field name="inflation_rate">3.0</field>
+            <field name="interest_rate">4.5</field>
+            <field name="data_source">manual</field>
+            <field name="date_from" eval="time.strftime('%Y-01-01')"/>
+            <field name="active" eval="True"/>
+        </record>
+        
+        <!-- Economic Data for EUR (Euro) -->
+        <record id="economic_data_eur" model="ak.tender.economic.data">
+            <field name="name">Euro Economic Data</field>
+            <field name="currency_id" ref="base.EUR"/>
+            <field name="npv_rate">4.0</field>
+            <field name="inflation_rate">2.5</field>
+            <field name="interest_rate">3.5</field>
+            <field name="data_source">manual</field>
+            <field name="date_from" eval="time.strftime('%Y-01-01')"/>
+            <field name="active" eval="True"/>
+        </record>
+        
+        <!-- Economic Data for GBP (British Pound) -->
+        <record id="economic_data_gbp" model="ak.tender.economic.data">
+            <field name="name">British Pound Economic Data</field>
+            <field name="currency_id" ref="base.GBP"/>
+            <field name="npv_rate">4.5</field>
+            <field name="inflation_rate">3.0</field>
+            <field name="interest_rate">4.0</field>
+            <field name="data_source">manual</field>
+            <field name="date_from" eval="time.strftime('%Y-01-01')"/>
+            <field name="active" eval="True"/>
+        </record>
+    </data>
+</odoo>
