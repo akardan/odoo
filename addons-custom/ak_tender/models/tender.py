@@ -577,7 +577,7 @@ class AkTender(models.Model):
         for record in self:
             if record.tender_type == 'direct':
                 for line in record.tender_lines:
-                    if not line.product_id.default_code:
+                    if line.display_type == 'product' and not line.product_id.default_code:
                         raise ValidationError(_(
                             "Direkt ihale tipinde tüm ürünlerin ERP kodu olmalıdır. "
                             "Ürün '%s' için ERP kodu bulunamadı."
