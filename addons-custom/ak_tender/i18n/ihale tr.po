@@ -1,0 +1,3743 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+# 	* ak_tender
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 18.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-08-31 16:40+0000\n"
+"PO-Revision-Date: 2025-08-31 16:40+0000\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: \n"
+"Plural-Forms: \n"
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+msgid " ve %s diğer"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/service_category_template.py:0
+#: code:addons/ak_tender/models/tender_template.py:0
+msgid "%s (Kopya)"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+msgid ""
+"%s adet teklif için NPV değerleri başarıyla hesaplandı. Toplam NPV: %.2f"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/add_supplier_wizard.py:0
+msgid "%s tedarikçi ihaleye başarıyla eklendi."
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+msgid "%s tedarikçi için satın alma talebi oluşturuldu."
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/service_category_template.py:0
+#: code:addons/ak_tender/models/tender_template.py:0
+msgid "%s-COPY"
+msgstr "%s-KOPYA"
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_tender_view_form
+msgid ""
+"**Önemli:** İhale başlatılmadan önce en az bir ihale kalemi tanımlanmalıdır."
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_tender_view_form
+msgid ""
+"**Önemli:** İhale başlatılmadan önce en az bir tedarikçi davet edilmelidir."
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_purchase_order_portal_content
+msgid "1 Ay"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_tender_view_search
+msgid "1. Tur Teklif Toplama"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_purchase_order_portal_content
+msgid "12 Ay"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_tender_view_search
+msgid "2. Tur Teklif Toplama"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_purchase_order_portal_content
+msgid "24 Ay"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_purchase_order_portal_content
+msgid "3 Ay"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_purchase_order_portal_content
+msgid "6 Ay"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_purchase_order_portal_content
+msgid "<i class=\"fa fa-fw fa-check\"/>Paid"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_purchase_order_portal_content
+msgid "<i class=\"fa fa-fw fa-check\"/>Reversed"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_purchase_order_portal_content
+msgid "<i class=\"fa fa-fw fa-clock-o\"/>Waiting Payment"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_tender_view_kanban
+msgid "<i class=\"fa fa-fw fa-edit\"/> Düzenle"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_tender_view_kanban
+msgid "<i class=\"fa fa-fw fa-eye\"/> Teklifleri Görüntüle"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_tender_view_kanban
+msgid "<i class=\"fa fa-fw fa-shopping-cart\"/> Satın Alma Siparişleri"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_tender_view_kanban
+msgid "<i class=\"fa fa-fw fa-trash\"/> Sil"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_purchase_order_portal_content
+msgid "<i class=\"fa fa-save\"/> Tüm Değişiklikleri Kaydet"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.portal_tender_bid_form
+msgid "<option value=\"\">Select Payment Terms</option>"
+msgstr "<option value=\"\">Ödeme Koşullarını Seçin</option>"
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_purchase_order_portal_content
+msgid "<option value=\"\">Seçiniz</option>"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_tender_view_kanban
+msgid ""
+"<span class=\"me-auto o_form_label\">\n"
+"                                            <i class=\"fa fa-calendar\"/> Bitiş\n"
+"                                        </span>"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_tender_view_kanban
+msgid ""
+"<span class=\"me-auto o_form_label\">\n"
+"                                            <i class=\"fa fa-file-text-o\"/> SAT No\n"
+"                                        </span>"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_tender_view_kanban
+msgid ""
+"<span class=\"me-auto o_form_label\">\n"
+"                                            <i class=\"fa fa-target\"/> Hedef Fiyat\n"
+"                                        </span>"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_tender_view_kanban
+msgid ""
+"<span class=\"me-auto text-success o_form_label\">\n"
+"                                            <i class=\"fa fa-trophy\"/> Kazanan\n"
+"                                        </span>"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_tender_view_kanban
+msgid ""
+"<span class=\"text-muted text-truncate mw-100\" title=\"Davet Edilen\">Davet"
+" Edilen</span>"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_tender_view_kanban
+msgid ""
+"<span class=\"text-muted text-truncate mw-100\" title=\"Hedef Fiyat\">Hedef "
+"Fiyat</span>"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_tender_view_kanban
+msgid ""
+"<span class=\"text-muted text-truncate mw-100\" title=\"Teklif "
+"Sayısı\">Teklif Sayısı</span>"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.res_config_settings_view_form_tender
+msgid "<span>%</span>"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_purchase_order_portal_content
+msgid "<span>Amount</span>"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.res_config_settings_view_form_tender
+msgid "<span>TL</span>"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_purchase_order_portal_content
+msgid "<span>Vergiler</span>"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.res_config_settings_view_form_tender
+msgid "<span>kalem</span>"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_purchase_order_portal_content
+msgid "<strong class=\"d-block mb-1\">From:</strong>"
+msgstr "<strong class=\"d-block mb-1\">Kimden:</strong>"
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_purchase_order_portal_content
+msgid "<strong class=\"d-block mb-1\">Invoices</strong>"
+msgstr "<strong class=\"d-block mb-1\">Faturalar</strong>"
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_purchase_order_portal_content
+msgid "<strong class=\"mr16\">Subtotal</strong>"
+msgstr "<strong class=\"mr16\">Alt Toplam</strong>"
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_purchase_order_portal_content
+msgid ""
+"<strong>AK Tender Custom Template Active</strong> - Editable fields are "
+"enabled"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.report_vendor_comparison
+msgid "<strong>Başlangıç Tarihi</strong>"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.view_bulk_purchase_wizard_form
+msgid ""
+"<strong>Bilgi:</strong> Bu sihirbaz, birden fazla SAT numarasını "
+"birleştirerek tek bir ihale oluşturmanıza olanak tanır."
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.view_add_supplier_wizard_form
+msgid ""
+"<strong>Bilgi:</strong> Bu sihirbaz, ihaleye yeni tedarikçiler eklemenizi "
+"sağlar."
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_tender_view_form
+msgid ""
+"<strong>Bilgi:</strong> Ekonomik veri entegrasyonu, ihale değerlendirmesinde"
+" döviz kurları ve enflasyon gibi ekonomik faktörleri dikkate almanızı "
+"sağlar."
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_tender_view_form
+msgid ""
+"<strong>Bilgi:</strong> NPV (Net Bugünkü Değer) hesaplaması için "
+"kullanılacak oranı belirleyebilirsiniz."
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.report_vendor_comparison
+msgid "<strong>Bitiş Tarihi</strong>"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_purchase_order_portal_content
+msgid "<strong>Confirmation Date:</strong>"
+msgstr "<strong>Teyit Tarihi:</strong>"
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_tender_view_form
+msgid "<strong>Direkt İhale Kuralları:</strong>"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.report_vendor_comparison
+msgid "<strong>Durum</strong>"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_tender_view_form
+msgid "<strong>Endirekt İhale Özellikleri:</strong>"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_purchase_order_portal_content
+msgid "<strong>Hedef Fiyat:</strong>"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.report_vendor_comparison
+msgid "<strong>Hedef Fiyat</strong>"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.view_import_supplier_wizard_form
+msgid "<strong>MAILADRESI:</strong> Tedarikçi e-posta adresleri"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_tender_view_form
+msgid "<strong>MICE İhale Özellikleri:</strong>"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_purchase_order_portal_content
+msgid "<strong>Order Date:</strong>"
+msgstr "<strong>Sipariş Tarihi:</strong>"
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_tender_view_form
+msgid "<strong>Promosyon İhale Özellikleri:</strong>"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_purchase_order_portal_content
+msgid "<strong>Receipt Date:</strong>"
+msgstr "<strong>Faturalama Tarihi:</strong>"
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_purchase_order_portal_content
+msgid "<strong>Request For Quotation Date:</strong>"
+msgstr "<strong>Satınalma Talebi Tarihi:</strong>"
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.view_import_supplier_wizard_form
+msgid "<strong>SATICIANAVERI:</strong> Tedarikçi ana verileri"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.view_import_supplier_wizard_form
+msgid "<strong>SATICIBANKA:</strong> Tedarikçi banka hesapları"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_purchase_order_portal_content
+#: model_terms:ir.ui.view,arch_db:ak_tender.report_vendor_comparison
+msgid "<strong>Satınalma Açıklaması:</strong>"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.report_vendor_comparison
+msgid "<strong>TOPLAM</strong>"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.report_vendor_comparison
+msgid "<strong>Teklif Turu</strong>"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.report_vendor_comparison
+msgid "<strong>İhale Tipi</strong>"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_tender_view_kanban
+msgid "Acil"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender__is_urgent
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_tender_view_form
+msgid "Acil Talep"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_tender_view_search
+msgid "Acil Talepler"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender__urgent_deadline
+msgid "Acil Teslim Tarihi"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+#: model:ir.model.fields,help:ak_tender.field_ak_tender__urgent_reason
+msgid "Acil talebin nedeni."
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+#: model:ir.model.fields,help:ak_tender.field_ak_tender__urgent_deadline
+msgid "Acil talebin teslim edilmesi gereken son tarih."
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_tender_view_form
+msgid "Acil talep desteği"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+msgid ""
+"Acil talep desteği sadece Endirekt ve Promosyon ihale tipleri için "
+"kullanılabilir."
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+msgid "Acil talep için acil teslim tarihi belirtilmelidir."
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+msgid "Acil talep için aciliyet nedeni belirtilmelidir."
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender__urgent_reason
+msgid "Aciliyet Nedeni"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_tender_view_form
+msgid "Aciliyet nedenini açıklayın..."
+msgstr ""
+
+#. module: ak_tender
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender__message_needaction
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_template__message_needaction
+msgid "Action Needed"
+msgstr "İşlem Gerekiyor"
+
+#. module: ak_tender
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender__activity_ids
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_template__activity_ids
+msgid "Activities"
+msgstr "Aktiviteler"
+
+#. module: ak_tender
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender__activity_exception_decoration
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_template__activity_exception_decoration
+msgid "Activity Exception Decoration"
+msgstr "Etkinlik İstisna Dekorasyonu"
+
+#. module: ak_tender
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender__activity_state
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_template__activity_state
+msgid "Activity State"
+msgstr "Aktivite Durumu"
+
+#. module: ak_tender
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender__activity_type_icon
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_template__activity_type_icon
+msgid "Activity Type Icon"
+msgstr "Aktivite Tipi İkonu"
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/economic_data.py:0
+#: code:addons/ak_tender/models/service_category_template.py:0
+#: code:addons/ak_tender/models/tender_template.py:0
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_economic_data__active
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_template__active
+#: model_terms:ir.ui.view,arch_db:ak_tender.view_ak_tender_economic_data_search
+#: model_terms:ir.ui.view,arch_db:ak_tender.view_tender_template_search
+msgid "Aktif"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender_template.py:0
+#: model:ir.model.fields,help:ak_tender.field_ak_tender_template__active
+msgid "Aktif olmayan şablonlar gizlenir ancak silinmez."
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/service_category_template.py:0
+#: code:addons/ak_tender/models/tender.py:0
+#: code:addons/ak_tender/models/tender_template.py:0
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_line__allow_alternative
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_template_line__allow_alternative
+msgid "Alternatif Kabul Edilir"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_purchase_order_portal_content
+msgid "Alternatif Malzeme"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.report_vendor_comparison
+msgid "Alternatif Malzeme:"
+msgstr ""
+
+#. module: ak_tender
+#: model:ir.model.fields,field_description:ak_tender.field_purchase_order_line__alt_materials
+msgid "Alternatif Malzemeler"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/res_config_settings.py:0
+#: model:ir.model.fields,field_description:ak_tender.field_res_config_settings__ak_tender_allow_alternative_products
+msgid "Alternatif Ürünlere İzin Ver"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.res_config_settings_view_form_tender
+msgid "Alternatif ürün tekliflerine izin ver"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.view_ak_tender_economic_data_search
+#: model_terms:ir.ui.view,arch_db:ak_tender.view_tender_template_search
+msgid "Arşivlenmiş"
+msgstr ""
+
+#. module: ak_tender
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender__message_attachment_count
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_template__message_attachment_count
+msgid "Attachment Count"
+msgstr "Ek Sayısı"
+
+#. module: ak_tender
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender__workflow_available_transition_ids
+msgid "Available Transitions"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.report_vendor_comparison
+msgid "Ay"
+msgstr ""
+
+#. module: ak_tender
+#: model:ir.ui.menu,name:ak_tender.menu_ak_tender_configuration
+msgid "Ayarlar"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/service_category_template.py:0
+#: code:addons/ak_tender/models/tender.py:0
+#: code:addons/ak_tender/models/tender_template.py:0
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_line__name
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_template__description
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_template_line__name
+#: model_terms:ir.ui.view,arch_db:ak_tender.view_tender_template_form
+msgid "Açıklama"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_tender_view_form
+msgid "Açıklama ve Ekler"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+msgid "Başarılı"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender__start_date
+msgid "Başlangıç Tarihi"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+msgid "Başlangıç Tarihi, Bitiş Tarihinden sonra olamaz!"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/service_category_template.py:0
+#: code:addons/ak_tender/models/tender.py:0
+#: code:addons/ak_tender/models/tender_template.py:0
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_line__uom_id
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_template_line__product_uom_id
+msgid "Birim"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/service_category_template.py:0
+#: code:addons/ak_tender/models/tender_template.py:0
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_template_line__price_unit
+msgid "Birim Fiyat"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.report_vendor_comparison
+msgid "Birim Fiyat:"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_purchase_order_portal_content
+msgid "Birim Fiyatı"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/bulk_purchase_wizard.py:0
+#: model:ir.model.fields,help:ak_tender.field_ak_tender_bulk_purchase_wizard__pr_ids
+msgid "Birleştirilecek SAT numaraları (virgülle ayrılmış)."
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender__bulk_purchase_count
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_tender_view_form
+msgid "Birleştirilen SAT Sayısı"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender__end_date
+msgid "Bitiş Tarihi"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/economic_data.py:0
+#: model:ir.model.fields,help:ak_tender.field_ak_tender_economic_data__date_to
+msgid "Boş bırakılırsa süresiz olarak geçerlidir."
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender_template.py:0
+#: model:ir.model.fields,help:ak_tender.field_ak_tender_template__mail_template_id
+msgid ""
+"Bu e-posta şablonu, ihale onaylandığında gönderilecektir. Boş bırakılırsa "
+"e-posta gönderilmez."
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+msgid "Bu ihale tipi için uygun şablon bulunamadı."
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+#: model:ir.model.fields,help:ak_tender.field_ak_tender__is_urgent
+msgid "Bu ihale, acil talep olarak işaretlenmiştir."
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+#: model:ir.model.fields,help:ak_tender.field_ak_tender__is_bulk_purchase
+msgid "Bu ihale, toplu satın alma optimizasyonu ile oluşturulmuştur."
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+msgid ""
+"Bu ihale, toplu satın alma optimizasyonu ile oluşturulmuştur. İlişkili SAT "
+"numaraları: %s"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_tender_view_form
+msgid "Bu ihaleden oluşturulan Satın Alma Siparişleri"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+#: model:ir.model.fields,help:ak_tender.field_ak_tender__tender_round
+msgid "Bu ihalenin hangi turda olduğu (1, 2, 3...)."
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+#: model:ir.model.fields,help:ak_tender.field_ak_tender__invited_partners
+msgid "Bu ihaleye davet edilecek tedarikçiler."
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+#: model:ir.model.fields,help:ak_tender.field_ak_tender_line__target_price
+msgid "Bu kalem için belirlenen hedef fiyat."
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/service_category_template.py:0
+#: code:addons/ak_tender/models/tender.py:0
+#: code:addons/ak_tender/models/tender_template.py:0
+#: model:ir.model.fields,help:ak_tender.field_ak_tender_line__required
+#: model:ir.model.fields,help:ak_tender.field_ak_tender_template_line__required
+msgid "Bu satır ihale için zorunludur."
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/service_category_template.py:0
+#: code:addons/ak_tender/models/tender.py:0
+#: code:addons/ak_tender/models/tender_template.py:0
+#: model:ir.model.fields,help:ak_tender.field_ak_tender_line__allow_alternative
+#: model:ir.model.fields,help:ak_tender.field_ak_tender_template_line__allow_alternative
+msgid "Bu satır için alternatif teklifler kabul edilir."
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_tender_view_form
+msgid ""
+"Bu sayfa, tedarikçilerden gelen tekliflerin otomatik olarak işleneceği ve "
+"karşılaştırılacağı alan olacaktır. (Bu prototipte manuel giriş için "
+"açılmıştır, gerçek sistemde portal entegrasyonu ile dolacaktır.) Teklif turu"
+" bilgisi, hangi teklifin hangi aşamada geldiğini belirtir."
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/economic_data.py:0
+#: model:ir.model.constraint,message:ak_tender.constraint_ak_tender_economic_data_name_uniq
+msgid "Bu tanım zaten mevcut!"
+msgstr ""
+
+#. module: ak_tender
+#: model:ir.model.fields,help:ak_tender.field_purchase_order__tender_round
+msgid "Bu teklifin hangi turda sunulduğu (1, 2, 3...)."
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_tender_view_form
+msgid ""
+"Bu özellik, özellikle uzun vadeli promosyon ihalelerinde fiyat değişimlerini"
+" değerlendirmek için kullanışlıdır."
+msgstr ""
+
+#. module: ak_tender
+#: model:ir.model.fields,help:ak_tender.field_purchase_order_line__supplier_ref
+msgid "Bu ürün için tedarikçinin referans veya parça numarası"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+#: model:ir.model.fields,help:ak_tender.field_ak_tender_line__is_hotel_accommodation
+msgid "Bu ürün otel konaklaması mı?"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/service_category_template.py:0
+#: code:addons/ak_tender/models/tender_template.py:0
+msgid "Bu şablon kilitli olduğu için satır eklenemez veya değiştirilemez."
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/service_category_template.py:0
+#: code:addons/ak_tender/models/tender_template.py:0
+msgid "Bu şablon zaten kilidi açık."
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/service_category_template.py:0
+#: code:addons/ak_tender/models/tender_template.py:0
+msgid "Bu şablon zaten kilitli."
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/service_category_template.py:0
+#: code:addons/ak_tender/models/tender_template.py:0
+#: model:ir.model.fields,help:ak_tender.field_ak_tender_template__state_ids
+msgid ""
+"Bu şablonun geçerli olduğu iller. Boş bırakılırsa tüm iller için geçerlidir."
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/service_category_template.py:0
+#: code:addons/ak_tender/models/tender_template.py:0
+#: model:ir.model.fields,help:ak_tender.field_ak_tender_template__country_ids
+msgid ""
+"Bu şablonun geçerli olduğu ülkeler. Boş bırakılırsa tüm ülkeler için "
+"geçerlidir."
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/service_category_template.py:0
+#: code:addons/ak_tender/models/tender_template.py:0
+#: model:ir.model.fields,help:ak_tender.field_ak_tender_template__city
+msgid ""
+"Bu şablonun geçerli olduğu şehir. Boş bırakılırsa tüm şehirler için "
+"geçerlidir."
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender_template.py:0
+#: model:ir.model.fields,help:ak_tender.field_ak_tender_template__tender_type
+msgid "Bu şablonun uygulanabileceği ihale tipi."
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/service_category_template.py:0
+#: code:addons/ak_tender/models/tender.py:0
+#: code:addons/ak_tender/models/tender_template.py:0
+#: model:ir.model.fields.selection,name:ak_tender.selection__ak_tender_line__display_type__line_section
+#: model:ir.model.fields.selection,name:ak_tender.selection__ak_tender_template_line__display_type__line_section
+msgid "Bölüm"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_tender_view_form
+#: model_terms:ir.ui.view,arch_db:ak_tender.view_tender_template_form
+msgid "Bölüm Ekle"
+msgstr ""
+
+#. module: ak_tender
+#: model:ir.model.constraint,message:ak_tender.constraint_ak_tender_template_line_non_accountable_fields_null
+msgid "Bölüm veya not satırında ürün, miktar ve ölçü birimi olmamalıdır"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.portal_tender_bid_form
+msgid "Cancel"
+msgstr "İptal"
+
+#. module: ak_tender
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_template_line__product_uom_category_id
+msgid "Category"
+msgstr "Kategori"
+
+#. module: ak_tender
+#: model:ir.model,name:ak_tender.model_res_config_settings
+msgid "Config Settings"
+msgstr "Yapılandırma Ayarları"
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.portal_my_purchase_order_sidebar
+msgid "Connect with your software!"
+msgstr "Uygulama ile bağlan!"
+
+#. module: ak_tender
+#: model:ir.model,name:ak_tender.model_res_partner
+msgid "Contact"
+msgstr "Kontak"
+
+#. module: ak_tender
+#: model:ir.model.fields,help:ak_tender.field_ak_tender_template_line__product_uom_category_id
+msgid ""
+"Conversion between Units of Measure can only occur if they belong to the "
+"same category. The conversion will be made based on the ratios."
+msgstr ""
+"Ölçü Birimleri arasında dönüşüm, yalnızca aynı kategoriye ait olmaları durumunda yapılabilir. "
+"Dönüşüm, oranlara göre yapılacaktır."
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_tender_view_form
+msgid "Coğrafi Bilgiler"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.view_tender_template_form
+msgid "Coğrafi Filtreleme"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_tender_view_form
+msgid "Coğrafi tedarikçi filtreleme"
+msgstr ""
+
+#. module: ak_tender
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender__create_uid
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_add_supplier_wizard__create_uid
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_bulk_purchase_wizard__create_uid
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_economic_data__create_uid
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_line__create_uid
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_set_target_price_wizard__create_uid
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_template__create_uid
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_template_line__create_uid
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_template_selection_wizard__create_uid
+#: model:ir.model.fields,field_description:ak_tender.field_import_hotel_wizard__create_uid
+#: model:ir.model.fields,field_description:ak_tender.field_import_supplier_wizard__create_uid
+msgid "Created by"
+msgstr ""
+
+#. module: ak_tender
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender__create_date
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_add_supplier_wizard__create_date
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_bulk_purchase_wizard__create_date
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_economic_data__create_date
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_line__create_date
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_set_target_price_wizard__create_date
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_template__create_date
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_template_line__create_date
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_template_selection_wizard__create_date
+#: model:ir.model.fields,field_description:ak_tender.field_import_hotel_wizard__create_date
+#: model:ir.model.fields,field_description:ak_tender.field_import_supplier_wizard__create_date
+msgid "Created on"
+msgstr ""
+
+#. module: ak_tender
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender__workflow_current_state_id
+msgid "Current State"
+msgstr "Mevcut Durum"
+
+#. module: ak_tender
+#: model:ir.model.fields,help:ak_tender.field_ak_tender__workflow_current_state_id
+msgid "Current state of the record in the workflow."
+msgstr "İş akışındaki kaydın mevcut durumu."
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_tender_view_form
+msgid "Date"
+msgstr "Tarih"
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_purchase_order_portal_content
+msgid "Date:"
+msgstr "Tarih:"
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/add_supplier_wizard.py:0
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_add_supplier_wizard__send_invitation
+msgid "Davet Gönder"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/add_supplier_wizard.py:0
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_add_supplier_wizard__invitation_message
+msgid "Davet Mesajı"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/add_supplier_wizard.py:0
+msgid "Davet e-postaları gönderildi: %s"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.view_add_supplier_wizard_form
+msgid "Davet mesajı..."
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender__invited_partners
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_tender_view_form
+msgid "Davetli Tedarikçiler"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+msgid "Davetli tedarikçi bulunamadı. Lütfen önce tedarikçi ekleyin."
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_tender_view_form
+msgid "Davetli tedarikçilerin hepsi için satın alma talebi oluştur"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_tender_view_form
+#: model_terms:ir.ui.view,arch_db:ak_tender.portal_tender_bid_form
+msgid "Description"
+msgstr "Açıklama"
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/wizards/import_supplier_wizard.py:0
+msgid "Desteklenmeyen dosya formatı"
+msgstr ""
+
+#. module: ak_tender
+#: model:ir.model.fields.selection,name:ak_tender.selection__import_supplier_wizard__import_mode__detailed
+msgid "Detaylı İmport"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_tender_view_search
+msgid "Değerlendirmede"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+#: model:ir.model.fields,help:ak_tender.field_ak_tender__inflation_rate
+msgid "Değerlendirmede kullanılacak yıllık enflasyon oranı."
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+#: code:addons/ak_tender/models/tender_template.py:0
+#: model:ir.model.fields.selection,name:ak_tender.selection__ak_tender__tender_type__direct
+#: model:ir.model.fields.selection,name:ak_tender.selection__ak_tender_template__tender_type__direct
+msgid "Direkt Satın Alma"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.res_config_settings_view_form_tender
+msgid "Direkt ihale tipinde izin verilen maksimum tedarik süresi"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/res_config_settings.py:0
+#: model:ir.model.fields,help:ak_tender.field_res_config_settings__ak_tender_max_lead_time
+msgid ""
+"Direkt ihale tipinde izin verilen maksimum tedarik süresi (gün olarak)."
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.res_config_settings_view_form_tender
+msgid "Direkt ihale tipinde kalite onayının zorunlu olup olmadığını belirler"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/res_config_settings.py:0
+#: model:ir.model.fields,help:ak_tender.field_res_config_settings__ak_tender_quality_approval_required
+msgid "Direkt ihale tipinde kalite onayının zorunlu olup olmadığını belirler."
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/purchase_order.py:0
+msgid ""
+"Direkt ihale tipinde muadil ürün kabul edilmez. Lütfen orijinal ürünleri "
+"kullanın."
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+msgid ""
+"Direkt ihale tipinde tedarik süresi %s günü aşamaz. Ürün '%s' için tedarik "
+"süresi %s gün olarak belirlenmiş."
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+msgid ""
+"Direkt ihale tipinde tüm ürünlerin ERP kodu olmalıdır. Ürün '%s' için ERP "
+"kodu bulunamadı."
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_tender_view_form
+msgid "Direkt İhale Özellikleri"
+msgstr ""
+
+#. module: ak_tender
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender__display_name
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_add_supplier_wizard__display_name
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_bulk_purchase_wizard__display_name
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_economic_data__display_name
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_line__display_name
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_set_target_price_wizard__display_name
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_template__display_name
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_template_line__display_name
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_template_selection_wizard__display_name
+#: model:ir.model.fields,field_description:ak_tender.field_import_hotel_wizard__display_name
+#: model:ir.model.fields,field_description:ak_tender.field_import_supplier_wizard__display_name
+msgid "Display Name"
+msgstr ""
+
+#. module: ak_tender
+#: model:ir.model.fields,field_description:ak_tender.field_import_hotel_wizard__file_name
+#: model:ir.model.fields,field_description:ak_tender.field_import_supplier_wizard__file_name
+msgid "Dosya Adı"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_tender_view_search
+#: model_terms:ir.ui.view,arch_db:ak_tender.view_tender_template_search
+msgid "Durum"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+msgid "Döviz kurları ve enflasyon verileri başarıyla güncellendi."
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+#: model:ir.model.fields,help:ak_tender.field_ak_tender__exchange_rate_date
+msgid "Döviz kurlarının alınacağı tarih."
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender__erp_pr_id
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_tender_view_form
+msgid "ERP SAT No"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender__erp_plant_code
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_tender_view_form
+msgid "ERP Tesis Kodu"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender__erp_company_code
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_tender_view_form
+msgid "ERP Şirket Kodu"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender__economic_notes
+msgid "Ekonomik Değerlendirme Notları"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_tender_view_form
+msgid "Ekonomik Veri Entegrasyonu"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender__use_economic_data
+msgid "Ekonomik Veri Kullan"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_tender_view_search
+msgid "Ekonomik Veri Kullanan"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+msgid "Ekonomik Veri Yok"
+msgstr ""
+
+#. module: ak_tender
+#: model:ir.actions.act_window,name:ak_tender.action_ak_tender_economic_data
+#: model:ir.ui.menu,name:ak_tender.menu_ak_tender_economic_data
+#: model_terms:ir.ui.view,arch_db:ak_tender.view_ak_tender_economic_data_form
+#: model_terms:ir.ui.view,arch_db:ak_tender.view_ak_tender_economic_data_search
+#: model_terms:ir.ui.view,arch_db:ak_tender.view_ak_tender_economic_data_tree
+msgid "Ekonomik Veriler"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+msgid "Ekonomik Veriler Güncellendi"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_tender_view_form
+msgid "Ekonomik Verileri Güncelle"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+#: model:ir.model.fields,help:ak_tender.field_ak_tender__economic_notes
+msgid "Ekonomik değerlendirme ile ilgili notlar."
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_tender_view_form
+msgid "Ekonomik değerlendirme notları..."
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_tender_view_form
+msgid "Ekonomik veri entegrasyonu"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+msgid "Ekonomik veri entegrasyonu etkin değil."
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+msgid "Ekonomik veri entegrasyonu için kur tarihi belirtilmelidir."
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+msgid ""
+"Ekonomik veri entegrasyonu sadece Promosyon ihale tipi için kullanılabilir."
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+msgid "Ekonomik veriler güncellendi. Kur tarihi: %s, Kaynak: %s"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.view_ak_tender_economic_data_form
+msgid "Ekonomik veriler hakkında notlar..."
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.actions.act_window,help:ak_tender.action_ak_tender_economic_data
+msgid ""
+"Ekonomik veriler, NPV hesaplamaları ve diğer finansal değerlendirmeler için "
+"kullanılacak oranları içerir."
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+#: model:ir.model.fields,help:ak_tender.field_ak_tender__use_economic_data
+msgid "Ekonomik verileri ihale değerlendirmesinde kullan."
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+#: model:ir.model.fields,help:ak_tender.field_ak_tender__economic_data_source
+msgid "Ekonomik verilerin alınacağı kaynak."
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/economic_data.py:0
+#: model:ir.model.fields,help:ak_tender.field_ak_tender_economic_data__data_source
+msgid "Ekonomik verilerin alındığı kaynak."
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/bulk_purchase_wizard.py:0
+#: code:addons/ak_tender/models/tender.py:0
+msgid "En az bir SAT numarası belirtilmelidir."
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/add_supplier_wizard.py:0
+msgid "En az bir tedarikçi seçmelisiniz."
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.portal_my_tenders_list
+msgid "End Date"
+msgstr "Bitiş Tarihi"
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.portal_tender_bid_form
+msgid "End Date:"
+msgstr "Bitiş Tarihi:"
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/bulk_purchase_wizard.py:0
+#: code:addons/ak_tender/models/tender.py:0
+#: code:addons/ak_tender/models/tender_template.py:0
+#: model:ir.model.fields.selection,name:ak_tender.selection__ak_tender__tender_type__indirect
+#: model:ir.model.fields.selection,name:ak_tender.selection__ak_tender_bulk_purchase_wizard__tender_type__indirect
+#: model:ir.model.fields.selection,name:ak_tender.selection__ak_tender_template__tender_type__indirect
+msgid "Endirekt Satın Alma"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.res_config_settings_view_form_tender
+msgid ""
+"Endirekt ihale tipinde alternatif ürün tekliflerine izin verilip "
+"verilmeyeceğini belirler"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/res_config_settings.py:0
+#: model:ir.model.fields,help:ak_tender.field_res_config_settings__ak_tender_allow_alternative_products
+msgid ""
+"Endirekt ihale tipinde alternatif ürün tekliflerine izin verilip "
+"verilmeyeceğini belirler."
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/purchase_order.py:0
+msgid ""
+"Endirekt ihale tipinde muadil ürün kabul edilmemektedir. Lütfen orijinal "
+"ürünleri kullanın."
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.res_config_settings_view_form_tender
+msgid ""
+"Endirekt ve Promosyon ihale tiplerinde toplu satın alma optimizasyonu için "
+"parametreler"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_tender_view_form
+msgid "Endirekt İhale Özellikleri"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/economic_data.py:0
+#: code:addons/ak_tender/models/tender.py:0
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender__inflation_rate
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_economic_data__inflation_rate
+msgid "Enflasyon Oranı (%)"
+msgstr ""
+
+#. module: ak_tender
+#: model:ir.model.fields,field_description:ak_tender.field_import_hotel_wizard__excel_file
+#: model:ir.model.fields,field_description:ak_tender.field_import_supplier_wizard__excel_file
+msgid "Excel Dosyası"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/wizards/import_hotel_wizard.py:0
+msgid "Excel dosyası boş veya sadece başlık satırı içeriyor."
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.view_import_supplier_wizard_form
+msgid "Excel dosyasında aşağıdaki sayfalar olmalıdır:"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.view_import_hotel_wizard_form
+msgid "Excel dosyasında aşağıdaki sütunlar olmalıdır:"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/economic_data.py:0
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_economic_data__interest_rate
+msgid "Faiz Oranı (%)"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender__pricelist_id
+msgid "Fiyat Listesi"
+msgstr ""
+
+#. module: ak_tender
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender__message_follower_ids
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_template__message_follower_ids
+msgid "Followers"
+msgstr "Takipçiler"
+
+#. module: ak_tender
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender__message_partner_ids
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_template__message_partner_ids
+msgid "Followers (Partners)"
+msgstr "Takipçiler (İş Ortakları)"
+
+#. module: ak_tender
+#: model:ir.model.fields,help:ak_tender.field_ak_tender__activity_type_icon
+#: model:ir.model.fields,help:ak_tender.field_ak_tender_template__activity_type_icon
+msgid "Font awesome icon e.g. fa-tasks"
+msgstr ""
+
+#. module: ak_tender
+#: model:ir.model.fields,field_description:ak_tender.field_purchase_order__guarantee_period
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_purchase_order_portal_content
+msgid "Garanti Süresi"
+msgstr ""
+
+#. module: ak_tender
+#: model:ir.model.fields,field_description:ak_tender.field_purchase_order_line__warranty_period
+msgid "Garanti Süresi (Ay)"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.report_vendor_comparison
+msgid "Garanti Süresi:"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.report_vendor_comparison
+msgid "Gerekli Tarih:"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender__required_delivery_date
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_line__required_delivery_date
+msgid "Gerekli Teslim Tarihi"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/bulk_purchase_wizard.py:0
+msgid "Geçerli SAT numaraları belirtilmelidir."
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/economic_data.py:0
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_economic_data__date_from
+#: model_terms:ir.ui.view,arch_db:ak_tender.view_ak_tender_economic_data_search
+msgid "Geçerlilik Başlangıç"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/economic_data.py:0
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_economic_data__date_to
+msgid "Geçerlilik Bitiş"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender_template.py:0
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_template__validity_days
+msgid "Geçerlilik Süresi (Gün)"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/wizards/import_hotel_wizard.py:0
+msgid "Geçersiz Excel dosyası. Lütfen doğru formatta bir dosya yükleyin."
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_tender_view_search
+msgid "Grup Bazında"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.view_ak_tender_economic_data_search
+#: model_terms:ir.ui.view,arch_db:ak_tender.view_tender_template_search
+msgid "Grupla"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+#: code:addons/ak_tender/models/tender_template.py:0
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_line__days
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_template_line__days
+msgid "Gün"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.res_config_settings_view_form_tender
+msgid "Gün olarak maksimum tedarik süresi"
+msgstr ""
+
+#. module: ak_tender
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender__has_message
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_template__has_message
+msgid "Has Message"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+msgid "Hata"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/set_target_price_wizard.py:0
+#: code:addons/ak_tender/models/tender.py:0
+#: code:addons/ak_tender/wizards/set_target_price_wizard.py:0
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender__target_price
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_line__target_price
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_set_target_price_wizard__target_price
+msgid "Hedef Fiyat"
+msgstr ""
+
+#. module: ak_tender
+#: model:ir.actions.act_window,name:ak_tender.action_set_target_price_wizard
+#: model_terms:ir.ui.view,arch_db:ak_tender.view_set_target_price_wizard_form
+msgid "Hedef Fiyat Belirleme"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/set_target_price_wizard.py:0
+#: code:addons/ak_tender/wizards/set_target_price_wizard.py:0
+#: model:ir.model,name:ak_tender.model_ak_tender_set_target_price_wizard
+msgid "Hedef Fiyat Belirleme Sihirbazı"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/set_target_price_wizard.py:0
+#: code:addons/ak_tender/wizards/set_target_price_wizard.py:0
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_tender_view_search
+msgid "Hedef Fiyat Belirlendi"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/wizards/set_target_price_wizard.py:0
+msgid "Hedef Fiyat Güncellendi"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/set_target_price_wizard.py:0
+#: code:addons/ak_tender/wizards/set_target_price_wizard.py:0
+msgid ""
+"Hedef fiyat belirleme geçişi bulunamadı. Lütfen iş akışı tanımını kontrol "
+"edin."
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/set_target_price_wizard.py:0
+#: code:addons/ak_tender/wizards/set_target_price_wizard.py:0
+msgid "Hedef fiyat belirlemek için en az bir teklif girilmelidir."
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/set_target_price_wizard.py:0
+#: code:addons/ak_tender/wizards/set_target_price_wizard.py:0
+msgid "Hedef fiyat belirlendi: %s"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/wizards/set_target_price_wizard.py:0
+msgid "Hedef fiyat güncellendi: %s"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/set_target_price_wizard.py:0
+msgid "Hedef fiyat sadece '1. Teklif Toplama' aşamasında belirlenebilir."
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/wizards/set_target_price_wizard.py:0
+msgid "Hedef fiyat sadece 'Hedef Fiyat Belirleme' aşamasında belirlenebilir."
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_tender_view_form
+msgid "Hizmet kategorisi şablonları"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/service_category_template.py:0
+msgid "Hizmet şablonları sadece MICE ihaleleri için uygulanabilir."
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+msgid "Hizmet şablonu başarıyla uygulandı."
+msgstr ""
+
+#. module: ak_tender
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender__id
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_add_supplier_wizard__id
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_bulk_purchase_wizard__id
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_economic_data__id
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_line__id
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_set_target_price_wizard__id
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_template__id
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_template_line__id
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_template_selection_wizard__id
+#: model:ir.model.fields,field_description:ak_tender.field_import_hotel_wizard__id
+#: model:ir.model.fields,field_description:ak_tender.field_import_supplier_wizard__id
+msgid "ID"
+msgstr ""
+
+#. module: ak_tender
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender__activity_exception_icon
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_template__activity_exception_icon
+msgid "Icon"
+msgstr ""
+
+#. module: ak_tender
+#: model:ir.model.fields,help:ak_tender.field_ak_tender__activity_exception_icon
+#: model:ir.model.fields,help:ak_tender.field_ak_tender_template__activity_exception_icon
+msgid "Icon to indicate an exception activity."
+msgstr ""
+
+#. module: ak_tender
+#: model:ir.model.fields,help:ak_tender.field_ak_tender__message_needaction
+#: model:ir.model.fields,help:ak_tender.field_ak_tender_template__message_needaction
+msgid "If checked, new messages require your attention."
+msgstr ""
+
+#. module: ak_tender
+#: model:ir.model.fields,help:ak_tender.field_ak_tender__message_has_error
+#: model:ir.model.fields,help:ak_tender.field_ak_tender__message_has_sms_error
+#: model:ir.model.fields,help:ak_tender.field_ak_tender_template__message_has_error
+#: model:ir.model.fields,help:ak_tender.field_ak_tender_template__message_has_sms_error
+msgid "If checked, some messages have a delivery error."
+msgstr ""
+
+#. module: ak_tender
+#: model:ir.model,name:ak_tender.model_import_hotel_wizard
+msgid "Import Hotels from Excel"
+msgstr ""
+
+#. module: ak_tender
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender__message_is_follower
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_template__message_is_follower
+msgid "Is Follower"
+msgstr ""
+
+#. module: ak_tender
+#: model:ir.model.fields,field_description:ak_tender.field_purchase_order__is_readonly
+msgid "Is Readonly"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.portal_record_sidebar_inherit
+msgid "KARDAN.DX"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/res_config_settings.py:0
+#: model:ir.model.fields,field_description:ak_tender.field_res_config_settings__ak_tender_quality_approval_required
+msgid "Kalite Onayı Gerekli"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.res_config_settings_view_form_tender
+msgid "Kalite onayı zorunlu"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender__winning_order_id
+msgid "Kazanan Teklif (SAS)"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/service_category_template.py:0
+#: code:addons/ak_tender/models/tender_template.py:0
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_template__locked_date
+msgid "Kilitleme Tarihi"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/service_category_template.py:0
+#: code:addons/ak_tender/models/tender_template.py:0
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_template__locked_by_id
+msgid "Kilitleyen"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/service_category_template.py:0
+#: code:addons/ak_tender/models/tender_template.py:0
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_template__is_locked
+#: model_terms:ir.ui.view,arch_db:ak_tender.view_tender_template_search
+msgid "Kilitli"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/service_category_template.py:0
+#: code:addons/ak_tender/models/tender_template.py:0
+#: model:ir.model.fields,help:ak_tender.field_ak_tender_template__is_locked
+msgid "Kilitli şablonlar değiştirilemez."
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+#: code:addons/ak_tender/models/tender_template.py:0
+#: model:ir.model.fields,help:ak_tender.field_ak_tender_line__days
+#: model:ir.model.fields,help:ak_tender.field_ak_tender_template_line__days
+msgid "Konaklama gibi hizmetler için gün sayısı."
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/purchase_order_line.py:0
+#: code:addons/ak_tender/models/tender.py:0
+#: model:ir.model.fields,help:ak_tender.field_ak_tender_line__hotel_partner_id
+#: model:ir.model.fields,help:ak_tender.field_purchase_order_line__hotel_partner_id
+msgid "Konaklama için otel seçin"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+msgid ""
+"Konaklama ürünleri için gün sayısı 0'dan büyük olmalıdır. Lütfen '%s' ürünü "
+"için gün sayısını belirtin."
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_purchase_order_portal_content
+msgid "Kur"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender__exchange_rate_date
+msgid "Kur Tarihi"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+msgid "Kur tarihi belirtilmelidir."
+msgstr ""
+
+#. module: ak_tender
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender__write_uid
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_add_supplier_wizard__write_uid
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_bulk_purchase_wizard__write_uid
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_economic_data__write_uid
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_line__write_uid
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_set_target_price_wizard__write_uid
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_template__write_uid
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_template_line__write_uid
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_template_selection_wizard__write_uid
+#: model:ir.model.fields,field_description:ak_tender.field_import_hotel_wizard__write_uid
+#: model:ir.model.fields,field_description:ak_tender.field_import_supplier_wizard__write_uid
+msgid "Last Updated by"
+msgstr ""
+
+#. module: ak_tender
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender__write_date
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_add_supplier_wizard__write_date
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_bulk_purchase_wizard__write_date
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_economic_data__write_date
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_line__write_date
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_set_target_price_wizard__write_date
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_template__write_date
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_template_line__write_date
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_template_selection_wizard__write_date
+#: model:ir.model.fields,field_description:ak_tender.field_import_hotel_wizard__write_date
+#: model:ir.model.fields,field_description:ak_tender.field_import_supplier_wizard__write_date
+msgid "Last Updated on"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/wizards/import_hotel_wizard.py:0
+#: code:addons/ak_tender/wizards/import_supplier_wizard.py:0
+msgid "Lütfen bir Excel dosyası seçin."
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/wizards/tender_template_selection_wizard.py:0
+msgid "Lütfen bir şablon seçin."
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/set_target_price_wizard.py:0
+#: code:addons/ak_tender/wizards/set_target_price_wizard.py:0
+msgid "Lütfen geçerli bir hedef fiyat girin."
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/service_category_template.py:0
+msgid "MICE Hizmet Şablonu"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/service_category_template.py:0
+msgid "MICE Hizmet Şablonu Satırı"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+#: model:ir.model.fields,help:ak_tender.field_ak_tender__tender_template_id
+msgid "MICE ve diğer ihaleler için kullanılacak ihale şablonu."
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_tender_view_form
+msgid "MICE İhale Özellikleri"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+#: code:addons/ak_tender/models/tender_template.py:0
+#: model:ir.model.fields.selection,name:ak_tender.selection__ak_tender__tender_type__mice
+#: model:ir.model.fields.selection,name:ak_tender.selection__ak_tender_template__tender_type__mice
+msgid "MICE İhaleler"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/res_config_settings.py:0
+#: model:ir.model.fields,field_description:ak_tender.field_res_config_settings__ak_tender_max_lead_time
+msgid "Maksimum Tedarik Süresi (Gün)"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/economic_data.py:0
+#: code:addons/ak_tender/models/tender.py:0
+#: model:ir.model.fields.selection,name:ak_tender.selection__ak_tender__economic_data_source__manual
+#: model:ir.model.fields.selection,name:ak_tender.selection__ak_tender_economic_data__data_source__manual
+msgid "Manuel"
+msgstr ""
+
+#. module: ak_tender
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender__message_has_error
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_template__message_has_error
+msgid "Message Delivery error"
+msgstr ""
+
+#. module: ak_tender
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender__message_ids
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_template__message_ids
+msgid "Messages"
+msgstr ""
+
+#. module: ak_tender
+#: model:ir.model.fields,field_description:ak_tender.field_import_supplier_wizard__update_existing
+msgid "Mevcut Kayıtları Güncelle"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/service_category_template.py:0
+#: code:addons/ak_tender/models/tender.py:0
+#: code:addons/ak_tender/models/tender_template.py:0
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_line__quantity
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_template_line__product_qty
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_purchase_order_portal_content
+msgid "Miktar"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.report_vendor_comparison
+msgid "Miktar:"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/res_config_settings.py:0
+#: model:ir.model.fields,field_description:ak_tender.field_res_config_settings__ak_tender_bulk_purchase_min_items
+msgid "Minimum Kalem Sayısı"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/res_config_settings.py:0
+#: model:ir.model.fields,field_description:ak_tender.field_res_config_settings__ak_tender_bulk_purchase_min_value
+msgid "Minimum Toplam Değer"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_tender_view_form
+msgid "Muadil ürün kabul edilmez"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_tender_view_form
+msgid "Muadil ürün teklifleri (ayarlara bağlı olarak)"
+msgstr ""
+
+#. module: ak_tender
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender__my_activity_date_deadline
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_template__my_activity_date_deadline
+msgid "My Activity Deadline"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.portal_my_tenders_list
+msgid "My Tenders"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender__npv_value
+#: model:ir.model.fields,field_description:ak_tender.field_purchase_order_line__npv_value
+msgid "NPV Değeri"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+msgid "NPV Değerleri Hesaplandı"
+msgstr ""
+
+#. module: ak_tender
+#: model:ir.actions.server,name:ak_tender.action_calculate_all_npv_values
+msgid "NPV Değerlerini Hesapla"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/res_config_settings.py:0
+#: model:ir.model.fields,field_description:ak_tender.field_res_config_settings__ak_tender_npv_interest_rate
+msgid "NPV Faiz Oranı (%)"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_tender_view_form
+msgid "NPV Hesaplama Ayarları"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.res_config_settings_view_form_tender
+msgid "NPV Hesaplama Parametreleri"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/economic_data.py:0
+#: code:addons/ak_tender/models/tender.py:0
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender__npv_rate
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_economic_data__npv_rate
+msgid "NPV Oranı (%)"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_tender_view_form
+msgid ""
+"NPV Oranı, gelecekteki nakit akışlarının bugünkü değerini hesaplamak için "
+"kullanılır."
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+#: model:ir.model.fields,help:ak_tender.field_ak_tender__npv_rate
+msgid "NPV hesaplaması için kullanılacak yıllık oran (enflasyon oranı)."
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/economic_data.py:0
+#: model:ir.model.fields,help:ak_tender.field_ak_tender_economic_data__npv_rate
+msgid "NPV hesaplaması için kullanılacak yıllık oran."
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.res_config_settings_view_form_tender
+msgid ""
+"NPV hesaplamasında ödeme vadesi için Odoo'nun standart ödeme vadesi "
+"kullanılır."
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.report_vendor_comparison
+msgid "NPV:"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.res_config_settings_view_form_tender
+msgid "Net Bugünkü Değer (NPV) hesaplaması için parametreler"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/res_config_settings.py:0
+#: model:ir.model.fields,help:ak_tender.field_res_config_settings__ak_tender_npv_interest_rate
+msgid "Net Bugünkü Değer (NPV) hesaplaması için varsayılan yıllık faiz oranı."
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+#: model:ir.model.fields,help:ak_tender.field_ak_tender__npv_value
+#: model:ir.model.fields,help:ak_tender.field_purchase_order_line__npv_value
+msgid "Net Bugünkü Değer hesaplaması sonucu."
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+msgid "New"
+msgstr ""
+
+#. module: ak_tender
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender__activity_calendar_event_id
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_template__activity_calendar_event_id
+msgid "Next Activity Calendar Event"
+msgstr ""
+
+#. module: ak_tender
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender__activity_date_deadline
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_template__activity_date_deadline
+msgid "Next Activity Deadline"
+msgstr ""
+
+#. module: ak_tender
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender__activity_summary
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_template__activity_summary
+msgid "Next Activity Summary"
+msgstr ""
+
+#. module: ak_tender
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender__activity_type_id
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_template__activity_type_id
+msgid "Next Activity Type"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.portal_tender_bid_form
+msgid "No lines in this tender."
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/service_category_template.py:0
+#: code:addons/ak_tender/models/tender.py:0
+#: code:addons/ak_tender/models/tender_template.py:0
+#: model:ir.model.fields.selection,name:ak_tender.selection__ak_tender_line__display_type__line_note
+#: model:ir.model.fields.selection,name:ak_tender.selection__ak_tender_template_line__display_type__line_note
+msgid "Not"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_tender_view_form
+#: model_terms:ir.ui.view,arch_db:ak_tender.view_tender_template_form
+msgid "Not Ekle"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_tender_view_form
+msgid "Note"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/economic_data.py:0
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_economic_data__notes
+#: model_terms:ir.ui.view,arch_db:ak_tender.view_ak_tender_economic_data_form
+msgid "Notlar"
+msgstr ""
+
+#. module: ak_tender
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender__message_needaction_counter
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_template__message_needaction_counter
+msgid "Number of Actions"
+msgstr ""
+
+#. module: ak_tender
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender__message_has_error_counter
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_template__message_has_error_counter
+msgid "Number of errors"
+msgstr ""
+
+#. module: ak_tender
+#: model:ir.model.fields,help:ak_tender.field_ak_tender__message_needaction_counter
+#: model:ir.model.fields,help:ak_tender.field_ak_tender_template__message_needaction_counter
+msgid "Number of messages requiring action"
+msgstr ""
+
+#. module: ak_tender
+#: model:ir.model.fields,help:ak_tender.field_ak_tender__message_has_error_counter
+#: model:ir.model.fields,help:ak_tender.field_ak_tender_template__message_has_error_counter
+msgid "Number of messages with delivery error"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/bulk_purchase_wizard.py:0
+#: model:ir.model.fields,help:ak_tender.field_ak_tender_bulk_purchase_wizard__name
+msgid "Oluşturulacak ihalenin adı."
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/bulk_purchase_wizard.py:0
+#: model:ir.model.fields,help:ak_tender.field_ak_tender_bulk_purchase_wizard__tender_type
+msgid "Oluşturulacak ihalenin tipi."
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender_template.py:0
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_template__mail_template_id
+msgid "Onay E-postası"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.view_set_target_price_wizard_form
+msgid "Onayla"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_tender_view_kanban
+msgid "Onaylandı"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_tender_view_search
+msgid "Onaylanmış İhaleler"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/product.py:0
+#: model:ir.model.constraint,message:ak_tender.constraint_product_attribute_custom_value_tender_line_custom_value_unique
+msgid "Only one Custom Value is allowed per Attribute Value per Tender Line."
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.portal_my_tenders_list
+msgid "Open Tenders"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/purchase_order_line.py:0
+#: code:addons/ak_tender/models/res_partner.py:0
+#: code:addons/ak_tender/models/tender.py:0
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_line__hotel_partner_id
+#: model:ir.model.fields,field_description:ak_tender.field_purchase_order_line__hotel_partner_id
+#: model:ir.model.fields,field_description:ak_tender.field_res_partner__is_hotel
+#: model:ir.model.fields,field_description:ak_tender.field_res_users__is_hotel
+msgid "Otel"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/product.py:0
+#: code:addons/ak_tender/models/tender.py:0
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_line__is_hotel_accommodation
+#: model:ir.model.fields,field_description:ak_tender.field_product_product__is_hotel_accommodation
+#: model:ir.model.fields,field_description:ak_tender.field_product_template__is_hotel_accommodation
+msgid "Otel Konaklaması"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+msgid "Otel seçiniz..."
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/res_partner.py:0
+#: model:ir.model.fields,help:ak_tender.field_res_partner__hotel_star_rating
+#: model:ir.model.fields,help:ak_tender.field_res_users__hotel_star_rating
+msgid "Otelin yıldız sayısı"
+msgstr ""
+
+#. module: ak_tender
+#: model:ir.actions.server,name:ak_tender.action_import_hotels
+#: model_terms:ir.ui.view,arch_db:ak_tender.view_import_hotel_wizard_form
+msgid "Otelleri İçe Aktar"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender__currency_id
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_line__currency_id
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_set_target_price_wizard__currency_id
+#: model:ir.model.fields,field_description:ak_tender.field_purchase_order_line__currency_id
+msgid "Para Birimi"
+msgstr "Kur"
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.portal_tender_bid_form
+msgid "Payment Terms:"
+msgstr "Ödeme Koşulu:"
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_purchase_order_portal_content
+msgid "Payment terms"
+msgstr "Ödeme Koşulu"
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.portal_tender_bid_form
+msgid "Please enter a price for at least one tender line."
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.portal_record_sidebar_inherit
+msgid "Powered by"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_purchase_order_portal_content
+msgid "Pricing"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/purchase_order_line.py:0
+#: model:ir.model,name:ak_tender.model_product_template
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_purchase_order_portal_content
+#: model_terms:ir.ui.view,arch_db:ak_tender.portal_tender_bid_form
+msgid "Product"
+msgstr "Ürün"
+
+#. module: ak_tender
+#: model:ir.model,name:ak_tender.model_product_attribute_custom_value
+msgid "Product Attribute Custom Value"
+msgstr "Ürün Nitelik Özel Değeri"
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/purchase_order_line.py:0
+msgid "Product Description"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_purchase_order_portal_content
+msgid "Products"
+msgstr "Ürünler/Hizmetler"
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/bulk_purchase_wizard.py:0
+#: code:addons/ak_tender/models/tender.py:0
+#: code:addons/ak_tender/models/tender_template.py:0
+#: model:ir.model.fields.selection,name:ak_tender.selection__ak_tender__tender_type__promotion
+#: model:ir.model.fields.selection,name:ak_tender.selection__ak_tender_bulk_purchase_wizard__tender_type__promotion
+#: model:ir.model.fields.selection,name:ak_tender.selection__ak_tender_template__tender_type__promotion
+msgid "Promosyon ve Kırtasiye"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_tender_view_form
+msgid "Promosyon İhale Özellikleri"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.portal_tender_bid_form
+msgid "Proposed Delivery Date:"
+msgstr ""
+
+#. module: ak_tender
+#: model:ir.model,name:ak_tender.model_purchase_order
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_purchase_order_portal_content
+msgid "Purchase Order"
+msgstr "Satınalma Siparişi"
+
+#. module: ak_tender
+#: model:ir.model,name:ak_tender.model_purchase_order_line
+msgid "Purchase Order Line"
+msgstr "Satınalma Sipariş Satırı"
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.portal_tender_bid_form
+msgid "Quantity"
+msgstr ""
+
+#. module: ak_tender
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender__rating_ids
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_template__rating_ids
+msgid "Ratings"
+msgstr "Derecelendirmeler"
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_purchase_order_portal_content
+msgid "Request for Quotation"
+msgstr "Satınalma Teklif Talebi"
+
+#. module: ak_tender
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender__activity_user_id
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_template__activity_user_id
+msgid "Responsible User"
+msgstr "Sorumlu Kullanıcı"
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender__purchase_order_count
+msgid "SAS Sayısı"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_tender_view_form
+msgid "SAS'lar"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/bulk_purchase_wizard.py:0
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_bulk_purchase_wizard__pr_ids
+msgid "SAT Numaraları"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/wizards/import_supplier_wizard.py:0
+msgid "SATICIANAVERI sayfası boş"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/wizards/import_supplier_wizard.py:0
+msgid "SATICIANAVERI sayfası bulunamadı"
+msgstr ""
+
+#. module: ak_tender
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender__message_has_sms_error
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_template__message_has_sms_error
+msgid "SMS Delivery error"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/set_target_price_wizard.py:0
+#: code:addons/ak_tender/models/tender.py:0
+#: code:addons/ak_tender/wizards/set_target_price_wizard.py:0
+#: model:ir.model.fields,help:ak_tender.field_ak_tender__target_price
+#: model:ir.model.fields,help:ak_tender.field_ak_tender_set_target_price_wizard__target_price
+msgid "Satın Alma Direktörü tarafından belirlenen hedef fiyat."
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+#: model:ir.model.fields,help:ak_tender.field_ak_tender__required_delivery_date
+msgid "Satın alma siparişlerinde kullanılacak gerekli teslim tarihi."
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+msgid "Satınalma Geçmişi: %s"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+msgid "Satınalma geçmişini görüntülemek için bir ürün seçmelisiniz."
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/service_category_template.py:0
+#: code:addons/ak_tender/models/tender_template.py:0
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_template__line_count
+msgid "Satır Sayısı"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/service_category_template.py:0
+#: code:addons/ak_tender/models/tender.py:0
+#: code:addons/ak_tender/models/tender_template.py:0
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_line__display_type
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_template_line__display_type
+msgid "Satır Tipi"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender_template.py:0
+msgid ""
+"Satır tipini değiştiremezsiniz. Bunun yerine mevcut satırı silip yeni bir "
+"satır oluşturmalısınız."
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_purchase_order_portal_content
+msgid "Scheduled Date"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_tender_view_form
+msgid "Section"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/add_supplier_wizard.py:0
+msgid "Seçilen tedarikçiler zaten ihaleye davet edilmiş."
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.report_vendor_comparison
+msgid "Seçim:"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.report_vendor_comparison
+msgid "Seçimlerden Sipariş oluştur"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+#: model:ir.model.fields,help:ak_tender.field_ak_tender_line__lead_time_days
+msgid "Sipariş verilmesinden teslimata kadar geçen süre."
+msgstr ""
+
+#. module: ak_tender
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender__state
+msgid "State (deprecated)"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.portal_my_tenders_list
+msgid "Status"
+msgstr ""
+
+#. module: ak_tender
+#: model:ir.model.fields,help:ak_tender.field_ak_tender__activity_state
+#: model:ir.model.fields,help:ak_tender.field_ak_tender_template__activity_state
+msgid ""
+"Status based on activities\n"
+"Overdue: Due date is already passed\n"
+"Today: Activity date is today\n"
+"Planned: Future activities."
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.portal_tender_bid_form
+msgid "Status:"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.portal_tender_bid_form
+msgid "Submit Bid"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.portal_tender_bid_form
+msgid "Submit Bid for Tender:"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.portal_tender_bid_form
+msgid "Supplier Notes:"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/service_category_template.py:0
+#: code:addons/ak_tender/models/tender.py:0
+#: code:addons/ak_tender/models/tender_template.py:0
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_line__sequence
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_template__sequence
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_template_line__sequence
+msgid "Sıra"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/economic_data.py:0
+#: code:addons/ak_tender/models/tender.py:0
+#: model:ir.model.fields.selection,name:ak_tender.selection__ak_tender__economic_data_source__tcmb
+#: model:ir.model.fields.selection,name:ak_tender.selection__ak_tender_economic_data__data_source__tcmb
+msgid "TCMB"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_tender_view_kanban
+msgid "Tamamlandı"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_tender_view_search
+msgid "Tamamlanmış İhaleler"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/economic_data.py:0
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_economic_data__name
+#: model_terms:ir.ui.view,arch_db:ak_tender.view_ak_tender_economic_data_form
+msgid "Tanım"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_tender_view_search
+msgid "Taslak İhaleler"
+msgstr ""
+
+#. module: ak_tender
+#: model:ir.model.fields,help:ak_tender.field_ak_tender__state
+msgid ""
+"Technical field for upgrade purpose. Not used anymore. Use workflow_state "
+"instead."
+msgstr ""
+
+#. module: ak_tender
+#: model:ir.model.fields,help:ak_tender.field_ak_tender__workflow_state
+msgid "Technical identifier unique within workflow"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_line__lead_time_days
+msgid "Tedarik Süresi (Gün)"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_tender_view_form
+msgid "Tedarik süresi maksimum izin verilen değeri aşamaz"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+#: model:ir.actions.act_window,name:ak_tender.action_add_supplier_wizard
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_tender_view_form
+#: model_terms:ir.ui.view,arch_db:ak_tender.view_add_supplier_wizard_form
+msgid "Tedarikçi Ekle"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/add_supplier_wizard.py:0
+#: model:ir.model,name:ak_tender.model_ak_tender_add_supplier_wizard
+msgid "Tedarikçi Ekleme Sihirbazı"
+msgstr ""
+
+#. module: ak_tender
+#: model:ir.actions.report,name:ak_tender.action_report_vendor_comparison
+msgid "Tedarikçi Karşılaştırma"
+msgstr ""
+
+#. module: ak_tender
+#: model:ir.model.fields,field_description:ak_tender.field_purchase_order_line__supplier_ref
+msgid "Tedarikçi Referansı"
+msgstr ""
+
+#. module: ak_tender
+#: model:ir.model.fields,help:ak_tender.field_purchase_order_line__warranty_period
+msgid "Tedarikçi tarafından sunulan garanti süresi (ay olarak)"
+msgstr ""
+
+#. module: ak_tender
+#: model:ir.model.fields,help:ak_tender.field_purchase_order_line__alt_materials
+msgid "Tedarikçi tarafından önerilen alternatif malzemeler veya ürünler"
+msgstr ""
+
+#. module: ak_tender
+#: model:ir.model,name:ak_tender.model_import_supplier_wizard
+msgid "Tedarikçi İmport Wizard"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/add_supplier_wizard.py:0
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_add_supplier_wizard__partner_ids
+msgid "Tedarikçiler"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/add_supplier_wizard.py:0
+msgid "Tedarikçiler Eklendi"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_tender_view_form
+msgid "Tedarikçiler İçin SAT Oluştur"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_tender_view_form
+msgid "Tedarikçilerden gelen teklifleri (SAT) karşılaştır"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/add_supplier_wizard.py:0
+#: model:ir.model.fields,help:ak_tender.field_ak_tender_add_supplier_wizard__invitation_message
+msgid "Tedarikçilere gönderilecek davet mesajı."
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/add_supplier_wizard.py:0
+#: model:ir.model.fields,help:ak_tender.field_ak_tender_add_supplier_wizard__send_invitation
+msgid "Tedarikçilere otomatik davet e-postası gönder."
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.view_add_supplier_wizard_form
+msgid "Tedarikçileri Ekle"
+msgstr ""
+
+#. module: ak_tender
+#: model:ir.actions.server,name:ak_tender.action_import_suppliers
+#: model_terms:ir.ui.view,arch_db:ak_tender.view_import_supplier_wizard_form
+msgid "Tedarikçileri İçe Aktar"
+msgstr ""
+
+#. module: ak_tender
+#: model:ir.model.fields,help:ak_tender.field_purchase_order__guarantee_period
+msgid "Tedarikçinin sunduğu garanti süresi (örn: 2 Yıl)."
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_tender_view_form
+msgid "Teklif Karşılaştır"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender__offer_count
+msgid "Teklif Sayısı"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_tender_view_form
+msgid "Teklif Sonuçları & Değerlendirme"
+msgstr ""
+
+#. module: ak_tender
+#: model:ir.model.fields,field_description:ak_tender.field_purchase_order__offer_date
+msgid "Teklif Tarihi"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender__tender_round
+#: model:ir.model.fields,field_description:ak_tender.field_purchase_order__tender_round
+msgid "Teklif Turu"
+msgstr ""
+
+#. module: ak_tender
+#: model:ir.model.fields,help:ak_tender.field_purchase_order_line__currency_id
+msgid ""
+"Teklif kaleminin para birimi. Farklı para birimlerinde teklif verebilmek "
+"için kullanılır."
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+msgid "Teklif turu %s olarak güncellendi."
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender__purchase_order_ids
+msgid "Teklifler (SAT)"
+msgstr ""
+
+#. module: ak_tender
+#: model:ir.model.fields.selection,name:ak_tender.selection__import_supplier_wizard__import_mode__basic
+msgid "Temel Bilgiler"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.portal_my_tenders_list
+msgid "Tender Code"
+msgstr "İhale Kodu"
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/product.py:0
+#: code:addons/ak_tender/models/purchase_order_line.py:0
+#: model:ir.model.fields,field_description:ak_tender.field_product_attribute_custom_value__tender_line_id
+msgid "Tender Line"
+msgstr "İhale Kalemi"
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.portal_tender_bid_form
+msgid "Tender Lines"
+msgstr "İhale Kalemleri"
+
+#. module: ak_tender
+#: model:res.groups,name:ak_tender.group_tender_manager
+msgid "Tender Manager"
+msgstr "İhale Yöneticisi"
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.portal_my_tenders_list
+msgid "Tender Name"
+msgstr "İhale Adı"
+
+#. module: ak_tender
+#: model:res.groups,name:ak_tender.group_tender_requester
+msgid "Tender Requester"
+msgstr "İhale Talep Eden"
+
+#. module: ak_tender
+#: model:res.groups,name:ak_tender.group_tender_user
+msgid "Tender User"
+msgstr "İhale Kullanıcısı"
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_purchase_order_portal_content
+msgid "Terms &amp; Conditions"
+msgstr "Koşullar"
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_purchase_order_portal_content
+msgid "Teslimat Tarihi"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.report_vendor_comparison
+msgid "Teslimat Tarihi:"
+msgstr ""
+
+#. module: ak_tender
+#: model:ir.model.fields,help:ak_tender.field_ak_tender__workflow_definition_id
+msgid "The active workflow definition for this record."
+msgstr "Bu kayıt için etkin iş akışı tanımı."
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.portal_tender_bid_form
+msgid "There was an error submitting your bid. Please try again."
+msgstr "Teklifiniz gönderilirken bir hata oluştu. Lütfen tekrar deneyin."
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.portal_tender_bid_form
+msgid "This tender is not currently open for bidding."
+msgstr "Bu ihale şu anda teklif vermeye açık değildir."
+
+#. module: ak_tender
+#: model:ir.model,name:ak_tender.model_tier_definition
+msgid "Tier Definition"
+msgstr "Seviye Tanımı"
+
+#. module: ak_tender
+#: model:ir.model.fields,field_description:ak_tender.field_purchase_order__total_npv
+msgid "Toplam NPV Değeri"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.report_vendor_comparison
+msgid "Toplamdan Sipariş oluştur"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender__is_bulk_purchase
+msgid "Toplu Satın Alma"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_tender_view_form
+msgid "Toplu Satın Alma Bilgileri"
+msgstr ""
+
+#. module: ak_tender
+#: model:ir.actions.act_window,name:ak_tender.action_bulk_purchase_wizard
+msgid "Toplu Satın Alma Oluştur"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/res_config_settings.py:0
+#: model:ir.model.fields,field_description:ak_tender.field_res_config_settings__ak_tender_enable_bulk_purchase
+#: model_terms:ir.ui.view,arch_db:ak_tender.res_config_settings_view_form_tender
+msgid "Toplu Satın Alma Optimizasyonu"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/bulk_purchase_wizard.py:0
+#: model:ir.model,name:ak_tender.model_ak_tender_bulk_purchase_wizard
+#: model_terms:ir.ui.view,arch_db:ak_tender.view_bulk_purchase_wizard_form
+msgid "Toplu Satın Alma Sihirbazı"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/bulk_purchase_wizard.py:0
+msgid "Toplu Satın Alma İhalesi"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/bulk_purchase_wizard.py:0
+#: code:addons/ak_tender/models/tender.py:0
+msgid "Toplu Satın Alma: %s"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/bulk_purchase_wizard.py:0
+msgid "Toplu Satın Alma: %s ve %s diğer"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/bulk_purchase_wizard.py:0
+msgid "Toplu satın alma için en az %s SAT numarası belirtilmelidir."
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_tender_view_form
+msgid "Toplu satın alma optimizasyonu"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+msgid "Toplu satın alma optimizasyonu ayarlarda devre dışı bırakılmıştır."
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+#: model:ir.model.fields,help:ak_tender.field_ak_tender__related_pr_ids
+msgid ""
+"Toplu satın alma optimizasyonu için birleştirilen SAT numaraları (virgülle "
+"ayrılmış)."
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/res_config_settings.py:0
+#: model:ir.model.fields,help:ak_tender.field_res_config_settings__ak_tender_bulk_purchase_min_items
+msgid "Toplu satın alma optimizasyonu için minimum kalem sayısı."
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/res_config_settings.py:0
+#: model:ir.model.fields,help:ak_tender.field_res_config_settings__ak_tender_bulk_purchase_min_value
+msgid "Toplu satın alma optimizasyonu için minimum toplam değer."
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+msgid ""
+"Toplu satın alma optimizasyonu sadece Endirekt ve Promosyon ihale tipleri "
+"için kullanılabilir."
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.res_config_settings_view_form_tender
+msgid ""
+"Toplu satın alma optimizasyonu, belirtilen minimum kalem sayısı ve toplam "
+"değer kriterlerine göre yapılır."
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.view_bulk_purchase_wizard_form
+msgid ""
+"Toplu satın alma optimizasyonu, satın alma gücünüzü artırarak daha iyi "
+"fiyatlar ve koşullar elde etmenizi sağlar."
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/res_config_settings.py:0
+#: model:ir.model.fields,help:ak_tender.field_res_config_settings__ak_tender_enable_bulk_purchase
+msgid "Toplu satın alma optimizasyonunu etkinleştirir."
+msgstr ""
+
+#. module: ak_tender
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender__transition_history_ids
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_tender_view_form
+msgid "Transition History"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.report_vendor_comparison
+msgid "Tutar:"
+msgstr ""
+
+#. module: ak_tender
+#: model:ir.model.fields,help:ak_tender.field_ak_tender__activity_exception_decoration
+#: model:ir.model.fields,help:ak_tender.field_ak_tender_template__activity_exception_decoration
+msgid "Type of the exception activity on record."
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_tender_view_form
+msgid "Type to find a product..."
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/economic_data.py:0
+#: code:addons/ak_tender/models/tender.py:0
+#: model:ir.model.fields.selection,name:ak_tender.selection__ak_tender__economic_data_source__tuik
+#: model:ir.model.fields.selection,name:ak_tender.selection__ak_tender_economic_data__data_source__tuik
+msgid "TÜİK"
+msgstr ""
+
+#. module: ak_tender
+#: model:ir.model.fields,help:ak_tender.field_purchase_order__total_npv
+msgid "Tüm satırların NPV değerlerinin toplamı."
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_tender_view_form
+msgid "Tüm ürünlerin ERP kodu olmalıdır"
+msgstr ""
+
+#. module: ak_tender
+#: model:ir.ui.menu,name:ak_tender.ak_tender_menu_tender_list
+msgid "Tüm İhaleler"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.portal_tender_bid_form
+msgid "Unit Price ("
+msgstr "Birim Fiyat ("
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+msgid "Uyarı"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+msgid "Uygun Şablon Bulunamadı"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.portal_my_home_tender
+msgid "Verdiğiniz Teklifler"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/economic_data.py:0
+#: code:addons/ak_tender/models/tender.py:0
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender__economic_data_source
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_economic_data__data_source
+#: model_terms:ir.ui.view,arch_db:ak_tender.view_ak_tender_economic_data_search
+msgid "Veri Kaynağı"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.portal_my_tenders_list
+msgid "View / Submit Bid"
+msgstr "Teklifi Görüntüle / Gönder"
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.portal_my_home_tender
+msgid "View and submit bids for open tenders"
+msgstr "Açık ihalelere ilişkin teklifleri görüntüleyin ve gönderin"
+
+#. module: ak_tender
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender__website_message_ids
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_template__website_message_ids
+msgid "Website Messages"
+msgstr "Web Sitesi Mesajları"
+
+#. module: ak_tender
+#: model:ir.model.fields,help:ak_tender.field_ak_tender__website_message_ids
+#: model:ir.model.fields,help:ak_tender.field_ak_tender_template__website_message_ids
+msgid "Website communication history"
+msgstr "Web sitesi iletişim geçmişi"
+
+#. module: ak_tender
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender__workflow_definition_id
+msgid "Workflow"
+msgstr "İş akışı"
+
+#. module: ak_tender
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender__workflow_end_date
+msgid "İş Akışı Bitiş Tarihi"
+msgstr ""
+
+#. module: ak_tender
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender__workflow_start_date
+msgid "Workflow Start Date"
+msgstr "İş Akışı Başlangıç Tarihi"
+
+#. module: ak_tender
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender__workflow_state
+msgid "Workflow State Code"
+msgstr "İş Akışı Durum Kodu"
+
+#. module: ak_tender
+#: model_terms:ir.actions.act_window,help:ak_tender.ak_tender_action
+msgid "Yeni bir ihale oluşturun ve satın alma süreçlerinizi dijitalleştirin!"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/add_supplier_wizard.py:0
+msgid "Yeni tedarikçiler ihaleye eklendi: %s"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.portal_my_tenders_list
+msgid "You currently have no open tenders to bid on."
+msgstr "Şu anda teklif verebileceğiniz açık ihale bulunmamaktadır."
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.portal_tender_bid_form
+msgid "Your bid has been submitted successfully!"
+msgstr "Teklifiniz başarıyla iletildi!"
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/res_partner.py:0
+#: model:ir.model.fields,field_description:ak_tender.field_res_partner__hotel_star_rating
+#: model:ir.model.fields,field_description:ak_tender.field_res_users__hotel_star_rating
+msgid "Yıldız"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/economic_data.py:0
+#: model:ir.model.fields,help:ak_tender.field_ak_tender_economic_data__inflation_rate
+msgid "Yıllık enflasyon oranı."
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/economic_data.py:0
+#: model:ir.model.fields,help:ak_tender.field_ak_tender_economic_data__interest_rate
+msgid "Yıllık faiz oranı."
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/service_category_template.py:0
+#: code:addons/ak_tender/models/tender.py:0
+#: code:addons/ak_tender/models/tender_template.py:0
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_line__required
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_template_line__required
+msgid "Zorunlu"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/wizards/import_supplier_wizard.py:0
+msgid ""
+"supplierprocessedsuppliercreatedsupplierupdatedsupplierskippedsuppliererrorsbankprocessedbankcreatedbankskippedbankerrorsemailprocessedemailupdatedemailskippedemailerrors"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/wizards/import_supplier_wizard.py:0
+msgid ""
+"supplierprocessedsuppliercreatedsupplierupdatedsupplierskippedsuppliererrorsemailprocessedemailupdatedemailskippedemailerrors"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.report_vendor_comparison
+msgid "Ödeme Vadesi:"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+msgid "Önce bir ihale şablonu seçmelisiniz."
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.view_bulk_purchase_wizard_form
+msgid "Örnek: PR001, PR002, PR003"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender__country_id
+msgid "Ülke"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/service_category_template.py:0
+#: code:addons/ak_tender/models/tender_template.py:0
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_template__country_ids
+msgid "Ülkeler"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.report_vendor_comparison
+msgid "Ürün"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_tender_view_form
+#: model_terms:ir.ui.view,arch_db:ak_tender.view_tender_template_form
+msgid "Ürün Ekle"
+msgstr ""
+
+#. module: ak_tender
+#: model:ir.model.constraint,message:ak_tender.constraint_ak_tender_template_line_accountable_product_id_required
+msgid "Ürün satırında ürün ve ölçü birimi gereklidir."
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/service_category_template.py:0
+#: code:addons/ak_tender/models/tender.py:0
+#: code:addons/ak_tender/models/tender_template.py:0
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_template_line__product_id
+#: model:ir.model.fields.selection,name:ak_tender.selection__ak_tender_line__display_type__product
+#: model:ir.model.fields.selection,name:ak_tender.selection__ak_tender_template_line__display_type__product
+msgid "Ürün/Hizmet"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_line__product_id
+msgid "Ürün/Malzeme"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+#: model:ir.model,name:ak_tender.model_ak_tender
+msgid "İLKOis Tender"
+msgstr "İhale"
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/add_supplier_wizard.py:0
+#: code:addons/ak_tender/models/set_target_price_wizard.py:0
+#: code:addons/ak_tender/models/tender.py:0
+#: code:addons/ak_tender/wizards/set_target_price_wizard.py:0
+#: code:addons/ak_tender/wizards/tender_template_selection_wizard.py:0
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_add_supplier_wizard__tender_id
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_line__tender_id
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_set_target_price_wizard__tender_id
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_template_selection_wizard__tender_id
+#: model:ir.model.fields,field_description:ak_tender.field_purchase_order__tender_id
+#: model:ir.module.category,name:ak_tender.module_category_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_tender_view_form
+#: model_terms:ir.ui.view,arch_db:ak_tender.purchase_order_search_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.res_config_settings_view_form_tender
+msgid "İhale"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/bulk_purchase_wizard.py:0
+#: code:addons/ak_tender/models/tender.py:0
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender__name
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_bulk_purchase_wizard__name
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_tender_view_form
+msgid "İhale Adı"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_tender_view_search
+msgid "İhale Ara"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender__description
+msgid "İhale Açıklaması"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_tender_view_form
+#: model_terms:ir.ui.view,arch_db:ak_tender.product_template_form_view_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.purchase_order_form_tender
+msgid "İhale Bilgileri"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/economic_data.py:0
+#: model:ir.model,name:ak_tender.model_ak_tender_economic_data
+msgid "İhale Ekonomik Veriler"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+#: model:ir.model,name:ak_tender.model_ak_tender_line
+#: model:ir.model.fields,field_description:ak_tender.field_purchase_order_line__tender_line_id
+msgid "İhale Kalemi"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender__tender_lines
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_tender_view_form
+msgid "İhale Kalemleri"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender__code
+msgid "İhale Kodu"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.report_vendor_comparison
+msgid "İhale No:"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.view_bulk_purchase_wizard_form
+msgid "İhale Oluştur"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+msgid "İhale Onaylandı"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/service_category_template.py:0
+#: code:addons/ak_tender/models/tender_template.py:0
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_template__tender_count
+msgid "İhale Sayısı"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/bulk_purchase_wizard.py:0
+#: code:addons/ak_tender/models/tender.py:0
+#: code:addons/ak_tender/models/tender_template.py:0
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender__tender_type
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_bulk_purchase_wizard__tender_type
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_template__tender_type
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_template_selection_wizard__tender_type
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_tender_view_search
+#: model_terms:ir.ui.view,arch_db:ak_tender.view_tender_template_search
+msgid "İhale Tipi"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+msgid ""
+"İhale başarıyla onaylandı. Ancak kazanan bir teklif bulunamadığı için SAS "
+"onaylanamadı."
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+msgid ""
+"İhale başarıyla onaylandı. Kazanan teklif (%s) için Satın Alma Siparişi "
+"onaylandı."
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+#: model:ir.model.fields,help:ak_tender.field_ak_tender_line__product_id
+msgid "İhale edilecek ürün veya malzeme."
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+#: model:ir.model.fields,help:ak_tender.field_ak_tender__description
+msgid "İhale ile ilgili detaylı bilgiler ve şartnameler."
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/wizards/set_target_price_wizard.py:0
+msgid ""
+"İhale için hedef fiyat belirlendi. Yeni bir teklif toplama turu için hazır."
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/set_target_price_wizard.py:0
+msgid ""
+"İhale için hedef fiyat belirlendi. İkinci teklif toplama turu için hazır."
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/wizards/set_target_price_wizard.py:0
+msgid "İhale için hedef fiyat güncellendi."
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+msgid "İhale kalemi bulunamadı. Lütfen önce ihale kalemi ekleyin."
+msgstr ""
+
+#. module: ak_tender
+#: model:res.groups,comment:ak_tender.group_tender_user
+msgid ""
+"İhale kullanıcıları ihale süreçlerini görüntüleyebilir ve düzenleyebilir."
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.view_add_supplier_wizard_form
+msgid "İhale süreci devam ederken bile yeni tedarikçiler ekleyebilirsiniz."
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+#: model:ir.model.fields,help:ak_tender.field_ak_tender__discount_rate
+#: model:ir.model.fields,help:ak_tender.field_purchase_order_line__discount_rate
+msgid "İhale sürecinde kullanılacak iskonto oranı."
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+#: model:ir.model.fields,help:ak_tender.field_ak_tender__name
+msgid "İhale sürecinin başlığı veya kısa adı."
+msgstr ""
+
+#. module: ak_tender
+#: model:res.groups,comment:ak_tender.group_tender_requester
+msgid "İhale talep edicileri yeni ihale talepleri oluşturabilir."
+msgstr ""
+
+#. module: ak_tender
+#: model:res.groups,comment:ak_tender.group_tender_manager
+msgid "İhale yöneticileri tüm ihale süreçlerini yönetebilir ve onaylayabilir."
+msgstr ""
+
+#. module: ak_tender
+#: model:ir.module.category,description:ak_tender.module_category_tender
+msgid "İhale yönetimi için güvenlik grupları"
+msgstr ""
+
+#. module: ak_tender
+#: model:ir.actions.act_window,name:ak_tender.action_tender_template
+#: model:ir.ui.menu,name:ak_tender.menu_tender_template
+#: model_terms:ir.ui.view,arch_db:ak_tender.view_tender_template_search
+#: model_terms:ir.ui.view,arch_db:ak_tender.view_tender_template_tree
+msgid "İhale Şablonları"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+#: code:addons/ak_tender/models/tender_template.py:0
+#: model:ir.model,name:ak_tender.model_ak_tender_template
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender__tender_template_id
+#: model_terms:ir.ui.view,arch_db:ak_tender.view_tender_template_form
+msgid "İhale Şablonu"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender_template.py:0
+#: model:ir.model,name:ak_tender.model_ak_tender_template_line
+msgid "İhale Şablonu Satırı"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/wizards/tender_template_selection_wizard.py:0
+#: model:ir.model,name:ak_tender.model_ak_tender_template_selection_wizard
+msgid "İhale Şablonu Seçim Sihirbazı"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.actions.act_window,help:ak_tender.action_tender_template
+msgid ""
+"İhale şablonları, benzer ihaleler için tekrar kullanılabilir yapılar oluşturmanıza olanak tanır.\n"
+"                Şablonlar, ihale satırlarını, coğrafi filtreleri ve diğer ayarları içerebilir."
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender_template.py:0
+#: model:ir.model.fields,help:ak_tender.field_ak_tender_template_line__sequence
+msgid "İhale şablonu satırlarının görüntülenme sırasını belirler."
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/service_category_template.py:0
+#: code:addons/ak_tender/models/tender_template.py:0
+#: model:ir.actions.act_window,name:ak_tender.ak_tender_action
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_template__tender_ids
+#: model:ir.ui.menu,name:ak_tender.ak_tender_menu_root
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_tender_view_list
+#: model_terms:ir.ui.view,arch_db:ak_tender.view_tender_template_form
+msgid "İhaleler"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+#: model:ir.model.fields,help:ak_tender.field_ak_tender__state_id
+msgid "İhalenin gerçekleştirileceği il."
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+#: model:ir.model.fields,help:ak_tender.field_ak_tender__country_id
+msgid "İhalenin gerçekleştirileceği ülke."
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+#: model:ir.model.fields,help:ak_tender.field_ak_tender__city
+msgid "İhalenin gerçekleştirileceği şehir."
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender_template.py:0
+#: model:ir.model.fields,help:ak_tender.field_ak_tender_template__validity_days
+msgid "İhalenin geçerlilik süresinin hesaplanması için gün sayısı"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/add_supplier_wizard.py:0
+#: model:ir.model.fields,help:ak_tender.field_ak_tender_add_supplier_wizard__partner_ids
+msgid "İhaleye eklenecek tedarikçiler."
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_tender_view_form
+msgid "İhaleye yeni tedarikçiler ekle"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender__state_id
+msgid "İl"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+#: model:ir.model.fields,help:ak_tender.field_ak_tender__erp_pr_id
+msgid "İlgili ERP Satın Alma Talebi Numarası (entegrasyon ile gelecek)."
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+#: model:ir.model.fields,help:ak_tender.field_ak_tender__erp_plant_code
+msgid "İlgili ERP Tesis Kodu (entegrasyon ile gelecek)."
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+#: model:ir.model.fields,help:ak_tender.field_ak_tender__erp_company_code
+msgid "İlgili ERP Şirket Kodu (entegrasyon ile gelecek)."
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender__related_pr_ids
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_tender_view_form
+msgid "İlişkili SAT Numaraları"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.actions.act_window,help:ak_tender.action_ak_tender_economic_data
+msgid "İlk ekonomik veri kaydınızı oluşturun!"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.actions.act_window,help:ak_tender.action_tender_template
+msgid "İlk ihale şablonunuzu oluşturun"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/service_category_template.py:0
+#: code:addons/ak_tender/models/tender_template.py:0
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_template__state_ids
+msgid "İller"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/wizards/import_supplier_wizard.py:0
+msgid "İmport Başarılı"
+msgstr ""
+
+#. module: ak_tender
+#: model:ir.model.fields,field_description:ak_tender.field_import_supplier_wizard__import_mode
+msgid "İmport Modu"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_purchase_order_portal_content
+msgid "İndirim %"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.report_vendor_comparison
+msgid "İndirim %:"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.view_add_supplier_wizard_form
+#: model_terms:ir.ui.view,arch_db:ak_tender.view_bulk_purchase_wizard_form
+#: model_terms:ir.ui.view,arch_db:ak_tender.view_import_hotel_wizard_form
+#: model_terms:ir.ui.view,arch_db:ak_tender.view_import_supplier_wizard_form
+#: model_terms:ir.ui.view,arch_db:ak_tender.view_set_target_price_wizard_form
+#: model_terms:ir.ui.view,arch_db:ak_tender.view_tender_template_selection_wizard_form
+msgid "İptal"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender__discount_rate
+#: model:ir.model.fields,field_description:ak_tender.field_purchase_order_line__discount_rate
+msgid "İskonto Oranı (%)"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+#: model:ir.model.fields,help:ak_tender.field_ak_tender_line__required_delivery_date
+msgid "İstenen teslimat tarihi."
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.view_import_hotel_wizard_form
+#: model_terms:ir.ui.view,arch_db:ak_tender.view_import_supplier_wizard_form
+msgid "İçe Aktar"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/wizards/import_hotel_wizard.py:0
+msgid "İçe Aktarma Başarılı"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/service_category_template.py:0
+#: code:addons/ak_tender/models/tender_template.py:0
+#: code:addons/ak_tender/wizards/tender_template_selection_wizard.py:0
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_template_line__template_id
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_template_selection_wizard__template_id
+msgid "Şablon"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/service_category_template.py:0
+#: code:addons/ak_tender/models/tender_template.py:0
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_template__name
+#: model_terms:ir.ui.view,arch_db:ak_tender.view_tender_template_form
+msgid "Şablon Adı"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_tender_view_form
+msgid "Şablon Bilgileri"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.view_tender_template_form
+msgid "Şablon Kilidini Aç"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/service_category_template.py:0
+#: code:addons/ak_tender/models/tender_template.py:0
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_template__code
+#: model_terms:ir.ui.view,arch_db:ak_tender.view_tender_template_form
+msgid "Şablon Kodu"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/service_category_template.py:0
+#: code:addons/ak_tender/models/tender_template.py:0
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_template__line_ids
+#: model_terms:ir.ui.view,arch_db:ak_tender.view_tender_template_form
+msgid "Şablon Satırları"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+#: model:ir.actions.act_window,name:ak_tender.action_tender_template_selection_wizard
+#: model_terms:ir.ui.view,arch_db:ak_tender.view_tender_template_selection_wizard_form
+msgid "Şablon Seçimi"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+msgid "Şablon Uygulandı"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_tender_view_form
+msgid "Şablon değişiklik kısıtlamaları"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/service_category_template.py:0
+#: code:addons/ak_tender/models/tender_template.py:0
+#: model:ir.model.fields,help:ak_tender.field_ak_tender_template_line__product_id
+msgid "Şablonda kullanılacak ürün veya hizmet."
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender.py:0
+msgid "Şablondan %s kalem eklendi."
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.ak_tender_view_form
+msgid "Şablondan Ekle"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.view_tender_template_form
+msgid "Şablonu Kilitle"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.view_tender_template_form
+msgid "Şablonu Kopyala"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.view_tender_template_selection_wizard_form
+msgid "Şablonu Uygula"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender_template.py:0
+msgid ""
+"Şablonunuz %(product_company)s şirketine ait ürünler içeriyor, ancak "
+"şablonunuz %(template_company)s şirketine ait. Lütfen şablonunuzun şirketini"
+" değiştirin veya diğer şirketlerden ürünleri kaldırın."
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/tender_template.py:0
+msgid "Şablonunuz birden fazla şirkete ait ürünler içeremez."
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/service_category_template.py:0
+#: code:addons/ak_tender/models/tender.py:0
+#: code:addons/ak_tender/models/tender_template.py:0
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender__city
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_template__city
+msgid "Şehir"
+msgstr ""
+
+#. module: ak_tender
+#: model_terms:ir.ui.view,arch_db:ak_tender.view_import_hotel_wizard_form
+msgid "Şehir, Yöre, Konum, Otel, Yıldız, Oda, Pansiyon, Döviz"
+msgstr ""
+
+#. module: ak_tender
+#. odoo-python
+#: code:addons/ak_tender/models/economic_data.py:0
+#: code:addons/ak_tender/models/tender.py:0
+#: code:addons/ak_tender/models/tender_template.py:0
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender__company_id
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_economic_data__company_id
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_template__company_id
+#: model:ir.model.fields,field_description:ak_tender.field_ak_tender_template_line__company_id
+msgid "Şirket"
+msgstr ""
