@@ -211,7 +211,7 @@ class TenderPortal(CustomerPortal): # Inherit from CustomerPortal for standard l
         # and refine the logic, validation, and error handling.
         
     @http.route(['/my/purchase/update_supplier_order'], type='json', auth="public", website=True)
-    def portal_update_supplier_order(self, order_id, access_token=None, lines=None, line_id=None, **kw):
+    def portal_update_supplier_order(self, order_id, access_token=None, lines=None, line_id=None, payment_term_id=None, **kw):
         """
         Update the supplier's purchase order from the portal.
         This method allows suppliers to update various fields of their purchase order:
@@ -220,6 +220,7 @@ class TenderPortal(CustomerPortal): # Inherit from CustomerPortal for standard l
         - warranty_period: Warranty period in months
         - supplier_ref: Supplier reference
         - alt_materials: Alternative materials
+        - payment_term_id: Payment terms
         
         Can handle both single line updates and multiple line updates:
         - Single line: line_id, price_unit, etc. are passed directly
@@ -228,7 +229,7 @@ class TenderPortal(CustomerPortal): # Inherit from CustomerPortal for standard l
         try:
             # Log the request parameters for debugging
             _logger = logging.getLogger(__name__)
-            _logger.info(f"Update supplier order request: order_id={order_id}, access_token={access_token}, lines={lines}, line_id={line_id}, kw={kw}")
+            _logger.info(f"Update supplier order request: order_id={order_id}, access_token={access_token}, lines={lines}, line_id={line_id}, payment_term_id={payment_term_id}, kw={kw}")
             
             # Check access to the order
             order_sudo = self._document_check_access('purchase.order', order_id, access_token)
@@ -340,6 +341,28 @@ class TenderPortal(CustomerPortal): # Inherit from CustomerPortal for standard l
                             'success': True
                         })
                 
+                # Update payment term if provided
+                if payment_term_id:
+                    try:
+                        _logger.info(f"Updating payment term: {payment_term_id}")
+                        # Handle special case for 'cash' value
+                        if payment_term_id == 'cash':
+                            # Find or create the cash payment term
+                            cash_term = request.env['account.payment.term'].sudo().search([('name', '=', 'Peşin Ödeme')], limit=1)
+                            if cash_term:
+                                order_sudo.payment_term_id = cash_term.id
+                            else:
+                                _logger.warning("Cash payment term not found")
+                        else:
+                            # Try to convert to integer for regular payment term IDs
+                            try:
+                                payment_term_id_int = int(payment_term_id)
+                                order_sudo.payment_term_id = payment_term_id_int
+                            except (ValueError, TypeError) as e:
+                                _logger.warning(f"Invalid payment_term_id value: {payment_term_id}, error: {str(e)}")
+                    except Exception as e:
+                        _logger.exception(f"Error updating payment term: {str(e)}")
+                
                 # Recompute the order totals
                 order_sudo._amount_all()
                 
@@ -347,6 +370,7 @@ class TenderPortal(CustomerPortal): # Inherit from CustomerPortal for standard l
                 return {
                     'success': True,
                     'lines_updated': len(results),
+                    'payment_term_updated': bool(payment_term_id),
                     'amount_total': request.env['ir.qweb.field.monetary'].value_to_html(
                         order_sudo.amount_total, {'display_currency': order_sudo.currency_id}),
                 }
@@ -442,9 +466,32 @@ class TenderPortal(CustomerPortal): # Inherit from CustomerPortal for standard l
                     if 'price_unit' in vals or 'discount' in vals:
                         order_sudo._amount_all()
                 
+                # Update payment term if provided
+                if payment_term_id:
+                    try:
+                        _logger.info(f"Updating payment term: {payment_term_id}")
+                        # Handle special case for 'cash' value
+                        if payment_term_id == 'cash':
+                            # Find or create the cash payment term
+                            cash_term = request.env['account.payment.term'].sudo().search([('name', '=', 'Peşin Ödeme')], limit=1)
+                            if cash_term:
+                                order_sudo.payment_term_id = cash_term.id
+                            else:
+                                _logger.warning("Cash payment term not found")
+                        else:
+                            # Try to convert to integer for regular payment term IDs
+                            try:
+                                payment_term_id_int = int(payment_term_id)
+                                order_sudo.payment_term_id = payment_term_id_int
+                            except (ValueError, TypeError) as e:
+                                _logger.warning(f"Invalid payment_term_id value: {payment_term_id}, error: {str(e)}")
+                    except Exception as e:
+                        _logger.exception(f"Error updating payment term: {str(e)}")
+                
                 # Return updated values
                 result = {
                     'success': True,
+                    'payment_term_updated': bool(payment_term_id)
                 }
                 
                 # Add price-related values if price or discount was updated

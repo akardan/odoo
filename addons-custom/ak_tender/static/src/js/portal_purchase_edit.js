@@ -178,11 +178,17 @@ function initializePortalPurchaseEdit() {
                     return;
                 }
                 
+                // Get payment term value
+                var paymentTermSelect = document.querySelector('select[name="payment_term_id"]');
+                var paymentTermId = paymentTermSelect ? paymentTermSelect.value : false;
+                console.log('Payment term selected:', paymentTermId);
+                
                 // Prepare params object for all lines
                 var params = {
                     order_id: parseInt(orderId),
                     access_token: token,
-                    lines: orderLines
+                    lines: orderLines,
+                    payment_term_id: paymentTermId
                 };
                 
                 // Send the request using XMLHttpRequest
@@ -223,6 +229,32 @@ function initializePortalPurchaseEdit() {
                                 field.classList.add('is-valid');
                             });
                             
+                            // Update the total amount on the left side if it exists
+                            if (data.result && data.result.amount_total) {
+                                // Try to find the total amount element - it's the first h1 or h2 or h3 in the sidebar
+                                var totalAmountElement = document.querySelector('h1, h2, h3');
+                                if (totalAmountElement && totalAmountElement.textContent.includes('$')) {
+                                    console.log('Found total amount element:', totalAmountElement);
+                                    
+                                    // Get the updated amount from the response
+                                    var amountTotal = data.result.amount_total;
+                                    
+                                    // If the response contains HTML (like <span class="o_price_total">$ 44.000,00</span>)
+                                    // Extract just the text
+                                    if (amountTotal.includes('<')) {
+                                        var tempDiv = document.createElement('div');
+                                        tempDiv.innerHTML = amountTotal;
+                                        amountTotal = tempDiv.textContent || tempDiv.innerText || '';
+                                    }
+                                    
+                                    // Update the element
+                                    totalAmountElement.textContent = amountTotal;
+                                    console.log('Updated total amount to:', amountTotal);
+                                } else {
+                                    console.log('Total amount element not found');
+                                }
+                            }
+                            
                             // Remove success class after a delay
                             setTimeout(function() {
                                 editableFields.forEach(function(field) {
@@ -253,6 +285,9 @@ function initializePortalPurchaseEdit() {
                     button.innerHTML = '<i class="fa fa-save"></i> Tüm Değişiklikleri Kaydet';
                     saveInProgress = false;
                 };
+                
+                // Log the request data for debugging
+                console.log('Sending request with params:', params);
                 
                 xhr.send(JSON.stringify({
                     jsonrpc: "2.0",

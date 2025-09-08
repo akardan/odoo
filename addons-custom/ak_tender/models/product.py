@@ -16,3 +16,4 @@ class ProductTemplate(models.Model):
     _inherit = 'product.template'
     
     is_hotel_accommodation = fields.Boolean(string=_("Otel Konaklaması"))
+    manufacturer_id = fields.Many2one('res.partner', string=_("Manufacturer"), help=_("Manufacturer of the product"))

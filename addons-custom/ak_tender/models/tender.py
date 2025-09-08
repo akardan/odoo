@@ -1332,6 +1332,9 @@ class AkTender(models.Model):
         Send emails to all suppliers with purchase orders for the current tender round.
         This method finds all purchase orders for the current round of the tender
         and triggers the email sending action for each one.
+        
+        This method exactly mimics the action_rfq_send functionality to ensure RFQs are marked as sent
+        and emails include the "View Quotation" button.
         """
         self.ensure_one()
         
@@ -1339,7 +1342,7 @@ class AkTender(models.Model):
         purchase_orders = self.env['purchase.order'].search([
             ('tender_id', '=', self.id),
             ('tender_round', '=', self.tender_round),  # Only current round
-            ('state', 'not in', ['cancel'])
+            ('state', 'not in', ['cancel', 'purchase', 'done'])
         ])
         
         if not purchase_orders:
@@ -1355,8 +1358,14 @@ class AkTender(models.Model):
             }
         
         # Get the mail template for purchase orders
-        template = self.env.ref('purchase.email_template_edi_purchase')
-        if not template:
+        template_id = False
+        try:
+            # Use the same template as action_rfq_send
+            template_id = self.env['ir.model.data']._xmlid_lookup('purchase.email_template_edi_purchase')[1]
+        except ValueError:
+            pass
+            
+        if not template_id:
             return {
                 'type': 'ir.actions.client',
                 'tag': 'display_notification',
@@ -1368,11 +1377,36 @@ class AkTender(models.Model):
                 }
             }
         
-        # Send email for each purchase order
+        # Send email for each purchase order and mark as sent
         sent_count = 0
         for po in purchase_orders:
             try:
-                template.send_mail(po.id, force_send=True)
+                # Get the template with proper rendering
+                template = self.env['mail.template'].browse(template_id)
+                
+                # Set up the context exactly like action_rfq_send does
+                ctx = {
+                    'default_model': 'purchase.order',
+                    'default_res_id': po.id,
+                    'default_template_id': template_id,
+                    'default_composition_mode': 'comment',
+                    'default_email_layout_xmlid': "mail.mail_notification_layout_with_responsible_signature",
+                    'force_email': True,
+                    'mark_rfq_as_sent': True,
+                    'model_description': _('Request for Quotation') if po.state in ['draft', 'sent'] else _('Purchase Order'),
+                }
+                
+                # Get the language for proper template rendering
+                lang = po.partner_id.lang or self.env.user.lang or 'en_US'
+                template = template.with_context(lang=lang)
+                
+                # Send the email with all the proper context
+                template.with_context(ctx).send_mail(po.id, force_send=True)
+                
+                # Mark the RFQ as sent (change state to 'sent')
+                if po.state == 'draft':
+                    po.write({'state': 'sent'})
+                
                 sent_count += 1
             except Exception as e:
                 _logger.error("Failed to send email for purchase order %s: %s", po.name, str(e))
@@ -1382,7 +1416,7 @@ class AkTender(models.Model):
             'tag': 'display_notification',
             'params': {
                 'title': _('Başarılı'),
-                'message': _('%s tedarikçi için e-posta gönderildi.') % sent_count,
+                'message': _('%s tedarikçi için e-posta gönderildi ve RFQ durumu güncellendi.') % sent_count,
                 'sticky': False,
                 'type': 'success',
             }
