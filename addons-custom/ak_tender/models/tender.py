@@ -61,8 +61,8 @@ class AkTenderLine(models.Model):
                                   required=True,
                                   store=True)
     target_price = fields.Monetary(string=_('Hedef Fiyat'),
-                                    currency_field='currency_id',
-                                    help=_("Bu kalem için belirlenen hedef fiyat."))
+                                     currency_field='currency_id',
+                                     help=_("Bu kalem için belirlenen hedef fiyat."))
     # We don't need these fields anymore since we're using the standard product configurator
     
     # Computed field to access product's is_hotel_accommodation
@@ -77,6 +77,24 @@ class AkTenderLine(models.Model):
     def _compute_is_hotel_accommodation(self):
         for line in self:
             line.is_hotel_accommodation = line.product_id.is_hotel_accommodation if line.product_id else False
+            
+    @api.model
+    def create(self, vals):
+        """Yeni bir satır oluşturulduğunda tender'ın hedef fiyatını güncelle"""
+        line = super(AkTenderLine, self).create(vals)
+        if line.tender_id and line.display_type == 'product':
+            line.tender_id.calculate_total_target_price()
+        return line
+    
+    def write(self, vals):
+        """Satır güncellendiğinde tender'ın hedef fiyatını güncelle"""
+        result = super(AkTenderLine, self).write(vals)
+        # Eğer target_price veya quantity değişmişse tender'ın hedef fiyatını güncelle
+        if 'target_price' in vals or 'quantity' in vals:
+            for line in self:
+                if line.tender_id and line.display_type == 'product':
+                    line.tender_id.calculate_total_target_price()
+        return result
     
     
     @api.onchange('product_id')
@@ -148,6 +166,12 @@ class AkTenderLine(models.Model):
             if self.target_price and self.days and self.quantity:
                 total_target = self.days * self.quantity * self.target_price
                 # Bu değeri göstermek için computed field eklenebilir
+    
+    @api.onchange('target_price', 'quantity')
+    def _onchange_target_price(self):
+        """Hedef fiyat veya miktar değiştiğinde tender'ın hedef fiyatını güncelle"""
+        if self.display_type == 'product' and self.tender_id:
+            self.tender_id.calculate_total_target_price()
     
     def _get_lang(self):
         """
@@ -311,6 +335,20 @@ class AkTender(models.Model):
     currency_id = fields.Many2one('res.currency', string=_('Para Birimi'), default=lambda self: self.env.company.currency_id)
     target_price = fields.Monetary(string=_('Hedef Fiyat'), currency_field='currency_id',
                                    help=_("Satın Alma Direktörü tarafından belirlenen hedef fiyat."))
+    
+    def calculate_total_target_price(self):
+        """
+        Tüm ihale kalemlerinin toplam hedef fiyatını hesapla ve tender'ın hedef fiyatını güncelle
+        """
+        self.ensure_one()
+        
+        total = 0.0
+        for line in self.tender_lines:
+            if line.display_type == 'product' and line.target_price and line.quantity:
+                total += line.target_price * line.quantity
+        
+        self.target_price = total
+        return total
     
     company_id = fields.Many2one('res.company', string=_('Şirket'), default=lambda self: self.env.company)
     pricelist_id = fields.Many2one('product.pricelist', string=_('Fiyat Listesi'),
