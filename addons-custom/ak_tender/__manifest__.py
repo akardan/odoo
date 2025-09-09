@@ -41,6 +41,7 @@
         'views/tender_template_views.xml',
         'views/product_views.xml',
         'views/economic_data_views.xml',
+        'views/res_partner_views.xml',
         'views/menu.xml',
         'wizards/import_hotel_wizard_views.xml',
         'wizards/import_supplier_wizard_views.xml',
