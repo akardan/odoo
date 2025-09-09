@@ -1333,8 +1333,8 @@ class AkTender(models.Model):
         This method finds all purchase orders for the current round of the tender
         and triggers the email sending action for each one.
         
-        This method exactly mimics the action_rfq_send functionality to ensure RFQs are marked as sent
-        and emails include the "View Quotation" button.
+        This method uses a custom email template that includes the "View Quotation" button
+        with the exact design requested.
         """
         self.ensure_one()
         
@@ -1357,13 +1357,17 @@ class AkTender(models.Model):
                 }
             }
         
-        # Get the mail template for purchase orders
+        # Get our custom mail template
         template_id = False
         try:
-            # Use the same template as action_rfq_send
-            template_id = self.env['ir.model.data']._xmlid_lookup('purchase.email_template_edi_purchase')[1]
+            # Use our custom template with the View Quotation button
+            template_id = self.env['ir.model.data']._xmlid_lookup('ak_tender.email_template_edi_purchase_custom')[1]
         except ValueError:
-            pass
+            # Fall back to the standard template if our custom one is not found
+            try:
+                template_id = self.env['ir.model.data']._xmlid_lookup('purchase.email_template_edi_purchase')[1]
+            except ValueError:
+                pass
             
         if not template_id:
             return {
