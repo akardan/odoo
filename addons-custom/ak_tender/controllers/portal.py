@@ -3,6 +3,9 @@ import logging
 from odoo import http, fields, _
 from odoo.http import request
 from odoo.addons.portal.controllers.portal import CustomerPortal, pager as portal_pager
+from odoo.tools import formatLang
+
+_logger = logging.getLogger(__name__)
 
 class TenderPortal(CustomerPortal): # Inherit from CustomerPortal for standard layout and access control
 
@@ -194,11 +197,13 @@ class TenderPortal(CustomerPortal): # Inherit from CustomerPortal for standard l
                 existing_order.order_line.unlink()
                 order_vals['order_line'] = order_lines_vals
                 existing_order.write(order_vals)
+                purchase_order = existing_order
             else:
                 # Create new order
                 order_vals['order_line'] = order_lines_vals
-                request.env['purchase.order'].create(order_vals)
+                purchase_order = request.env['purchase.order'].create(order_vals)
             
+            # Notification will be sent automatically by the purchase_order model
             return request.redirect(f'/my/tenders/{tender_id}?bid_submitted=1')
             
         except Exception as e:
@@ -209,6 +214,8 @@ class TenderPortal(CustomerPortal): # Inherit from CustomerPortal for standard l
         # This is a basic structure. You'll need to add QWeb templates
         # (portal_my_tenders_list.xml, portal_tender_bid_form.xml)
         # and refine the logic, validation, and error handling.
+    
+    # Notification functionality moved to purchase_order model
         
     @http.route(['/my/purchase/update_supplier_order'], type='json', auth="public", website=True)
     def portal_update_supplier_order(self, order_id, access_token=None, lines=None, line_id=None, payment_term_id=None, **kw):
@@ -499,16 +506,20 @@ class TenderPortal(CustomerPortal): # Inherit from CustomerPortal for standard l
                     result.update({
                         'price_subtotal': request.env['ir.qweb.field.monetary'].value_to_html(
                             line.price_subtotal, {'display_currency': order_sudo.currency_id}),
+                        'price_total': request.env['ir.qweb.field.monetary'].value_to_html(
+                            line.price_total, {'display_currency': order_sudo.currency_id}),
+                        'amount_untaxed': request.env['ir.qweb.field.monetary'].value_to_html(
+                            order_sudo.amount_untaxed, {'display_currency': order_sudo.currency_id}),
+                        'amount_tax': request.env['ir.qweb.field.monetary'].value_to_html(
+                            order_sudo.amount_tax, {'display_currency': order_sudo.currency_id}),
                         'amount_total': request.env['ir.qweb.field.monetary'].value_to_html(
                             order_sudo.amount_total, {'display_currency': order_sudo.currency_id}),
                     })
                 
                 return result
             
-            else:
-                return {'error': 'No line data provided'}
+            return {'error': 'No line_id or lines provided'}
             
         except Exception as e:
-            _logger = logging.getLogger(__name__)
-            _logger.exception(f"Error updating supplier order: {str(e)}")
+            _logger.exception(f"Error in portal_update_supplier_order: {str(e)}")
             return {'error': str(e)}

@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-
     <!-- Template for listing tenders in the portal -->
     <template id="portal_my_tenders_list" name="My Tenders">
         <t t-call="portal.portal_layout">
@@ -54,6 +53,93 @@
     <!-- Template for the tender bid submission form -->
     <template id="portal_tender_bid_form" name="Tender Bid Form">
         <t t-call="portal.portal_layout">
+            <!-- Add JavaScript for attachment preview -->
+            <script type="text/javascript">
+                function previewAttachment(model, id, field, filename) {
+                    // Determine file type based on extension
+                    var isImage = /\.(jpg|jpeg|png|gif|bmp)$/i.test(filename);
+                    var isPdf = /\.pdf$/i.test(filename);
+                    
+                    // Get the content URL
+                    var contentUrl = '/web/content?model=' + model + '&amp;id=' + id + '&amp;field=' + field + '&amp;filename=' + filename;
+                    
+                    // Create modal for preview
+                    var modal = document.createElement('div');
+                    modal.className = 'modal fade';
+                    modal.id = 'attachmentPreviewModal';
+                    modal.setAttribute('tabindex', '-1');
+                    modal.setAttribute('role', 'dialog');
+                    modal.setAttribute('aria-hidden', 'true');
+                    
+                    var modalDialog = document.createElement('div');
+                    modalDialog.className = 'modal-dialog modal-lg';
+                    modalDialog.setAttribute('role', 'document');
+                    
+                    var modalContent = document.createElement('div');
+                    modalContent.className = 'modal-content';
+                    
+                    var modalHeader = document.createElement('div');
+                    modalHeader.className = 'modal-header';
+                    
+                    var modalTitle = document.createElement('h5');
+                    modalTitle.className = 'modal-title';
+                    modalTitle.textContent = filename;
+                    
+                    var closeButton = document.createElement('button');
+                    closeButton.type = 'button';
+                    closeButton.className = 'close';
+                    closeButton.setAttribute('data-dismiss', 'modal');
+                    closeButton.setAttribute('aria-label', 'Close');
+                    closeButton.innerHTML = '<span aria-hidden="true">&amp;times;</span>';
+                    
+                    modalHeader.appendChild(modalTitle);
+                    modalHeader.appendChild(closeButton);
+                    
+                    var modalBody = document.createElement('div');
+                    modalBody.className = 'modal-body text-center';
+                    
+                    // Add content based on file type
+                    if (isImage) {
+                        var img = document.createElement('img');
+                        img.src = contentUrl;
+                        img.className = 'img-fluid';
+                        img.style.maxHeight = '70vh';
+                        modalBody.appendChild(img);
+                    } else if (isPdf) {
+                        var iframe = document.createElement('iframe');
+                        iframe.src = contentUrl;
+                        iframe.width = '100%';
+                        iframe.height = '85vh';
+                        iframe.style.minHeight = '600px';
+                        modalBody.appendChild(iframe);
+                    } else {
+                        // For other file types, show download link
+                        var downloadLink = document.createElement('a');
+                        downloadLink.href = contentUrl;
+                        downloadLink.className = 'btn btn-primary';
+                        downloadLink.target = '_blank';
+                        downloadLink.innerHTML = '<i class="fa fa-download"></i> İndir';
+                        modalBody.appendChild(downloadLink);
+                    }
+                    
+                    modalContent.appendChild(modalHeader);
+                    modalContent.appendChild(modalBody);
+                    modalDialog.appendChild(modalContent);
+                    modal.appendChild(modalDialog);
+                    
+                    // Add modal to body
+                    document.body.appendChild(modal);
+                    
+                    // Show modal
+                    $(modal).modal('show');
+                    
+                    // Remove modal from DOM when hidden
+                    $(modal).on('hidden.bs.modal', function () {
+                        document.body.removeChild(modal);
+                    });
+                }
+            </script>
+            
             <div class="container">
                 <h4>Submit Bid for Tender: <span t-field="tender.name"/> (<span t-field="tender.code"/>)</h4>
                 <p>End Date: <span t-field="tender.end_date" t-options='{"widget": "datetime"}'/></p>
@@ -178,6 +264,93 @@
     
     <!-- Copy of purchase.purchase_order_portal_content -->
     <template id="ak_purchase_order_portal_content" name="AK Purchase Order Portal Content">
+        <!-- Add JavaScript for attachment preview -->
+        <script type="text/javascript">
+            function previewAttachment(model, id, field, filename) {
+                // Determine file type based on extension
+                var isImage = /\.(jpg|jpeg|png|gif|bmp)$/i.test(filename);
+                var isPdf = /\.pdf$/i.test(filename);
+                
+                // Get the content URL
+                var contentUrl = '/web/content?model=' + model + '&amp;id=' + id + '&amp;field=' + field + '&amp;filename=' + filename;
+                
+                // Create modal for preview
+                var modal = document.createElement('div');
+                modal.className = 'modal fade';
+                modal.id = 'attachmentPreviewModal';
+                modal.setAttribute('tabindex', '-1');
+                modal.setAttribute('role', 'dialog');
+                modal.setAttribute('aria-hidden', 'true');
+                
+                var modalDialog = document.createElement('div');
+                modalDialog.className = 'modal-dialog modal-lg';
+                modalDialog.setAttribute('role', 'document');
+                
+                var modalContent = document.createElement('div');
+                modalContent.className = 'modal-content';
+                
+                var modalHeader = document.createElement('div');
+                modalHeader.className = 'modal-header';
+                
+                var modalTitle = document.createElement('h5');
+                modalTitle.className = 'modal-title';
+                modalTitle.textContent = filename;
+                
+                var closeButton = document.createElement('button');
+                closeButton.type = 'button';
+                closeButton.className = 'close';
+                closeButton.setAttribute('data-dismiss', 'modal');
+                closeButton.setAttribute('aria-label', 'Close');
+                closeButton.innerHTML = '<span aria-hidden="true">&amp;times;</span>';
+                
+                modalHeader.appendChild(modalTitle);
+                modalHeader.appendChild(closeButton);
+                
+                var modalBody = document.createElement('div');
+                modalBody.className = 'modal-body text-center';
+                
+                // Add content based on file type
+                if (isImage) {
+                    var img = document.createElement('img');
+                    img.src = contentUrl;
+                    img.className = 'img-fluid';
+                    img.style.maxHeight = '70vh';
+                    modalBody.appendChild(img);
+                } else if (isPdf) {
+                    var iframe = document.createElement('iframe');
+                    iframe.src = contentUrl;
+                    iframe.width = '100%';
+                    iframe.height = '85vh';
+                    iframe.style.minHeight = '600px';
+                    modalBody.appendChild(iframe);
+                } else {
+                    // For other file types, show download link
+                    var downloadLink = document.createElement('a');
+                    downloadLink.href = contentUrl;
+                    downloadLink.className = 'btn btn-primary';
+                    downloadLink.target = '_blank';
+                    downloadLink.innerHTML = '<i class="fa fa-download"></i> İndir';
+                    modalBody.appendChild(downloadLink);
+                }
+                
+                modalContent.appendChild(modalHeader);
+                modalContent.appendChild(modalBody);
+                modalDialog.appendChild(modalContent);
+                modal.appendChild(modalDialog);
+                
+                // Add modal to body
+                document.body.appendChild(modal);
+                
+                // Show modal
+                $(modal).modal('show');
+                
+                // Remove modal from DOM when hidden
+                $(modal).on('hidden.bs.modal', function () {
+                    document.body.removeChild(modal);
+                });
+            }
+        </script>
+        
         <!-- Visible indicator to show this is our custom template -->
         <!-- <div class="alert alert-info">
             <strong>AK Tender Custom Template Active</strong> - Editable fields are enabled
@@ -206,6 +379,10 @@
                             <strong>Order Date:</strong>
                         </t>
                         <span t-field="order.date_order" t-options='{"widget": "date"}'/>
+                    </div>
+                    <div class="mb-3 col-6">
+                        <strong>Tedarikçi Adı:</strong>
+                        <span t-field="order.partner_id.name"/>
                     </div>
                 </div>
                 <div class="row">
@@ -305,6 +482,40 @@
                                                     rows="2"><t t-esc="line.alt_materials or ''"/></textarea>
                                             </div>
                                             
+                                            <!-- Attachment fields -->
+                                            <div class="mt-2">
+                                                <div class="row">
+                                                    <div class="col-6">
+                                                        <label class="form-label">Ek1:</label>
+                                                        <div t-if="line.tender_line_id and line.tender_line_id.attachment1">
+                                                            <!-- Preview button with eye icon -->
+                                                            <button t-attf-onclick="previewAttachment('ak.tender.line', {{line.tender_line_id.id}}, 'attachment1', '{{line.tender_line_id.attachment1_filename}}')"
+                                                                    class="btn btn-sm btn-primary">
+                                                                <i class="fa fa-eye"></i>
+                                                            </button>
+                                                            <span class="ml-2" t-esc="line.tender_line_id.attachment1_filename or 'Ek1'"/>
+                                                        </div>
+                                                        <div t-else="">
+                                                            <span class="text-muted">Dosya yok</span>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <label class="form-label">Ek2:</label>
+                                                        <div t-if="line.tender_line_id and line.tender_line_id.attachment2">
+                                                            <!-- Preview button with eye icon -->
+                                                            <button t-attf-onclick="previewAttachment('ak.tender.line', {{line.tender_line_id.id}}, 'attachment2', '{{line.tender_line_id.attachment2_filename}}')"
+                                                                    class="btn btn-sm btn-primary">
+                                                                <i class="fa fa-eye"></i>
+                                                            </button>
+                                                            <span class="ml-2" t-esc="line.tender_line_id.attachment2_filename or 'Ek2'"/>
+                                                        </div>
+                                                        <div t-else="">
+                                                            <span class="text-muted">Dosya yok</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            
                                             <!-- Hidden Supplier Reference field -->
                                             <input type="hidden"
                                                 t-attf-name="supplier_ref_line_{{line.id}}"
@@ -350,9 +561,9 @@
                                                 t-att-value="line.price_unit" />
                                             
                                             <!-- Target price (read-only) with currency symbol only -->
-                                            <div class="mt-1 small text-muted" t-if="line.tender_line_id and line.tender_line_id.target_price">
+                                            <div class="mt-2" t-if="line.tender_line_id and line.tender_line_id.target_price" style="color: red;">
                                                 <strong>Hedef Fiyat:</strong>
-                                                <span t-field="line.tender_line_id.target_price"
+                                                <span t-field="line.tender_line_id.target_price" style="font-weight: bold;"
                                                       t-options='{"widget": "monetary", "display_currency": line.tender_line_id.currency_id}'/>
                                             </div>
                                         </td>
@@ -500,33 +711,71 @@
         </div>
     </template>
     
-    <!-- Override the portal_my_purchase_order template to use our custom template -->
-    <template id="portal_my_purchase_order_inherit" name="Custom Purchase Order Portal" inherit_id="purchase.portal_my_purchase_order">
+    <!-- Comprehensive Purchase Order Portal Customization -->
+    <template id="portal_my_purchase_order_custom" name="Custom Purchase Order Portal" inherit_id="purchase.portal_my_purchase_order">
+        <!-- Adjust content area width to match narrower sidebar -->
+        <xpath expr="//div[@id='quote_content']" position="attributes">
+            <attribute name="class">o_portal_content col-12 col-lg-9 col-xxl-10</attribute>
+        </xpath>
+        <!-- 1. Replace content with our custom template -->
         <xpath expr="//div[@id='portal_purchase_content']" position="replace">
             <div id="portal_purchase_content" class="container-fluid px-0 mx-0">
                 <div t-call="ak_tender.ak_purchase_order_portal_content"/>
             </div>
         </xpath>
-    </template>
+        
+        <!-- 2. Replace the sidebar with our custom version -->
+        <xpath expr="//t[@t-call='portal.portal_record_sidebar']" position="replace">
+            <t t-call="portal.portal_record_sidebar">
+                <t t-set="classes" t-value="'col-lg-3 col-xxl-2 d-print-none'"/>
+                <t t-set="title">
+                    <h4 t-field="order.amount_total" data-id="total_amount" class="mb-0" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"/>
+                </t>
+                <t t-set="entries">
+                    <!-- Only show Accept/Reject buttons when not in RFQ stage (draft, sent) -->
+                    <div t-if="not request.env.user._is_public() and order.state not in ['draft', 'sent']" class="flex-grow-1 d-flex gap-2">
+                        <div class="btn-group flex-grow-1 mb-1">
+                            <a t-if="not order.mail_reception_confirmed" t-att-href="order.get_confirm_url(confirm_type='reception')" target="_self" class="btn btn-secondary btn-block px-3" name="accept" title="Accept" style="background-color: #875A7B;">Accept</a>
+                            <a t-else="" href="#" class="btn btn-secondary btn-block px-3 disabled" style="background-color: #875A7B;" tabindex="-1" aria-disabled="true" name="accept" title="Accept">Accept</a>
+                        </div>
+                        <div class="btn-group flex-grow-1 mb-1">
+                            <a t-if="not order.mail_reception_declined" t-att-href="order.get_confirm_url(confirm_type='decline')" target="_self" class="btn btn-secondary btn-block px-3" name="decline" title="Decline">Decline</a>
+                            <a t-else="" href="#" class="btn btn-secondary btn-block px-3 disabled" tabindex="-1" aria-disabled="true" name="decline" title="Decline">Decline</a>
+                        </div>
+                    </div>
 
-    <!-- Copy of purchase.portal_my_purchase_order with "Connect with your software!" button hidden -->
-    <template id="portal_my_purchase_order_sidebar" name="Custom Purchase Order Sidebar" inherit_id="purchase.portal_my_purchase_order">
-        <xpath expr="//button[@id='portal_connect_software_modal_btn']/.." position="replace">
-            <!-- Removed "Connect with your software!" button -->
-            <div style="display: none;">
-                <button id="portal_connect_software_modal_btn" type="button" class="btn btn-primary d-none">
-                    Connect with your software!
-                </button>
-            </div>
+                    <div class="d-flex flex-column gap-4 mt-3">
+                        <a class="btn btn-secondary o_print_btn o_portal_invoice_print" t-att-href="order.get_portal_url(report_type='pdf')" id="print_invoice_report" title="View Details" role="button" target="_blank"><i class="fa fa-print me-1"/>Download / Print</a>
+                        <div class="navspy flex-grow-1 ps-0" t-ignore="true" role="complementary">
+                            <ul class="nav flex-column bs-sidenav"></ul>
+                        </div>
+                        <div t-if="order.user_id">
+                            <h6 class="small text-muted">Buyer</h6>
+                            <t t-call="portal.portal_my_contact">
+                                <t t-set="_contactAvatar" t-value="image_data_uri(order.user_id.avatar_128)"/>
+                                <t t-set="_contactName" t-value="order.user_id.name"/>
+                                <t t-set="_contactLink" t-value="True"/>
+                                <div t-field="order.user_id" t-options='{"widget": "contact", "fields": ["phone"], "no_marker": False}'/>
+                            </t>
+                        </div>
+
+                        <!-- Hide "Connect with your software!" button -->
+                        <div style="display: none;">
+                            <button id="portal_connect_software_modal_btn" type="button" class="btn btn-primary d-none">
+                                Connect with your software!
+                            </button>
+                        </div>
+                    </div>
+                </t>
+                
+                <!-- 3. Custom footer - Replace "Powered by Odoo" with "Powered by KARDAN.DX" -->
+                <t t-set="o_portal_footer_custom">
+                    <div class="d-none d-lg-block mt-5 small text-center text-muted">
+                        Powered by <a href="#" class="text-decoration-none">KARDAN.DX</a>
+                    </div>
+                </t>
+            </t>
         </xpath>
     </template>
 
-    <!-- Replace "Powered by Odoo" with "Powered by KARDAN.DX" in portal sidebar -->
-    <template id="portal_record_sidebar_inherit" name="Custom Footer" inherit_id="portal.portal_record_sidebar">
-        <xpath expr="//div[contains(@class, 'd-none d-lg-block mt-5 small text-center text-muted')]" position="replace">
-            <div class="d-none d-lg-block mt-5 small text-center text-muted">
-                Powered by <a href="#" class="text-decoration-none">KARDAN.DX</a>
-            </div>
-        </xpath>
-    </template>
 </odoo>

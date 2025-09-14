@@ -61,8 +61,45 @@ class AkTenderLine(models.Model):
                                   required=True,
                                   store=True)
     target_price = fields.Monetary(string=_('Hedef Fiyat'),
-                                     currency_field='currency_id',
-                                     help=_("Bu kalem için belirlenen hedef fiyat."))
+                                      currency_field='currency_id',
+                                      help=_("Bu kalem için belirlenen hedef fiyat."))
+    # Attachment fields for tender line
+    attachment1 = fields.Binary(string=_('Ek1'), help=_("Upload image or PDF attachment 1"))
+    attachment1_filename = fields.Char(string=_('Ek1 Dosya Adı'))
+    attachment2 = fields.Binary(string=_('Ek2'), help=_("Upload image or PDF attachment 2"))
+    attachment2_filename = fields.Char(string=_('Ek2 Dosya Adı'))
+    
+    # Computed fields for attachment type detection
+    is_image1 = fields.Boolean(string="Is Image 1", compute="_compute_attachment_types")
+    is_pdf1 = fields.Boolean(string="Is PDF 1", compute="_compute_attachment_types")
+    is_image2 = fields.Boolean(string="Is Image 2", compute="_compute_attachment_types")
+    is_pdf2 = fields.Boolean(string="Is PDF 2", compute="_compute_attachment_types")
+    
+    @api.depends('attachment1_filename', 'attachment2_filename')
+    def _compute_attachment_types(self):
+        """Compute if attachments are images or PDFs based on filename"""
+        for line in self:
+            # Default values
+            line.is_image1 = False
+            line.is_pdf1 = False
+            line.is_image2 = False
+            line.is_pdf2 = False
+            
+            # Check attachment1 type
+            if line.attachment1 and line.attachment1_filename:
+                filename = line.attachment1_filename.lower()
+                if any(filename.endswith(ext) for ext in ['.jpg', '.jpeg', '.png', '.gif', '.bmp']):
+                    line.is_image1 = True
+                elif filename.endswith('.pdf'):
+                    line.is_pdf1 = True
+            
+            # Check attachment2 type
+            if line.attachment2 and line.attachment2_filename:
+                filename = line.attachment2_filename.lower()
+                if any(filename.endswith(ext) for ext in ['.jpg', '.jpeg', '.png', '.gif', '.bmp']):
+                    line.is_image2 = True
+                elif filename.endswith('.pdf'):
+                    line.is_pdf2 = True
     # We don't need these fields anymore since we're using the standard product configurator
     
     # Computed field to access product's is_hotel_accommodation
@@ -204,6 +241,140 @@ class AkTenderLine(models.Model):
         }
         
         return action
+        
+    def action_preview_attachment1(self):
+        """
+        Open a preview dialog for attachment1 based on file type
+        """
+        self.ensure_one()
+        if not self.attachment1:
+            raise UserError(_("Önizleme için dosya bulunamadı."))
+            
+        # Get file extension to determine preview type
+        filename = self.attachment1_filename or ''
+        file_extension = filename.split('.')[-1].lower() if '.' in filename else ''
+        
+        # Create the action based on file type
+        if file_extension in ['jpg', 'jpeg', 'png', 'gif', 'bmp']:
+            # Image preview
+            return {
+                'name': _('Ek1 Önizleme: %s') % self.attachment1_filename,
+                'type': 'ir.actions.act_window',
+                'res_model': 'ak.tender.line',
+                'view_mode': 'form',
+                'res_id': self.id,
+                'target': 'new',
+                'flags': {'mode': 'readonly'},
+                'views': [(self.env.ref('ak_tender.ak_tender_line_attachment_preview_form').id, 'form')],
+                'context': {
+                    'form_view_initial_mode': 'view',
+                    'force_detailed_view': True,
+                    'preview_attachment': 'attachment1',
+                }
+            }
+        elif file_extension == 'pdf':
+            # PDF preview using the form view with improved height
+            return {
+                'name': _('Ek1 Önizleme: %s') % self.attachment1_filename,
+                'type': 'ir.actions.act_window',
+                'res_model': 'ak.tender.line',
+                'view_mode': 'form',
+                'res_id': self.id,
+                'target': 'new',
+                'flags': {'mode': 'readonly'},
+                'views': [(self.env.ref('ak_tender.ak_tender_line_attachment_preview_form').id, 'form')],
+                'context': {
+                    'form_view_initial_mode': 'view',
+                    'force_detailed_view': True,
+                    'preview_attachment': 'attachment1',
+                }
+            }
+        else:
+            # For other file types, just return to form view
+            return {'type': 'ir.actions.act_window_close'}
+            
+    def action_preview_attachment2(self):
+        """
+        Open a preview dialog for attachment2 based on file type
+        """
+        self.ensure_one()
+        if not self.attachment2:
+            raise UserError(_("Önizleme için dosya bulunamadı."))
+            
+        # Get file extension to determine preview type
+        filename = self.attachment2_filename or ''
+        file_extension = filename.split('.')[-1].lower() if '.' in filename else ''
+        
+        # Create the action based on file type
+        if file_extension in ['jpg', 'jpeg', 'png', 'gif', 'bmp']:
+            # Image preview
+            return {
+                'name': _('Ek2 Önizleme: %s') % self.attachment2_filename,
+                'type': 'ir.actions.act_window',
+                'res_model': 'ak.tender.line',
+                'view_mode': 'form',
+                'res_id': self.id,
+                'target': 'new',
+                'flags': {'mode': 'readonly'},
+                'views': [(self.env.ref('ak_tender.ak_tender_line_attachment_preview_form').id, 'form')],
+                'context': {
+                    'form_view_initial_mode': 'view',
+                    'force_detailed_view': True,
+                    'preview_attachment': 'attachment2',
+                }
+            }
+        elif file_extension == 'pdf':
+            # PDF preview using the form view with improved height
+            return {
+                'name': _('Ek2 Önizleme: %s') % self.attachment2_filename,
+                'type': 'ir.actions.act_window',
+                'res_model': 'ak.tender.line',
+                'view_mode': 'form',
+                'res_id': self.id,
+                'target': 'new',
+                'flags': {'mode': 'readonly'},
+                'views': [(self.env.ref('ak_tender.ak_tender_line_attachment_preview_form').id, 'form')],
+                'context': {
+                    'form_view_initial_mode': 'view',
+                    'force_detailed_view': True,
+                    'preview_attachment': 'attachment2',
+                }
+            }
+        else:
+            # For other file types, just return to form view
+            return {'type': 'ir.actions.act_window_close'}
+            
+    def action_download_attachment1(self):
+        """
+        Generate a download URL for attachment1
+        """
+        self.ensure_one()
+        if not self.attachment1 or not self.attachment1_filename:
+            raise UserError(_("Dosya bulunamadı."))
+            
+        base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
+        attachment_url = f"{base_url}/web/content?model=ak.tender.line&id={self.id}&field=attachment1&filename={self.attachment1_filename}"
+        return {
+            'type': 'ir.actions.act_url',
+            'url': attachment_url,
+            'target': 'new',
+        }
+        
+    def action_download_attachment2(self):
+        """
+        Generate a download URL for attachment2
+        """
+        self.ensure_one()
+        if not self.attachment2 or not self.attachment2_filename:
+            raise UserError(_("Dosya bulunamadı."))
+            
+        base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
+        attachment_url = f"{base_url}/web/content?model=ak.tender.line&id={self.id}&field=attachment2&filename={self.attachment2_filename}"
+        return {
+            'type': 'ir.actions.act_url',
+            'url': attachment_url,
+            'target': 'new',
+        }
 
 @api.constrains('days', 'product_id', 'tender_id.tender_type')
 def _check_days_for_accommodation(self):
@@ -890,6 +1061,28 @@ class AkTender(models.Model):
         # Use standard views to avoid any issues
         action['views'] = [(self.env.ref('purchase.purchase_order_view_tree').id, 'list'),
                           (self.env.ref('purchase.purchase_order_form').id, 'form')]
+        return action
+        
+    def action_view_purchase_order(self, purchase_order_id=None):
+        """
+        Open a specific purchase order form view.
+        This method is used by the notification system to open a specific purchase order.
+        """
+        self.ensure_one()
+        if not purchase_order_id:
+            # If no specific purchase order is provided, find the most recent one
+            purchase_order = self.env['purchase.order'].search([
+                ('tender_id', '=', self.id)
+            ], order='create_date desc', limit=1)
+            if not purchase_order:
+                # If no purchase order found, show all purchase orders
+                return self.action_view_purchase_orders()
+            purchase_order_id = purchase_order.id
+            
+        # Open the specific purchase order
+        action = self.env.ref('purchase.purchase_form_action').read()[0]
+        action['views'] = [(self.env.ref('purchase.purchase_order_form').id, 'form')]
+        action['res_id'] = purchase_order_id
         return action
     
     @api.model

@@ -207,13 +207,57 @@ function initializePortalPurchaseEdit() {
                             if (data.result && data.result.error) {
                                 // Show error
                                 console.error('Error:', data.result.error);
-                                alert('Hata: ' + data.result.error);
+                                
+                                // Handle object errors properly
+                                let errorMessage = '';
+                                if (typeof data.result.error === 'object') {
+                                    // Try to extract meaningful information from the error object
+                                    if (data.result.error.message) {
+                                        errorMessage = data.result.error.message;
+                                    } else if (data.result.error.data && data.result.error.data.message) {
+                                        errorMessage = data.result.error.data.message;
+                                    } else {
+                                        // If no specific message, stringify the object
+                                        try {
+                                            errorMessage = JSON.stringify(data.result.error);
+                                        } catch (e) {
+                                            errorMessage = 'Bilinmeyen hata';
+                                        }
+                                    }
+                                } else {
+                                    // If it's already a string, use it directly
+                                    errorMessage = data.result.error;
+                                }
+                                
+                                alert('Hata: ' + errorMessage);
                                 saveInProgress = false;
                                 return;
                             } else if (data.error) {
                                 // Show error
                                 console.error('Error:', data.error);
-                                alert('Hata: ' + data.error);
+                                
+                                // Handle object errors properly
+                                let errorMessage = '';
+                                if (typeof data.error === 'object') {
+                                    // Try to extract meaningful information from the error object
+                                    if (data.error.message) {
+                                        errorMessage = data.error.message;
+                                    } else if (data.error.data && data.error.data.message) {
+                                        errorMessage = data.error.data.message;
+                                    } else {
+                                        // If no specific message, stringify the object
+                                        try {
+                                            errorMessage = JSON.stringify(data.error);
+                                        } catch (e) {
+                                            errorMessage = 'Bilinmeyen hata';
+                                        }
+                                    }
+                                } else {
+                                    // If it's already a string, use it directly
+                                    errorMessage = data.error;
+                                }
+                                
+                                alert('Hata: ' + errorMessage);
                                 saveInProgress = false;
                                 return;
                             }
@@ -271,16 +315,83 @@ function initializePortalPurchaseEdit() {
                     } else {
                         console.error('AJAX error:', xhr.status, xhr.statusText);
                         console.error('Response:', xhr.responseText);
-                        alert('Bir hata oluştu: ' + xhr.statusText);
+                        
+                        // Try to get more detailed error information
+                        let errorMessage = 'Bir hata oluştu.';
+                        
+                        if (xhr.status) {
+                            errorMessage += ' HTTP Kodu: ' + xhr.status;
+                        }
+                        
+                        if (xhr.statusText) {
+                            errorMessage += ' (' + xhr.statusText + ')';
+                        }
+                        
+                        if (xhr.responseText) {
+                            try {
+                                // Try to parse the response as JSON
+                                const errorData = JSON.parse(xhr.responseText);
+                                if (errorData.error) {
+                                    if (typeof errorData.error === 'object') {
+                                        if (errorData.error.message) {
+                                            errorMessage += ' Hata: ' + errorData.error.message;
+                                        } else if (errorData.error.data && errorData.error.data.message) {
+                                            errorMessage += ' Hata: ' + errorData.error.data.message;
+                                        }
+                                    } else {
+                                        errorMessage += ' Hata: ' + errorData.error;
+                                    }
+                                }
+                            } catch (parseError) {
+                                // If not JSON, just log it
+                                console.error('Could not parse error response:', parseError);
+                            }
+                        }
+                        
+                        alert(errorMessage);
                         button.disabled = false;
                         button.innerHTML = '<i class="fa fa-save"></i> Tüm Değişiklikleri Kaydet';
                         saveInProgress = false;
                     }
                 };
                 
-                xhr.onerror = function() {
-                    console.error('AJAX error: Network error');
-                    alert('Bir ağ hatası oluştu. Lütfen tekrar deneyiniz.');
+                xhr.onerror = function(e) {
+                    console.error('AJAX error: Network error', e);
+                    
+                    // Try to get more detailed error information
+                    let errorMessage = 'Bir ağ hatası oluştu.';
+                    
+                    if (xhr.status) {
+                        errorMessage += ' HTTP Kodu: ' + xhr.status;
+                    }
+                    
+                    if (xhr.statusText) {
+                        errorMessage += ' (' + xhr.statusText + ')';
+                    }
+                    
+                    if (xhr.responseText) {
+                        console.error('Response text:', xhr.responseText);
+                        try {
+                            // Try to parse the response as JSON
+                            const errorData = JSON.parse(xhr.responseText);
+                            if (errorData.error) {
+                                if (typeof errorData.error === 'object') {
+                                    if (errorData.error.message) {
+                                        errorMessage += ' Hata: ' + errorData.error.message;
+                                    } else if (errorData.error.data && errorData.error.data.message) {
+                                        errorMessage += ' Hata: ' + errorData.error.data.message;
+                                    }
+                                } else {
+                                    errorMessage += ' Hata: ' + errorData.error;
+                                }
+                            }
+                        } catch (parseError) {
+                            // If not JSON, just log it
+                            console.error('Could not parse error response:', parseError);
+                        }
+                    }
+                    
+                    alert(errorMessage + ' Lütfen tekrar deneyiniz.');
                     button.disabled = false;
                     button.innerHTML = '<i class="fa fa-save"></i> Tüm Değişiklikleri Kaydet';
                     saveInProgress = false;

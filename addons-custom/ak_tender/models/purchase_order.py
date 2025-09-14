@@ -2,6 +2,9 @@
 
 from odoo import models, fields, api, _
 from odoo.exceptions import ValidationError
+import logging
+
+_logger = logging.getLogger(__name__)
 
 class PurchaseOrder(models.Model):
     _inherit = 'purchase.order'
@@ -178,8 +181,138 @@ class PurchaseOrder(models.Model):
             self.calculate_total_npv()
             
     def write(self, vals):
-        """Override to recalculate NPV when payment term changes"""
+        """Override to recalculate NPV when payment term changes and send notifications"""
+        # Check if this is a price update
+        price_update = any(field in vals for field in ['order_line', 'amount_untaxed', 'amount_total'])
+        
         result = super(PurchaseOrder, self).write(vals)
+        
         if 'payment_term_id' in vals:
             self.calculate_total_npv()
+            
+        # Send notification if this is a price update and has a tender
+        if price_update:
+            for record in self:
+                if record.tender_id:
+                    self._send_bid_notification(record)
+                    
         return result
+        
+    @api.model
+    def create(self, vals):
+        """Override to send notification when a purchase order is created"""
+        record = super(PurchaseOrder, self).create(vals)
+        
+        # Send notification if this has a tender
+        if record.tender_id:
+            self._send_bid_notification(record)
+            
+        return record
+        
+    def _send_bid_notification(self, order):
+        """Send notification to tender managers when a supplier submits a bid"""
+        if not order.tender_id or not order.partner_id:
+            return
+            
+        # Find users who should be notified (tender creator and followers)
+        users_to_notify = self.env['res.users'].sudo()
+        
+        # Add the tender creator
+        if order.tender_id.create_uid:
+            users_to_notify |= order.tender_id.create_uid
+        
+        # Add followers with write access (typically purchasers)
+        for follower in order.tender_id.message_follower_ids:
+            if follower.partner_id.user_ids:
+                users_to_notify |= follower.partner_id.user_ids
+        
+        if not users_to_notify:
+            return
+            
+        # Format the bid amount
+        bid_amount = f"{order.amount_untaxed} {order.currency_id.symbol}"
+        
+        # Create the message body
+        message_body = f"""
+        <p>Yeni bir teklif alındı:</p>
+        <ul>
+            <li><strong>Tedarikçi:</strong> {order.partner_id.name}</li>
+            <li><strong>Teklif Tutarı:</strong> {bid_amount}</li>
+            <li><strong>Teklif Tarihi:</strong> {fields.Datetime.now().strftime('%d/%m/%Y %H:%M')}</li>
+        </ul>
+        <p>Detayları görmek için <a href="/web#id={order.id}&model=purchase.order&view_type=form">tıklayın</a>.</p>
+        """
+        
+        _logger.info(f"Sending bid notifications to {len(users_to_notify)} users for tender {order.tender_id.name}")
+        
+        # Create a notification for each user
+        for user in users_to_notify:
+            try:
+                _logger.info(f"Creating notification for user {user.name} (ID: {user.id})")
+                
+                # Create a mail.message record
+                message = self.env['mail.message'].sudo().create({
+                    'model': 'ak.tender',
+                    'res_id': order.tender_id.id,
+                    'message_type': 'notification',
+                    'subtype_id': self.env.ref('mail.mt_note').id,
+                    'subject': f"Yeni Teklif: {order.partner_id.name} - {bid_amount}",
+                    'body': message_body,
+                    'author_id': self.env.user.partner_id.id,
+                    'email_from': self.env.user.email_formatted,
+                    'notification_ids': [(0, 0, {
+                        'res_partner_id': user.partner_id.id,
+                        'notification_type': 'inbox',
+                        'notification_status': 'sent',
+                    })],
+                })
+                
+                _logger.info(f"Created message ID: {message.id}")
+                
+                # Create a bus notification to update the UI
+                self.env['bus.bus']._sendone(
+                    user.partner_id,
+                    'mail.message/inbox',
+                    {
+                        'type': 'activity_updated',
+                        'message_id': message.id,
+                    }
+                )
+                
+                _logger.info(f"Sent bus notification for message ID: {message.id}")
+                
+                # Also create a mail.notification record to ensure it appears in the inbox
+                self.env['mail.notification'].sudo().create({
+                    'mail_message_id': message.id,
+                    'notification_type': 'inbox',
+                    'res_partner_id': user.partner_id.id,
+                    'notification_status': 'sent',
+                })
+                
+                _logger.info(f"Created mail.notification for message ID: {message.id}")
+                
+            except Exception as e:
+                _logger.error(f"Error creating notification for user {user.name}: {str(e)}")
+            
+        try:
+            # Also post a message to the tender's chatter for record keeping
+            # Use notification_ids to ensure it appears in the inbox
+            partner_ids = users_to_notify.mapped('partner_id').ids
+            _logger.info(f"Posting message to tender chatter with partners: {partner_ids}")
+            
+            message = order.tender_id.sudo().message_post(
+                body=message_body,
+                message_type='notification',
+                subtype_id=self.env.ref('mail.mt_comment').id,
+                subject=f"Yeni Teklif: {order.partner_id.name} - {bid_amount}",
+                partner_ids=partner_ids,
+                notification_type='inbox'
+            )
+            
+            _logger.info(f"Posted message to tender chatter: {message}")
+            
+            # Force a notification update
+            self.env.cr.commit()
+            
+        except Exception as e:
+            _logger.error(f"Error posting message to tender chatter: {str(e)}")
