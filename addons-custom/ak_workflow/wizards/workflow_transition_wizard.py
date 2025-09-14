@@ -13,6 +13,7 @@ class WorkflowTransitionWizard(models.TransientModel):
     transition_id = fields.Many2one('ak.workflow.transition', string='Transition', readonly=True, required=True)
     comment = fields.Text(string='Comment')
     transition_display_info = fields.Char(string="Transition Info", compute='_compute_transition_display_info')
+    actions_info = fields.Html(string="Actions to Execute", compute='_compute_actions_info')
 
     @api.depends('transition_id')
     def _compute_transition_display_info(self):
@@ -21,6 +22,26 @@ class WorkflowTransitionWizard(models.TransientModel):
                 wizard.transition_display_info = f"{wizard.transition_id.from_state_id.name} → {wizard.transition_id.to_state_id.name}"
             else:
                 wizard.transition_display_info = ''
+    
+    @api.depends('transition_id')
+    def _compute_actions_info(self):
+        for wizard in self:
+            if not wizard.transition_id or not wizard.transition_id.action_ids:
+                wizard.actions_info = '<p>No actions will be executed.</p>'
+                continue
+                
+            # Get actions sorted by sequence
+            actions = wizard.transition_id.action_ids.sorted(key=lambda r: (r.sequence, r.name))
+            
+            # Build HTML ordered list with just action names
+            html = '<ol class="list-group list-group-numbered">'
+            
+            for action in actions:
+                html += f'<li class="list-group-item">{action.name}</li>'
+            
+            html += '</ol>'
+            
+            wizard.actions_info = html
 
     @api.model
     def default_get(self, fields_list):

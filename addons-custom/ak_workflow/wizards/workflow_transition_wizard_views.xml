@@ -17,6 +17,10 @@
                         </div>
                         <field name="comment" placeholder="Add an optional comment..."/>
                     </group>
+                    
+                    <group string="Actions to be Executed">
+                        <field name="actions_info" nolabel="1"/>
+                    </group>
                     <footer>
                         <button name="execute_transition" type="object" string="Execute" class="btn-primary"/>
                         <button string="Cancel" class="btn-secondary" special="cancel"/>

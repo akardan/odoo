@@ -37,7 +37,22 @@
                                 <field name="group_ids" widget="many2many_tags"/>
                             </page>
                             <page string="Actions">
-                                <field name="action_ids"/>
+                                <field name="action_ids">
+                                    <list editable="bottom">
+                                        <field name="sequence" widget="handle"/>
+                                        <field name="name"/>
+                                        <field name="action_type"/>
+                                        <field name="active"/>
+                                    </list>
+                                    <form>
+                                        <group>
+                                            <field name="name"/>
+                                            <field name="action_type"/>
+                                            <field name="sequence"/>
+                                            <field name="active"/>
+                                        </group>
+                                    </form>
+                                </field>
                             </page>
                         </notebook>
                     </sheet>

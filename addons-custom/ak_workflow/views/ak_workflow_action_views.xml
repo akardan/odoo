@@ -49,6 +49,19 @@
             </field>
         </record>
 
+        <record id="ak_workflow_action_tree_view" model="ir.ui.view">
+            <field name="name">ak.workflow.action.tree</field>
+            <field name="model">ak.workflow.action</field>
+            <field name="arch" type="xml">
+                <list>
+                    <field name="sequence" widget="handle"/>
+                    <field name="name"/>
+                    <field name="action_type"/>
+                    <field name="active"/>
+                </list>
+            </field>
+        </record>
+
         <record id="action_ak_workflow_action" model="ir.actions.act_window">
             <field name="name">Actions</field>
             <field name="res_model">ak.workflow.action</field>

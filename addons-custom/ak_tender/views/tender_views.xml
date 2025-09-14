@@ -25,20 +25,8 @@
                                 string="Tedarikçi Ekle"
                                 help="İhaleye yeni tedarikçiler ekle"
                             />
-                            <button name="create_purchase_orders_for_suppliers"
-                                type="object"
-                                class="oe_stat_button"
-                                icon="fa-file-text-o"
-                                string="Tedarikçiler İçin SAT Oluştur"
-                                help="Davetli tedarikçilerin hepsi için satın alma talebi oluştur"
-                            />
-                            <button name="action_send_bulk_emails"
-                                type="object"
-                                class="oe_stat_button"
-                                icon="fa-envelope-o"
-                                string="Toplu E-posta Gönder"
-                                help="Mevcut turdaki tüm tedarikçilere SAT tekliflerini e-posta ile gönder"
-                            />
+                            <!-- Button removed and replaced with server action -->
+                            <!-- Button removed and replaced with server action -->
                             <button name="action_review_offers"
                                 type="object"
                                 class="oe_stat_button"
@@ -222,9 +210,17 @@
                                 <field name="description" widget="html" nolabel="1"/>
                             </page>
                             <page string="Davetli Tedarikçiler" name="invited_partners">
-                                <field name="invited_partners" widget="many2many_tags" nolabel="1"/>
+                                <field name="invited_partners" nolabel="1">
+                                    <list>
+                                        <field name="name"/>
+                                        <field name="email"/>
+                                        <field name="phone"/>
+                                        <field name="city"/>
+                                        <field name="country_id"/>
+                                    </list>
+                                </field>
                                 <p class="oe_grey">
-                                    **Önemli:** İhale başlatılmadan önce en az bir tedarikçi davet edilmelidir.
+                                    **Önemli:** İhale başlatılmadan önce en az iki tedarikçi davet edilmelidir.
                                 </p>
                             </page>
                             <page string="Teklif Sonuçları &amp; Değerlendirme" name="tender_results_evaluation">

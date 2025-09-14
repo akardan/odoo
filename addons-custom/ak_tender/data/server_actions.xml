@@ -13,6 +13,41 @@ if records:
     for record in records:
         record.calculate_all_npv_values()
 </field>
+            <field name="groups_id" eval="[(4, ref('group_tender_user'))]"/>
+            <field name="sequence" eval="15"/>  <!-- Set sequence to appear right after "Tedarikçi Ekle" action -->
         </record>
+        
+        <!-- Server Action for Creating Purchase Orders for Suppliers -->
+        <record id="action_create_purchase_orders_for_suppliers" model="ir.actions.server">
+            <field name="name">Tedarikçiler İçin SAT Oluştur</field>
+            <field name="model_id" ref="model_ak_tender"/>
+            <field name="binding_model_id" ref="model_ak_tender"/>
+            <field name="binding_view_types">form</field>
+            <field name="state">code</field>
+            <field name="code">
+if records:
+    for record in records:
+        record.create_purchase_orders_for_suppliers()
+</field>
+            <field name="groups_id" eval="[(4, ref('group_tender_user'))]"/>
+            <field name="sequence" eval="11"/>  <!-- Set sequence to appear right after "Tedarikçi Ekle" action -->
+        </record>
+        
+        <!-- Server Action for Sending Bulk Emails -->
+        <record id="action_send_bulk_emails_server" model="ir.actions.server">
+            <field name="name">Toplu E-posta Gönder</field>
+            <field name="model_id" ref="model_ak_tender"/>
+            <field name="binding_model_id" ref="model_ak_tender"/>
+            <field name="binding_view_types">form</field>
+            <field name="state">code</field>
+            <field name="code">
+if records:
+    for record in records:
+        record.action_send_bulk_emails()
+</field>
+            <field name="groups_id" eval="[(4, ref('group_tender_user'))]"/>
+            <field name="sequence" eval="12"/>  <!-- Set sequence to appear after "Tedarikçiler İçin SAT Oluştur" action -->
+        </record>
+        
     </data>
 </odoo>
