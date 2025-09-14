@@ -1250,6 +1250,24 @@ class AkTender(models.Model):
             }
         }
         
+    def action_set_target_price(self):
+        """
+        Open the Set Target Price wizard.
+        This method is called from the server action.
+        """
+        self.ensure_one()
+        
+        return {
+            'name': _('Hedef Fiyat Belirleme'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'ak.tender.set.target.price.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {
+                'default_tender_id': self.id,
+            }
+        }
+        
     def create_purchase_orders_for_suppliers(self):
         """
         Create purchase orders for all invited suppliers.
