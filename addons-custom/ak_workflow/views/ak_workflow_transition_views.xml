@@ -38,19 +38,53 @@
                             </page>
                             <page string="Actions">
                                 <field name="action_ids">
-                                    <list editable="bottom">
+                                    <list>
                                         <field name="sequence" widget="handle"/>
                                         <field name="name"/>
                                         <field name="action_type"/>
                                         <field name="active"/>
                                     </list>
                                     <form>
-                                        <group>
-                                            <field name="name"/>
-                                            <field name="action_type"/>
-                                            <field name="sequence"/>
-                                            <field name="active"/>
-                                        </group>
+                                        <sheet>
+                                            <group>
+                                                <group>
+                                                    <field name="name"/>
+                                                    <field name="trigger_event" invisible="1"/>
+                                                    <field name="action_type"/>
+                                                    <field name="sequence"/>
+                                                    <field name="active"/>
+                                                </group>
+                                            </group>
+                                            <notebook>
+                                                <page string="Action Configuration">
+                                                    <group>
+                                                        <field name="email_template_id" invisible="action_type != 'email'"/>
+                                                        <field name="method_name" invisible="action_type != 'method'"/>
+                                                        <field name="field_id" invisible="action_type != 'field_update'"/>
+                                                        <field name="field_value" invisible="action_type != 'field_update'"/>
+                                                        <field name="create_model_id" invisible="action_type != 'create_record'"/>
+                                                        <field name="create_values" invisible="action_type != 'create_record'"/>
+                                                        <field name="webhook_url" invisible="action_type != 'webhook'"/>
+                                                        <field name="webhook_method" invisible="action_type != 'webhook'"/>
+                                                        <field name="webhook_data_expression" invisible="action_type != 'webhook'"/>
+                                                        <field name="notification_title" invisible="action_type != 'notification'"/>
+                                                        <field name="notification_message" invisible="action_type != 'notification'"/>
+                                                        <field name="notification_type" invisible="action_type != 'notification'"/>
+                                                        <field name="activity_type_id" invisible="action_type != 'activity'"/>
+                                                        <field name="activity_summary" invisible="action_type != 'activity'"/>
+                                                        <field name="activity_note" invisible="action_type != 'activity'"/>
+                                                        <field name="activity_user_id" invisible="action_type != 'activity'"/>
+                                                        <field name="server_action_id" invisible="action_type != 'server_action'"/>
+                                                    </group>
+                                                </page>
+                                                <page string="Conditions">
+                                                    <group>
+                                                        <field name="condition_expression" placeholder="Python expression that must return True"/>
+                                                        <field name="continue_on_error"/>
+                                                    </group>
+                                                </page>
+                                            </notebook>
+                                        </sheet>
                                     </form>
                                 </field>
                             </page>
