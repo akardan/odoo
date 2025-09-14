@@ -49,7 +49,7 @@
                                             <group>
                                                 <group>
                                                     <field name="name"/>
-                                                    <field name="trigger_event" invisible="1"/>
+                                                    <field name="trigger_event"/>
                                                     <field name="action_type"/>
                                                     <field name="sequence"/>
                                                     <field name="active"/>
