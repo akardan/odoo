@@ -223,7 +223,7 @@
                                     **Önemli:** İhale başlatılmadan önce en az iki tedarikçi davet edilmelidir.
                                 </p>
                             </page>
-                            <page string="Teklif Sonuçları &amp; Değerlendirme" name="tender_results_evaluation">
+                            <page string="Teklifler" name="tender_results_evaluation">
                                 <field name="purchase_order_ids" nolabel="1" context="{'default_tender_id': id, 'default_state': 'draft', 'group_by': 'tender_round'}">
                                     <list default_group_by="tender_round">
                                         <field name="currency_id" column_invisible="True"/>

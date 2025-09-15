@@ -61,8 +61,9 @@ class AkTenderLine(models.Model):
                                   required=True,
                                   store=True)
     target_price = fields.Monetary(string=_('Hedef Fiyat'),
-                                      currency_field='currency_id',
-                                      help=_("Bu kalem için belirlenen hedef fiyat."))
+                                       currency_field='currency_id',
+                                       default=0.0,
+                                       help=_("Bu kalem için belirlenen hedef fiyat."))
     # Attachment fields for tender line
     attachment1 = fields.Binary(string=_('Ek1'), help=_("Upload image or PDF attachment 1"))
     attachment1_filename = fields.Char(string=_('Ek1 Dosya Adı'))
@@ -1742,4 +1743,58 @@ class AkTender(models.Model):
                 'sticky': False,
                 'type': 'success',
             }
+        }
+        
+    def create_orders_from_total_selection(self, vendor_ids, use_npv=False):
+        """
+        Create purchase orders from the selected vendors based on total amount or NPV.
+        
+        Args:
+            vendor_ids (list): List of vendor (purchase order) IDs to create orders from
+            use_npv (bool): Whether to use NPV for selection instead of total amount
+            
+        Returns:
+            dict: Action to reload the page
+        """
+        self.ensure_one()
+        if not vendor_ids:
+            return {'type': 'ir.actions.act_window_close'}
+            
+        # Get the selected purchase orders
+        selected_pos = self.env['purchase.order'].browse(vendor_ids)
+        if not selected_pos:
+            return {'type': 'ir.actions.act_window_close'}
+            
+        # Create confirmed purchase orders from the selected ones
+        created_orders = self.env['purchase.order']
+        for po in selected_pos:
+            # Create a new purchase order
+            new_po = po.copy({
+                'state': 'purchase',
+                'date_approve': fields.Datetime.now(),
+                'tender_id': self.id,
+                'origin': f"{self.code} - {po.name}",
+                'tender_round': self.tender_round,
+            })
+            
+            # Update the lines to use NPV values if requested
+            if use_npv:
+                for line in new_po.order_line:
+                    if hasattr(line, 'npv_value') and line.npv_value:
+                        # Use NPV value for pricing
+                        line.price_unit = line.npv_value / line.product_qty if line.product_qty else 0
+                
+            created_orders += new_po
+            
+        # Log the creation
+        self.message_post(
+            body=_("%s sipariş(ler) oluşturuldu: %s") % (
+                len(created_orders), ", ".join(created_orders.mapped('name'))
+            ),
+            subtype_xmlid='mail.mt_note'
+        )
+        
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'reload',
         }

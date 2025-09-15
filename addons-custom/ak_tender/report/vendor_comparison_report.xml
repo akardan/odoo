@@ -9,6 +9,16 @@
                             <h4 class="mt-3 mb-3">İhale No: <span t-field="o.code"/> | <span t-field="o.name"/></h4>
 
                             <style>
+                                @charset "UTF-8";
+                                @font-face {
+                                    font-family: 'DejaVu Sans';
+                                    src: url('/web/static/lib/fontawesome/fonts/DejaVuSans.ttf') format('truetype');
+                                    font-weight: normal;
+                                    font-style: normal;
+                                }
+                                body, table, td, th, div, span, p, h1, h2, h3, h4, h5, h6 {
+                                    font-family: 'DejaVu Sans', sans-serif !important;
+                                }
                                 .label-col {
                                     text-align: left;
                                     padding-right: 5px !important;
@@ -29,6 +39,10 @@
                                 }
                                 .header-table td {
                                     padding: 2px !important;
+                                }
+                                .selected-npv {
+                                    font-weight: bold;
+                                    color: #dc3545;
                                 }
                             </style>
                             <table class="table table-borderless mt-4 header-table" style="margin-bottom: 10px;">
@@ -170,10 +184,10 @@
                                             odoo.jsonRpc("/web/dataset/call_kw/ak.tender/create_orders_from_total_selection", 'call', {
                                                 model: 'ak.tender',
                                                 method: 'create_orders_from_total_selection',
-                                                args: [parseInt(button.closest('table').dataset.tenderId), vendorIds],
+                                                args: [parseInt(button.closest('table').dataset.tenderId), vendorIds, true], // Added true parameter to use NPV
                                                 kwargs: {},
                                             }).then(function(result) {
-                                                alert("Toplam siparişler oluşturuldu!");
+                                                alert("NPV bazlı siparişler oluşturuldu!");
                                                 location.reload();
                                             });
                                         } else {
@@ -363,11 +377,7 @@
                                                     
                                                     <td class="vendor-col">
                                                         <t t-if="vendor_line">
-                                                            <!-- Bold if this is the lowest non-zero amount -->
-                                                            <strong t-if="vendor_line.price_subtotal > 0 and vendor_line.price_subtotal == min_amount">
-                                                                <span t-field="vendor_line.price_subtotal"/>
-                                                            </strong>
-                                                            <span t-else="" t-field="vendor_line.price_subtotal"/>
+                                                            <span t-field="vendor_line.price_subtotal"/>
                                                         </t>
                                                         <span t-else="">-</span>
                                                     </td>
@@ -396,6 +406,31 @@
                                             <tr>
                                                 <td class="field-col">NPV:</td>
                                                 
+                                                <!-- First collect all non-zero NPV values for this product -->
+                                                <t t-set="npv_values" t-value="[]"/>
+                                                <t t-foreach="vendors_to_show" t-as="vendor_collect">
+                                                    <t t-set="vendor_line_collect" t-value="False"/>
+                                                    <t t-foreach="vendor_collect.order_line" t-as="line_collect">
+                                                        <t t-if="line_collect.tender_line_id and line_collect.tender_line_id.id == tender_line.id">
+                                                            <t t-set="vendor_line_collect" t-value="line_collect"/>
+                                                        </t>
+                                                    </t>
+                                                    
+                                                    <t t-if="vendor_line_collect">
+                                                        <t t-set="has_npv_collect" t-value="False"/>
+                                                        <t t-foreach="vendor_line_collect._fields" t-as="field">
+                                                            <t t-if="field == 'npv_value'">
+                                                                <t t-set="has_npv_collect" t-value="True"/>
+                                                            </t>
+                                                        </t>
+                                                        <t t-if="has_npv_collect and vendor_line_collect.npv_value > 0">
+                                                            <t t-set="npv_values" t-value="npv_values + [vendor_line_collect.npv_value]"/>
+                                                        </t>
+                                                    </t>
+                                                </t>
+                                                <!-- Find minimum non-zero NPV -->
+                                                <t t-set="min_npv" t-value="min(npv_values) if npv_values else 0"/>
+                                                
                                                 <t t-foreach="vendors_to_show" t-as="vendor">
                                                     <t t-set="vendor_line" t-value="False"/>
                                                     <t t-foreach="vendor.order_line" t-as="line">
@@ -412,8 +447,13 @@
                                                                     <t t-set="has_npv" t-value="True"/>
                                                                 </t>
                                                             </t>
-                                                            <!-- Simply show NPV value -->
-                                                            <span t-if="has_npv" t-field="vendor_line.npv_value" t-options='{"widget": "monetary", "display_currency": vendor_line.currency_id}'/>
+                                                            <!-- Show NPV value, bold and red if it's the lowest -->
+                                                            <t t-if="has_npv">
+                                                                <t t-if="vendor_line.npv_value > 0 and vendor_line.npv_value == min_npv">
+                                                                    <b><font color="#dc3545"><span t-field="vendor_line.npv_value" t-options='{"widget": "monetary", "display_currency": vendor_line.currency_id}'/></font></b>
+                                                                </t>
+                                                                <span t-else="" t-field="vendor_line.npv_value" t-options='{"widget": "monetary", "display_currency": vendor_line.currency_id}'/>
+                                                            </t>
                                                             <span t-else="">-</span>
                                                         </t>
                                                         <span t-else="">-</span>
@@ -472,8 +512,8 @@
                                             <tr>
                                                 <td class="field-col">Seçim:</td>
                                                 
-                                                <!-- First collect all non-zero prices for this product -->
-                                                <t t-set="product_amounts" t-value="[]"/>
+                                                <!-- First collect all non-zero NPV values for this product -->
+                                                <t t-set="product_npvs" t-value="[]"/>
                                                 <t t-foreach="vendors_to_show" t-as="vendor_collect">
                                                     <t t-set="vendor_line_collect" t-value="False"/>
                                                     <t t-foreach="vendor_collect.order_line" t-as="line_collect">
@@ -481,12 +521,23 @@
                                                             <t t-set="vendor_line_collect" t-value="line_collect"/>
                                                         </t>
                                                     </t>
-                                                    <t t-if="vendor_line_collect and vendor_line_collect.price_subtotal > 0">
-                                                        <t t-set="product_amounts" t-value="product_amounts + [vendor_line_collect.price_subtotal]"/>
+                                                    <t t-if="vendor_line_collect">
+                                                        <t t-set="has_npv" t-value="False"/>
+                                                        <t t-foreach="vendor_line_collect._fields" t-as="field">
+                                                            <t t-if="field == 'npv_value'">
+                                                                <t t-set="has_npv" t-value="True"/>
+                                                            </t>
+                                                        </t>
+                                                        <t t-if="has_npv and vendor_line_collect.npv_value > 0">
+                                                            <t t-set="product_npvs" t-value="product_npvs + [vendor_line_collect.npv_value]"/>
+                                                        </t>
+                                                        <t t-elif="not has_npv and vendor_line_collect.price_subtotal > 0">
+                                                            <t t-set="product_npvs" t-value="product_npvs + [vendor_line_collect.price_subtotal]"/>
+                                                        </t>
                                                     </t>
                                                 </t>
-                                                <!-- Find minimum non-zero amount for this product -->
-                                                <t t-set="min_product_amount" t-value="min(product_amounts) if product_amounts else 0"/>
+                                                <!-- Find minimum non-zero NPV for this product -->
+                                                <t t-set="min_product_npv" t-value="min(product_npvs) if product_npvs else 0"/>
                                                 
                                                 <t t-foreach="vendors_to_show" t-as="vendor">
                                                     <t t-set="vendor_line" t-value="False"/>
@@ -498,8 +549,20 @@
                                                     
                                                     <td class="vendor-col text-center">
                                                         <t t-if="vendor_line">
-                                                            <!-- Auto-check if this vendor has the lowest non-zero price for this product -->
-                                                            <t t-if="vendor_line.price_subtotal > 0 and vendor_line.price_subtotal == min_product_amount">
+                                                            <t t-set="has_npv" t-value="False"/>
+                                                            <t t-set="line_npv" t-value="0"/>
+                                                            <t t-foreach="vendor_line._fields" t-as="field">
+                                                                <t t-if="field == 'npv_value'">
+                                                                    <t t-set="has_npv" t-value="True"/>
+                                                                    <t t-set="line_npv" t-value="vendor_line.npv_value"/>
+                                                                </t>
+                                                            </t>
+                                                            
+                                                            <!-- Auto-check if this vendor has the lowest non-zero NPV for this product -->
+                                                            <t t-if="has_npv and line_npv > 0 and line_npv == min_product_npv">
+                                                                <input type="checkbox" name="vendor_product_selection" t-att-value="str(vendor.id) + '_' + str(tender_line.id)" class="form-check-input" checked="checked"/>
+                                                            </t>
+                                                            <t t-elif="not has_npv and vendor_line.price_subtotal > 0 and vendor_line.price_subtotal == min_product_npv">
                                                                 <input type="checkbox" name="vendor_product_selection" t-att-value="str(vendor.id) + '_' + str(tender_line.id)" class="form-check-input" checked="checked"/>
                                                             </t>
                                                             <t t-else="">
@@ -602,10 +665,10 @@
                                             
                                             <td class="vendor-col">
                                                 <t t-if="has_npv">
-                                                    <!-- Bold if this is the lowest non-zero total NPV -->
-                                                    <strong t-if="total_npv > 0 and total_npv == min_total_npv">
-                                                        <span t-esc="total_npv" t-options='{"widget": "monetary", "display_currency": vendor.currency_id}'/>
-                                                    </strong>
+                                                    <!-- Bold and red if this is the lowest non-zero total NPV (selected vendor) -->
+                                                    <t t-if="total_npv > 0 and total_npv == min_total_npv">
+                                                        <b><font color="#dc3545"><span t-esc="total_npv" t-options='{"widget": "monetary", "display_currency": vendor.currency_id}'/></font></b>
+                                                    </t>
                                                     <span t-else="" t-esc="total_npv" t-options='{"widget": "monetary", "display_currency": vendor.currency_id}'/>
                                                 </t>
                                                 <span t-else="">-</span>
@@ -619,17 +682,23 @@
                                         
                                         
                                         <t t-foreach="vendors_to_show" t-as="vendor">
-                                            <!-- Calculate total amount for this vendor -->
-                                            <t t-set="total_amount" t-value="0"/>
+                                            <!-- Calculate total NPV for this vendor -->
+                                            <t t-set="has_npv" t-value="False"/>
+                                            <t t-set="total_npv" t-value="0"/>
                                             <t t-foreach="vendor.order_line" t-as="line">
                                                 <t t-if="line.tender_line_id and not line.display_type">
-                                                    <t t-set="total_amount" t-value="total_amount + line.price_subtotal"/>
+                                                    <t t-foreach="line._fields" t-as="field">
+                                                        <t t-if="field == 'npv_value'">
+                                                            <t t-set="has_npv" t-value="True"/>
+                                                            <t t-set="total_npv" t-value="total_npv + line.npv_value if line.npv_value else total_npv"/>
+                                                        </t>
+                                                    </t>
                                                 </t>
                                             </t>
                                             
                                             <td class="vendor-col text-center">
-                                                <!-- Auto-check if this vendor has the lowest non-zero total amount -->
-                                                <t t-if="total_amount > 0 and total_amount == min_total_amount">
+                                                <!-- Auto-check if this vendor has the lowest non-zero total NPV -->
+                                                <t t-if="has_npv and total_npv > 0 and total_npv == min_total_npv">
                                                     <input type="checkbox" name="vendor_total_selection" t-att-value="vendor.id" class="form-check-input" checked="checked"/>
                                                 </t>
                                                 <t t-else="">
@@ -655,6 +724,100 @@
             <field name="report_file">ak_tender.report_vendor_comparison</field>
             <field name="binding_model_id" ref="model_ak_tender"/>
             <field name="binding_type">report</field>
+            <field name="paperformat_id" ref="base.paperformat_euro"/>
+            <field name="print_report_name">'Tedarikci_Karsilastirma_%s' % (object.code)</field>
+        </record>
+        
+        <!-- Simple PDF report template for better Turkish character support -->
+        <template id="report_vendor_comparison_pdf">
+            <t t-call="web.html_container">
+                <t t-call="web.external_layout">
+                    <t t-foreach="docs" t-as="o">
+                        <div class="page">
+                            <style>
+                                @charset "UTF-8";
+                                @font-face {
+                                    font-family: 'DejaVu Sans';
+                                    src: url('/web/static/lib/fontawesome/fonts/DejaVuSans.ttf') format('truetype');
+                                    font-weight: normal;
+                                    font-style: normal;
+                                }
+                                body, table, td, th, div, span, p, h1, h2, h3, h4, h5, h6 {
+                                    font-family: 'DejaVu Sans', sans-serif !important;
+                                }
+                                .table-bordered {
+                                    border: 1px solid #000;
+                                }
+                                .table-bordered th, .table-bordered td {
+                                    border: 1px solid #000;
+                                    padding: 4px;
+                                }
+                                .npv-selected {
+                                    font-weight: bold;
+                                    color: #ff0000;
+                                }
+                            </style>
+                            <h3>İhale Karşılaştırma: <span t-field="o.code"/> - <span t-field="o.name"/></h3>
+                            
+                            <table class="table table-sm table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>Product</th>
+                                        <th>Field</th>
+                                        <t t-foreach="o.purchase_order_ids.filtered(lambda po: po.tender_round == o.tender_round)" t-as="vendor">
+                                            <th t-esc="vendor.partner_id.name"/>
+                                        </t>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-foreach="o.tender_lines.filtered(lambda l: l.display_type == 'product')" t-as="line">
+                                        <tr>
+                                            <td rowspan="3"><span t-field="line.product_id.name"/></td>
+                                            <td>Price</td>
+                                            <t t-foreach="o.purchase_order_ids.filtered(lambda po: po.tender_round == o.tender_round)" t-as="vendor">
+                                                <t t-set="vendor_line" t-value="vendor.order_line.filtered(lambda l: l.tender_line_id.id == line.id)[:1]"/>
+                                                <td>
+                                                    <t t-if="vendor_line">
+                                                        <span t-field="vendor_line.price_subtotal"/>
+                                                    </t>
+                                                    <t t-else="">-</t>
+                                                </td>
+                                            </t>
+                                        </tr>
+                                        <tr>
+                                            <td>NPV</td>
+                                            <t t-foreach="o.purchase_order_ids.filtered(lambda po: po.tender_round == o.tender_round)" t-as="vendor">
+                                                <t t-set="vendor_line" t-value="vendor.order_line.filtered(lambda l: l.tender_line_id.id == line.id)[:1]"/>
+                                                <td>
+                                                    <t t-if="vendor_line and hasattr(vendor_line, 'npv_value')">
+                                                        <span t-if="vendor_line.npv_value == min(o.purchase_order_ids.filtered(lambda po: po.tender_round == o.tender_round).mapped('order_line').filtered(lambda l: l.tender_line_id.id == line.id and hasattr(l, 'npv_value')).mapped('npv_value') or [0])"
+                                                              t-field="vendor_line.npv_value"
+                                                              class="npv-selected"/>
+                                                        <span t-else="" t-field="vendor_line.npv_value"/>
+                                                    </t>
+                                                    <t t-else="">-</t>
+                                                </td>
+                                            </t>
+                                        </tr>
+                                    </t>
+                                </tbody>
+                            </table>
+                        </div>
+                    </t>
+                </t>
+            </t>
+        </template>
+        
+        <!-- PDF Report action -->
+        <record id="action_report_vendor_comparison_pdf" model="ir.actions.report">
+            <field name="name">Tedarikci Karsilastirma (PDF)</field>
+            <field name="model">ak.tender</field>
+            <field name="report_type">qweb-pdf</field>
+            <field name="report_name">ak_tender.report_vendor_comparison_pdf</field>
+            <field name="report_file">ak_tender.report_vendor_comparison_pdf</field>
+            <field name="binding_model_id" ref="model_ak_tender"/>
+            <field name="binding_type">report</field>
+            <field name="paperformat_id" ref="base.paperformat_euro"/>
         </record>
     </data>
 </odoo>
