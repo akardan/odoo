@@ -66,7 +66,8 @@ class TenderPortal(CustomerPortal): # Inherit from CustomerPortal for standard l
             'default_url': url,
             # Add other necessary values for the template
         })
-        return request.render("ak_tender.portal_my_tenders_list", values)
+        # Redirect to portal home as the tenders list template has been removed
+        return request.redirect('/my')
 
     # Placeholder for bid submission form route
     @http.route(['/my/tenders/<int:tender_id>'], type='http', auth="user", website=True)
@@ -133,87 +134,12 @@ class TenderPortal(CustomerPortal): # Inherit from CustomerPortal for standard l
         values.update(form_values)
         values.update(kw) # Pass URL parameters to the template
         
-        return request.render("ak_tender.portal_tender_bid_form", values)
+        # Redirect to tenders list as the bid form template has been removed
+        return request.redirect('/my/tenders')
 
-    # Placeholder for bid submission POST handler
-    @http.route(['/my/tenders/<int:tender_id>/submit'], type='http', auth="user", website=True, methods=['POST'], csrf=True)
-    def portal_tender_form_submit(self, tender_id, **post):
-        tender = request.env['ak.tender'].browse(tender_id)
-        partner = request.env.user.partner_id
+    # This method has been removed as the related template has been removed
 
-        if not tender.exists() or partner not in tender.invited_partners:
-            return request.redirect('/my')
-
-        if tender.state not in ['first_tender_round', 'new_tender_round', 'target_price_set']:
-            # Handle case where tender is not open for bidding
-            # You might want to redirect with an error message
-            return request.redirect('/my/tenders/%s' % tender_id) 
-
-        # Extract data from post
-        # Example: post.get('delivery_date'), post.get('payment_terms_id'), etc.
-        # For lines, they might come as post['price_unit_for_line_X']
-        
-        order_vals = {
-            'tender_id': tender.id,
-            'partner_id': partner.commercial_partner_id.id,
-            'date_order': fields.Datetime.now(),
-            'currency_id': tender.currency_id.id,
-            'payment_term_id': int(post.get('payment_terms')) if post.get('payment_terms') else None,
-            'notes': post.get('notes') or None,
-            'tender_round': 1, # Default to 1, can be adjusted based on tender state
-            'state': 'draft', # Start as a draft RFQ
-        }
-        
-        order_lines_vals = []
-        for tender_line in tender.tender_lines:
-            price_unit_str = post.get(f'price_unit_line_{tender_line.id}')
-            if price_unit_str:
-                try:
-                    price_unit = float(price_unit_str)
-                    order_lines_vals.append((0, 0, {
-                        'tender_line_id': tender_line.id,
-                        'product_id': tender_line.product_id.id,
-                        'name': tender_line.name,
-                        'product_qty': tender_line.quantity,
-                        'product_uom': tender_line.uom_id.id,
-                        'price_unit': price_unit,
-                        'date_planned': post.get('delivery_date') and fields.Date.from_string(post.get('delivery_date')) or tender_line.required_delivery_date or tender.required_delivery_date or fields.Date.today(),
-                    }))
-                except ValueError:
-                    pass
-
-        if not order_lines_vals and tender.tender_lines:
-            return request.redirect('/my/tenders/%s?error=no_prices' % tender_id)
-
-        # Check if an order already exists for this partner and tender
-        existing_order = request.env['purchase.order'].search([
-            ('tender_id', '=', tender.id),
-            ('partner_id', '=', partner.commercial_partner_id.id)
-        ], limit=1)
-
-        try:
-            if existing_order:
-                # Update existing order
-                existing_order.order_line.unlink()
-                order_vals['order_line'] = order_lines_vals
-                existing_order.write(order_vals)
-                purchase_order = existing_order
-            else:
-                # Create new order
-                order_vals['order_line'] = order_lines_vals
-                purchase_order = request.env['purchase.order'].create(order_vals)
-            
-            # Notification will be sent automatically by the purchase_order model
-            return request.redirect(f'/my/tenders/{tender_id}?bid_submitted=1')
-            
-        except Exception as e:
-            # Log error e
-            # Redirect back to form with an error message
-            return request.redirect('/my/tenders/%s?error=submission_failed' % tender_id)
-
-        # This is a basic structure. You'll need to add QWeb templates
-        # (portal_my_tenders_list.xml, portal_tender_bid_form.xml)
-        # and refine the logic, validation, and error handling.
+        # This is a basic structure. The referenced templates have been removed.
     
     # Notification functionality moved to purchase_order model
         
