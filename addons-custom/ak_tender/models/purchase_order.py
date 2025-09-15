@@ -42,7 +42,7 @@ class PurchaseOrder(models.Model):
             if not record.tender_id:
                 continue
             state_code = record.tender_id.workflow_current_state_id.code if record.tender_id.workflow_current_state_id else None
-            if state_code == 'second_tender_round' and record.tender_round == 1:
+            if state_code == 'completed' or state_code == 'cancelled':
                 record.is_readonly = True
     
     

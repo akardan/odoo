@@ -22,7 +22,7 @@ class TenderPortal(CustomerPortal): # Inherit from CustomerPortal for standard l
             AkTender = request.env['ak.tender']
             values['tender_count'] = AkTender.search_count([
                 ('invited_partners', 'in', partner_ids_to_check),
-                ('state', 'in', ['first_tender_round', 'second_tender_round', 'target_price_set']) # Active bidding states
+                ('state', 'in', ['first_tender_round', 'new_tender_round', 'target_price_set']) # Active bidding states
             ]) if AkTender.has_access('read') else 0
             
         return values
@@ -39,7 +39,7 @@ class TenderPortal(CustomerPortal): # Inherit from CustomerPortal for standard l
 
         domain = [
             ('invited_partners', 'in', partner_ids_to_check),
-            ('state', 'in', ['first_tender_round', 'second_tender_round', 'target_price_set']) # Active bidding states
+            ('state', 'in', ['first_tender_round', 'new_tender_round', 'target_price_set']) # Active bidding states
         ]
 
         # TODO: Implement search, sortby, filterby, groupby if needed later
@@ -90,7 +90,7 @@ class TenderPortal(CustomerPortal): # Inherit from CustomerPortal for standard l
             return request.redirect('/my')
 
         # Check if tender is in a state that allows bidding
-        if tender.state not in ['first_tender_round', 'second_tender_round', 'target_price_set']:
+        if tender.state not in ['first_tender_round', 'new_tender_round', 'target_price_set']:
             # Maybe show a message or redirect
             # For now, still show the form but could be read-only or show status
             pass
@@ -144,7 +144,7 @@ class TenderPortal(CustomerPortal): # Inherit from CustomerPortal for standard l
         if not tender.exists() or partner not in tender.invited_partners:
             return request.redirect('/my')
 
-        if tender.state not in ['first_tender_round', 'second_tender_round', 'target_price_set']:
+        if tender.state not in ['first_tender_round', 'new_tender_round', 'target_price_set']:
             # Handle case where tender is not open for bidding
             # You might want to redirect with an error message
             return request.redirect('/my/tenders/%s' % tender_id) 

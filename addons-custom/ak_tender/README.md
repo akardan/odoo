@@ -59,7 +59,7 @@ Bu modül, `ak_workflow` modülü ile entegre çalışır. İhale süreçleri, t
 - `draft`: Taslak
 - `first_tender_round`: 1. Teklif Toplama
 - `target_price_set`: Hedef Fiyat Belirlendi
-- `second_tender_round`: 2. Teklif Toplama
+- `new_tender_round`: Yeni Teklif Toplama
 - `evaluation`: Değerlendirme
 - `approved`: Onaylandı
 - `done`: Tamamlandı

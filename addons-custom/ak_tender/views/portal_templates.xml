@@ -145,7 +145,7 @@
                 <p>End Date: <span t-field="tender.end_date" t-options='{"widget": "datetime"}'/></p>
                 <p>Status: <span t-field="tender.state" class="badge"/></p>
 
-                <t t-if="tender.state not in ['first_tender_round', 'second_tender_round', 'target_price_set']">
+                <t t-if="tender.state not in ['first_tender_round', 'new_tender_round', 'target_price_set']">
                     <div class="alert alert-warning" role="alert">
                         This tender is not currently open for bidding.
                     </div>
@@ -205,7 +205,7 @@
                                             <input type="number" t-attf-name="price_unit_line_{{line.id}}" class="form-control form-control-sm"
                                                    step="0.01" min="0" required="required"
                                                    t-att-value="bid_lines_data and bid_lines_data.get(line.id, {}).get('price_unit', '0.00')"
-                                                   t-att-disabled="tender.state not in ['first_tender_round', 'second_tender_round', 'target_price_set'] or None" />
+                                                   t-att-disabled="tender.state not in ['first_tender_round', 'new_tender_round', 'target_price_set'] or None" />
                                         </td>
                                     </tr>
                                 </t>
@@ -215,7 +215,7 @@
 
                     <div class="mt-4">
                         <button type="submit" class="btn btn-primary" 
-                                t-att-disabled="tender.state not in ['first_tender_round', 'second_tender_round', 'target_price_set'] or None">
+                                t-att-disabled="tender.state not in ['first_tender_round', 'new_tender_round', 'target_price_set'] or None">
                             Submit Bid
                         </button>
                         <a t-attf-href="/my/tenders" class="btn btn-secondary">Cancel</a>
@@ -672,7 +672,8 @@
                 <!-- Document-level save button -->
                 <div class="row mb-4">
                     <div class="col-12 text-end">
-                        <button id="save-all-btn" class="btn btn-primary">
+                        <button id="save-all-btn" class="btn btn-primary"
+                                t-att-disabled="order.tender_id.workflow_current_state_id.code not in ['first_tender_round', 'new_tender_round'] or order.tender_round != order.tender_id.tender_round or None">
                             <i class="fa fa-save"></i> Tüm Değişiklikleri Kaydet
                         </button>
                     </div>
