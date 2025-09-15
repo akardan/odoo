@@ -89,7 +89,8 @@ class PurchaseOrderLine(models.Model):
         """
         Calculate Net Present Value (NPV) based on the line amount, NPV rate (inflation rate), and payment term.
         
-        NPV = Amount / (1 + (npv_rate/100)/365)^payment_term_days
+        For split payment terms, calculates NPV for each term separately and sums them:
+        NPV = Sum[ (Amount * term_percent) / (1 + (npv_rate/100)/365)^term_days ]
         
         This uses the inflation rate from the tender to calculate the present value of future payments.
         """
@@ -102,32 +103,56 @@ class PurchaseOrderLine(models.Model):
             # Get the line amount
             amount = line.price_subtotal or 0.0
             
-            # Get payment term days
-            payment_term_days = 30  # Default to 30 days if no payment term is defined
-            if line.order_id and line.order_id.payment_term_id:
-                if line.order_id.payment_term_id.line_ids:
-                    # İlk ödeme koşulu satırını kullan
-                    term_line = line.order_id.payment_term_id.line_ids[0]
-                    payment_term_days = term_line.nb_days
+            # If no amount to calculate, set NPV to zero
+            if not amount:
+                line.npv_value = 0.0
+                continue
             
             # Get NPV rate from tender
             npv_rate = 10.0  # Default value
             if line.order_id and line.order_id.tender_id:
                 # İhale üzerindeki NPV oranını kullan
                 npv_rate = line.order_id.tender_id.npv_rate or 10.0
-            
-            # If no amount to calculate, set NPV to zero
-            if not amount:
-                line.npv_value = 0.0
-                continue
                 
             # Ensure npv_rate is not zero to avoid division by zero
             if npv_rate <= 0:
                 npv_rate = 0.1  # Use a small positive value instead of zero
             
-            # Calculate NPV using inflation rate (npv_rate)
             daily_rate = (npv_rate / 100) / 365
-            npv_value = amount / ((1 + daily_rate) ** payment_term_days)
+            
+            # Calculate NPV based on payment terms
+            npv_value = 0.0
+            
+            # Check if payment term exists and has lines
+            if line.order_id and line.order_id.payment_term_id and line.order_id.payment_term_id.line_ids:
+                payment_term_lines = line.order_id.payment_term_id.line_ids
+                
+                # If there are multiple payment term lines, calculate NPV for each one
+                for term_line in payment_term_lines:
+                    # Get days for this term line
+                    term_days = term_line.nb_days or 0
+                    
+                    # Calculate value percentage based on value and value_amount
+                    # According to account.payment.term.line model structure
+                    if term_line.value == 'percent':
+                        term_percent = term_line.value_amount / 100.0
+                    elif term_line.value == 'fixed':
+                        # For fixed amount, calculate percentage of total
+                        total_amount = line.order_id.amount_total
+                        term_percent = term_line.value_amount / total_amount if total_amount else 0
+                    else:
+                        # Default to equal distribution if we can't determine the percentage
+                        term_percent = 1.0 / len(payment_term_lines)
+                    
+                    # Calculate NPV for this term portion
+                    term_amount = amount * term_percent
+                    term_npv = term_amount / ((1 + daily_rate) ** term_days)
+                    npv_value += term_npv
+            else:
+                # Default to 30 days if no payment term is defined
+                payment_term_days = 30
+                npv_value = amount / ((1 + daily_rate) ** payment_term_days)
+            
             line.npv_value = npv_value
         
         return True
