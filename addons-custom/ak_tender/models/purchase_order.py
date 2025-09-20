@@ -34,6 +34,24 @@ class PurchaseOrder(models.Model):
                                help="Tüm satırların NPV değerlerinin toplamı.", readonly=True)
     
     is_readonly = fields.Boolean(compute='_compute_is_readonly', store=False)
+    
+    # Selection fields
+    system_selection = fields.Boolean(
+        string='Sistem Seçimi',
+        default=False,
+        help="Bu sipariş sistem tarafından otomatik olarak seçildi (NPV veya diğer kriterlere göre)"
+    )
+    
+    user_selection = fields.Boolean(
+        string='Kullanıcı Seçimi',
+        default=False,
+        help="Bu sipariş kullanıcı tarafından karşılaştırma ekranında manuel olarak seçildi"
+    )
+    
+    selection_note = fields.Text(
+        string='Seçim Notu',
+        help="Sistem Seçiminden farklı ise, ilgili notlar (neden seçildi, hangi kriterlere göre seçildi, vb.)"
+    )
 
     @api.depends('tender_id.workflow_current_state_id', 'tender_round')
     def _compute_is_readonly(self):
@@ -189,4 +207,16 @@ class PurchaseOrder(models.Model):
             
         return result
         
+    def button_to_approve(self):
+        """
+        Set the purchase order state to 'to approve' directly.
+        This is used in the tender process to set RFQs to approval state.
+        """
+        for order in self:
+            if order.state not in ['draft', 'sent']:
+                continue
+            order.write({'state': 'to approve'})
+            if order.partner_id not in order.message_partner_ids:
+                order.message_subscribe([order.partner_id.id])
+        return True
         

@@ -5,7 +5,7 @@ import io
 import logging
 from odoo import api, fields, models, _
 from odoo.exceptions import UserError
-from datetime import datetime
+from datetime import datetime, timedelta
 
 _logger = logging.getLogger(__name__)
 
@@ -208,7 +208,7 @@ class SatImportWizard(models.TransientModel):
             'purchasing_group': safe_get(15),  # Satınalma grubu
             'quantity': safe_float(16, 0.0),  # Talep miktarı
             'company_code': safe_get(17),  # Üretim yeri (İlko 2100, Merkez 2000, ilkopol 1100)
-            # İndeks 18: Talep tarihi (şu an kullanılmıyor)
+            'request_date': safe_date(18),  # Talep tarihi
             # İndeks 19: Yaratıldı (şu an kullanılmıyor)
             # İndeks 20: Talep eden (şu an kullanılmıyor)
             'requirement_number': safe_get(21),  # İhtiyaç numarası
@@ -301,14 +301,22 @@ class SatImportWizard(models.TransientModel):
 
     def _prepare_tender_vals(self, data):
         """İhale için değerleri hazırla"""
+        request_date = data.get('request_date')
+        
+        start_date = fields.Datetime.now()
+        
+        # Bitiş tarihi = Başlangıç tarihi + 1 hafta
+        end_date = start_date + timedelta(days=7)
+        
         vals = {
             'name': data.get('name') or f"SAT-{data.get('erp_pr_id')}",
             'erp_pr_id': data.get('erp_pr_id'),
             'erp_company_code': data.get('company_code'),
             'erp_plant_code': data.get('plant_code'),
             'required_delivery_date': data.get('required_delivery_date'),
-            'start_date': fields.Datetime.now(),
-            'end_date': fields.Datetime.now(),  # Varsayılan olarak şu anki tarih, gerçek uygulamada değiştirilmeli
+            'request_date': request_date,  # Talep tarihi
+            'start_date': start_date,  # Başlangıç tarihi
+            'end_date': end_date,  # Bitiş tarihi (başlangıç + 1 hafta)
             'tender_type': 'direct',  # Varsayılan olarak direkt satın alma
         }
         
@@ -388,12 +396,37 @@ class SatImportWizard(models.TransientModel):
         
         # Birim bilgisi varsa ekle
         if data.get('unit_of_measure'):
-            uom = self.env['uom.uom'].search([('name', '=', data.get('unit_of_measure'))], limit=1)
+            uom_name = data.get('unit_of_measure')
+            
+            # Birim adı eşleştirmesi
+            uom_mapping = {
+                'ADT': 'Adet',  # ADT, Adet'in Türkçe kısaltmasıdır
+                'KG': 'kg',     # Kilogram
+            }
+            
+            # Eşleştirme varsa, eşleşen adı kullan
+            search_name = uom_mapping.get(uom_name, uom_name)
+            _logger.info(f"Birim aranıyor: {uom_name} -> {search_name}")
+            
+            # Önce eşleşen adla ara
+            uom = self.env['uom.uom'].search([('name', '=', search_name)], limit=1)
+            
+            # Bulunamadıysa orijinal adla ara
+            if not uom and search_name != uom_name:
+                uom = self.env['uom.uom'].search([('name', '=', uom_name)], limit=1)
+            
+            # Hala bulunamadıysa, varsayılan birim olarak 'Adet' birimini kullan
+            if not uom:
+                _logger.warning(f"Birim bulunamadı: {uom_name}, varsayılan birim kullanılıyor")
+                uom = self.env.ref('uom.product_uom_unit', raise_if_not_found=False)
+                if not uom:
+                    uom = self.env['uom.uom'].search([('name', '=', 'Adet')], limit=1)
+            
             if uom:
                 line_vals['uom_id'] = uom.id
                 _logger.info(f"Birim bulundu: {uom.name} (ID: {uom.id})")
             else:
-                _logger.warning(f"Birim bulunamadı: {data.get('unit_of_measure')}")
+                _logger.warning(f"Birim bulunamadı: {uom_name}")
         
         # İhale kalemi oluştur
         _logger.info(f"İhale kalemi oluşturuluyor: {line_vals}")
@@ -452,37 +485,36 @@ class SatImportWizard(models.TransientModel):
                 # Birim bilgisi varsa ekle
                 uom_name = data.get('unit_of_measure')  # Ölçü birimi
                 if uom_name:
-                    uom = self.env['uom.uom'].search([('name', '=', uom_name)], limit=1)
+                    # Birim adı eşleştirmesi
+                    uom_mapping = {
+                        'ADT': 'Adet',  # ADT, Adet'in Türkçe kısaltmasıdır
+                        'KG': 'kg',     # Kilogram
+                    }
+                    
+                    # Eşleştirme varsa, eşleşen adı kullan
+                    search_name = uom_mapping.get(uom_name, uom_name)
+                    _logger.info(f"Birim aranıyor: {uom_name} -> {search_name}")
+                    
+                    # Önce eşleşen adla ara
+                    uom = self.env['uom.uom'].search([('name', '=', search_name)], limit=1)
+                    
+                    # Bulunamadıysa orijinal adla ara
+                    if not uom and search_name != uom_name:
+                        uom = self.env['uom.uom'].search([('name', '=', uom_name)], limit=1)
+                    
+                    # Hala bulunamadıysa, varsayılan birim olarak 'Adet' birimini kullan
                     if not uom:
-                        # Birim bulunamadıysa, referans birim olarak 'Adet' birimini kullan
-                        reference_uom = self.env.ref('uom.product_uom_unit', raise_if_not_found=False)
-                        if not reference_uom:
-                            reference_uom = self.env['uom.uom'].search([('name', '=', 'Adet')], limit=1)
-                        
-                        if reference_uom:
-                            # Yeni birim oluştur
-                            try:
-                                uom = self.env['uom.uom'].sudo().create({
-                                    'name': uom_name,
-                                    'category_id': reference_uom.category_id.id,
-                                    'uom_type': 'reference',
-                                    'rounding': 0.01,
-                                    'factor': 1.0,
-                                })
-                                _logger.info(f"Yeni birim oluşturuldu: {uom.name} (ID: {uom.id})")
-                            except Exception as e:
-                                _logger.error(f"Birim oluşturma hatası: {str(e)}")
-                                # Birim oluşturulamadıysa, varsayılan birimi kullan
-                                uom = reference_uom
-                        else:
-                            _logger.warning(f"Referans birim bulunamadı, birim oluşturulamadı: {uom_name}")
+                        _logger.warning(f"Birim bulunamadı: {uom_name}, varsayılan birim kullanılıyor")
+                        uom = self.env.ref('uom.product_uom_unit', raise_if_not_found=False)
+                        if not uom:
+                            uom = self.env['uom.uom'].search([('name', '=', 'Adet')], limit=1)
                     
                     if uom:
                         product_vals['uom_id'] = uom.id
                         product_vals['uom_po_id'] = uom.id
                         _logger.info(f"Ürün birimi ayarlandı: {uom.name} (ID: {uom.id})")
                     else:
-                        _logger.warning(f"Birim bulunamadı ve oluşturulamadı: {uom_name}")
+                        _logger.warning(f"Birim bulunamadı: {uom_name}")
                 
                 # Mal grubu varsa kategori bul veya oluştur
                 material_group = data.get('material_group')

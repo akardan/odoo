@@ -55,6 +55,24 @@ class PurchaseOrderLine(models.Model):
         readonly=True
     )
     
+    # Selection fields
+    system_selection = fields.Boolean(
+        string='Sistem Seçimi',
+        default=False,
+        help="Bu satır sistem tarafından otomatik olarak seçildi (NPV veya diğer kriterlere göre)"
+    )
+    
+    user_selection = fields.Boolean(
+        string='Kullanıcı Seçimi',
+        default=False,
+        help="Bu satır kullanıcı tarafından karşılaştırma ekranında manuel olarak seçildi"
+    )
+    
+    selection_note = fields.Text(
+        string='Seçim Notu',
+        help="Sistem Seçiminden farklı ise, ilgili notlar (neden seçildi, hangi kriterlere göre seçildi, vb.)"
+    )
+    
     # The following fields are already on purchase.order.line, but we are adding them
     # to show the link and in case any properties needed to be modified.
     # product_id, name, product_qty (quantity), product_uom (uom_id) are standard fields.
@@ -139,7 +157,11 @@ class PurchaseOrderLine(models.Model):
                     elif term_line.value == 'fixed':
                         # For fixed amount, calculate percentage of total
                         total_amount = line.order_id.amount_total
-                        term_percent = term_line.value_amount / total_amount if total_amount else 0
+                        # Ensure total_amount is not too small to avoid division issues
+                        if total_amount and total_amount > 0.001:
+                            term_percent = term_line.value_amount / total_amount
+                        else:
+                            term_percent = 0
                     else:
                         # Default to equal distribution if we can't determine the percentage
                         term_percent = 1.0 / len(payment_term_lines)

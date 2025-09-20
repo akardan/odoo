@@ -32,4 +32,12 @@
               parent="menu_ak_tender_configuration"
               action="action_ak_tender_economic_data"
               sequence="30"/>
+              
+   <!-- İhale Tanımlarını (SAT) İçe Aktar Menüsü -->
+   <menuitem id="menu_import_sat"
+             name="İhale Tanımlarını (SAT) İçe Aktar"
+             parent="menu_ak_tender_configuration"
+             action="action_import_sat_wizard"
+             sequence="20"/>
+             
 </odoo>

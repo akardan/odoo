@@ -106,3 +106,21 @@
     min-height: 180px;
     transition: all 0.3s ease;
 }
+
+/* Make "Teklifler" tab bold and red - targeting data-highlight attribute */
+.nav-item a[data-highlight="1"],
+.o_notebook .nav-link[data-highlight="1"],
+.o_notebook_headers .nav-item a[data-highlight="1"],
+.o_notebook ul.nav li a[data-highlight="1"],
+.o_notebook .nav-tabs .nav-link[data-highlight="1"],
+li.nav-item a.nav-link[data-highlight="1"],
+/* Also keep the original selectors */
+.nav-item a[data-name="tender_results_evaluation"],
+.o_notebook .nav-link[data-name="tender_results_evaluation"],
+.o_notebook_headers .nav-item a[href="#notebook_page_tender_results_evaluation"],
+.o_notebook ul.nav li a[data-section="tender_results_evaluation"],
+.o_notebook .nav-tabs .nav-link[data-name="tender_results_evaluation"],
+li.nav-item a.nav-link[data-name="tender_results_evaluation"] {
+    font-weight: bold !important;
+    color: red !important;
+}

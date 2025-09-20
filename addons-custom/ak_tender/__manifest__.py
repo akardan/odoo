@@ -43,10 +43,11 @@
         'views/product_views.xml',
         'views/economic_data_views.xml',
         'views/res_partner_views.xml',
-        'views/menu.xml',
         'wizards/import_hotel_wizard_views.xml',
         'wizards/import_supplier_wizard_views.xml',
+        'wizards/import_sat_wizard_views.xml',
         'wizards/tender_template_selection_wizard_views.xml',
+        'views/menu.xml',
         'report/vendor_comparison_report.xml',
     ],
     'demo': [

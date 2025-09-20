@@ -483,6 +483,7 @@ class AkTender(models.Model):
 
     start_date = fields.Datetime(string=_('Başlangıç Tarihi'), default=fields.Datetime.now(), required=True)
     end_date = fields.Datetime(string=_('Bitiş Tarihi'), required=True)
+    request_date = fields.Date(string=_('Talep Tarihi'), help=_("SAT'ın talep edildiği tarih."))
     tender_round = fields.Integer(string=_('Teklif Turu'), default=1, help=_("Bu ihalenin hangi turda olduğu (1, 2, 3...)."))
     required_delivery_date = fields.Date(string=_('Gerekli Teslim Tarihi'),
                                help=_("Satın alma siparişlerinde kullanılacak gerekli teslim tarihi."))
@@ -1773,6 +1774,9 @@ class AkTender(models.Model):
                 'tender_id': self.id,
                 'origin': f"{self.code} - {po.name}",
                 'tender_round': self.tender_round,
+                'system_selection': use_npv,  # Mark as system selection if using NPV
+                'user_selection': not use_npv,  # Mark as user selection if not using NPV
+                'selection_note': _("NPV bazlı sistem seçimi") if use_npv else _("Toplam bazlı kullanıcı seçimi"),
             })
             
             # Update the lines to use NPV values if requested
@@ -1781,6 +1785,14 @@ class AkTender(models.Model):
                     if hasattr(line, 'npv_value') and line.npv_value:
                         # Use NPV value for pricing
                         line.price_unit = line.npv_value / line.product_qty if line.product_qty else 0
+                        # Mark line as system selection
+                        line.system_selection = True
+                        line.selection_note = _("NPV bazlı sistem seçimi")
+            else:
+                # Mark all lines as user selection
+                for line in new_po.order_line:
+                    line.user_selection = True
+                    line.selection_note = _("Toplam bazlı kullanıcı seçimi")
                 
             created_orders += new_po
             
@@ -1792,6 +1804,345 @@ class AkTender(models.Model):
             subtype_xmlid='mail.mt_note'
         )
         
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'reload',
+        }
+        
+    def save_user_selection(self, tender_id=None, value=None, is_product_selection=False, is_total_selection=False, is_checked=False):
+        """
+        Save user selection to the database.
+        
+        Args:
+            tender_id: The ID of the tender
+            value: The value of the checkbox (vendor_id or vendor_id_tender_line_id)
+            is_product_selection: Whether this is a product selection
+            is_total_selection: Whether this is a total selection
+            is_checked: Whether the checkbox is checked
+            
+        Returns:
+            dict: Result of the operation
+        """
+        # Find the tender record
+        # The tender_id parameter is actually the ID of the current tender (self)
+        tender = self
+        if not tender.exists():
+            return {'success': False, 'error': 'Tender not found'}
+            
+        # Ensure we're using the correct environment
+        self = self.with_context(tracking_disable=False)
+        
+        # Log the input parameters
+        _logger.info("save_user_selection called with: tender_id=%s, value=%s, is_product_selection=%s, is_total_selection=%s, is_checked=%s",
+                    tender_id, value, is_product_selection, is_total_selection, is_checked)
+        
+        try:
+            if is_product_selection:
+                # Product selection (vendor_id_tender_line_id)
+                parts = value.split('_')
+                if len(parts) >= 2:
+                    vendor_id = int(parts[0])
+                    tender_line_id = int(parts[1])
+                    
+                    _logger.info("Processing product selection: vendor_id=%s, tender_line_id=%s", vendor_id, tender_line_id)
+                    
+                    # Find the purchase order for this vendor in the current round
+                    po = tender.purchase_order_ids.filtered(lambda p: p.partner_id.id == vendor_id and p.tender_round == tender.tender_round)
+                    _logger.info("Found purchase orders: %s (count: %s)", po.mapped('name'), len(po))
+                    if po:
+                        # Find the purchase order line for this tender line
+                        po_line = po[0].order_line.filtered(lambda l: l.tender_line_id.id == tender_line_id)
+                        _logger.info("Found purchase order lines: %s (count: %s)", po_line.mapped('name'), len(po_line))
+                        if po_line:
+                            # Update the user_selection field
+                            _logger.info("Updating user_selection to %s for po_line: %s", is_checked, po_line.mapped('name'))
+                            # Save which PO and PO line the selection was made on
+                            # Use sudo() to ensure we have the necessary permissions
+                            po_line.sudo().write({
+                                'user_selection': is_checked,
+                                'system_selection': is_checked,  # Also save as system selection
+                                'selection_note': f"Kullanıcı tarafından seçildi: {fields.Datetime.now()}" if is_checked else False
+                            })
+                            # Force a flush to ensure the changes are written to the database
+                            self.env.cr.flush()
+                            
+                            # Also update the PO if a line is selected
+                            if is_checked:
+                                po[0].sudo().write({
+                                    'user_selection': True,
+                                    'system_selection': True,  # Also save as system selection
+                                    'selection_note': f"Kullanıcı tarafından seçildi: {fields.Datetime.now()}"
+                                })
+                                # Force a flush to ensure the changes are written to the database
+                                self.env.cr.flush()
+                                
+                            # Invalidate the cache to ensure fresh data is loaded
+                            po.invalidate_cache()
+                            po_line.invalidate_cache()
+                            
+                            # Log the updated values to verify they were saved
+                            _logger.info("After update - po_line.user_selection: %s, po_line.system_selection: %s",
+                                        po_line.user_selection, po_line.system_selection)
+                            
+                            # Force a database commit to ensure changes are saved
+                            self._cr.commit()
+                            
+                            # If checked, uncheck all other lines for this tender line
+                            if is_checked:
+                                other_po_lines = tender.purchase_order_ids.filtered(
+                                    lambda p: p.tender_round == tender.tender_round
+                                ).mapped('order_line').filtered(
+                                    lambda l: l.tender_line_id.id == tender_line_id and l.id != po_line[0].id
+                                )
+                                other_po_lines.write({'user_selection': False})
+            
+            elif is_total_selection:
+                # Total selection (vendor_id)
+                try:
+                    vendor_id = int(value)
+                except ValueError:
+                    # If value contains an underscore, it might be in the format vendor_id_tender_line_id
+                    if '_' in value:
+                        parts = value.split('_')
+                        if len(parts) >= 1:
+                            vendor_id = int(parts[0])
+                        else:
+                            return {'success': False, 'error': f'Invalid value format: {value}'}
+                    else:
+                        return {'success': False, 'error': f'Invalid vendor_id: {value}'}
+                
+                _logger.info("Processing total selection: vendor_id=%s", vendor_id)
+                
+                # Find the purchase order for this vendor in the current round
+                po = tender.purchase_order_ids.filtered(lambda p: p.partner_id.id == vendor_id and p.tender_round == tender.tender_round)
+                _logger.info("Found purchase orders: %s", po.mapped('name'))
+                if po:
+                    # Update the user_selection field
+                    _logger.info("Updating user_selection to %s for po: %s", is_checked, po[0].name)
+                    po[0].sudo().write({
+                        'user_selection': is_checked,
+                        'system_selection': is_checked,  # Also save as system selection
+                        'selection_note': f"Kullanıcı tarafından seçildi: {fields.Datetime.now()}" if is_checked else False
+                    })
+                    # Force a flush to ensure the changes are written to the database
+                    self.env.cr.flush()
+                    
+                    # If the total PO is selected, also mark all its lines as selected
+                    if is_checked:
+                        po[0].order_line.sudo().write({
+                            'user_selection': True,
+                            'system_selection': True,  # Also save as system selection
+                            'selection_note': f"PO seçiminden dolayı seçildi: {fields.Datetime.now()}"
+                        })
+                        # Force a flush to ensure the changes are written to the database
+                        self.env.cr.flush()
+                    
+                    # Invalidate the cache to ensure fresh data is loaded
+                    po.invalidate_cache()
+                    po[0].order_line.invalidate_cache()
+                    
+                    # Log the updated values to verify they were saved
+                    _logger.info("After update - po.user_selection: %s, po.system_selection: %s",
+                                po[0].user_selection, po[0].system_selection)
+                    
+                    # Force a database commit to ensure changes are saved
+                    self._cr.commit()
+                    
+                    # If checked, uncheck all other purchase orders
+                    if is_checked:
+                        other_pos = tender.purchase_order_ids.filtered(
+                            lambda p: p.id != po[0].id and p.tender_round == tender.tender_round
+                        )
+                        other_pos.write({'user_selection': False})
+            
+            # Commit the transaction to ensure changes are saved to the database
+            self._cr.commit()
+            
+            # Return success message with additional debug info
+            return {
+                'success': True,
+                'message': 'Selection saved successfully',
+                'debug_info': {
+                    'tender_id': tender.id,
+                    'value': value,
+                    'is_product_selection': is_product_selection,
+                    'is_total_selection': is_total_selection,
+                    'is_checked': is_checked
+                }
+            }
+            
+        except Exception as e:
+            _logger.error("Error saving user selection: %s", str(e))
+            # Rollback the transaction in case of error
+            self._cr.rollback()
+            return {'success': False, 'error': str(e)}
+        
+    def save_all_selections(self, tender_id, selections):
+        """
+        Save all user selections at once.
+        
+        Args:
+            tender_id: The ID of the tender
+            selections: Dictionary with product and total selections
+            
+        Returns:
+            dict: Result of the operation
+        """
+        # Find the tender record
+        tender = self.browse(tender_id)
+        if not tender.exists():
+            return {'success': False, 'error': 'Tender not found'}
+        
+        # Log the input parameters
+        _logger.info("save_all_selections called with: tender_id=%s, selections=%s",
+                    tender_id, selections)
+        
+        try:
+            # Process product selections
+            if 'product' in selections:
+                for selection in selections['product']:
+                    value = selection.get('value')
+                    is_checked = selection.get('isChecked')
+                    
+                    if value:
+                        parts = value.split('_')
+                        if len(parts) >= 2:
+                            vendor_id = int(parts[0])
+                            tender_line_id = int(parts[1])
+                            
+                            # Find the purchase order for this vendor in the current round
+                            po = tender.purchase_order_ids.filtered(lambda p: p.partner_id.id == vendor_id and p.tender_round == tender.tender_round)
+                            if po:
+                                # Find the purchase order line for this tender line
+                                po_line = po[0].order_line.filtered(lambda l: l.tender_line_id.id == tender_line_id)
+                                if po_line:
+                                    # Update the user_selection field
+                                    po_line.write({'user_selection': is_checked})
+                                    
+                                    # If checked, uncheck all other lines for this tender line
+                                    if is_checked:
+                                        other_po_lines = tender.purchase_order_ids.filtered(
+                                            lambda p: p.tender_round == tender.tender_round
+                                        ).mapped('order_line').filtered(
+                                            lambda l: l.tender_line_id.id == tender_line_id and l.id != po_line[0].id
+                                        )
+                                        other_po_lines.write({'user_selection': False})
+            
+            # Process total selections
+            if 'total' in selections:
+                for selection in selections['total']:
+                    value = selection.get('value')
+                    is_checked = selection.get('isChecked')
+                    
+                    if value:
+                        vendor_id = int(value)
+                        
+                        # Find the purchase order for this vendor in the current round
+                        po = tender.purchase_order_ids.filtered(lambda p: p.partner_id.id == vendor_id and p.tender_round == tender.tender_round)
+                        if po:
+                            # Update the user_selection field
+                            po[0].write({'user_selection': is_checked})
+                            
+                            # If checked, uncheck all other purchase orders
+                            if is_checked:
+                                other_pos = tender.purchase_order_ids.filtered(
+                                    lambda p: p.id != po[0].id and p.tender_round == tender.tender_round
+                                )
+                                other_pos.write({'user_selection': False})
+            
+            # Force commit to ensure changes are saved
+            self.env.cr.commit()
+            
+            return {'success': True, 'message': 'All selections saved successfully'}
+            
+        except Exception as e:
+            _logger.error("Error saving all selections: %s", str(e))
+            return {'success': False, 'error': str(e)}
+    
+    def create_orders_from_selections(self, selection_ids):
+        """
+        Create purchase orders from the selected product-vendor combinations.
+        
+        Args:
+            selection_ids (list): List of strings in format "product_id:vendor_id"
+            
+        Returns:
+            dict: Action to reload the page
+        """
+        self.ensure_one()
+        if not selection_ids:
+            return {'type': 'ir.actions.act_window_close'}
+            
+        # Parse the selection IDs
+        selections = []
+        for selection in selection_ids:
+            parts = selection.split(':')
+            if len(parts) == 2:
+                try:
+                    product_id = int(parts[0])
+                    vendor_id = int(parts[1])
+                    selections.append((product_id, vendor_id))
+                except ValueError:
+                    continue
+        
+        if not selections:
+            return {'type': 'ir.actions.act_window_close'}
+            
+        # Group selections by vendor
+        vendor_products = {}
+        for product_id, vendor_id in selections:
+            if vendor_id not in vendor_products:
+                vendor_products[vendor_id] = []
+            vendor_products[vendor_id].append(product_id)
+            
+        # Create purchase orders for each vendor
+        created_orders = self.env['purchase.order']
+        for vendor_id, product_ids in vendor_products.items():
+            # Find the vendor's purchase order in the tender
+            vendor_po = self.purchase_order_ids.filtered(lambda po: po.partner_id.id == vendor_id and po.tender_round == self.tender_round)
+            if not vendor_po:
+                continue
+                
+            # Create a new purchase order
+            new_po = vendor_po[0].copy({
+                'state': 'purchase',
+                'date_approve': fields.Datetime.now(),
+                'tender_id': self.id,
+                'origin': f"{self.code} - {vendor_po[0].name}",
+                'tender_round': self.tender_round,
+                'user_selection': True,  # Mark as user selection
+                'system_selection': False,
+                'selection_note': _("Ürün bazlı kullanıcı seçimi"),
+            })
+            
+            # Keep only the selected product lines
+            lines_to_keep = []
+            for line in new_po.order_line:
+                if line.product_id and line.product_id.id in product_ids:
+                    lines_to_keep.append(line.id)
+                    # Mark line as user selection
+                    line.user_selection = True
+                    line.system_selection = False
+                    line.selection_note = _("Ürün bazlı kullanıcı seçimi")
+            
+            # Remove unselected lines
+            new_po.order_line.filtered(lambda l: l.id not in lines_to_keep).unlink()
+            
+            if new_po.order_line:
+                created_orders += new_po
+            else:
+                # If no lines remain, delete the order
+                new_po.unlink()
+            
+        # Log the creation
+        if created_orders:
+            self.message_post(
+                body=_("%s sipariş(ler) oluşturuldu: %s") % (
+                    len(created_orders), ", ".join(created_orders.mapped('name'))
+                ),
+                subtype_xmlid='mail.mt_note'
+            )
+            
         return {
             'type': 'ir.actions.client',
             'tag': 'reload',

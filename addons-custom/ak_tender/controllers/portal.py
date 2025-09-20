@@ -160,9 +160,7 @@ class TenderPortal(CustomerPortal): # Inherit from CustomerPortal for standard l
         - Multiple lines: lines parameter contains a list of line data
         """
         try:
-            # Log the request parameters for debugging
             _logger = logging.getLogger(__name__)
-            _logger.info(f"Update supplier order request: order_id={order_id}, access_token={access_token}, lines={lines}, line_id={line_id}, payment_term_id={payment_term_id}, kw={kw}")
             
             # Check access to the order
             order_sudo = self._document_check_access('purchase.order', order_id, access_token)
@@ -174,10 +172,19 @@ class TenderPortal(CustomerPortal): # Inherit from CustomerPortal for standard l
             if order_sudo.state not in ['draft', 'sent']:
                 _logger.warning(f"Order in non-editable state: {order_sudo.state}")
                 return {'error': 'This order cannot be edited anymore.'}
+                
+            # Check if the tender is in a valid state for editing
+            if order_sudo.tender_id:
+                # Get the current workflow state code
+                state_code = order_sudo.tender_id.workflow_current_state_id.code if order_sudo.tender_id.workflow_current_state_id else None
+                
+                # Check if editing is allowed based on tender state and round
+                if state_code not in ['first_tender_round', 'new_tender_round'] or order_sudo.tender_round != order_sudo.tender_id.tender_round:
+                    _logger.warning(f"Tender in non-editable state or round: state_code={state_code}, order_round={order_sudo.tender_round}, tender_round={order_sudo.tender_id.tender_round}")
+                    return {'error': 'Bu ihale adımında teklif düzenleme yapılamaz. Sadece teklif aşamasında ve güncel turda düzenleme yapabilirsiniz.'}
             
             # Handle multiple lines update
             if lines:
-                _logger.info(f"Processing multiple lines: {len(lines)}")
                 results = []
                 
                 for line_data in lines:
@@ -202,7 +209,6 @@ class TenderPortal(CustomerPortal): # Inherit from CustomerPortal for standard l
                     if 'price_unit' in line_data:
                         try:
                             price_unit = float(line_data.get('price_unit'))
-                            _logger.info(f"Updating price: old={line.price_unit}, new={price_unit}")
                             vals['price_unit'] = price_unit
                         except (ValueError, TypeError) as e:
                             _logger.warning(f"Invalid price_unit value: {line_data.get('price_unit')}, error: {str(e)}")
@@ -225,7 +231,6 @@ class TenderPortal(CustomerPortal): # Inherit from CustomerPortal for standard l
                     if 'date_planned' in line_data:
                         try:
                             date_planned = line_data.get('date_planned')
-                            _logger.info(f"Updating delivery date: old={line.date_planned}, new={date_planned}")
                             vals['date_planned'] = date_planned
                         except Exception as e:
                             _logger.warning(f"Invalid date_planned value: {line_data.get('date_planned')}, error: {str(e)}")
@@ -235,7 +240,6 @@ class TenderPortal(CustomerPortal): # Inherit from CustomerPortal for standard l
                     if 'warranty_period' in line_data:
                         try:
                             warranty_period = int(line_data.get('warranty_period'))
-                            _logger.info(f"Updating warranty period: old={line.warranty_period if hasattr(line, 'warranty_period') else 'N/A'}, new={warranty_period}")
                             vals['warranty_period'] = warranty_period
                         except (ValueError, TypeError) as e:
                             _logger.warning(f"Invalid warranty_period value: {line_data.get('warranty_period')}, error: {str(e)}")
@@ -244,30 +248,25 @@ class TenderPortal(CustomerPortal): # Inherit from CustomerPortal for standard l
                     # Handle supplier_ref update
                     if 'supplier_ref' in line_data:
                         supplier_ref = line_data.get('supplier_ref')
-                        _logger.info(f"Updating supplier reference: old={line.supplier_ref if hasattr(line, 'supplier_ref') else 'N/A'}, new={supplier_ref}")
                         vals['supplier_ref'] = supplier_ref
                     
                     # Handle alt_materials update
                     if 'alt_materials' in line_data:
                         alt_materials = line_data.get('alt_materials')
-                        _logger.info(f"Updating alternative materials: old={line.alt_materials if hasattr(line, 'alt_materials') else 'N/A'}, new={alt_materials}")
                         vals['alt_materials'] = alt_materials
                     
                     # Handle name update
                     if 'name' in line_data:
                         name = line_data.get('name')
-                        _logger.info(f"Updating purchase description: old={line.name}, new={name}")
                         vals['name'] = name
                     
                     # Handle taxes_id update
                     if 'taxes_id' in line_data:
                         taxes_id = line_data.get('taxes_id')
-                        _logger.info(f"Updating taxes: old={line.taxes_id}, new={taxes_id}")
                         vals['taxes_id'] = taxes_id
                     
                     # Update the line with all the values
                     if vals:
-                        _logger.info(f"Writing values to line: {vals}")
                         line.write(vals)
                         results.append({
                             'line_id': line_id,
@@ -277,20 +276,19 @@ class TenderPortal(CustomerPortal): # Inherit from CustomerPortal for standard l
                 # Update payment term if provided
                 if payment_term_id:
                     try:
-                        _logger.info(f"Updating payment term: {payment_term_id}")
                         # Handle special case for 'cash' value
                         if payment_term_id == 'cash':
                             # Find or create the cash payment term
                             cash_term = request.env['account.payment.term'].sudo().search([('name', '=', 'Peşin Ödeme')], limit=1)
                             if cash_term:
-                                order_sudo.payment_term_id = cash_term.id
+                                order_sudo.write({'payment_term_id': cash_term.id})
                             else:
                                 _logger.warning("Cash payment term not found")
                         else:
                             # Try to convert to integer for regular payment term IDs
                             try:
                                 payment_term_id_int = int(payment_term_id)
-                                order_sudo.payment_term_id = payment_term_id_int
+                                order_sudo.write({'payment_term_id': payment_term_id_int})
                             except (ValueError, TypeError) as e:
                                 _logger.warning(f"Invalid payment_term_id value: {payment_term_id}, error: {str(e)}")
                     except Exception as e:
@@ -299,14 +297,20 @@ class TenderPortal(CustomerPortal): # Inherit from CustomerPortal for standard l
                 # Recompute the order totals
                 order_sudo._amount_all()
                 
-                # Return updated values
-                return {
-                    'success': True,
-                    'lines_updated': len(results),
-                    'payment_term_updated': bool(payment_term_id),
-                    'amount_total': request.env['ir.qweb.field.monetary'].value_to_html(
-                        order_sudo.amount_total, {'display_currency': order_sudo.currency_id}),
+                # Prepare the response
+                response = {
+                    'result': {
+                        'success': True,
+                        'lines_updated': len(results),
+                        'payment_term_updated': bool(payment_term_id),
+                        'amount_total': request.env['ir.qweb.field.monetary'].value_to_html(
+                            order_sudo.amount_total, {'display_currency': order_sudo.currency_id}),
+                        'total_amount': order_sudo.amount_total,  # Add raw value for frontend calculations
+                        'currency_symbol': order_sudo.currency_id.symbol,  # Add currency symbol for display
+                    }
                 }
+                
+                return response
             
             # Handle single line update (backward compatibility)
             elif line_id:
@@ -327,7 +331,6 @@ class TenderPortal(CustomerPortal): # Inherit from CustomerPortal for standard l
                 if 'price_unit' in kw:
                     try:
                         price_unit = float(kw.get('price_unit'))
-                        _logger.info(f"Updating price: old={line.price_unit}, new={price_unit}")
                         vals['price_unit'] = price_unit
                     except (ValueError, TypeError) as e:
                         _logger.warning(f"Invalid price_unit value: {kw.get('price_unit')}, error: {str(e)}")
@@ -340,7 +343,6 @@ class TenderPortal(CustomerPortal): # Inherit from CustomerPortal for standard l
                         if discount < 0 or discount > 100:
                             _logger.warning(f"Invalid discount value (must be between 0-100): {discount}")
                             return {'error': 'Invalid discount value (must be between 0-100)'}
-                        _logger.info(f"Updating discount: old={line.discount}, new={discount}")
                         vals['discount'] = discount
                     except (ValueError, TypeError) as e:
                         _logger.warning(f"Invalid discount value: {kw.get('discount')}, error: {str(e)}")
@@ -350,7 +352,6 @@ class TenderPortal(CustomerPortal): # Inherit from CustomerPortal for standard l
                 if 'date_planned' in kw:
                     try:
                         date_planned = kw.get('date_planned')
-                        _logger.info(f"Updating delivery date: old={line.date_planned}, new={date_planned}")
                         vals['date_planned'] = date_planned
                     except Exception as e:
                         _logger.warning(f"Invalid date_planned value: {kw.get('date_planned')}, error: {str(e)}")
@@ -360,7 +361,6 @@ class TenderPortal(CustomerPortal): # Inherit from CustomerPortal for standard l
                 if 'warranty_period' in kw:
                     try:
                         warranty_period = int(kw.get('warranty_period'))
-                        _logger.info(f"Updating warranty period: old={line.warranty_period if hasattr(line, 'warranty_period') else 'N/A'}, new={warranty_period}")
                         vals['warranty_period'] = warranty_period
                     except (ValueError, TypeError) as e:
                         _logger.warning(f"Invalid warranty_period value: {kw.get('warranty_period')}, error: {str(e)}")
@@ -369,30 +369,25 @@ class TenderPortal(CustomerPortal): # Inherit from CustomerPortal for standard l
                 # Handle supplier_ref update
                 if 'supplier_ref' in kw:
                     supplier_ref = kw.get('supplier_ref')
-                    _logger.info(f"Updating supplier reference: old={line.supplier_ref if hasattr(line, 'supplier_ref') else 'N/A'}, new={supplier_ref}")
                     vals['supplier_ref'] = supplier_ref
                 
                 # Handle alt_materials update
                 if 'alt_materials' in kw:
                     alt_materials = kw.get('alt_materials')
-                    _logger.info(f"Updating alternative materials: old={line.alt_materials if hasattr(line, 'alt_materials') else 'N/A'}, new={alt_materials}")
                     vals['alt_materials'] = alt_materials
                 
                 # Handle name update
                 if 'name' in kw:
                     name = kw.get('name')
-                    _logger.info(f"Updating purchase description: old={line.name}, new={name}")
                     vals['name'] = name
                 
                 # Handle taxes_id update
                 if 'taxes_id' in kw:
                     taxes_id = kw.get('taxes_id')
-                    _logger.info(f"Updating taxes: old={line.taxes_id}, new={taxes_id}")
                     vals['taxes_id'] = taxes_id
                 
                 # Update the line with all the values
                 if vals:
-                    _logger.info(f"Writing values to line: {vals}")
                     line.write(vals)
                     
                     # Recompute the order if price or discount was updated
@@ -402,29 +397,34 @@ class TenderPortal(CustomerPortal): # Inherit from CustomerPortal for standard l
                 # Update payment term if provided
                 if payment_term_id:
                     try:
-                        _logger.info(f"Updating payment term: {payment_term_id}")
                         # Handle special case for 'cash' value
                         if payment_term_id == 'cash':
                             # Find or create the cash payment term
                             cash_term = request.env['account.payment.term'].sudo().search([('name', '=', 'Peşin Ödeme')], limit=1)
                             if cash_term:
-                                order_sudo.payment_term_id = cash_term.id
+                                order_sudo.write({'payment_term_id': cash_term.id})
                             else:
                                 _logger.warning("Cash payment term not found")
                         else:
                             # Try to convert to integer for regular payment term IDs
                             try:
                                 payment_term_id_int = int(payment_term_id)
-                                order_sudo.payment_term_id = payment_term_id_int
+                                order_sudo.write({'payment_term_id': payment_term_id_int})
                             except (ValueError, TypeError) as e:
                                 _logger.warning(f"Invalid payment_term_id value: {payment_term_id}, error: {str(e)}")
                     except Exception as e:
                         _logger.exception(f"Error updating payment term: {str(e)}")
                 
-                # Return updated values
+                # Return updated values in the format expected by the JavaScript
                 result = {
-                    'success': True,
-                    'payment_term_updated': bool(payment_term_id)
+                    'result': {
+                        'success': True,
+                        'payment_term_updated': bool(payment_term_id),
+                        'amount_total': request.env['ir.qweb.field.monetary'].value_to_html(
+                            order_sudo.amount_total, {'display_currency': order_sudo.currency_id}),
+                        'total_amount': order_sudo.amount_total,  # Add raw value for frontend calculations
+                        'currency_symbol': order_sudo.currency_id.symbol  # Add currency symbol for display
+                    }
                 }
                 
                 # Add price-related values if price or discount was updated

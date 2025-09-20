@@ -181,7 +181,6 @@ function initializePortalPurchaseEdit() {
                 // Get payment term value
                 var paymentTermSelect = document.querySelector('select[name="payment_term_id"]');
                 var paymentTermId = paymentTermSelect ? paymentTermSelect.value : false;
-                console.log('Payment term selected:', paymentTermId);
                 
                 // Prepare params object for all lines
                 var params = {
@@ -274,12 +273,16 @@ function initializePortalPurchaseEdit() {
                             });
                             
                             // Update the total amount on the left side if it exists
+                            // Handle nested result structure
+                            if (data.result && data.result.result && data.result.result.amount_total) {
+                                // Use the nested result
+                                data.result = data.result.result;
+                            }
+                            
                             if (data.result && data.result.amount_total) {
-                                // Try to find the total amount element - it's the first h1 or h2 or h3 in the sidebar
-                                var totalAmountElement = document.querySelector('h1, h2, h3');
-                                if (totalAmountElement && totalAmountElement.textContent.includes('$')) {
-                                    console.log('Found total amount element:', totalAmountElement);
-                                    
+                                // Try to find the total amount element by its data-id attribute
+                                var totalAmountElement = document.querySelector('[data-id="total_amount"]');
+                                if (totalAmountElement) {
                                     // Get the updated amount from the response
                                     var amountTotal = data.result.amount_total;
                                     
@@ -293,9 +296,35 @@ function initializePortalPurchaseEdit() {
                                     
                                     // Update the element
                                     totalAmountElement.textContent = amountTotal;
-                                    console.log('Updated total amount to:', amountTotal);
+                                    
+                                    // Force a refresh of the element
+                                    totalAmountElement.style.display = 'none';
+                                    setTimeout(function() {
+                                        totalAmountElement.style.display = '';
+                                    }, 10);
                                 } else {
-                                    console.log('Total amount element not found');
+                                    // Try alternative selectors
+                                    var alternativeElement = document.querySelector('h4[t-field="order.amount_total"]');
+                                    if (alternativeElement) {
+                                        alternativeElement.textContent = amountTotal;
+                                    } else {
+                                        // Try a more generic approach - find any element that might contain the total
+                                        var possibleElements = document.querySelectorAll('h1, h2, h3, h4, h5, h6, .o_portal_sidebar');
+                                        
+                                        // Try to find an element that contains currency symbols or numbers
+                                        for (var i = 0; i < possibleElements.length; i++) {
+                                            var el = possibleElements[i];
+                                            if (el.textContent.match(/[$€£¥]|[0-9,.]/)) {
+                                                el.textContent = amountTotal;
+                                                break;
+                                            }
+                                        }
+                                        
+                                        // As a last resort, force a page reload after a short delay
+                                        setTimeout(function() {
+                                            window.location.reload();
+                                        }, 1000);
+                                    }
                                 }
                             }
                             
@@ -397,8 +426,7 @@ function initializePortalPurchaseEdit() {
                     saveInProgress = false;
                 };
                 
-                // Log the request data for debugging
-                console.log('Sending request with params:', params);
+                // Send the request
                 
                 xhr.send(JSON.stringify({
                     jsonrpc: "2.0",
