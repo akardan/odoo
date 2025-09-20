@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- S Paketi -->
+        <record id="service_package_s" model="digital.service.package">
+            <field name="name">S Paket</field>
+            <field name="code">S</field>
+            <field name="max_prospectus">25</field>
+            <field name="price">999.00</field>
+            <field name="currency_id" ref="base.TRY"/>
+            <field name="ai_voice_included">False</field>
+            <field name="studio_voice_included">False</field>
+            <field name="multi_language">False</field>
+            <field name="custom_development">False</field>
+            <field name="account_manager">False</field>
+            <field name="description"><![CDATA[
+                <h3>S Paket - Başlangıç Düzeyi</h3>
+                <ul>
+                    <li>25 Adet Dijital Prospektüs</li>
+                    <li>Temel QR Kod Erişimi</li>
+                    <li>Türkçe İçerik Desteği</li>
+                    <li>Temel Raporlama</li>
+                    <li>E-posta Desteği</li>
+                </ul>
+            ]]></field>
+        </record>
+
+        <!-- M Paketi -->
+        <record id="service_package_m" model="digital.service.package">
+            <field name="name">M Paket</field>
+            <field name="code">M</field>
+            <field name="max_prospectus">50</field>
+            <field name="price">1999.00</field>
+            <field name="currency_id" ref="base.TRY"/>
+            <field name="ai_voice_included">True</field>
+            <field name="studio_voice_included">False</field>
+            <field name="multi_language">True</field>
+            <field name="custom_development">False</field>
+            <field name="account_manager">False</field>
+            <field name="description"><![CDATA[
+                <h3>M Paket - Orta Düzey</h3>
+                <ul>
+                    <li>50 Adet Dijital Prospektüs</li>
+                    <li>AI Seslendirme Dahil</li>
+                    <li>Çoklu Dil Desteği (TR/EN)</li>
+                    <li>Gelişmiş Raporlama</li>
+                    <li>Öncelikli E-posta Desteği</li>
+                    <li>Analitik Dashboard</li>
+                </ul>
+            ]]></field>
+        </record>
+
+        <!-- L Paketi -->
+        <record id="service_package_l" model="digital.service.package">
+            <field name="name">L Paket</field>
+            <field name="code">L</field>
+            <field name="max_prospectus">100</field>
+            <field name="price">3999.00</field>
+            <field name="currency_id" ref="base.TRY"/>
+            <field name="ai_voice_included">True</field>
+            <field name="studio_voice_included">True</field>
+            <field name="multi_language">True</field>
+            <field name="custom_development">True</field>
+            <field name="account_manager">False</field>
+            <field name="description"><![CDATA[
+                <h3>L Paket - İleri Düzey</h3>
+                <ul>
+                    <li>100 Adet Dijital Prospektüs</li>
+                    <li>AI + Stüdyo Seslendirme</li>
+                    <li>Çoklu Dil Desteği (TR/EN/AR)</li>
+                    <li>Özel Yazılım Geliştirme</li>
+                    <li>7/24 Telefon Desteği</li>
+                    <li>Detaylı Analitik ve Raporlama</li>
+                    <li>API Entegrasyonu</li>
+                </ul>
+            ]]></field>
+        </record>
+
+        <!-- XL Paketi -->
+        <record id="service_package_xl" model="digital.service.package">
+            <field name="name">XL Paket</field>
+            <field name="code">XL</field>
+            <field name="max_prospectus">999999</field>
+            <field name="price">7999.00</field>
+            <field name="currency_id" ref="base.TRY"/>
+            <field name="ai_voice_included">True</field>
+            <field name="studio_voice_included">True</field>
+            <field name="multi_language">True</field>
+            <field name="custom_development">True</field>
+            <field name="account_manager">True</field>
+            <field name="description"><![CDATA[
+                <h3>XL Paket - Kurumsal Çözüm</h3>
+                <ul>
+                    <li>Sınırsız Dijital Prospektüs</li>
+                    <li>AI + Profesyonel Stüdyo Seslendirme</li>
+                    <li>Tüm Diller Desteklenir</li>
+                    <li>Tam Özelleştirilebilir Yazılım</li>
+                    <li>Özel Müşteri Hesap Yöneticisi</li>
+                    <li>7/24 VIP Destek</li>
+                    <li>Gelişmiş API ve Entegrasyonlar</li>
+                    <li>Özel Eğitim ve Danışmanlık</li>
+                </ul>
+            ]]></field>
+        </record>
+    </data>
+</odoo>

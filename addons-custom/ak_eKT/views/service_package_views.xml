@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Hizmet Paketi Form View -->
+    <record id="service_package_form_view" model="ir.ui.view">
+        <field name="name">Service Package Form</field>
+        <field name="model">digital.service.package</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button class="oe_stat_button" type="object" name="action_view_subscriptions" icon="fa-users">
+                            <field string="Abonelikler" name="subscription_count" widget="statinfo"/>
+                        </button>
+                    </div>
+                    
+                    <div class="oe_title">
+                        <h1><field name="name" placeholder="Paket Adı"/></h1>
+                    </div>
+                    
+                    <group>
+                        <group>
+                            <field name="code"/>
+                            <field name="max_prospectus"/>
+                            <field name="active"/>
+                        </group>
+                        <group>
+                            <field name="price"/>
+                            <field name="currency_id"/>
+                        </group>
+                    </group>
+                    
+                    <group string="Paket Özellikleri">
+                        <group>
+                            <field name="ai_voice_included"/>
+                            <field name="studio_voice_included"/>
+                            <field name="multi_language"/>
+                        </group>
+                        <group>
+                            <field name="custom_development"/>
+                            <field name="account_manager"/>
+                        </group>
+                    </group>
+                    
+                    <notebook>
+                        <page string="Açıklama">
+                            <field name="description" widget="html"/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Hizmet Paketi List View -->
+    <record id="service_package_list_view" model="ir.ui.view">
+        <field name="name">Service Package List</field>
+        <field name="model">digital.service.package</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <field name="code"/>
+                <field name="max_prospectus"/>
+                <field name="price"/>
+                <field name="currency_id"/>
+                <field name="ai_voice_included" widget="boolean_toggle"/>
+                <field name="studio_voice_included" widget="boolean_toggle"/>
+                <field name="active" widget="boolean_toggle"/>
+            </list>
+        </field>
+    </record>
+    
+    <!-- Hizmet Paketi Search View -->
+    <record id="service_package_search_view" model="ir.ui.view">
+        <field name="name">Service Package Search</field>
+        <field name="model">digital.service.package</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="code"/>
+                <separator/>
+                <filter string="AI Seslendirme" name="ai_voice" domain="[('ai_voice_included', '=', True)]"/>
+                <filter string="Stüdyo Seslendirme" name="studio_voice" domain="[('studio_voice_included', '=', True)]"/>
+                <filter string="Çoklu Dil" name="multi_language" domain="[('multi_language', '=', True)]"/>
+                <filter string="Özel Geliştirme" name="custom_dev" domain="[('custom_development', '=', True)]"/>
+                <separator/>
+                <filter string="Aktif" name="active" domain="[('active', '=', True)]"/>
+                <filter string="Arşivlenmiş" name="inactive" domain="[('active', '=', False)]"/>
+            </search>
+        </field>
+    </record>
+
+    <!-- Action -->
+    <record id="service_package_action" model="ir.actions.act_window">
+        <field name="name">Hizmet Paketleri</field>
+        <field name="res_model">digital.service.package</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                İlk hizmet paketinizi oluşturun!
+            </p>
+        </field>
+    </record>
+</odoo>

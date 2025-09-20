@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Müşteri Abonelik Form View -->
+    <record id="customer_subscription_form_view" model="ir.ui.view">
+        <field name="name">Customer Subscription Form</field>
+        <field name="model">digital.customer.subscription</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button string="Aktifleştir" name="action_activate" 
+                            states="draft" type="object" class="btn-primary"/>
+                    <button string="İptal Et" name="action_cancel" 
+                            states="draft,active" type="object" class="btn-secondary"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,active,expired,cancelled"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button class="oe_stat_button" type="object" name="action_view_prospectus" icon="fa-file-text">
+                            <field string="Prospektüsler" name="prospectus_count" widget="statinfo"/>
+                        </button>
+                        <button class="oe_stat_button" icon="fa-cubes">
+                            <field string="Kalan Kota" name="remaining_quota" widget="statinfo"/>
+                        </button>
+                    </div>
+                    
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+                    
+                    <group>
+                        <group>
+                            <field name="partner_id"/>
+                            <field name="package_id"/>
+                        </group>
+                        <group>
+                            <field name="start_date"/>
+                            <field name="end_date"/>
+                        </group>
+                    </group>
+                    
+                    <group string="Paket Özellikleri" col="4">
+                        <field name="package_id" invisible="1"/>
+                        <label for="package_id" string="Maksimum Prospektüs:"/>
+                        <div>
+                            <field name="package_id" readonly="1" nolabel="1" options="{'no_create': True, 'no_edit': True}"/>
+                        </div>
+                        <label for="package_id" string="AI Seslendirme:"/>
+                        <div>
+                            <field name="package_id" readonly="1" nolabel="1" options="{'no_create': True, 'no_edit': True}"/>
+                        </div>
+                        <label for="package_id" string="Çoklu Dil:"/>
+                        <div>
+                            <field name="package_id" readonly="1" nolabel="1" options="{'no_create': True, 'no_edit': True}"/>
+                        </div>
+                        <label for="package_id" string="Özel Geliştirme:"/>
+                        <div>
+                            <field name="package_id" readonly="1" nolabel="1" options="{'no_create': True, 'no_edit': True}"/>
+                        </div>
+                    </group>
+                    
+                    <group string="Fiyatlandırma">
+                        <field name="price" widget="monetary"/>
+                        <field name="currency_id" invisible="1"/>
+                    </group>
+                    
+                    <notebook>
+                        <page string="Notlar">
+                            <field name="notes"/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- Müşteri Abonelik List View -->
+    <record id="customer_subscription_list_view" model="ir.ui.view">
+        <field name="name">Customer Subscription List</field>
+        <field name="model">digital.customer.subscription</field>
+        <field name="arch" type="xml">
+            <list decoration-success="state=='active'" decoration-muted="state=='expired'">
+                <field name="name"/>
+                <field name="partner_id"/>
+                <field name="package_id"/>
+                <field name="prospectus_count"/>
+                <field name="remaining_quota"/>
+                <field name="start_date"/>
+                <field name="end_date"/>
+                <field name="state" widget="badge"/>
+            </list>
+        </field>
+    </record>
+    
+    <!-- Müşteri Abonelik Search View -->
+    <record id="customer_subscription_search_view" model="ir.ui.view">
+        <field name="name">Customer Subscription Search</field>
+        <field name="model">digital.customer.subscription</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="partner_id"/>
+                <field name="package_id"/>
+                <separator/>
+                <filter string="Taslak" name="draft" domain="[('state', '=', 'draft')]"/>
+                <filter string="Aktif" name="active" domain="[('state', '=', 'active')]"/>
+                <filter string="Süresi Dolmuş" name="expired" domain="[('state', '=', 'expired')]"/>
+                <filter string="İptal" name="cancelled" domain="[('state', '=', 'cancelled')]"/>
+                <separator/>
+                <filter string="Bu Ay Başlayan" name="start_this_month" 
+                        domain="[('start_date', '&gt;=', (context_today().replace(day=1)).strftime('%Y-%m-%d'))]"/>
+                <filter string="Bu Ay Biten" name="end_this_month" 
+                        domain="[('end_date', '&gt;=', (context_today().replace(day=1)).strftime('%Y-%m-%d')),
+                                 ('end_date', '&lt;=', (context_today().replace(day=1) + relativedelta(months=1, days=-1)).strftime('%Y-%m-%d'))]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Müşteri" name="group_by_partner" context="{'group_by': 'partner_id'}"/>
+                    <filter string="Paket" name="group_by_package" context="{'group_by': 'package_id'}"/>
+                    <filter string="Durum" name="group_by_state" context="{'group_by': 'state'}"/>
+                    <filter string="Başlangıç Ayı" name="group_by_start_month" context="{'group_by': 'start_date:month'}"/>
+                    <filter string="Bitiş Ayı" name="group_by_end_month" context="{'group_by': 'end_date:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Action -->
+    <record id="customer_subscription_action" model="ir.actions.act_window">
+        <field name="name">Müşteri Abonelikleri</field>
+        <field name="res_model">digital.customer.subscription</field>
+        <field name="view_mode">list,form</field>
+        <field name="context">{'search_default_active': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                İlk müşteri aboneliğinizi oluşturun!
+            </p>
+        </field>
+    </record>
+</odoo>
