@@ -585,8 +585,7 @@
                     <field name="is_urgent"/>
                     <field name="urgent_deadline"/>
                     
-                    <progressbar field="activity_state" colors='{"overdue": "danger", "today": "warning", "planned": "success"}'/>
-                    
+                    <progressbar field="tender_type" colors='{"direct": "info", "indirect": "success", "mice": "primary", "promotion": "warning"}'/>
                     <templates>
                         <t t-name="menu">
                             <div class="o_kanban_tender_card_manage_pane">
