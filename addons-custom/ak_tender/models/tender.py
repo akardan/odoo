@@ -421,6 +421,27 @@ class AkTender(models.Model):
                        help=_("İhale sürecinin başlığı veya kısa adı."))
     code = fields.Char(string=_('İhale Kodu'), required=True, copy=False, readonly=True,
                        default=lambda self: _('New'))
+
+    delay_days = fields.Integer(string=_('Gecikme Günü'), compute='_compute_delay_days', store=False)
+
+    @api.depends('workflow_current_state_id', 'transition_history_ids.create_date')
+    def _compute_delay_days(self):
+        for record in self:
+            delay = 0
+            if record.workflow_current_state_id:
+                # Find the latest transition to the current state
+                latest_transition = self.env['ak.workflow.transition.history'].search([
+                    ('res_model', '=', record._name),
+                    ('res_id', '=', record.id),
+                    ('to_state_id', '=', record.workflow_current_state_id.id),
+                ], order='create_date desc', limit=1)
+
+                if latest_transition and latest_transition.create_date:
+                    # Calculate the difference in days
+                    time_diff = fields.Datetime.now() - latest_transition.create_date
+                    delay = time_diff.days
+
+            record.delay_days = delay
     
     # ERP Entegrasyon Alanları (Simülasyon)
     erp_pr_id = fields.Char(string=_('ERP SAT No'), copy=False,
@@ -498,16 +519,47 @@ class AkTender(models.Model):
                                        domain=[('supplier_rank', '>=', 0)],
                                        help=_("Bu ihaleye davet edilecek tedarikçiler."))
 
+    # Kazanan Teklifler (SAS)
+    winning_order_ids = fields.Many2many('purchase.order', string=_('Kazanan Teklifler (SAS)'), compute='_compute_winning_orders', store=True, readonly=True)
+    
+    @api.depends('purchase_order_ids.state', 'purchase_order_ids.tender_round', 'tender_round')
+    def _compute_winning_orders(self):
+        for record in self:
+            winning_orders = self.env['purchase.order']
+            if record.purchase_order_ids:
+                # Get the latest tender round
+                last_tender_round = max(record.purchase_order_ids.mapped('tender_round')) if record.purchase_order_ids.mapped('tender_round') else 0
+
+                # Filter purchase orders from the last tender round that are in 'purchase' or 'to approve' state
+                winning_orders = record.purchase_order_ids.filtered(lambda po:
+                    po.tender_round == last_tender_round and
+                    po.state in ('to approve', 'purchase', 'done')  3
+                )
+            record.winning_order_ids = winning_orders
+        
+    winning_supplier_ids = fields.Many2many(
+        'res.partner',
+        string=_('Kazanan Tedarikçiler'),
+        compute='_compute_winning_supplier_ids',
+        store=False, # This is a dynamic list based on current state
+        help=_("Son teklif turunda Satınalma Siparişi veya Onaylanacak statüsündeki tedarikçiler.")
+    )
+
+    @api.depends('winning_order_ids')
+    def _compute_winning_supplier_ids(self):
+        for record in self:
+            winning_partners = self.env['res.partner']
+            if record.winning_order_ids:
+                winning_partners |= record.winning_order_ids.mapped('partner_id')
+            record.winning_supplier_ids = winning_partners
+
     # İhale Sonuçları (One2many ilişki)
     purchase_order_ids = fields.One2many('purchase.order', 'tender_id', string=_('Teklifler (SAT)'))
-    
-    # Kazanan Teklif ve Hedef Fiyat (Raporlama için)
-    winning_order_id = fields.Many2one('purchase.order', string=_('Kazanan Teklif (SAS)'), compute='_compute_winning_order', store=True, readonly=True)
-    
+        
     # TEKLİF DOKÜMANINA GÖRE KRİTİK ALAN: HEDEF FİYAT
     currency_id = fields.Many2one('res.currency', string=_('Para Birimi'), default=lambda self: self.env.company.currency_id)
     target_price = fields.Monetary(string=_('Hedef Fiyat'), currency_field='currency_id',
-                                   help=_("Satın Alma Direktörü tarafından belirlenen hedef fiyat."))
+                                help=_("Satın Alma Direktörü tarafından belirlenen hedef fiyat."))
     
     def calculate_total_target_price(self):
         """
@@ -664,22 +716,6 @@ class AkTender(models.Model):
                 tender.offer_count = 0
 
     
-    @api.depends('purchase_order_ids.amount_total', 'purchase_order_ids.state', 'workflow_current_state_id')
-    def _compute_winning_order(self):
-        for tender in self:
-            # Sadece onaylanmış siparişleri göster
-            selected_order = tender.purchase_order_ids.filtered(lambda o: o.state == 'purchase')
-            
-            # Eğer onaylanmış sipariş varsa, onu göster
-            if selected_order:
-                tender.winning_order_id = selected_order[0]
-            # Eğer ihale 'approved' veya 'done' durumundaysa ve onaylanmış sipariş yoksa
-            # en düşük fiyatlı teklifi göster
-            elif tender.workflow_current_state_id.code in ('approved', 'done') and tender.purchase_order_ids:
-                tender.winning_order_id = min(tender.purchase_order_ids, key=lambda o: o.amount_total)
-            # Diğer durumlarda kazanan teklif gösterme
-            else:
-                tender.winning_order_id = False
     
     @api.depends('purchase_order_ids')
     def _compute_purchase_order_count(self):

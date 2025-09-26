@@ -25,8 +25,6 @@
                                 string="Tedarikçi Ekle"
                                 help="İhaleye yeni tedarikçiler ekle"
                             />
-                            <!-- Button removed and replaced with server action -->
-                            <!-- Button removed and replaced with server action -->
                             <button name="action_review_offers"
                                 type="object"
                                 class="oe_stat_button"
@@ -112,6 +110,10 @@
                                         <field name="quantity"/>
                                         <field name="uom_id"/>
                                         <field name="required_delivery_date" />
+                                        <button name="action_view_purchase_history"
+                                                type="object"
+                                                icon="fa-history"
+                                                class="btn-link"/>
                                         <field name="target_price" widget="monetary" options="{'currency_field': 'currency_id'}" />
                                         <field name="currency_id" string=" " />
                                         <field name="attachment1" widget="binary" filename="attachment1_filename" optional="show"/>
@@ -125,10 +127,6 @@
                                         <button name="action_preview_attachment2" type="object"
                                                 icon="fa-eye"
                                                 attrs="{'invisible': [('attachment2', '=', False)]}"
-                                                class="btn-link"/>
-                                        <button name="action_view_purchase_history"
-                                                type="object"
-                                                icon="fa-history"
                                                 class="btn-link"/>
                                         <control>
                                             <create string="Ürün Ekle" context="{'default_display_type': 'product'}"/>
@@ -241,6 +239,7 @@
                                 <field name="purchase_order_ids" nolabel="1" context="{'default_tender_id': id, 'default_state': 'draft', 'group_by': 'tender_round'}">
                                     <list default_group_by="tender_round">
                                         <field name="currency_id" column_invisible="True"/>
+                                        <field name="name"/>
                                         <field name="partner_id" domain="[('id', 'in', parent.invited_partners)]"/>
                                         <field name="date_order"/>
                                         <field name="tender_round"/>
@@ -254,7 +253,7 @@
                                 <group class="oe_subtotal_footer oe_right">
                                     <field name="target_price" widget="monetary" options="{'currency_field': 'currency_id'}"
                                            readonly="[('workflow_current_state_id.code', 'not in', ['first_tender_round', 'target_price_set'])]"/>
-                                    <field name="winning_order_id" readonly="1" />
+                                    <field name="winning_order_ids" widget="many2many_tags" readonly="1" />
                                 </group>
                                 
                                 <!-- NPV Hesaplama Alanları -->
@@ -515,10 +514,12 @@
                     <field name="start_date"/>
                     <field name="end_date"/>
                     <field name="request_date" optional="show"/>
-                    <field name="target_price" widget="monetary" options="{'currency_field': 'currency_id'}"/>
+                    <field name="target_price" widget="monetary" options="{'currency_field': 'currency_id'}" width="20%"/>
                     <field name="currency_id" invisible="1"/>
                     <field name="workflow_current_state_id" widget="badge"/>
+                    <field name="delay_days" string="Gecikme Günü"/>
                     <field name="is_urgent" widget="boolean_toggle"/>
+                    <field name="winning_supplier_ids" widget="many2many_tags" optional="show"/>
                     <!-- <field name="use_economic_data" widget="boolean_toggle" optional="hide"/>
                     <field name="economic_data_source" optional="hide"/> -->
                 </list>
@@ -576,7 +577,7 @@
                     <field name="invited_partners"/>
                     <field name="currency_id"/>
                     <field name="target_price"/>
-                    <field name="winning_order_id"/>
+                    <field name="winning_order_ids" widget="many2many_tags"/>
                     <field name="purchase_order_count"/>
                     <field name="offer_count"/>
                     <field name="create_date"/>
@@ -692,12 +693,12 @@
                                     </div>
                                     
                                     <!-- Winning Result -->
-                                    <div class="d-flex mb-1" t-if="record.winning_order_id.raw_value">
+                                    <div class="d-flex mb-1" t-if="record.winning_order_ids.raw_value">
                                         <span class="me-auto text-success o_form_label">
                                             <i class="fa fa-trophy"/> Kazanan
                                         </span>
                                         <span class="text-success fw-bold">
-                                            <field name="winning_order_id" options="{'no_open': True}"/>
+                                            <field name="winning_order_ids" options="{'no_open': True}"/>
                                         </span>
                                     </div>
                                 </div>

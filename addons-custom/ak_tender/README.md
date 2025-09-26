@@ -2,15 +2,20 @@
 
 ## Genel Bakış
 
-Bu modül, çok aşamalı satın alma ihale süreçlerini Odoo üzerinde yönetmek için tasarlanmıştır. Modül, iş akışı (workflow) tabanlı bir yaklaşım kullanarak ihale süreçlerini yönetir.
+Bu modül, çok aşamalı satın alma ihale süreçlerini Odoo üzerinde yönetmek için tasarlanmıştır. Modül, iş akışı (workflow) tabanlı bir yaklaşım kullanarak ihale süreçlerini yönetir ve ihale ile satın alma siparişi işlevselliğinde sürekli iyileştirmeler yapılmıştır.
 
 ## Özellikler
 
 - ERP Entegrasyon (simülasyon)
+- SAT içe aktar Fonksiyonelliği
 - Çok Aşamalı İhale Süreci (1. Teklif Toplama, Hedef Fiyat, 2. Teklif Toplama)
 - Tedarikçi Portal Entegrasyonu (veri girişi temsili)
 - Onay Mekanizması entegrasyonu (Approvals modülü ile)
+- Hedef Fiyat Belirleme Sihirbazı (sunucu eylemi ile erişim)
+- Satın Alma Siparişi Oluşturma ve Toplu E-posta Gönderme Sunucu Eylemleri
+- İş Akışı Geçiş Sihirbazında eylemlerin görüntülenmesi
 - Raporlama ve Analiz altyapısı
+- İhale tiplerine göre ilerleme çubuğu renklendirmesi
 - İhale Kalemleri yönetimi
 - Odoo'nun temel satın alma (purchase.order) modülü ile entegrasyon
 - Farklı ihale tipleri için görsel yönetim özellikleri (direct, indirect, mice, promotion)
@@ -194,7 +199,7 @@ Tedarikçi karşılaştırma raporu, farklı tedarikçilerden gelen teklifleri y
 
 - Ürün bazında fiyat karşılaştırması
 - En düşük fiyatlı tekliflerin otomatik vurgulanması
-- NPV (Net Bugünkü Değer) hesaplamaları
+- Gelişmiş NPV (Net Bugünkü Değer) hesaplamaları ve rapor stil iyileştirmeleri
 - Teslimat tarihi ve garanti süresi karşılaştırması
 - Alternatif malzeme önerilerinin görüntülenmesi
 - Toplam fiyat karşılaştırması ve otomatik seçim önerisi
@@ -210,11 +215,12 @@ Tedarikçiler için geliştirilmiş portal arayüzü, aşağıdaki özelliklere 
 - Alternatif malzeme önerileri sunma
 - Vergi seçimi yapabilme
 - Toplu değişiklik kaydetme
+- İhale listesi ve teklif formu şablonları kaldırıldı, ilgili Odoo sayfalara yönlendirme yapıldı.
 
 ## NPV Hesaplamaları
 
 NPV (Net Bugünkü Değer) hesaplamaları, farklı tedarikçilerden gelen tekliflerin finansal karşılaştırmasını yapmak için kullanılır. Bu özellik, aşağıdaki avantajları sağlar:
 
-- Farklı ödeme koşullarının etkisini değerlendirme
+- Farklı ödeme koşullarına göre bölünmüş ödeme desteği ile NPV hesaplamaları
 - Uzun vadeli satın almalarda gerçek maliyeti hesaplama
 - İskonto oranı belirleme ve ekonomik faktörleri dikkate alma

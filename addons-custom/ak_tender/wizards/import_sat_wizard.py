@@ -309,7 +309,7 @@ class SatImportWizard(models.TransientModel):
         end_date = start_date + timedelta(days=7)
         
         vals = {
-            'name': data.get('name') or f"SAT-{data.get('erp_pr_id')}",
+            'name': data.get('erp_pr_id').lstrip('0') if data.get('erp_pr_id') else False,  # İhale adı olarak SAT numarasını kullan, baştaki sıfırları at
             'erp_pr_id': data.get('erp_pr_id'),
             'erp_company_code': data.get('company_code'),
             'erp_plant_code': data.get('plant_code'),
