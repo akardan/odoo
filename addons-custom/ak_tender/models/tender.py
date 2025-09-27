@@ -533,7 +533,7 @@ class AkTender(models.Model):
                 # Filter purchase orders from the last tender round that are in 'purchase' or 'to approve' state
                 winning_orders = record.purchase_order_ids.filtered(lambda po:
                     po.tender_round == last_tender_round and
-                    po.state in ('to approve', 'purchase', 'done')  3
+                    po.state in ('to approve', 'purchase', 'done') 
                 )
             record.winning_order_ids = winning_orders
         

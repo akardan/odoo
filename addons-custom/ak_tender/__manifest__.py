@@ -19,7 +19,7 @@
     'category': 'Purchases',
     'version': '0.5', # Versiyon yükseltildi
     'sequence': -225,
-    'depends': ['base', 'purchase', 'stock', 'mail', 'contacts', 'product', 'portal', 'ak_workflow', 'sale'],
+    'depends': ['base', 'web', 'purchase', 'stock', 'mail', 'contacts', 'product', 'portal', 'ak_workflow', 'sale'],
     'data': [
         'security/security_groups.xml',
         'security/security_rules.xml',

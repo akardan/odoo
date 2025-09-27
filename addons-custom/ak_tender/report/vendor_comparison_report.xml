@@ -4,50 +4,492 @@
         <!-- Report template for vendor comparison -->
         <template id="report_vendor_comparison">
             <t t-call="web.html_container">
+                <head>
+                    <link href="/ak_tender/static/src/css/vendor_comparison.css" rel="stylesheet"/>
+                    <!-- Inline JavaScript -->
+                    <script type="text/javascript">
+                        <![CDATA[
+                        window.VendorComparison = {
+                            config: {
+                                selectors: {
+                                    comparisonTable: '.comparison-table',
+                                    vendorCheckbox: 'input[name="vendor_user_selection"]',
+                                    vendorTotalCheckbox: 'input[name="vendor_user_total_selection"]',
+                                    vendorColumn: 'th.vendor-col[data-vendor-id]',
+                                    userTotalAmountRow: '.user-total-amount',
+                                    userTotalNpvRow: '.user-total-npv',
+                                    grandTotalAmountRow: '.grand-total-amount',
+                                    grandTotalNpvRow: '.grand-total-npv'
+                                },
+                                classes: {
+                                    userSelection: 'user-selection',
+                                    systemSelection: 'system-selection',
+                                    userBadge: 'selection-badge user-badge ml-2',
+                                    systemBadge: 'selection-badge system-badge'
+                                }
+                            },
+
+                            parseAmount: function(text) {
+                                if (!text || text.trim() === '-' || text.trim() === '') return 0;
+                                const cleanText = text.replace(/[^\d.,]/g, '').replace(/\./g, '').replace(',', '.');
+                                return parseFloat(cleanText) || 0;
+                            },
+
+                            handleCheckboxSelection: function(checkbox) {
+                                try {
+                                    this.enforceRowExclusivity(checkbox);
+                                    this.updateCheckboxUI(checkbox, checkbox.checked);
+                                    this.saveUserSelection(checkbox);
+                                    
+                                } catch (e) {
+                                    console.error("Error in handleCheckboxSelection:", e);
+                                }
+                            },
+
+                            enforceRowExclusivity: function(checkbox) {
+                                if (!checkbox.checked) return;
+                                
+                                const row = checkbox.closest('tr');
+                                const checkboxesInRow = row.querySelectorAll('input[type="checkbox"]');
+                                
+                                checkboxesInRow.forEach(cb => {
+                                    if (cb !== checkbox) {
+                                        cb.checked = false;
+                                        this.updateCheckboxUI(cb, false);
+                                    }
+                                });
+                            },
+
+                            updateCheckboxUI: function(checkbox, isChecked) {
+                                const cell = checkbox.closest('td');
+                                const badgeContainer = checkbox.parentElement;
+                                const existingBadge = badgeContainer.querySelector('.selection-badge.user-badge');
+                                
+                                if (isChecked) {
+                                    cell && cell.classList.add(this.config.classes.userSelection);
+                                    
+                                    if (!existingBadge) {
+                                        const badge = document.createElement('span');
+                                        badge.className = this.config.classes.userBadge;
+                                        badge.style.color = 'white';
+                                        badge.textContent = 'K';
+                                        badgeContainer.appendChild(badge);
+                                    }
+                                    
+                                    if (checkbox.name === 'vendor_user_total_selection') {
+                                        this.updateVendorColumnUI(checkbox.value, true);
+                                    }
+                                } else {
+                                    cell && cell.classList.remove(this.config.classes.userSelection);
+                                    existingBadge && existingBadge.remove();
+                                    
+                                    if (checkbox.name === 'vendor_user_total_selection') {
+                                        this.updateVendorColumnUI(checkbox.value, false);
+                                    }
+                                }
+                            },
+
+                            updateVendorColumnUI: function(vendorId, isSelected) {
+                                const vendorColumn = document.querySelector('th.vendor-col[data-vendor-id="' + vendorId + '"]');
+                                
+                                if (!vendorColumn) return;
+                                
+                                if (isSelected) {
+                                    vendorColumn.classList.add(this.config.classes.userSelection);
+                                    const headerBadge = vendorColumn.querySelector('.selection-badge.user-badge');
+                                    if (!headerBadge) {
+                                        const badge = document.createElement('span');
+                                        badge.className = this.config.classes.userBadge;
+                                        badge.style.textAlign = 'center';
+                                        badge.textContent = 'Kullanıcı';
+                                        vendorColumn.appendChild(badge);
+                                    }
+                                } else {
+                                    vendorColumn.classList.remove(this.config.classes.userSelection);
+                                    const badges = vendorColumn.querySelectorAll('.selection-badge.user-badge');
+                                    badges.forEach(function(badge) { badge.remove(); });
+                                }
+                            },
+
+                            getCsrfToken: function() {
+                                const meta = document.querySelector('meta[name="csrf-token"]');
+                                return meta ? meta.getAttribute('content') : '';
+                            },
+
+                            saveUserSelection: function(checkbox) {
+                                const self = this;
+                                const comparisonTable = document.querySelector(this.config.selectors.comparisonTable);
+                                const tenderId = parseInt(comparisonTable && comparisonTable.dataset.tenderId);
+                                const isProductSelection = checkbox.name === 'vendor_user_selection';
+                                const isTotalSelection = checkbox.name === 'vendor_user_total_selection';
+                                const isChecked = checkbox.checked;
+                                const value = checkbox.value;
+                                
+                                // Simple fetch API call
+                                fetch('/web/dataset/call_kw/ak.tender/save_user_selection', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'X-Requested-With': 'XMLHttpRequest',
+                                        'X-CSRFToken': this.getCsrfToken()
+                                    },
+                                    body: JSON.stringify({
+                                        jsonrpc: '2.0',
+                                        method: 'call',
+                                        params: {
+                                            model: 'ak.tender',
+                                            method: 'save_user_selection',
+                                            args: [tenderId, value, isProductSelection, isTotalSelection, isChecked],
+                                            kwargs: {}
+                                        }
+                                    })
+                                }).then(function(response) {
+                                    return response.json();
+                                }).then(function(result) {
+                                    self.updateUserTotals();
+                                }).catch(function(error) {
+                                    console.error("Error saving selection:", error);
+                                    alert("Seçim kaydedilirken hata oluştu!");
+                                    checkbox.checked = !checkbox.checked;
+                                });
+                            },
+
+                            updateUserTotals: function() {
+                                const vendorColumns = document.querySelectorAll(this.config.selectors.vendorColumn);
+                                let grandTotalUserAmount = 0;
+                                let grandTotalUserNpv = 0;
+                                let hasAnyUserNpvSelection = false;
+                                const self = this;
+ 
+                                  vendorColumns.forEach(function(vendorColumn) {
+                                      const vendorId = vendorColumn.dataset.vendorId;
+                                      let userTotalAmount = 0;
+                                      let userTotalNpv = 0;
+                                      let hasNpvForVendor = false;
+ 
+                                      // Check if this vendor is selected (vendor total selection checkbox)
+                                      const vendorTotalCheckbox = document.querySelector(
+                                          'input[name="vendor_user_total_selection"][value="' + vendorId + '"]'
+                                      );
+                                      const isVendorTotalSelected = vendorTotalCheckbox && vendorTotalCheckbox.checked;
+ 
+                                      if (isVendorTotalSelected) {
+                                          // Sum all products for this vendor
+                                          const vendorAmountCells = document.querySelectorAll(
+                                              'td[data-vendor-id="' + vendorId + '"][data-field="price_subtotal"]'
+                                          );
+                                          const vendorNpvCells = document.querySelectorAll(
+                                              'td[data-vendor-id="' + vendorId + '"][data-field="npv_value"]'
+                                          );
+ 
+                                          vendorAmountCells.forEach(function(cell) {
+                                              const span = cell.querySelector('span');
+                                              const amountText = span ? span.textContent : '';
+                                              userTotalAmount += self.parseAmount(amountText);
+                                          });
+ 
+                                          vendorNpvCells.forEach(function(cell) {
+                                              const span = cell.querySelector('span');
+                                              const npvText = span ? span.textContent : '';
+                                              const npvValue = self.parseAmount(npvText);
+                                              if (npvValue > 0) {
+                                                  userTotalNpv += npvValue;
+                                                  hasNpvForVendor = true;
+                                              }
+                                          });
+                                      } else {
+                                          // Check individual product selections for this vendor
+                                          const productCheckboxes = document.querySelectorAll(
+                                              'input[name="vendor_user_selection"]:checked'
+                                          );
+                                          
+                                          productCheckboxes.forEach(function(checkbox) {
+                                              const value = checkbox.value;
+                                              const parts = value.split('_');
+                                              const checkboxVendorId = parts[0];
+                                              const tenderLineId = parts[1];
+ 
+                                              if (checkboxVendorId === vendorId) {
+                                                  
+                                                  // Find the Tutar row for this tender line
+                                                  const allRows = document.querySelectorAll('tr[data-tender-line-id="' + tenderLineId + '"]');
+                                                  let tutarRow = null;
+                                                  
+                                                  allRows.forEach(row => {
+                                                      const fieldCol = row.querySelector('td.field-col');
+                                                      if (fieldCol && fieldCol.textContent.includes('Tutar')) {
+                                                          tutarRow = row;
+                                                      }
+                                                  });
+                                                  
+                                                  if (tutarRow) {
+                                                      const amountCell = tutarRow.querySelector('td[data-vendor-id="' + vendorId + '"] span');
+                                                      
+                                                      if (amountCell) {
+                                                          const amountText = amountCell.textContent || '';
+                                                          const amount = self.parseAmount(amountText);
+                                                          userTotalAmount += amount;
+                                                      }
+                                                  }
+                                                  
+                                                  // Find NPV row
+                                                  let npvRow = null;
+                                                  allRows.forEach(row => {
+                                                      const fieldCol = row.querySelector('td.field-col');
+                                                      if (fieldCol && fieldCol.textContent.includes('NPV')) {
+                                                          npvRow = row;
+                                                      }
+                                                  });
+                                                  
+                                                  if (npvRow) {
+                                                      const npvCell = npvRow.querySelector('td[data-vendor-id="' + vendorId + '"] span');
+                                                      
+                                                      if (npvCell) {
+                                                          const npvText = npvCell.textContent || '';
+                                                          const npvValue = self.parseAmount(npvText);
+                                                          if (npvValue > 0) {
+                                                              userTotalNpv += npvValue;
+                                                              hasNpvForVendor = true;
+                                                          }
+                                                      }
+                                                  }
+
+                                              }
+                                          });
+                                      }
+ 
+                                      // Update individual vendor totals
+                                      self.updateVendorTotalUI(vendorId, userTotalAmount, userTotalNpv, hasNpvForVendor);
+ 
+                                      grandTotalUserAmount += userTotalAmount;
+                                      if (hasNpvForVendor) {
+                                          grandTotalUserNpv += userTotalNpv;
+                                          hasAnyUserNpvSelection = true;
+                                      }
+                                  });
+ 
+                                // Update grand totals
+                                this.updateGrandTotalUI(grandTotalUserAmount, grandTotalUserNpv, hasAnyUserNpvSelection);
+                            },
+ 
+                            updateVendorTotalUI: function(vendorId, totalAmount, totalNpv, hasNpv) {
+                                const userTotalAmountCell = document.querySelector(
+                                    this.config.selectors.userTotalAmountRow + ' td[data-vendor-id="' + vendorId + '"]'
+                                );
+                                const userTotalNpvCell = document.querySelector(
+                                    this.config.selectors.userTotalNpvRow + ' td[data-vendor-id="' + vendorId + '"]'
+                                );
+ 
+                                if (userTotalAmountCell) {
+                                    const span = userTotalAmountCell.querySelector('span');
+                                    if (span) {
+                                        span.textContent = totalAmount > 0 ?
+                                            totalAmount.toLocaleString('tr-TR', { style: 'currency', currency: 'TRY' }) : '-';
+                                    }
+                                }
+ 
+                                if (userTotalNpvCell) {
+                                    const span = userTotalNpvCell.querySelector('span');
+                                    if (span) {
+                                        span.textContent = hasNpv ?
+                                            totalNpv.toLocaleString('tr-TR', { style: 'currency', currency: 'TRY' }) : '-';
+                                    }
+                                }
+                            },
+ 
+                            updateGrandTotalUI: function(totalAmount, totalNpv, hasNpv) {
+                                const grandTotalAmountCell = document.querySelector(
+                                    this.config.selectors.grandTotalAmountRow + ' .vendor-col'
+                                );
+                                const grandTotalNpvCell = document.querySelector(
+                                    this.config.selectors.grandTotalNpvRow + ' .vendor-col'
+                                );
+ 
+                                if (grandTotalAmountCell) {
+                                    grandTotalAmountCell.innerHTML = totalAmount > 0 ?
+                                        '<strong><span class="oe_currency_value">' + totalAmount.toLocaleString('tr-TR', { style: 'currency', currency: 'TRY' }) + '</span></strong>' :
+                                        '<span>-</span>';
+                                }
+ 
+                                if (grandTotalNpvCell) {
+                                    grandTotalNpvCell.innerHTML = hasNpv ?
+                                        '<strong><span class="oe_currency_value">' + totalNpv.toLocaleString('tr-TR', { style: 'currency', currency: 'TRY' }) + '</span></strong>' :
+                                        '<span>-</span>';
+                                }
+                            },
+
+                            createOrderFromSelection: function(event) {
+                                event.preventDefault();
+                                const selectedProducts = document.querySelectorAll('input[name="vendor_product_selection"]:checked');
+                                const selections = Array.from(selectedProducts).map(function(checkbox) { return checkbox.value; });
+                                const self = this;
+                                
+                                if (selections.length > 0) {
+                                    fetch('/web/dataset/call_kw/ak.tender/create_orders_from_selections', {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/json',
+                                            'X-Requested-With': 'XMLHttpRequest',
+                                            'X-CSRFToken': this.getCsrfToken()
+                                        },
+                                        body: JSON.stringify({
+                                            jsonrpc: '2.0',
+                                            method: 'call',
+                                            params: {
+                                                model: 'ak.tender',
+                                                method: 'create_orders_from_selections',
+                                                args: [self.getTenderId(), selections],
+                                                kwargs: {}
+                                            }
+                                        })
+                                    }).then(function(response) {
+                                        return response.json();
+                                    }).then(function(result) {
+                                        alert("Siparişler oluşturuldu!");
+                                        location.reload();
+                                    }).catch(function(error) {
+                                        console.error("Error creating orders:", error);
+                                        alert("Sipariş oluşturulurken hata oluştu!");
+                                    });
+                                } else {
+                                    alert("Lütfen en az bir ürün seçin!");
+                                }
+                            },
+
+                            createOrderFromTotalSelection: function(event) {
+                                event.preventDefault();
+                                const selectedVendors = document.querySelectorAll('input[name="vendor_user_total_selection"]:checked');
+                                const self = this;
+                                
+                                if (selectedVendors.length === 0) {
+                                    alert("Lütfen en az bir tedarikçi seçin!");
+                                    return;
+                                }
+                                
+                                const vendorIds = Array.from(selectedVendors).map(function(checkbox) { return parseInt(checkbox.value); });
+                                
+                                console.log("Creating orders for vendors:", vendorIds);
+                                
+                                fetch('/web/dataset/call_kw/ak.tender/create_orders_from_total_selection', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'X-Requested-With': 'XMLHttpRequest',
+                                        'X-CSRFToken': this.getCsrfToken()
+                                    },
+                                    body: JSON.stringify({
+                                        jsonrpc: '2.0',
+                                        method: 'call',
+                                        params: {
+                                            model: 'ak.tender',
+                                            method: 'create_orders_from_total_selection',
+                                            args: [self.getTenderId(), vendorIds],
+                                            kwargs: {}
+                                        }
+                                    })
+                                }).then(function(response) {
+                                    return response.json();
+                                }).then(function(result) {
+                                    alert("Tedarikçi siparişleri oluşturuldu!");
+                                    location.reload();
+                                }).catch(function(error) {
+                                    console.error("Error creating orders:", error);
+                                    alert("Sipariş oluşturulurken hata oluştu!");
+                                });
+                            },
+
+                            getTenderId: function() {
+                                const comparisonTable = document.querySelector(this.config.selectors.comparisonTable);
+                                return parseInt(comparisonTable && comparisonTable.dataset.tenderId);
+                            },
+
+                            init: function() {
+                                console.log("VendorComparison initialized");
+                                this.loadInitialState();
+                            },
+
+                            loadInitialState: function() {
+                                const self = this;
+                                setTimeout(function() {
+                                    console.log("Loading initial state...");
+                                    const allCheckboxes = document.querySelectorAll('input[type="checkbox"]');
+                                    
+                                    allCheckboxes.forEach(function(checkbox) {
+                                        const name = checkbox.getAttribute('name');
+                                        const value = checkbox.value;
+                                        let vendorId = value;
+                                        
+                                        if (name === 'vendor_user_selection') {
+                                            vendorId = value.split('_')[0];
+                                        }
+                                        
+                                        // Check debug elements for user_selection state
+                                        const debugElement = document.querySelector(
+                                            'th.vendor-col[data-vendor-id="' + vendorId + '"] div small'
+                                        );
+                                        
+                                        if (debugElement && debugElement.textContent.includes('user_selection: True')) {
+                                            checkbox.checked = true;
+                                            self.updateCheckboxUI(checkbox, true);
+                                        }
+                                    });
+
+                                    console.log("Dumping data attributes from table cells:");
+                                    document.querySelectorAll('td[data-tender-line-id][data-vendor-id][data-field]').forEach(cell => {
+                                        console.log(`  Cell - tenderLineId: ${cell.dataset.tenderLineId}, vendorId: ${cell.dataset.vendorId}, field: ${cell.dataset.field}, textContent: ${cell.textContent.trim()}`);
+                                    });
+                                    
+                                    self.updateUserTotals();
+                                }, 500);
+                            }
+                        };
+
+                        // Initialize when DOM is loaded
+                        document.addEventListener('DOMContentLoaded', function() {
+                            window.VendorComparison.init();
+                        });
+
+                        // Also try immediate initialization in case DOM is already loaded
+                        if (document.readyState === 'complete' || document.readyState === 'interactive') {
+                            window.VendorComparison.init();
+                        }
+                        ]]>
+                    </script>
+                </head>
                 <t t-foreach="docs" t-as="o">
                     <!-- Add CSRF token meta tag -->
                     <meta name="csrf-token" t-att-content="request.csrf_token()"/>
                     <div class="page">
-                            <h4 class="mt-3 mb-3">İhale No: <span t-field="o.code"/> | <span t-field="o.name"/></h4>
+                        <style>
+                            .page, .page * {
+                                font-size: 13px !important;
+                            }
+                            .comparison-table th, .comparison-table td {
+                                font-size: 11px !important;
+                            }
+                            .selection-badge {
+                                font-size: 11px !important; /* Smaller for badges */
+                            }
+                            .comparison-table td {
+                                padding: 2px !important;
+                                line-height: 1.1 !important;
+                            }
+                        </style>
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <h2 class="mt-2 mb-0" style="font-size: 18px !important;">İhale No: <span t-field="o.code" style="font-size: 18px !important;"/> | <span t-field="o.name" style="font-size: 18px !important;"/></h2>
+                            <div style="display: flex; align-items: center;">
+                                <div style="text-align: right; margin-right: 10px;">
+                                    <span class="selection-badge system-badge">S</span> Sistem Seçimi
+                                    <span class="selection-badge user-badge ml-2">K</span> Kullanıcı Seçimi
+                                </div>
+                                <button type="button" class="btn btn-sm btn-secondary" onclick="window.location.reload()">
+                                    <i class="fa fa-refresh"></i> Raporu Yenile
+                                </button>
+                            </div>
+                        </div>
 
-                            <style>
-                                @charset "UTF-8";
-                                @font-face {
-                                    font-family: 'DejaVu Sans';
-                                    src: url('/web/static/lib/fontawesome/fonts/DejaVuSans.ttf') format('truetype');
-                                    font-weight: normal;
-                                    font-style: normal;
-                                }
-                                body, table, td, th, div, span, p, h1, h2, h3, h4, h5, h6 {
-                                    font-family: 'DejaVu Sans', sans-serif !important;
-                                }
-                                .label-col {
-                                    text-align: left;
-                                    padding-right: 5px !important;
-                                    white-space: nowrap;
-                                    width: 120px;
-                                }
-                                .order-button {
-                                    width: 220px;
-                                    display: inline-block;
-                                }
-                                .colon-col {
-                                    width: 10px;
-                                    padding-left: 0 !important;
-                                    padding-right: 5px !important;
-                                }
-                                .value-col {
-                                    padding-left: 0 !important;
-                                }
-                                .header-table td {
-                                    padding: 2px !important;
-                                }
-                                .selected-npv {
-                                    font-weight: bold;
-                                    color: #dc3545;
-                                }
-                            </style>
-                            <table class="table table-borderless mt-4 header-table" style="margin-bottom: 10px;">
+                            <!-- Header Table -->
+                            <table class="table table-borderless mt-1 header-table" style="margin-bottom: 1px;">
                                 <tr>
                                     <td class="label-col"><strong>İhale Tipi</strong></td>
                                     <td class="colon-col">:</td>
@@ -61,10 +503,15 @@
                                     <td class="colon-col">:</td>
                                     <td class="value-col"><span t-field="o.workflow_current_state_id"/></td>
                                     
-                                    <td style="text-align: right;">
-                                        <button type="button" class="btn btn-sm btn-primary order-button" onclick="createOrderFromSelection(this)" t-att-disabled="o.workflow_current_state_id.code != 'evaluation'">
-                                            Seçimlerden Sipariş oluştur
-                                        </button>
+                                    <td style="text-align: right;" rowspan="2">
+                                        <div style="display: flex; flex-direction: row; justify-content: flex-end; align-items: center;">
+                                            <button type="button" class="btn btn-sm btn-primary order-button create-order-from-selection mr-1" style="width: 190px;" onclick="window.VendorComparison.createOrderFromSelection(event)" t-att-disabled="o.workflow_current_state_id.code != 'evaluation'">
+                                                Seçimlerden Sipariş oluştur
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-secondary order-button create-order-from-total-selection" style="width: 190px;" onclick="window.VendorComparison.createOrderFromTotalSelection(event)" t-att-disabled="o.workflow_current_state_id.code != 'evaluation'">
+                                                Teklifleri Siparişe Dönüştür
+                                            </button>
+                                        </div>
                                     </td>
                                 </tr>
                                 <tr>
@@ -80,129 +527,24 @@
                                     <td class="colon-col">:</td>
                                     <td class="value-col"><span t-field="o.target_price"/></td>
                                     
-                                    <td style="text-align: right;">
-
-                                        <button type="button" class="btn btn-sm btn-secondary order-button" onclick="createOrderFromTotalSelection(this)" t-att-disabled="o.workflow_current_state_id.code != 'evaluation'">
-                                            Teklifleri Siparişe Dönüştür
-                                        </button>
-                                    </td>
                                 </tr>
                             </table>
                             
-                            <!-- Selection Legend and Refresh Button -->
-                            <div class="mt-2 mb-2" style="display: flex; justify-content: space-between; align-items: center;">
-                                <button type="button" class="btn btn-sm btn-secondary" onclick="window.location.reload()">
-                                    <i class="fa fa-refresh"></i> Raporu Yenile
-                                </button>
-                                <div style="text-align: right; font-size: 12px;">
-                                    <span class="selection-badge system-badge">S</span> Sistem Seçimi
-                                    <span class="selection-badge user-badge ml-2" style="margin-left: 10px;">K</span> Kullanıcı Seçimi
-                                </div>
+                            
                             </div>
                             
-                            <!-- <h3 class="mt-4">Tedarikçi Karşılaştırma</h3> -->
-                            
                             <!-- Comparison Table -->
-                            <style>
-                                .comparison-table th, .comparison-table td {
-                                    padding: 3px;
-                                    font-size: 12px;
-                                    vertical-align: middle;
-                                    line-height: 1.1;
-                                    height: auto !important;
-                                    max-height: none !important;
-                                }
-                                .confirmed-order {
-                                    background-color: #d4edda !important;
-                                    border-left: 3px solid #28a745 !important;
-                                }
-                                .confirmed-badge {
-                                    display: inline-block;
-                                    padding: 2px 5px;
-                                    border-radius: 3px;
-                                    font-size: 10px;
-                                    margin-left: 5px;
-                                    background-color: #28a745;
-                                    color: white;
-                                }
-                                .confirmed-order {
-                                    background-color: #d4edda !important;
-                                    border-left: 3px solid #28a745 !important;
-                                }
-                                .confirmed-badge {
-                                    display: inline-block;
-                                    padding: 2px 5px;
-                                    border-radius: 3px;
-                                    font-size: 10px;
-                                    margin-left: 5px;
-                                    background-color: #28a745;
-                                    color: white;
-                                }
-                                .comparison-table th {
-                                    background-color: #f5f5f5;
-                                    font-weight: bold;
-                                    text-align: center;
-                                }
-                                .comparison-table .product-col {
-                                    width: 30%;
-                                    min-width: 300px;
-                                }
-                                .comparison-table .field-col {
-                                    width: 12%;
-                                    min-width: 100px;
-                                    white-space: nowrap;
-                                }
-                                .comparison-table .vendor-col {
-                                    width: 15%;
-                                    min-width: 150px;
-                                    text-align: center;
-                                }
-                                .comparison-table .text-center {
-                                    text-align: center;
-                                }
-                                .comparison-table .product-row td {
-                                    background-color: #f9f9f9;
-                                }
-                                .system-selection {
-                                    background-color: #e6f7ff !important;
-                                    border-left: 3px solid #1890ff !important;
-                                }
-                                .user-selection {
-                                    background-color: #f6ffed !important;
-                                    border-left: 3px solid #52c41a !important;
-                                }
-                                .selection-badge {
-                                    display: inline-block;
-                                    padding: 2px 5px;
-                                    border-radius: 3px;
-                                    font-size: 10px;
-                                    margin-left: 5px;
-                                    color: white; /* Ensure text is visible on colored backgrounds */
-                                    text-align: center; /* Center text in badge */
-                                }
-                                .system-badge {
-                                    background-color: #1890ff;
-                                    color: white;
-                                }
-                                .user-badge {
-                                    background-color: #52c41a;
-                                    color: white;
-                                }
-                            </style>
-                            <table class="table table-bordered comparison-table mt-3" t-att-data-tender-id="o.id">
+                            <table class="table table-bordered comparison-table mt-0" t-att-data-tender-id="o.id">
                                 <thead>
                                     <tr>
-                                        <!-- Product Information Column -->
                                         <th class="product-col">Ürün</th>
-                                        
-                                        <!-- Field Column -->
                                         <th class="field-col"></th>
                                         
-                                        <!-- Define vendors_to_show at the beginning -->
+                                        <!-- Define vendors_to_show -->
                                         <t t-set="latest_round_pos" t-value="o.purchase_order_ids.filtered(lambda po: po.tender_round == o.tender_round)"/>
                                         <t t-set="vendors_to_show" t-value="latest_round_pos if latest_round_pos else o.purchase_order_ids"/>
                                         
-                                        <!-- Vendor Columns - Only show latest round -->
+                                        <!-- Vendor Columns -->
                                         <t t-foreach="vendors_to_show" t-as="vendor">
                                             <th t-att-class="'vendor-col ' + (vendor.system_selection and 'system-selection ' or '') + (vendor.user_selection and 'user-selection' or '') + ((vendor.state == 'purchase' or vendor.state == 'to approve') and 'confirmed-order' or '')" t-att-data-vendor-id="vendor.id">
                                                 <span t-esc="vendor.partner_id.name"/> -
@@ -219,11 +561,11 @@
                                                 <span t-elif="vendor.state == 'purchase'" style="color: #28a745; font-weight: bold;">
                                                     <span class="selection-badge confirmed-badge" style="color: white;">Satınalma Siparişi</span>
                                                 </span>
-                                                <span t-elif="vendor.state == 'done'" style="color: #6f42c1; font-weight: bold;">
-                                                    <span class="selection-badge" style="background-color: #6f42c1; color: white;">Kilitli</span>
+                                                <span t-elif="vendor.state == 'done'" style="color: #28a745; font-weight: bold;">
+                                                    <span class="selection-badge" style="background-color: #28a745; color: white;">Tamamlandı</span>
                                                 </span>
-                                                <span t-elif="vendor.state == 'cancel'" style="color: #dc3545; font-weight: bold;">
-                                                    <span class="selection-badge" style="background-color: #dc3545; color: white;">İptal</span>
+                                                <span t-elif="vendor.state == 'cancel'" style="color: #f71206ff; font-weight: bold;">
+                                                    <span class="selection-badge" style="background-color: #f71206ff; color: white;">İptal</span>
                                                 </span>
                                                 <span t-else="">
                                                     <span style="color: #6c757d;">Bilinmeyen Durum</span>
@@ -245,706 +587,7 @@
                                         </t>
                                     </tr>
                                 </thead>
-                                <!-- Include jQuery -->
-                                <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-                                <script type="text/javascript">
-                                    // Force a refresh of the report when it's opened
-                                    $(document).ready(function() {
-                                        console.log("Document ready, refreshing report data");
-                                        
-                                        // Log all checkboxes for debugging
-                                        var allCheckboxes = $('input[type="checkbox"]');
-                                        console.log("Found " + allCheckboxes.length + " checkboxes");
-                                        
-                                        // Log all user_selection fields for debugging
-                                        var userSelectionDebug = $('.vendor-col div small:contains("user_selection")');
-                                        console.log("Found " + userSelectionDebug.length + " user_selection debug elements");
-                                        userSelectionDebug.each(function() {
-                                            console.log("Debug value:", $(this).text());
-                                        });
-                                        
-                                        // Highlight confirmed purchase orders
-                                        highlightConfirmedOrders();
-                                        
-                                        // Add a small delay to ensure the DOM is fully loaded
-                                        setTimeout(function() {
-                                            // Force a refresh of the selection badges
-                                            allCheckboxes.each(function() {
-                                                var checkbox = $(this);
-                                                var isChecked = checkbox.prop('checked');
-                                                var name = checkbox.attr('name');
-                                                var value = checkbox.val();
-                                                
-                                                console.log("Checkbox:", name, value, "Checked:", isChecked);
-                                                
-                                                // Check if the corresponding PO has user_selection=True
-                                                var vendorId = value;
-                                                if (name === 'vendor_user_selection') {
-                                                    // For product selections, extract vendor_id from value (format: vendor_id_tender_line_id)
-                                                    vendorId = value.split('_')[0];
-                                                }
-                                                
-                                                // Find the debug element for this vendor
-                                                var debugElement = $('th.vendor-col[data-vendor-id="' + vendorId + '"] div small:contains("user_selection")');
-                                                if (debugElement.length > 0) {
-                                                    var debugText = debugElement.text();
-                                                    console.log("Debug for vendor " + vendorId + ":", debugText);
-                                                    
-                                                    // If the debug text indicates user_selection is True, check the checkbox
-                                                    if (debugText.indexOf("user_selection: True") >= 0 || debugText.indexOf("user_selection: true") >= 0) {
-                                                        console.log("Setting checkbox checked for vendor " + vendorId);
-                                                        checkbox.prop('checked', true);
-                                                        isChecked = true;
-                                                    }
-                                                }
-                                                
-                                                if (isChecked) {
-                                                    console.log("Processing checked checkbox:", name, value);
-                                                    var cell = checkbox.closest('td');
-                                                    if (cell) {
-                                                        cell.addClass('user-selection');
-                                                    }
-                                                    
-                                                    // Make sure the badge exists
-                                                    var badgeContainer = checkbox.parent();
-                                                    var existingBadge = badgeContainer.find('.selection-badge.user-badge');
-                                                    if (!existingBadge.length) {
-                                                        var badge = $('<span class="selection-badge user-badge ml-2" style="color: white;">K</span>');
-                                                        badgeContainer.append(badge);
-                                                    }
-                                                    
-                                                    // If this is a total selection, update the vendor column header
-                                                    if (name === 'vendor_user_total_selection') {
-                                                        var vendorColumn = $('th.vendor-col[data-vendor-id="' + vendorId + '"]');
-                                                        if (vendorColumn.length > 0) {
-                                                            vendorColumn.addClass('user-selection');
-                                                            var headerBadge = vendorColumn.find('.selection-badge.user-badge');
-                                                            if (!headerBadge.length) {
-                                                                var badge = $('<span class="selection-badge user-badge ml-2" style="color: white; text-align: center;">Kullanıcı</span>');
-                                                                vendorColumn.append(badge);
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                            });
-                                        }, 500);
-                                    });
-                                    
-                                    // Function to handle checkbox selection (only one per row)
-                                    function handleCheckboxSelection(checkbox) {
-                                        try {
-                                            // Find the parent row of the checkbox
-                                            var row = checkbox.closest('tr');
-                                            
-                                            // Get all checkboxes within this row
-                                            var checkboxesInRow = row.querySelectorAll('input[type="checkbox"]');
-                                            
-                                            // Uncheck all other checkboxes in the same row
-                                            checkboxesInRow.forEach(function(cb) {
-                                                if (cb !== checkbox &amp;&amp; checkbox.checked) {
-                                                    cb.checked = false;
-                                                }
-                                            });
-                                            
-                                            // Update UI immediately
-                                            var cell = checkbox.closest('td');
-                                            if (cell) {
-                                                if (checkbox.checked) {
-                                                    cell.classList.add('user-selection');
-                                                    
-                                                    // Add badge if it doesn't exist
-                                                    var badgeContainer = checkbox.parentElement;
-                                                    var existingBadge = badgeContainer.querySelector('.selection-badge.user-badge');
-                                                    if (!existingBadge) {
-                                                        var badge = document.createElement('span');
-                                                        badge.className = 'selection-badge user-badge ml-2';
-                                                        badge.style.color = 'white'; // Ensure text is visible
-                                                        badge.textContent = 'K';
-                                                        badgeContainer.appendChild(badge);
-                                                    }
-                                                } else {
-                                                    cell.classList.remove('user-selection');
-                                                    
-                                                    // Remove badge if it exists
-                                                    var badgeContainer = checkbox.parentElement;
-                                                    var existingBadge = badgeContainer.querySelector('.selection-badge.user-badge');
-                                                    if (existingBadge) {
-                                                        existingBadge.remove();
-                                                    }
-                                                }
-                                            }
-                                        } catch (e) {
-                                            console.error("Error in handleCheckboxSelection:", e);
-                                        }
-                                        
-                                        // Save the selection to the database
-                                        var tenderId = document.querySelector('table[data-tender-id]').dataset.tenderId;
-                                        var isProductSelection = checkbox.name === 'vendor_user_selection';
-                                        var isTotalSelection = checkbox.name === 'vendor_user_total_selection';
-                                        var isChecked = checkbox.checked;
-                                        var value = checkbox.value;
-                                        
-                                        console.log("Saving selection:", {
-                                            tenderId: tenderId,
-                                            isProductSelection: isProductSelection,
-                                            isTotalSelection: isTotalSelection,
-                                            isChecked: isChecked,
-                                            value: value
-                                        });
-                                        
-                                        // Call the server action to save the selection
-                                        $.ajax({
-                                            url: '/web/dataset/call_kw/ak.tender/save_user_selection',
-                                            type: 'POST',
-                                            dataType: 'json',
-                                            contentType: 'application/json',
-                                            data: JSON.stringify({
-                                                jsonrpc: "2.0",
-                                                method: "call",
-                                                params: {
-                                                    model: 'ak.tender',
-                                                    method: 'save_user_selection',
-                                                    args: [parseInt(tenderId), value, isProductSelection, isTotalSelection, isChecked],
-                                                    kwargs: {}
-                                                },
-                                                id: Math.floor(Math.random() * 1000000000)
-                                            }),
-                                            headers: {
-                                                'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]') ? document.querySelector('meta[name="csrf-token"]').getAttribute('content') : ''
-                                            },
-                                            success: function(result) {
-                                                console.log("Selection saved successfully", result);
-                                                
-                                                // Check if the result contains an error
-                                                if (result.error) {
-                                                    console.error("Error saving selection:", result.error);
-                                                    alert("Seçim kaydedilirken hata oluştu: " + result.error);
-                                                    return;
-                                                }
-                                                
-                                                // Log additional debug info if available
-                                                if (result.result &amp;&amp; result.result.debug_info) {
-                                                    console.log("Debug info:", result.result.debug_info);
-                                                }
-                                                
-                                                // Add or remove the badge based on the checkbox state
-                                                var badgeContainer = checkbox.parentElement;
-                                                var existingBadge = badgeContainer.querySelector('.selection-badge.user-badge');
-                                                
-                                                if (isChecked) {
-                                                    // Add badge if it doesn't exist
-                                                    if (!existingBadge) {
-                                                        var badge = document.createElement('span');
-                                                        badge.className = 'selection-badge user-badge ml-2';
-                                                        badge.style.color = 'white'; // Ensure text is visible
-                                                        badge.textContent = 'K';
-                                                        badgeContainer.appendChild(badge);
-                                                    }
-                                                    
-                                                    // Add user-selection class to the parent cell
-                                                    var cell = checkbox.closest('td');
-                                                    if (cell) {
-                                                        cell.classList.add('user-selection');
-                                                    }
-                                                    
-                                                    // If this is a total selection, update the vendor column headers
-                                                    if (checkbox.name === 'vendor_user_total_selection') {
-                                                        var vendorId = checkbox.value;
-                                                        var vendorColumns = document.querySelectorAll('th.vendor-col');
-                                                        vendorColumns.forEach(function(col) {
-                                                            if (col.dataset.vendorId === vendorId) {
-                                                                col.classList.add('user-selection');
-                                                                // Add badge if it doesn't exist
-                                                                var headerBadge = col.querySelector('.selection-badge.user-badge');
-                                                                if (!headerBadge) {
-                                                                    var badge = document.createElement('span');
-                                                                    badge.className = 'selection-badge user-badge ml-2';
-                                                                    badge.style.color = 'white'; // Ensure text is visible
-                                                                    badge.style.textAlign = 'center'; // Center text in badge
-                                                                    badge.textContent = 'Kullanıcı';
-                                                                    col.appendChild(badge);
-                                                                }
-                                                            }
-                                                        });
-                                                    }
-                                                } else {
-                                                    // Remove badge if it exists
-                                                    if (existingBadge) {
-                                                        existingBadge.remove();
-                                                    }
-                                                    
-                                                    // Remove user-selection class from the parent cell
-                                                    var cell = checkbox.closest('td');
-                                                    if (cell) {
-                                                        cell.classList.remove('user-selection');
-                                                    }
-                                                    
-                                                    // If this is a total selection, update the vendor column headers
-                                                    if (checkbox.name === 'vendor_user_total_selection') {
-                                                        var vendorId = checkbox.value;
-                                                        var vendorColumns = document.querySelectorAll('th.vendor-col');
-                                                        vendorColumns.forEach(function(col) {
-                                                            if (col.dataset.vendorId === vendorId) {
-                                                                col.classList.remove('user-selection');
-                                                                // Remove badge if it exists
-                                                                var headerBadge = col.querySelector('.selection-badge.user-badge');
-                                                                if (headerBadge) {
-                                                                    headerBadge.remove();
-                                                                }
-                                                            }
-                                                        });
-                                                    }
-                                                }
-                                            },
-                                            error: function(error) {
-                                                console.error("Error saving selection:", error);
-                                                
-                                                // Simple error message
-                                                alert("Seçim kaydedilirken hata oluştu!");
-                                                
-                                                // Revert the checkbox state
-                                                checkbox.checked = !checkbox.checked;
-                                            }
-                                        });
-                                    }
-                                    
-                                    // Function to create orders from selection
-                                    
-                                    function createOrderFromSelection(button) {
-                                        // Get the selected checkboxes for product selections
-                                        var selectedProducts = document.querySelectorAll('input[name="vendor_product_selection"]:checked');
-                                        var selections = [];
-                                        
-                                        selectedProducts.forEach(function(checkbox) {
-                                            selections.push(checkbox.value);
-                                        });
-                                        
-                                        if (selections.length > 0) {
-                                            // Call the server action to create orders using jQuery AJAX
-                                            $.ajax({
-                                                url: '/web/dataset/call_kw/ak.tender/create_orders_from_selections',
-                                                type: 'POST',
-                                                dataType: 'json',
-                                                contentType: 'application/json',
-                                                data: JSON.stringify({
-                                                    jsonrpc: "2.0",
-                                                    method: "call",
-                                                    params: {
-                                                        model: 'ak.tender',
-                                                        method: 'create_orders_from_selections',
-                                                        args: [parseInt(button.closest('table').dataset.tenderId), selections],
-                                                        kwargs: {}
-                                                    },
-                                                    id: Math.floor(Math.random() * 1000000000)
-                                                }),
-                                                headers: {
-                                                    'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]') ? document.querySelector('meta[name="csrf-token"]').getAttribute('content') : ''
-                                                },
-                                                success: function(result) {
-                                                    alert("Siparişler oluşturuldu!");
-                                                    location.reload();
-                                                },
-                                                error: function(error) {
-                                                    console.error("Error creating orders:", error);
-                                                    alert("Sipariş oluşturulurken hata oluştu!");
-                                                }
-                                            });
-                                        } else {
-                                            alert("Lütfen en az bir ürün seçin!");
-                                        }
-                                    }
-                                    
-                                    function createOrderFromTotalSelection(button) {
-                                        console.log("Starting createOrderFromTotalSelection");
-                                        
-                                        // Get the selected checkboxes for total selections
-                                        // This function converts existing RFQs to Purchase Orders for selected vendors
-                                        var selectedVendors = document.querySelectorAll('input[name="vendor_user_total_selection"]:checked');
-                                        
-                                        if (selectedVendors.length === 0) {
-                                            // Also try to get vendor checkboxes with a different name
-                                            selectedVendors = document.querySelectorAll('input[name="vendor_checkbox"]:checked');
-                                        }
-                                        
-                                        if (selectedVendors.length === 0) {
-                                            alert("Lütfen en az bir tedarikçi seçin!");
-                                            return;
-                                        }
-                                        
-                                        var vendorIds = [];
-                                        
-                                        // Get the tender ID from the table data attribute
-                                        var table = document.querySelector('table.comparison-table');
-                                        var tenderId = table ? parseInt(table.dataset.tenderId) : null;
-                                        
-                                        // If tender ID is not found in the table, try to get it from the URL
-                                        if (!tenderId) {
-                                            var urlParams = new URLSearchParams(window.location.search);
-                                            var activeId = urlParams.get('active_id');
-                                            if (activeId) {
-                                                tenderId = parseInt(activeId);
-                                            }
-                                        }
-                                        
-                                        if (!tenderId) {
-                                            alert("İhale ID'si bulunamadı!");
-                                            return;
-                                        }
-                                        
-                                        // Always set to "to approve" state when using this button
-                                        var isEvaluation = true;
-                                        
-                                        console.log("Tender ID:", tenderId);
-                                        console.log("Is in evaluation stage:", isEvaluation);
-                                        
-                                        // Extract vendor IDs from selected checkboxes
-                                        selectedVendors.forEach(function(checkbox) {
-                                            vendorIds.push(parseInt(checkbox.value));
-                                        });
-                                        
-                                        console.log("Selected vendor IDs:", vendorIds);
-                                        
-                                        if (vendorIds.length === 0) {
-                                            alert("Lütfen en az bir tedarikçi seçin!");
-                                            return;
-                                        }
-                                        
-                                        // First try to get purchase orders directly from the page
-                                        var purchaseOrderIds = [];
-                                        var vendorColumns = document.querySelectorAll('th.vendor-col');
-                                        
-                                        vendorColumns.forEach(function(column) {
-                                            var vendorId = column.getAttribute('data-vendor-id');
-                                            if (vendorId &amp;&amp; vendorIds.includes(parseInt(vendorId))) {
-                                                // Check if this vendor has a purchase order
-                                                var poState = null;
-                                                var stateText = column.textContent.trim().toLowerCase();
-                                                
-                                                if (stateText.includes('satınalma siparişi')) {
-                                                    poState = 'purchase';
-                                                } else if (stateText.includes('onayda')) {
-                                                    poState = 'to approve';
-                                                } else if (stateText.includes('rfq gönderildi')) {
-                                                    poState = 'sent';
-                                                } else if (stateText.includes('rfq') &amp;&amp; !stateText.includes('gönderildi')) {
-                                                    poState = 'draft';
-                                                } else if (stateText.includes('kilitli')) {
-                                                    poState = 'done';
-                                                } else if (stateText.includes('iptal')) {
-                                                    poState = 'cancel';
-                                                }
-                                                
-                                                if (poState &amp;&amp; (poState === 'draft' || poState === 'sent' || poState === 'to approve')) {
-                                                    purchaseOrderIds.push(parseInt(vendorId));
-                                                }
-                                            }
-                                        });
-                                        
-                                        console.log("Purchase order IDs from page:", purchaseOrderIds);
-                                        
-                                        // If we found purchase orders on the page, use them
-                                        if (purchaseOrderIds.length > 0) {
-                                            console.log("Using purchase orders found on page");
-                                            if (isEvaluation) {
-                                                setToApproveState(purchaseOrderIds);
-                                            } else {
-                                                confirmPurchaseOrders(purchaseOrderIds);
-                                            }
-                                            return;
-                                        }
-                                        
-                                        // If we didn't find purchase orders on the page, try to get them from the server
-                                        console.log("No purchase orders found on page, trying server");
-                                        
-                                        // Get the purchase orders directly from the tender
-                                        $.ajax({
-                                            url: '/web/dataset/call_kw/ak.tender/read',
-                                            type: 'POST',
-                                            dataType: 'json',
-                                            contentType: 'application/json',
-                                            data: JSON.stringify({
-                                                jsonrpc: "2.0",
-                                                method: "call",
-                                                params: {
-                                                    model: 'ak.tender',
-                                                    method: 'read',
-                                                    args: [tenderId, ['purchase_order_ids']],
-                                                    kwargs: {}
-                                                },
-                                                id: Math.floor(Math.random() * 1000000000)
-                                            }),
-                                            headers: {
-                                                'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]') ? document.querySelector('meta[name="csrf-token"]').getAttribute('content') : ''
-                                            },
-                                            success: function(result) {
-                                                if (result.error) {
-                                                    console.error("Error reading tender:", result.error);
-                                                    alert("İhale bilgileri okunurken hata oluştu!");
-                                                    return;
-                                                }
-                                                
-                                                console.log("Tender read result:", result.result);
-                                                
-                                                if (result.result &amp;&amp; result.result[0] &amp;&amp; result.result[0].purchase_order_ids &amp;&amp; result.result[0].purchase_order_ids.length > 0) {
-                                                    // Get all purchase orders from the tender
-                                                    var allPoIds = result.result[0].purchase_order_ids;
-                                                    console.log("All PO IDs from tender:", allPoIds);
-                                                    
-                                                    // Now get the details of these purchase orders to filter by vendor
-                                                    $.ajax({
-                                                        url: '/web/dataset/call_kw/purchase.order/read',
-                                                        type: 'POST',
-                                                        dataType: 'json',
-                                                        contentType: 'application/json',
-                                                        data: JSON.stringify({
-                                                            jsonrpc: "2.0",
-                                                            method: "call",
-                                                            params: {
-                                                                model: 'purchase.order',
-                                                                method: 'read',
-                                                                args: [allPoIds, ['partner_id', 'state']],
-                                                                kwargs: {}
-                                                            },
-                                                            id: Math.floor(Math.random() * 1000000000)
-                                                        }),
-                                                        headers: {
-                                                            'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]') ? document.querySelector('meta[name="csrf-token"]').getAttribute('content') : ''
-                                                        },
-                                                        success: function(poResult) {
-                                                            if (poResult.error) {
-                                                                console.error("Error reading purchase orders:", poResult.error);
-                                                                alert("Siparişler okunurken hata oluştu!");
-                                                                return;
-                                                            }
-                                                            
-                                                            console.log("PO details:", poResult.result);
-                                                            
-                                                            // Filter purchase orders by vendor and state
-                                                            var filteredPoIds = [];
-                                                            poResult.result.forEach(function(po) {
-                                                                console.log("Checking PO:", po);
-                                                                console.log("  Partner ID:", po.partner_id);
-                                                                console.log("  State:", po.state);
-                                                                console.log("  Vendor IDs:", vendorIds);
-                                                                console.log("  Includes:", vendorIds.includes(po.partner_id[0]));
-                                                                
-                                                                if (po.partner_id &amp;&amp; vendorIds.includes(po.partner_id[0]) &amp;&amp;
-                                                                    (po.state === 'draft' || po.state === 'sent' || po.state === 'to approve')) {
-                                                                    filteredPoIds.push(po.id);
-                                                                }
-                                                            });
-                                                            
-                                                            console.log("Filtered PO IDs:", filteredPoIds);
-                                                            
-                                                            if (filteredPoIds.length > 0) {
-                                                                // If in evaluation stage, set to "to approve" status, otherwise confirm
-                                                                if (isEvaluation) {
-                                                                    setToApproveState(filteredPoIds);
-                                                                } else {
-                                                                    confirmPurchaseOrders(filteredPoIds);
-                                                                }
-                                                            } else {
-                                                                // Try a broader search without state filter
-                                                                var anyPoIds = [];
-                                                                poResult.result.forEach(function(po) {
-                                                                    if (po.partner_id &amp;&amp; vendorIds.includes(po.partner_id[0])) {
-                                                                        anyPoIds.push(po.id);
-                                                                    }
-                                                                });
-                                                                
-                                                                console.log("Any PO IDs (without state filter):", anyPoIds);
-                                                                
-                                                                if (anyPoIds.length > 0) {
-                                                                    console.log("Found POs but they are not in the right state");
-                                                                    alert("Seçilen tedarikçiler için siparişler bulundu, ancak uygun durumda değiller!");
-                                                                } else {
-                                                                    console.log("No matching purchase orders found for the selected vendors");
-                                                                    alert("Seçilen tedarikçiler için sipariş bulunamadı! Lütfen önce siparişlerin oluşturulduğundan emin olun.");
-                                                                }
-                                                            }
-                                                        },
-                                                        error: function(error) {
-                                                            console.error("Error reading purchase orders:", error);
-                                                            alert("Siparişler okunurken hata oluştu!");
-                                                        }
-                                                    });
-                                                } else {
-                                                    console.log("No purchase orders found in the tender");
-                                                    alert("İhalede hiç sipariş bulunamadı! Lütfen önce siparişlerin oluşturulduğundan emin olun.");
-                                                }
-                                            },
-                                            error: function(error) {
-                                                console.error("Error reading tender:", error);
-                                                alert("İhale bilgileri okunurken hata oluştu!");
-                                            }
-                                        });
-                                        
-                                    }
-                                    
-                                    // Function to confirm purchase orders
-                                    function confirmPurchaseOrders(poIds) {
-                                        $.ajax({
-                                            url: '/web/dataset/call_kw/purchase.order/button_confirm',
-                                            type: 'POST',
-                                            dataType: 'json',
-                                            contentType: 'application/json',
-                                            data: JSON.stringify({
-                                                jsonrpc: "2.0",
-                                                method: "call",
-                                                params: {
-                                                    model: 'purchase.order',
-                                                    method: 'button_confirm',
-                                                    args: [poIds],
-                                                    kwargs: {}
-                                                },
-                                                id: Math.floor(Math.random() * 1000000000)
-                                            }),
-                                            headers: {
-                                                'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]') ? document.querySelector('meta[name="csrf-token"]').getAttribute('content') : ''
-                                            },
-                                            success: function(result) {
-                                                if (result.error) {
-                                                    console.error("Error confirming purchase orders:", result.error);
-                                                    alert("Siparişler onaylanırken hata oluştu!");
-                                                    return;
-                                                }
-                                                
-                                                // Highlight the confirmed vendors and their products
-                                                highlightConfirmedOrders(poIds);
-                                                
-                                                alert("Seçilen tedarikçinin teklifi siparişe dönüştürüldü!");
-                                                // Don't reload the page so we can see the highlighting
-                                            },
-                                            error: function(error) {
-                                                console.error("Error confirming purchase orders:", error);
-                                                alert("Siparişler onaylanırken hata oluştu!");
-                                            }
-                                        });
-                                    }
-                                    
-                                    // Function to set purchase orders to "to approve" state directly
-                                    function setToApproveState(poIds) {
-                                        $.ajax({
-                                            url: '/web/dataset/call_kw/purchase.order/button_to_approve',
-                                            type: 'POST',
-                                            dataType: 'json',
-                                            contentType: 'application/json',
-                                            data: JSON.stringify({
-                                                jsonrpc: "2.0",
-                                                method: "call",
-                                                params: {
-                                                    model: 'purchase.order',
-                                                    method: 'button_to_approve',
-                                                    args: [poIds],
-                                                    kwargs: {}
-                                                },
-                                                id: Math.floor(Math.random() * 1000000000)
-                                            }),
-                                            headers: {
-                                                'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]') ? document.querySelector('meta[name="csrf-token"]').getAttribute('content') : ''
-                                            },
-                                            success: function(result) {
-                                                if (result.error) {
-                                                    console.error("Error setting purchase orders to approve state:", result.error);
-                                                    alert("Siparişler onay durumuna alınırken hata oluştu!");
-                                                    return;
-                                                }
-                                                
-                                                alert("Seçilen tedarikçinin teklifi onay durumuna alındı!");
-                                                location.reload();
-                                            },
-                                            error: function(error) {
-                                                console.error("Error setting purchase orders to approve state:", error);
-                                                alert("Siparişler onay durumuna alınırken hata oluştu!");
-                                            }
-                                        });
-                                    }
-                                    
-                                    // Function to highlight confirmed orders and their products
-                                    function highlightConfirmedOrders(poIds) {
-                                        console.log("Highlighting confirmed orders");
-                                        
-                                        // Find all vendor columns
-                                        var vendorColumns = document.querySelectorAll('th.vendor-col');
-                                        var confirmedVendorIds = [];
-                                        
-                                        // Find all status cells in the table
-                                        var rows = document.querySelectorAll('tr');
-                                        
-                                        // Look for cells containing "Purchase"
-                                        rows.forEach(function(row) {
-                                            var cells = row.querySelectorAll('td');
-                                            cells.forEach(function(cell, cellIndex) {
-                                                var text = cell.textContent.trim();
-                                                if (text.indexOf('Satınalma Siparişi') >= 0) {
-                                                    console.log("Found Satınalma Siparişi in:", text);
-                                                    
-                                                    // Find the vendor for this row
-                                                    var vendorName = row.querySelector('td:first-child');
-                                                    if (vendorName) {
-                                                        console.log("Vendor:", vendorName.textContent.trim());
-                                                        
-                                                        // Find matching vendor column
-                                                        vendorColumns.forEach(function(column) {
-                                                            if (column.textContent.indexOf(vendorName.textContent.trim()) >= 0) {
-                                                                // Add confirmed class
-                                                                column.classList.add('confirmed-order');
-                                                                
-                                                                // Add badge
-                                                                var badge = document.createElement('span');
-                                                                badge.className = 'confirmed-badge';
-                                                                badge.style.color = 'white'; // Ensure text is visible
-                                                                badge.style.textAlign = 'center'; // Center text in badge
-                                                                badge.textContent = 'Satınalma Siparişi';
-                                                                column.appendChild(badge);
-                                                                
-                                                                console.log("Highlighted vendor column:", column);
-                                                            }
-                                                        });
-                                                    }
-                                                }
-                                            });
-                                        });
-                                    }
-                                    
-                                    // Function to set purchase orders to "to approve" state directly
-                                    function setToApproveState(poIds) {
-                                        $.ajax({
-                                            url: '/web/dataset/call_kw/purchase.order/write',
-                                            type: 'POST',
-                                            dataType: 'json',
-                                            contentType: 'application/json',
-                                            data: JSON.stringify({
-                                                jsonrpc: "2.0",
-                                                method: "call",
-                                                params: {
-                                                    model: 'purchase.order',
-                                                    method: 'write',
-                                                    args: [poIds, {'state': 'to approve'}],
-                                                    kwargs: {}
-                                                },
-                                                id: Math.floor(Math.random() * 1000000000)
-                                            }),
-                                            headers: {
-                                                'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]') ? document.querySelector('meta[name="csrf-token"]').getAttribute('content') : ''
-                                            },
-                                            success: function(result) {
-                                                if (result.error) {
-                                                    console.error("Error setting purchase orders to approve state:", result.error);
-                                                    alert("Siparişler onay durumuna alınırken hata oluştu!");
-                                                    return;
-                                                }
-                                                
-                                                alert("Seçilen tedarikçinin teklifi onay durumuna alındı!");
-                                                location.reload();
-                                            },
-                                            error: function(error) {
-                                                console.error("Error setting purchase orders to approve state:", error);
-                                                alert("Siparişler onay durumuna alınırken hata oluştu!");
-                                            }
-                                        });
-                                    }
-                                </script>
+
                                 <tbody>
                                     <!-- For each product in the tender -->
                                     <t t-foreach="o.tender_lines" t-as="tender_line">
@@ -966,14 +609,14 @@
                                         </t>
                                         <t t-else="">
                                             <!-- Product row -->
-                                            <tr class="product-row">
+                                            <tr class="product-row" t-att-data-product-id="tender_line.product_id.id" t-att-data-tender-line-id="tender_line.id">
                                                 <td class="product-col" t-att-rowspan="13">
                                                     <div><strong t-field="tender_line.product_id.display_name"/></div>
                                                     <t t-if="tender_line.product_id.description_purchase">
-                                                        <div class="mt-2" style="padding-left: 15px; font-size: 12px;">
+                                                        <div class="mt-2" style="padding-left: 15px;">
                                                             <strong>Satınalma Açıklaması:</strong>
                                                         </div>
-                                                        <div class="mt-1" style="padding-left: 15px; font-size: 12px; max-height: 220px; overflow: hidden;">
+                                                        <div class="mt-1" style="padding-left: 15px; max-height: 220px; overflow: hidden;">
                                                             <t t-if="tender_line.product_id.description_purchase">
                                                                 <div style="display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis;">
                                                                     <t t-foreach="tender_line.product_id.description_purchase.split('\n')" t-as="line">
@@ -986,10 +629,9 @@
                                                         </div>
                                                     </t>
                                                 </td>
-                                                <td class="field-col">Gerekli Tarih:</td>
+                                                <td class="field-col"><strong>Gerekli Tarih:</strong></td>
                                                 
                                                 <!-- For each vendor in the latest round, add their data for this product -->
-                                                
                                                 <t t-foreach="vendors_to_show" t-as="vendor">
                                                     <t t-set="vendor_line" t-value="False"/>
                                                     <t t-foreach="vendor.order_line" t-as="line">
@@ -998,7 +640,7 @@
                                                         </t>
                                                     </t>
                                                     
-                                                    <td t-attf-class="vendor-col #{vendor_line and vendor_line.system_selection and 'system-selection' or ''} #{vendor_line and vendor_line.user_selection and 'user-selection' or ''}">
+                                                    <td t-attf-class="vendor-col #{vendor_line and vendor_line.system_selection and 'system-selection' or ''} #{vendor_line and vendor_line.user_selection and 'user-selection' or ''}" t-att-data-vendor-id="vendor.id" t-att-data-field="required_delivery_date">
                                                         <span t-if="tender_line.required_delivery_date" t-field="tender_line.required_delivery_date"/>
                                                         <span t-else="">-</span>
                                                         <t t-if="vendor_line and vendor_line.system_selection">
@@ -1012,8 +654,8 @@
                                             </tr>
                                             
                                             <!-- Miktar ve Birim row -->
-                                            <tr>
-                                                <td class="field-col">Miktar:</td>
+                                            <tr t-att-data-tender-line-id="tender_line.id">
+                                                <td class="field-col"><strong>Miktar:</strong></td>
                                                 <t t-foreach="vendors_to_show" t-as="vendor">
                                                     <t t-set="vendor_line" t-value="False"/>
                                                     <t t-foreach="vendor.order_line" t-as="line">
@@ -1021,7 +663,7 @@
                                                             <t t-set="vendor_line" t-value="line"/>
                                                         </t>
                                                     </t>
-                                                    <td t-attf-class="vendor-col #{vendor_line and vendor_line.system_selection and 'system-selection' or ''} #{vendor_line and vendor_line.user_selection and 'user-selection' or ''}">
+                                                    <td t-attf-class="vendor-col #{vendor_line and vendor_line.system_selection and 'system-selection' or ''} #{vendor_line and vendor_line.user_selection and 'user-selection' or ''}" t-att-data-vendor-id="vendor.id" t-att-data-field="quantity">
                                                         <t t-if="vendor_line">
                                                             <span t-field="vendor_line.product_qty"/>
                                                             <span t-if="vendor_line.product_uom"> <span t-field="vendor_line.product_uom.name"/></span>
@@ -1032,8 +674,8 @@
                                             </tr>
                                             
                                             <!-- Alternatif Malzeme row -->
-                                            <tr>
-                                                <td class="field-col">Alternatif Malzeme:</td>
+                                            <tr t-att-data-tender-line-id="tender_line.id">
+                                                <td class="field-col"><strong>Alternatif Malzeme:</strong></td>
                                                 <t t-foreach="vendors_to_show" t-as="vendor">
                                                     <t t-set="vendor_line" t-value="False"/>
                                                     <t t-foreach="vendor.order_line" t-as="line">
@@ -1042,7 +684,7 @@
                                                         </t>
                                                     </t>
                                                     
-                                                    <td t-attf-class="vendor-col #{vendor_line and vendor_line.system_selection and 'system-selection' or ''} #{vendor_line and vendor_line.user_selection and 'user-selection' or ''}">
+                                                    <td t-attf-class="vendor-col #{vendor_line and vendor_line.system_selection and 'system-selection' or ''} #{vendor_line and vendor_line.user_selection and 'user-selection' or ''}" t-att-data-vendor-id="vendor.id" t-att-data-field="alt_materials">
                                                         <span t-if="vendor_line and vendor_line.alt_materials" t-field="vendor_line.alt_materials"/>
                                                         <span t-else="">-</span>
                                                     </td>
@@ -1050,8 +692,8 @@
                                             </tr>
 
                                             <!-- Birim Fiyat row -->
-                                            <tr>
-                                                <td class="field-col">Birim Fiyat:</td>
+                                            <tr t-att-data-tender-line-id="tender_line.id">
+                                                <td class="field-col"><strong>Birim Fiyat:</strong></td>
                                                 <t t-foreach="vendors_to_show" t-as="vendor">
                                                     <t t-set="vendor_line" t-value="False"/>
                                                     <t t-foreach="vendor.order_line" t-as="line">
@@ -1060,7 +702,7 @@
                                                         </t>
                                                     </t>
 
-                                                    <td t-attf-class="vendor-col #{vendor_line and vendor_line.system_selection and 'system-selection' or ''} #{vendor_line and vendor_line.user_selection and 'user-selection' or ''}">
+                                                    <td t-attf-class="vendor-col #{vendor_line and vendor_line.system_selection and 'system-selection' or ''} #{vendor_line and vendor_line.user_selection and 'user-selection' or ''}" t-att-data-vendor-id="vendor.id" t-att-data-field="price_unit">
                                                         <span t-if="vendor_line" t-field="vendor_line.price_unit" t-options='{"widget": "monetary", "display_currency": vendor_line.currency_id}'/>
                                                         <span t-else="">-</span>
                                                     </td>
@@ -1068,8 +710,8 @@
                                             </tr>
 
                                             <!-- İndirim % row -->
-                                            <tr>
-                                                <td class="field-col">İndirim %:</td>
+                                            <tr t-att-data-tender-line-id="tender_line.id">
+                                                <td class="field-col"><strong>İndirim %:</strong></td>
                                                 <t t-foreach="vendors_to_show" t-as="vendor">
                                                     <t t-set="vendor_line" t-value="False"/>
                                                     <t t-foreach="vendor.order_line" t-as="line">
@@ -1078,7 +720,7 @@
                                                         </t>
                                                     </t>
                                                     
-                                                    <td t-attf-class="vendor-col #{vendor_line and vendor_line.system_selection and 'system-selection' or ''} #{vendor_line and vendor_line.user_selection and 'user-selection' or ''}">
+                                                    <td t-attf-class="vendor-col #{vendor_line and vendor_line.system_selection and 'system-selection' or ''} #{vendor_line and vendor_line.user_selection and 'user-selection' or ''}" t-att-data-vendor-id="vendor.id" t-att-data-field="discount">
                                                         <span t-if="vendor_line" t-field="vendor_line.discount"/>
                                                         <span t-else="">-</span>
                                                     </td>
@@ -1086,8 +728,8 @@
                                             </tr>
                                             
                                             <!-- Ödeme Vadesi row -->
-                                            <tr>
-                                                <td class="field-col">Ödeme Vadesi:</td>
+                                            <tr t-att-data-tender-line-id="tender_line.id">
+                                                <td class="field-col"><strong>Ödeme Vadesi:</strong></td>
                                                 <t t-foreach="vendors_to_show" t-as="vendor">
                                                     <t t-set="vendor_line" t-value="False"/>
                                                     <t t-foreach="vendor.order_line" t-as="line">
@@ -1096,17 +738,16 @@
                                                         </t>
                                                     </t>
                                                     
-                                                    <td t-attf-class="vendor-col #{vendor_line and vendor_line.system_selection and 'system-selection' or ''} #{vendor_line and vendor_line.user_selection and 'user-selection' or ''}">
+                                                    <td t-attf-class="vendor-col #{vendor_line and vendor_line.system_selection and 'system-selection' or ''} #{vendor_line and vendor_line.user_selection and 'user-selection' or ''}" t-att-data-vendor-id="vendor.id" t-att-data-field="payment_term">
                                                         <span t-if="vendor.payment_term_id" t-field="vendor.payment_term_id.name"/>
                                                         <span t-else="">-</span>
                                                     </td>
                                                 </t>
                                             </tr>
                                             
-                                            
                                             <!-- Tutar row -->
-                                            <tr>
-                                                <td class="field-col">Tutar:</td>
+                                            <tr t-att-data-tender-line-id="tender_line.id">
+                                                <td class="field-col"><strong>Tutar:</strong></td>
                                                 <!-- First collect all non-zero amounts -->
                                                 <t t-set="amounts" t-value="[]"/>
                                                 <t t-foreach="vendors_to_show" t-as="vendor_collect">
@@ -1131,7 +772,7 @@
                                                         </t>
                                                     </t>
                                                     
-                                                    <td t-attf-class="vendor-col #{vendor_line and vendor_line.system_selection and 'system-selection' or ''} #{vendor_line and vendor_line.user_selection and 'user-selection' or ''}">
+                                                    <td t-attf-class="vendor-col #{vendor_line and vendor_line.system_selection and 'system-selection' or ''} #{vendor_line and vendor_line.user_selection and 'user-selection' or ''}" t-att-data-vendor-id="vendor.id" t-att-data-field="price_subtotal">
                                                         <t t-if="vendor_line">
                                                             <span t-field="vendor_line.price_subtotal"/>
                                                         </t>
@@ -1140,28 +781,9 @@
                                                 </t>
                                             </tr>
                                             
-                                            <!-- Para Birimi row
-                                            <tr>
-                                                <td class="field-col">Para Birimi:</td>
-                                                <t t-foreach="o.purchase_order_ids" t-as="vendor">
-                                                    <t t-set="vendor_line" t-value="False"/>
-                                                    <t t-foreach="vendor.order_line" t-as="line">
-                                                        <t t-if="line.tender_line_id and line.tender_line_id.id == tender_line.id">
-                                                            <t t-set="vendor_line" t-value="line"/>
-                                                        </t>
-                                                    </t>
-                                                    
-                                                    <td t-attf-class="vendor-col #{vendor_line and vendor_line.system_selection and 'system-selection' or ''} #{vendor_line and vendor_line.user_selection and 'user-selection' or ''}">
-                                                        <span t-if="vendor_line and vendor_line.currency_id" t-field="vendor_line.currency_id.name"/>
-                                                        <span t-else="">-</span>
-                                                    </td>
-                                                </t>
-                                            </tr>
-                                            -->
-                                            
                                             <!-- NPV row -->
-                                            <tr>
-                                                <td class="field-col">NPV:</td>
+                                            <tr t-att-data-tender-line-id="tender_line.id">
+                                                <td class="field-col"><strong>NPV:</strong></td>
                                                 
                                                 <!-- First collect all non-zero NPV values for this product -->
                                                 <t t-set="npv_values" t-value="[]"/>
@@ -1196,7 +818,7 @@
                                                         </t>
                                                     </t>
                                                     
-                                                    <td t-attf-class="vendor-col #{vendor_line and vendor_line.system_selection and 'system-selection' or ''} #{vendor_line and vendor_line.user_selection and 'user-selection' or ''}">
+                                                    <td t-attf-class="vendor-col #{vendor_line and vendor_line.system_selection and 'system-selection' or ''} #{vendor_line and vendor_line.user_selection and 'user-selection' or ''}" t-att-data-vendor-id="vendor.id" t-att-data-field="npv_value">
                                                         <t t-if="vendor_line">
                                                             <t t-set="has_npv" t-value="False"/>
                                                             <t t-foreach="vendor_line._fields" t-as="field">
@@ -1219,8 +841,8 @@
                                             </tr>
                                             
                                             <!-- Teslimat Tarihi row -->
-                                            <tr>
-                                                <td class="field-col">Teslimat Tarihi:</td>
+                                            <tr t-att-data-tender-line-id="tender_line.id">
+                                                <td class="field-col"><strong>Teslimat Tarihi:</strong></td>
                                                 <t t-foreach="vendors_to_show" t-as="vendor">
                                                     <t t-set="vendor_line" t-value="False"/>
                                                     <t t-foreach="vendor.order_line" t-as="line">
@@ -1229,7 +851,7 @@
                                                         </t>
                                                     </t>
                                                     
-                                                    <td t-attf-class="vendor-col #{vendor_line and vendor_line.system_selection and 'system-selection' or ''} #{vendor_line and vendor_line.user_selection and 'user-selection' or ''}">
+                                                    <td t-attf-class="vendor-col #{vendor_line and vendor_line.system_selection and 'system-selection' or ''} #{vendor_line and vendor_line.user_selection and 'user-selection' or ''}" t-att-data-vendor-id="vendor.id" t-att-data-field="date_planned">
                                                         <span t-if="vendor_line and vendor_line.date_planned" t-field="vendor_line.date_planned" t-options='{"format": "dd/MM/yyyy"}'/>
                                                         <span t-else="">-</span>
                                                     </td>
@@ -1237,8 +859,8 @@
                                             </tr>
                                             
                                             <!-- Garanti Süresi row -->
-                                            <tr>
-                                                <td class="field-col">Garanti Süresi:</td>
+                                            <tr t-att-data-tender-line-id="tender_line.id">
+                                                <td class="field-col"><strong>Garanti Süresi:</strong></td>
                                                 <t t-foreach="vendors_to_show" t-as="vendor">
                                                     <t t-set="vendor_line" t-value="False"/>
                                                     <t t-foreach="vendor.order_line" t-as="line">
@@ -1247,7 +869,7 @@
                                                         </t>
                                                     </t>
                                                     
-                                                    <td t-attf-class="vendor-col #{vendor_line and vendor_line.system_selection and 'system-selection' or ''} #{vendor_line and vendor_line.user_selection and 'user-selection' or ''}">
+                                                    <td t-attf-class="vendor-col #{vendor_line and vendor_line.system_selection and 'system-selection' or ''} #{vendor_line and vendor_line.user_selection and 'user-selection' or ''}" t-att-data-vendor-id="vendor.id" t-att-data-field="warranty_period">
                                                         <t t-if="vendor_line">
                                                             <t t-set="has_warranty" t-value="False"/>
                                                             <t t-foreach="vendor_line._fields" t-as="field">
@@ -1266,8 +888,8 @@
                                             </tr>
                                             
                                             <!-- Ürün Seçim row -->
-                                            <tr>
-                                                <td class="field-col">Sistem Seçimi:</td>
+                                            <tr t-att-data-tender-line-id="tender_line.id">
+                                                <td class="field-col"><strong>Sistem Seçimi:</strong></td>
                                                 
                                                 <!-- First collect all non-zero NPV values for this product -->
                                                 <t t-set="product_npvs" t-value="[]"/>
@@ -1304,7 +926,7 @@
                                                         </t>
                                                     </t>
                                                     
-                                                    <td t-attf-class="vendor-col text-center #{vendor_line and vendor_line.system_selection and 'system-selection' or ''}">
+                                                    <td t-attf-class="vendor-col text-center #{vendor_line and vendor_line.system_selection and 'system-selection' or ''}" t-att-data-vendor-id="vendor.id" t-att-data-field="system_selection">
                                                         <t t-if="vendor_line">
                                                             <t t-set="has_npv" t-value="False"/>
                                                             <t t-set="line_npv" t-value="0"/>
@@ -1338,8 +960,8 @@
                                             </tr>
                                             
                                             <!-- Kullanıcı Seçimi row -->
-                                            <tr>
-                                                <td class="field-col">Kullanıcı Seçimi:</td>
+                                            <tr t-att-data-tender-line-id="tender_line.id">
+                                                <td class="field-col"><strong>Kullanıcı Seçimi:</strong></td>
                                                 <t t-foreach="vendors_to_show" t-as="vendor">
                                                     <t t-set="vendor_line" t-value="False"/>
                                                     <t t-foreach="vendor.order_line" t-as="line">
@@ -1348,10 +970,17 @@
                                                         </t>
                                                     </t>
                                                     
-                                                    <td t-att-class="'vendor-col text-center ' + (vendor_line and vendor_line.user_selection and 'user-selection' or '')">
+                                                    <td t-att-class="'vendor-col text-center ' + (vendor_line and vendor_line.user_selection and 'user-selection' or '')" t-att-data-vendor-id="vendor.id" t-att-data-field="user_selection">
                                                         <t t-if="vendor_line">
                                                             <div>
-                                                                <input type="checkbox" name="vendor_user_selection" t-att-value="str(vendor.id) + '_' + str(tender_line.id)" class="form-check-input" t-att-checked="vendor_line.user_selection and 'checked'" t-att-data-line-id="vendor_line.id" t-att-data-vendor-id="vendor.id" onclick="handleCheckboxSelection(this)"/>
+                                                                <input  type="checkbox" 
+                                                                        name="vendor_user_selection" 
+                                                                        t-att-value="str(vendor.id) + '_' + str(tender_line.id)" 
+                                                                        class="form-check-input" 
+                                                                        t-att-checked="vendor_line.user_selection and 'checked'" 
+                                                                        t-att-data-line-id="vendor_line.id" 
+                                                                        t-att-data-vendor-id="vendor.id" 
+                                                                        onclick="window.VendorComparison.handleCheckboxSelection(this)"/>
                                                                 <t t-if="vendor_line.user_selection">
                                                                     <span class="selection-badge user-badge ml-2">K</span>
                                                                 </t>
@@ -1370,7 +999,7 @@
                                             </tr>
                                             
                                             <!-- Seçim Notu row -->
-                                            <tr>
+                                            <tr t-att-data-tender-line-id="tender_line.id">
                                                 <td class="field-col">Kullanıcı Seçim Notu:</td>
                                                 <t t-foreach="vendors_to_show" t-as="vendor">
                                                     <t t-set="vendor_line" t-value="False"/>
@@ -1379,7 +1008,7 @@
                                                             <t t-set="vendor_line" t-value="line"/>
                                                         </t>
                                                     </t>
-                                                    <td t-attf-class="vendor-col #{vendor_line and vendor_line.system_selection and 'system-selection' or ''} #{vendor_line and vendor_line.user_selection and 'user-selection' or ''}">
+                                                    <td t-attf-class="vendor-col #{vendor_line and vendor_line.system_selection and 'system-selection' or ''} #{vendor_line and vendor_line.user_selection and 'user-selection' or ''}" t-att-data-vendor-id="vendor.id" t-att-data-field="selection_note">
                                                         <span t-if="vendor_line and vendor_line.selection_note" t-field="vendor_line.selection_note"/>
                                                         <span t-elif="vendor.selection_note" t-field="vendor.selection_note"/>
                                                         <span t-else="">-</span>
@@ -1392,14 +1021,14 @@
                                     
                                     <!-- Total rows -->
                                     <tr class="table-active">
-                                        <td rowspan="5" class="product-col"><strong>TOPLAM</strong></td>
-                                        <td class="field-col">Tutar:</td>
+                                        <td rowspan="4" class="product-col"><strong>Toplam - Sistem</strong></td>
+                                        <td class="field-col"><strong>Tutar:</strong></td>
                                         
                                         <!-- First collect all non-zero total amounts -->
                                         <t t-set="total_amounts" t-value="[]"/>
                                         <t t-set="vendors_to_collect" t-value="vendors_to_show"/>
                                         
-                                        <t t-foreach="vendors_to_collect" t-as="vendor_collect">
+                                        <t t-foreach="vendors_to_collected" t-as="vendor_collect">
                                             <t t-set="vendor_total" t-value="0"/>
                                             <t t-foreach="vendor_collect.order_line" t-as="line">
                                                 <t t-if="line.tender_line_id and not line.display_type">
@@ -1422,7 +1051,7 @@
                                                 </t>
                                             </t>
                                             
-                                            <td t-attf-class="vendor-col #{vendor.system_selection and 'system-selection' or ''} #{vendor.user_selection and 'user-selection' or ''}">
+                                            <td t-attf-class="vendor-col #{vendor.system_selection and 'system-selection' or ''} #{vendor.user_selection and 'user-selection' or ''}" t-att-data-vendor-id="vendor.id" t-att-data-field="total_amount">
                                                 <!-- Bold if this is the lowest non-zero total amount -->
                                                 <strong t-if="total_amount > 0 and total_amount == min_total_amount">
                                                     <span t-esc="total_amount" t-options='{"widget": "monetary", "display_currency": vendor.currency_id}'/>
@@ -1433,13 +1062,13 @@
                                     </tr>
                                     
                                     <tr class="table-active">
-                                        <td class="field-col">NPV:</td>
+                                        <td class="field-col"><strong>NPV:</strong></td>
                                         
                                         <!-- First collect all non-zero total NPV values -->
                                         <t t-set="total_npvs" t-value="[]"/>
                                         <t t-set="vendors_to_collect" t-value="vendors_to_show"/>
                                         
-                                        <t t-foreach="vendors_to_collect" t-as="vendor_collect">
+                                        <t t-foreach="vendors_to_collected" t-as="vendor_collect">
                                             <t t-set="has_npv" t-value="False"/>
                                             <t t-set="vendor_total_npv" t-value="0"/>
                                             <t t-foreach="vendor_collect.order_line" t-as="line">
@@ -1475,7 +1104,7 @@
                                                 </t>
                                             </t>
                                             
-                                            <td t-attf-class="vendor-col #{vendor.system_selection and 'system-selection' or ''} #{vendor.user_selection and 'user-selection' or ''}">
+                                            <td t-attf-class="vendor-col #{vendor.system_selection and 'system-selection' or ''} #{vendor.user_selection and 'user-selection' or ''}" t-att-data-vendor-id="vendor.id" t-att-data-field="total_npv">
                                                 <t t-if="has_npv">
                                                     <!-- Bold and red if this is the lowest non-zero total NPV (selected vendor) -->
                                                     <t t-if="total_npv > 0 and total_npv == min_total_npv">
@@ -1490,7 +1119,7 @@
                                     
                                     <!-- Total Sistem Seçimi row -->
                                     <tr class="table-active">
-                                        <td class="field-col">Sistem Seçimi:</td>
+                                        <td class="field-col"><strong>Sistem Seçimi:</strong></td>
                                         
                                         <t t-foreach="vendors_to_show" t-as="vendor">
                                             <!-- Calculate total NPV for this vendor -->
@@ -1507,7 +1136,7 @@
                                                 </t>
                                             </t>
                                             
-                                            <td t-attf-class="vendor-col text-center #{vendor.system_selection and 'system-selection' or ''}">
+                                            <td t-attf-class="vendor-col text-center #{vendor.system_selection and 'system-selection' or ''}" t-att-data-vendor-id="vendor.id" t-att-data-field="system_total_selection">
                                                 <!-- Show badge if this vendor has the lowest non-zero total NPV -->
                                                 <t t-if="has_npv and total_npv > 0 and total_npv == min_total_npv">
                                                     <span class="selection-badge system-badge">S</span>
@@ -1525,12 +1154,17 @@
                                     
                                     <!-- Total Kullanıcı Seçimi row -->
                                     <tr class="table-active">
-                                        <td class="field-col">Kullanıcı Seçimi:</td>
+                                        <td class="field-col"><strong>Kullanıcı Seçimi:</strong></td>
                                         
                                         <t t-foreach="vendors_to_show" t-as="vendor">
-                                            <td t-att-class="'vendor-col text-center ' + (vendor.user_selection and 'user-selection' or '')">
+                                            <td t-att-class="'vendor-col text-center ' + (vendor.user_selection and 'user-selection' or '')" t-att-data-vendor-id="vendor.id" t-att-data-field="user_total_selection">
                                                 <div>
-                                                    <input type="checkbox" name="vendor_user_total_selection" t-att-value="vendor.id" class="form-check-input" t-att-checked="vendor.user_selection and 'checked'" t-att-data-vendor-id="vendor.id" onclick="handleCheckboxSelection(this)"/>
+                                                    <input  type="checkbox" 
+                                                            name="vendor_user_total_selection" 
+                                                            t-att-value="vendor.id" class="form-check-input" 
+                                                            t-att-checked="vendor.user_selection and 'checked'" 
+                                                            t-att-data-vendor-id="vendor.id" 
+                                                            onclick="window.VendorComparison.handleCheckboxSelection(this)"/>
                                                     <t t-if="vendor.user_selection">
                                                         <span class="selection-badge user-badge ml-2">K</span>
                                                     </t>
@@ -1545,27 +1179,52 @@
                                         </t>
                                     </tr>
                                     
-                                    <!-- Total Seçim Notu row -->
-                                    <tr class="table-active">
-                                        <td class="field-col">Kullanıcı Seçim Notu:</td>
+                                    <!-- Total Kullanıcı rows -->
+                                    <tr class="table-active user-total-amount">
+                                        <td rowspan="2" class="product-col"><strong>Toplam - Kullanıcı</strong></td>
+                                        <td class="field-col"><strong>Tutar:</strong></td>
                                         
                                         <t t-foreach="vendors_to_show" t-as="vendor">
-                                            <td t-attf-class="vendor-col #{vendor.system_selection and 'system-selection' or ''} #{vendor.user_selection and 'user-selection' or ''}">
-                                                <span t-if="vendor.selection_note" t-field="vendor.selection_note"/>
-                                                <span t-else="">-</span>
+                                            <td t-attf-class="vendor-col #{vendor.user_selection and 'user-selection' or ''}" t-att-data-vendor-id="vendor.id" t-att-data-field="user_total_amount">
+                                                <span>-</span>
                                             </td>
                                         </t>
+                                    </tr>
+                                    
+                                    <tr class="table-active user-total-npv">
+                                        <td class="field-col"><strong>NPV:</strong></td>
+                                        
+                                        <t t-foreach="vendors_to_show" t-as="vendor">
+                                            <td t-attf-class="vendor-col #{vendor.user_selection and 'user-selection' or ''}" t-att-data-vendor-id="vendor.id" t-att-data-field="user_total_npv">
+                                                <span>-</span>
+                                            </td>
+                                        </t>
+                                    </tr>
+                                    
+                                    <!-- Grand Total rows -->
+                                    <tr class="table-active grand-total-amount">
+                                        <td rowspan="2" class="product-col"><strong>Genel Toplam</strong></td>
+                                        <td class="field-col"><strong>Toplam Tutar:</strong></td>
+                                        <td t-att-colspan="len(vendors_to_show)" class="vendor-col text-center">
+                                            <span>-</span>
+                                        </td>
+                                    </tr>
+                                    
+                                    <tr class="table-active grand-total-npv">
+                                        <td class="field-col"><strong>Toplam NPV:</strong></td>
+                                        <td t-att-colspan="len(vendors_to_show)" class="vendor-col text-center">
+                                            <span>-</span>
+                                        </td>
                                     </tr>
                                 </tbody>
                             </table>
                             
                             <div class="mt-3" style="text-align: right;">
                             </div>
-                    </div>
                 </t>
             </t>
         </template>
-        
+
         <!-- Report action -->
         <record id="action_report_vendor_comparison" model="ir.actions.report">
             <field name="name">Tedarikçi Karşılaştırma</field>
@@ -1589,7 +1248,7 @@
                                 @charset "UTF-8";
                                 @font-face {
                                     font-family: 'DejaVu Sans';
-                                    src: url('/web/static/lib/fontawesome/fonts/DejaVuSans.ttf') format('truetype');
+                                    src: url('/ak_tender/static/lib/src/fonts/DejaVuSans.ttf') format('truetype');
                                     font-weight: normal;
                                     font-style: normal;
                                 }
@@ -1597,10 +1256,10 @@
                                     font-family: 'DejaVu Sans', sans-serif !important;
                                 }
                                 .table-bordered {
-                                    border: 1px solid #000;
+                                    border: 1px solid #7f7f7fff;
                                 }
                                 .table-bordered th, .table-bordered td {
-                                    border: 1px solid #000;
+                                    border: 1px solid #7f7f7fff;
                                     padding: 4px;
                                 }
                                 .npv-selected {

@@ -29,6 +29,8 @@ Bu modül, çok aşamalı satın alma ihale süreçlerini Odoo üzerinde yönetm
 - Gelişmiş Portal Arayüzü (tedarikçiler için teklif düzenleme)
 - NPV (Net Bugünkü Değer) hesaplamaları
 - Garanti süresi yönetimi
+- Gecikme günleri hesaplaması
+- Kazanan siparişler işlevselliği
 - Rol tabanlı erişim kontrolü (RBAC) ile güvenlik yönetimi
 
 ## Güvenlik Grupları
