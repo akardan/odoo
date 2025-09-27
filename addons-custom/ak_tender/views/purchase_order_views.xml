@@ -13,13 +13,17 @@
             <field name="arch" type="xml">
                 <xpath expr="//field[@name='partner_ref']" position="after">
                     <field name="tender_id" readonly="1" force_save="1"/>
-                    <field name="tender_round" invisible="tender_id == False"/>
+                    <field name="tender_round"  readonly="1" invisible="tender_id == False"/>
                 </xpath>
                 <xpath expr="//field[@name='order_line']//field[@name='product_id']" position="before">
                     <field name="tender_line_id" readonly="1" optional="show"/>
                 </xpath>
                 <xpath expr="//field[@name='order_line']//field[@name='product_qty']" position="before">
                     <field name="alt_materials" readonly="1" optional="show"/>
+                </xpath>
+                <xpath expr="//field[@name='order_line']//field[@name='price_subtotal']" position="after">
+                    <field name="system_selection" string="S.S." optional="show"/>
+                    <field name="user_selection" string="K.S." optional="show"/>
                 </xpath>
                 
                 <xpath expr="//notebook" position="inside">
@@ -54,6 +58,10 @@
                     <field name="payment_term_id" string="Ödeme Koşulları" optional="show"/>
                     <field name="total_npv" widget="monetary" options="{'currency_field': 'currency_id'}" string="Toplam NPV" sum="Toplam" optional="show"/>
                 </xpath>
+                <xpath expr="//field[@name='amount_total']" position="after">
+                    <field name="system_selection" string="S.S." optional="show"/>
+                    <field name="user_selection" string="K.S."  optional="show"/>
+                </xpath>            
             </field>
         </record>
         
@@ -72,6 +80,10 @@
                 <xpath expr="//field[@name='amount_untaxed']" position="after">
                     <field name="payment_term_id" string="Ödeme Koşulları" optional="show"/>
                     <field name="total_npv" widget="monetary" options="{'currency_field': 'currency_id'}" string="Toplam NPV" sum="Toplam" optional="show"/>
+                </xpath>
+                <xpath expr="//field[@name='amount_total']" position="after">
+                    <field name="system_selection" string="S.S." optional="show"/>
+                    <field name="user_selection" string="K.S."  optional="show"/>
                 </xpath>
             </field>
         </record>

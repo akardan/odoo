@@ -248,6 +248,8 @@
                                         <field name="total_npv" widget="monetary" options="{'currency_field': 'currency_id'}"/>
                                         <field name="amount_total" widget="monetary" options="{'currency_field': 'currency_id'}" optional="hide"/>
                                         <field name="state"/>
+                                        <field name="system_selection" string="S.S." optional="show"/>
+                                        <field name="user_selection" string="K.S." optional="show"/>
                                     </list>
                                 </field>
                                 <group class="oe_subtotal_footer oe_right">

@@ -125,8 +125,29 @@
                                 const isChecked = checkbox.checked;
                                 const value = checkbox.value;
                                 
-                                // Simple fetch API call
-                                fetch('/web/dataset/call_kw/ak.tender/save_user_selection', {
+                                // Parse the selection data
+                                let selections = [];
+                                
+                                if (isProductSelection) {
+                                    // Product selection: value is "vendor_id_tender_line_id"
+                                    const parts = value.split('_');
+                                    if (parts.length >= 2) {
+                                        selections.push({
+                                            vendor_id: parseInt(parts[0]),
+                                            tender_line_id: parseInt(parts[1]),
+                                            is_checked: isChecked
+                                        });
+                                    }
+                                } else if (isTotalSelection) {
+                                    // Total selection: value is "vendor_id"
+                                    selections.push({
+                                        vendor_id: parseInt(value),
+                                        tender_line_id: null,
+                                        is_checked: isChecked
+                                    });
+                                }
+                                
+                                fetch('/web/dataset/call_kw', {
                                     method: 'POST',
                                     headers: {
                                         'Content-Type': 'application/json',
@@ -139,17 +160,29 @@
                                         params: {
                                             model: 'ak.tender',
                                             method: 'save_user_selection',
-                                            args: [tenderId, value, isProductSelection, isTotalSelection, isChecked],
+                                            args: [[tenderId], selections],
                                             kwargs: {}
                                         }
                                     })
                                 }).then(function(response) {
                                     return response.json();
-                                }).then(function(result) {
-                                    self.updateUserTotals();
+                                }).then(function(data) {
+                                    console.log('Server response:', data);
+                                    if (data.error) {
+                                        console.error('Error saving selection:', data.error);
+                                        if (data.error.data && data.error.data.message) {
+                                            console.error('Error details:', data.error.data.message);
+                                        }
+                                    } else if (data.result) {
+                                        console.log('Selection saved successfully:', data.result);
+                                        self.updateUserTotals();
+                                        self.showRefreshNotification();
+                                    } else {
+                                        console.log('Unexpected response format:', data);
+                                    }
                                 }).catch(function(error) {
-                                    console.error("Error saving selection:", error);
-                                    alert("Seçim kaydedilirken hata oluştu!");
+                                    console.error('Network error:', error);
+                                    alert('Seçim kaydedilirken hata oluştu!');
                                     checkbox.checked = !checkbox.checked;
                                 });
                             },
@@ -403,6 +436,37 @@
                                 return parseInt(comparisonTable && comparisonTable.dataset.tenderId);
                             },
 
+                            showRefreshNotification: function() {
+                                // Show a small notification that the user should refresh to see saved selections
+                                const notification = document.createElement('div');
+                                notification.style.cssText = `
+                                    position: fixed;
+                                    top: 20px;
+                                    right: 20px;
+                                    background: #28a745;
+                                    color: white;
+                                    padding: 10px 15px;
+                                    border-radius: 5px;
+                                    z-index: 9999;
+                                    font-size: 14px;
+                                    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+                                `;
+                                notification.innerHTML = `
+                                    <i class="fa fa-check"></i> Seçim kaydedildi! 
+                                    <button onclick="window.location.href = window.location.href.split('?')[0] + '?t=' + Date.now()" style="background: none; border: 1px solid white; color: white; margin-left: 10px; padding: 2px 8px; border-radius: 3px; cursor: pointer;">
+                                        Yenile
+                                    </button>
+                                `;
+                                document.body.appendChild(notification);
+                                
+                                // Auto-remove after 5 seconds
+                                setTimeout(function() {
+                                    if (notification.parentNode) {
+                                        notification.parentNode.removeChild(notification);
+                                    }
+                                }, 5000);
+                            },
+
                             init: function() {
                                 console.log("VendorComparison initialized");
                                 this.loadInitialState();
@@ -412,36 +476,39 @@
                                 const self = this;
                                 setTimeout(function() {
                                     console.log("Loading initial state...");
-                                    const allCheckboxes = document.querySelectorAll('input[type="checkbox"]');
                                     
-                                    allCheckboxes.forEach(function(checkbox) {
-                                        const name = checkbox.getAttribute('name');
-                                        const value = checkbox.value;
-                                        let vendorId = value;
-                                        
-                                        if (name === 'vendor_user_selection') {
-                                            vendorId = value.split('_')[0];
-                                        }
-                                        
-                                        // Check debug elements for user_selection state
-                                        const debugElement = document.querySelector(
-                                            'th.vendor-col[data-vendor-id="' + vendorId + '"] div small'
-                                        );
-                                        
-                                        if (debugElement && debugElement.textContent.includes('user_selection: True')) {
+                                    // Load product-level selections
+                                    const productCheckboxes = document.querySelectorAll('input[name="vendor_user_selection"]');
+                                    console.log('Found product checkboxes:', productCheckboxes.length);
+                                    productCheckboxes.forEach(function(checkbox) {
+                                        const row = checkbox.closest('tr');
+                                        const debugDiv = row.querySelector('div[style*="display: none"]');
+                                        console.log('Checkbox value:', checkbox.value, 'Debug div:', debugDiv ? debugDiv.textContent : 'not found');
+                                        if (debugDiv && debugDiv.textContent.includes('user_selection: True')) {
+                                            console.log('Setting checkbox checked:', checkbox.value);
                                             checkbox.checked = true;
                                             self.updateCheckboxUI(checkbox, true);
                                         }
                                     });
-
-                                    console.log("Dumping data attributes from table cells:");
-                                    document.querySelectorAll('td[data-tender-line-id][data-vendor-id][data-field]').forEach(cell => {
-                                        console.log(`  Cell - tenderLineId: ${cell.dataset.tenderLineId}, vendorId: ${cell.dataset.vendorId}, field: ${cell.dataset.field}, textContent: ${cell.textContent.trim()}`);
+                                    
+                                    // Load vendor total selections
+                                    const totalCheckboxes = document.querySelectorAll('input[name="vendor_user_total_selection"]');
+                                    console.log('Found total checkboxes:', totalCheckboxes.length);
+                                    totalCheckboxes.forEach(function(checkbox) {
+                                        const debugDiv = checkbox.closest('td').querySelector('div[style*="display: none"]');
+                                        console.log('Total checkbox value:', checkbox.value, 'Debug div:', debugDiv ? debugDiv.textContent : 'not found');
+                                        if (debugDiv && debugDiv.textContent.includes('user_selection: True')) {
+                                            console.log('Setting total checkbox checked:', checkbox.value);
+                                            checkbox.checked = true;
+                                            self.updateCheckboxUI(checkbox, true);
+                                        }
                                     });
                                     
                                     self.updateUserTotals();
                                 }, 500);
-                            }
+                            },
+
+
                         };
 
                         // Initialize when DOM is loaded
@@ -453,10 +520,19 @@
                         if (document.readyState === 'complete' || document.readyState === 'interactive') {
                             window.VendorComparison.init();
                         }
+                        
+
                         ]]>
                     </script>
                 </head>
                 <t t-foreach="docs" t-as="o">
+                    <!-- Force refresh data if cache-busting parameter is present -->
+                    <t t-set="refresh_param" t-value="request.httprequest.args.get('t')"/>
+                    <t t-if="refresh_param">
+                        <t t-set="o" t-value="request.env['ak.tender'].sudo().browse(o.id)"/>
+                    </t>
+                    <!-- Calculate and save system selections -->
+                    <t t-set="dummy" t-value="o.calculate_and_save_system_selections()"/>
                     <!-- Add CSRF token meta tag -->
                     <meta name="csrf-token" t-att-content="request.csrf_token()"/>
                     <div class="page">
@@ -482,7 +558,7 @@
                                     <span class="selection-badge system-badge">S</span> Sistem Seçimi
                                     <span class="selection-badge user-badge ml-2">K</span> Kullanıcı Seçimi
                                 </div>
-                                <button type="button" class="btn btn-sm btn-secondary" onclick="window.location.reload()">
+                                <button type="button" class="btn btn-sm btn-secondary" onclick="window.location.href = window.location.href.split('?')[0] + '?t=' + Date.now()" title="Seçimleri görmek için raporu yenileyin">
                                     <i class="fa fa-refresh"></i> Raporu Yenile
                                 </button>
                             </div>
@@ -546,7 +622,7 @@
                                         
                                         <!-- Vendor Columns -->
                                         <t t-foreach="vendors_to_show" t-as="vendor">
-                                            <th t-att-class="'vendor-col ' + (vendor.system_selection and 'system-selection ' or '') + (vendor.user_selection and 'user-selection' or '') + ((vendor.state == 'purchase' or vendor.state == 'to approve') and 'confirmed-order' or '')" t-att-data-vendor-id="vendor.id">
+                                            <th t-att-class="'vendor-col ' + (vendor.system_selection and 'system-selection ' or '') + (vendor.user_selection and 'user-selection' or '') + ((vendor.state == 'purchase' or vendor.state == 'to approve') and 'confirmed-order' or '')" t-att-data-vendor-id="vendor.partner_id.id">
                                                 <span t-esc="vendor.partner_id.name"/> -
                                                 <!-- Purchase Order Status -->
                                                 <span t-if="vendor.state == 'draft'" style="color: #6c757d; font-weight: bold;">
@@ -640,15 +716,15 @@
                                                         </t>
                                                     </t>
                                                     
-                                                    <td t-attf-class="vendor-col #{vendor_line and vendor_line.system_selection and 'system-selection' or ''} #{vendor_line and vendor_line.user_selection and 'user-selection' or ''}" t-att-data-vendor-id="vendor.id" t-att-data-field="required_delivery_date">
+                                                    <td t-attf-class="vendor-col #{vendor_line and vendor_line.system_selection and 'system-selection' or ''} #{vendor_line and vendor_line.user_selection and 'user-selection' or ''}" t-att-data-vendor-id="vendor.partner_id.id" t-att-data-field="required_delivery_date">
                                                         <span t-if="tender_line.required_delivery_date" t-field="tender_line.required_delivery_date"/>
                                                         <span t-else="">-</span>
-                                                        <t t-if="vendor_line and vendor_line.system_selection">
+                                                        <!-- <t t-if="vendor_line and vendor_line.system_selection">
                                                             <span class="selection-badge system-badge">S</span>
                                                         </t>
                                                         <t t-if="vendor_line and vendor_line.user_selection">
                                                             <span class="selection-badge user-badge">K</span>
-                                                        </t>
+                                                        </t> -->
                                                     </td>
                                                 </t>
                                             </tr>
@@ -663,7 +739,7 @@
                                                             <t t-set="vendor_line" t-value="line"/>
                                                         </t>
                                                     </t>
-                                                    <td t-attf-class="vendor-col #{vendor_line and vendor_line.system_selection and 'system-selection' or ''} #{vendor_line and vendor_line.user_selection and 'user-selection' or ''}" t-att-data-vendor-id="vendor.id" t-att-data-field="quantity">
+                                                    <td t-attf-class="vendor-col #{vendor_line and vendor_line.system_selection and 'system-selection' or ''} #{vendor_line and vendor_line.user_selection and 'user-selection' or ''}" t-att-data-vendor-id="vendor.partner_id.id" t-att-data-field="quantity">
                                                         <t t-if="vendor_line">
                                                             <span t-field="vendor_line.product_qty"/>
                                                             <span t-if="vendor_line.product_uom"> <span t-field="vendor_line.product_uom.name"/></span>
@@ -684,7 +760,7 @@
                                                         </t>
                                                     </t>
                                                     
-                                                    <td t-attf-class="vendor-col #{vendor_line and vendor_line.system_selection and 'system-selection' or ''} #{vendor_line and vendor_line.user_selection and 'user-selection' or ''}" t-att-data-vendor-id="vendor.id" t-att-data-field="alt_materials">
+                                                    <td t-attf-class="vendor-col #{vendor_line and vendor_line.system_selection and 'system-selection' or ''} #{vendor_line and vendor_line.user_selection and 'user-selection' or ''}" t-att-data-vendor-id="vendor.partner_id.id" t-att-data-field="alt_materials">
                                                         <span t-if="vendor_line and vendor_line.alt_materials" t-field="vendor_line.alt_materials"/>
                                                         <span t-else="">-</span>
                                                     </td>
@@ -702,7 +778,7 @@
                                                         </t>
                                                     </t>
 
-                                                    <td t-attf-class="vendor-col #{vendor_line and vendor_line.system_selection and 'system-selection' or ''} #{vendor_line and vendor_line.user_selection and 'user-selection' or ''}" t-att-data-vendor-id="vendor.id" t-att-data-field="price_unit">
+                                                    <td t-attf-class="vendor-col #{vendor_line and vendor_line.system_selection and 'system-selection' or ''} #{vendor_line and vendor_line.user_selection and 'user-selection' or ''}" t-att-data-vendor-id="vendor.partner_id.id" t-att-data-field="price_unit">
                                                         <span t-if="vendor_line" t-field="vendor_line.price_unit" t-options='{"widget": "monetary", "display_currency": vendor_line.currency_id}'/>
                                                         <span t-else="">-</span>
                                                     </td>
@@ -720,7 +796,7 @@
                                                         </t>
                                                     </t>
                                                     
-                                                    <td t-attf-class="vendor-col #{vendor_line and vendor_line.system_selection and 'system-selection' or ''} #{vendor_line and vendor_line.user_selection and 'user-selection' or ''}" t-att-data-vendor-id="vendor.id" t-att-data-field="discount">
+                                                    <td t-attf-class="vendor-col #{vendor_line and vendor_line.system_selection and 'system-selection' or ''} #{vendor_line and vendor_line.user_selection and 'user-selection' or ''}" t-att-data-vendor-id="vendor.partner_id.id" t-att-data-field="discount">
                                                         <span t-if="vendor_line" t-field="vendor_line.discount"/>
                                                         <span t-else="">-</span>
                                                     </td>
@@ -738,7 +814,7 @@
                                                         </t>
                                                     </t>
                                                     
-                                                    <td t-attf-class="vendor-col #{vendor_line and vendor_line.system_selection and 'system-selection' or ''} #{vendor_line and vendor_line.user_selection and 'user-selection' or ''}" t-att-data-vendor-id="vendor.id" t-att-data-field="payment_term">
+                                                    <td t-attf-class="vendor-col #{vendor_line and vendor_line.system_selection and 'system-selection' or ''} #{vendor_line and vendor_line.user_selection and 'user-selection' or ''}" t-att-data-vendor-id="vendor.partner_id.id" t-att-data-field="payment_term">
                                                         <span t-if="vendor.payment_term_id" t-field="vendor.payment_term_id.name"/>
                                                         <span t-else="">-</span>
                                                     </td>
@@ -772,7 +848,7 @@
                                                         </t>
                                                     </t>
                                                     
-                                                    <td t-attf-class="vendor-col #{vendor_line and vendor_line.system_selection and 'system-selection' or ''} #{vendor_line and vendor_line.user_selection and 'user-selection' or ''}" t-att-data-vendor-id="vendor.id" t-att-data-field="price_subtotal">
+                                                    <td t-attf-class="vendor-col #{vendor_line and vendor_line.system_selection and 'system-selection' or ''} #{vendor_line and vendor_line.user_selection and 'user-selection' or ''}" t-att-data-vendor-id="vendor.partner_id.id" t-att-data-field="price_subtotal">
                                                         <t t-if="vendor_line">
                                                             <span t-field="vendor_line.price_subtotal"/>
                                                         </t>
@@ -818,7 +894,7 @@
                                                         </t>
                                                     </t>
                                                     
-                                                    <td t-attf-class="vendor-col #{vendor_line and vendor_line.system_selection and 'system-selection' or ''} #{vendor_line and vendor_line.user_selection and 'user-selection' or ''}" t-att-data-vendor-id="vendor.id" t-att-data-field="npv_value">
+                                                    <td t-attf-class="vendor-col #{vendor_line and vendor_line.system_selection and 'system-selection' or ''} #{vendor_line and vendor_line.user_selection and 'user-selection' or ''}" t-att-data-vendor-id="vendor.partner_id.id" t-att-data-field="npv_value">
                                                         <t t-if="vendor_line">
                                                             <t t-set="has_npv" t-value="False"/>
                                                             <t t-foreach="vendor_line._fields" t-as="field">
@@ -851,7 +927,7 @@
                                                         </t>
                                                     </t>
                                                     
-                                                    <td t-attf-class="vendor-col #{vendor_line and vendor_line.system_selection and 'system-selection' or ''} #{vendor_line and vendor_line.user_selection and 'user-selection' or ''}" t-att-data-vendor-id="vendor.id" t-att-data-field="date_planned">
+                                                    <td t-attf-class="vendor-col #{vendor_line and vendor_line.system_selection and 'system-selection' or ''} #{vendor_line and vendor_line.user_selection and 'user-selection' or ''}" t-att-data-vendor-id="vendor.partner_id.id" t-att-data-field="date_planned">
                                                         <span t-if="vendor_line and vendor_line.date_planned" t-field="vendor_line.date_planned" t-options='{"format": "dd/MM/yyyy"}'/>
                                                         <span t-else="">-</span>
                                                     </td>
@@ -869,7 +945,7 @@
                                                         </t>
                                                     </t>
                                                     
-                                                    <td t-attf-class="vendor-col #{vendor_line and vendor_line.system_selection and 'system-selection' or ''} #{vendor_line and vendor_line.user_selection and 'user-selection' or ''}" t-att-data-vendor-id="vendor.id" t-att-data-field="warranty_period">
+                                                    <td t-attf-class="vendor-col #{vendor_line and vendor_line.system_selection and 'system-selection' or ''} #{vendor_line and vendor_line.user_selection and 'user-selection' or ''}" t-att-data-vendor-id="vendor.partner_id.id" t-att-data-field="warranty_period">
                                                         <t t-if="vendor_line">
                                                             <t t-set="has_warranty" t-value="False"/>
                                                             <t t-foreach="vendor_line._fields" t-as="field">
@@ -926,7 +1002,7 @@
                                                         </t>
                                                     </t>
                                                     
-                                                    <td t-attf-class="vendor-col text-center #{vendor_line and vendor_line.system_selection and 'system-selection' or ''}" t-att-data-vendor-id="vendor.id" t-att-data-field="system_selection">
+                                                    <td t-attf-class="vendor-col text-center #{vendor_line and vendor_line.system_selection and 'system-selection' or ''}" t-att-data-vendor-id="vendor.partner_id.id" t-att-data-field="system_selection">
                                                         <t t-if="vendor_line">
                                                             <t t-set="has_npv" t-value="False"/>
                                                             <t t-set="line_npv" t-value="0"/>
@@ -946,7 +1022,7 @@
                                                                 <span class="selection-badge system-badge">S</span>
                                                                 <input type="hidden" name="vendor_product_selection" t-att-value="str(vendor.id) + '_' + str(tender_line.id)" checked="checked"/>
                                                             </t>
-                                                            <t t-elif="vendor_line.system_selection">
+                                                            <t t-elif="vendor_line and vendor_line.system_selection">
                                                                 <span class="selection-badge system-badge">S</span>
                                                             </t>
                                                             <t t-else="">
@@ -970,16 +1046,16 @@
                                                         </t>
                                                     </t>
                                                     
-                                                    <td t-att-class="'vendor-col text-center ' + (vendor_line and vendor_line.user_selection and 'user-selection' or '')" t-att-data-vendor-id="vendor.id" t-att-data-field="user_selection">
+                                                    <td t-att-class="'vendor-col text-center ' + (vendor_line and vendor_line.user_selection and 'user-selection' or '')" t-att-data-vendor-id="vendor.partner_id.id" t-att-data-field="user_selection">
                                                         <t t-if="vendor_line">
                                                             <div>
                                                                 <input  type="checkbox" 
                                                                         name="vendor_user_selection" 
-                                                                        t-att-value="str(vendor.id) + '_' + str(tender_line.id)" 
+                                                                        t-att-value="str(vendor.partner_id.id) + '_' + str(tender_line.id)" 
                                                                         class="form-check-input" 
-                                                                        t-att-checked="vendor_line.user_selection and 'checked'" 
+                                                                        t-att-checked="vendor_line.user_selection and 'checked' or None" 
                                                                         t-att-data-line-id="vendor_line.id" 
-                                                                        t-att-data-vendor-id="vendor.id" 
+                                                                        t-att-data-vendor-id="vendor.partner_id.id" 
                                                                         onclick="window.VendorComparison.handleCheckboxSelection(this)"/>
                                                                 <t t-if="vendor_line.user_selection">
                                                                     <span class="selection-badge user-badge ml-2">K</span>
@@ -987,10 +1063,10 @@
                                                             </div>
                                                             <!-- Debug info -->
                                                             <div style="display: none;">
-                                                                <small>line_id: <t t-esc="vendor_line.id"/></small>
+                                                                <small>line_id: <t t-esc="vendor_line.id if vendor_line else 'None'"/></small>
                                                                 <small>vendor_id: <t t-esc="vendor.id"/></small>
-                                                                <small>user_selection: <t t-esc="vendor_line.user_selection"/></small>
-                                                                <small>system_selection: <t t-esc="vendor_line.system_selection"/></small>
+                                                                <small>user_selection: <t t-esc="vendor_line.user_selection if vendor_line else 'None'"/></small>
+                                                                <small>system_selection: <t t-esc="vendor_line.system_selection if vendor_line else 'None'"/></small>
                                                             </div>
                                                         </t>
                                                         <span t-else="">-</span>
@@ -1008,7 +1084,7 @@
                                                             <t t-set="vendor_line" t-value="line"/>
                                                         </t>
                                                     </t>
-                                                    <td t-attf-class="vendor-col #{vendor_line and vendor_line.system_selection and 'system-selection' or ''} #{vendor_line and vendor_line.user_selection and 'user-selection' or ''}" t-att-data-vendor-id="vendor.id" t-att-data-field="selection_note">
+                                                    <td t-attf-class="vendor-col #{vendor_line and vendor_line.system_selection and 'system-selection' or ''} #{vendor_line and vendor_line.user_selection and 'user-selection' or ''}" t-att-data-vendor-id="vendor.partner_id.id" t-att-data-field="selection_note">
                                                         <span t-if="vendor_line and vendor_line.selection_note" t-field="vendor_line.selection_note"/>
                                                         <span t-elif="vendor.selection_note" t-field="vendor.selection_note"/>
                                                         <span t-else="">-</span>
@@ -1051,7 +1127,7 @@
                                                 </t>
                                             </t>
                                             
-                                            <td t-attf-class="vendor-col #{vendor.system_selection and 'system-selection' or ''} #{vendor.user_selection and 'user-selection' or ''}" t-att-data-vendor-id="vendor.id" t-att-data-field="total_amount">
+                                            <td t-attf-class="vendor-col #{vendor.system_selection and 'system-selection' or ''} #{vendor.user_selection and 'user-selection' or ''}" t-att-data-vendor-id="vendor.partner_id.id" t-att-data-field="total_amount">
                                                 <!-- Bold if this is the lowest non-zero total amount -->
                                                 <strong t-if="total_amount > 0 and total_amount == min_total_amount">
                                                     <span t-esc="total_amount" t-options='{"widget": "monetary", "display_currency": vendor.currency_id}'/>
@@ -1104,7 +1180,7 @@
                                                 </t>
                                             </t>
                                             
-                                            <td t-attf-class="vendor-col #{vendor.system_selection and 'system-selection' or ''} #{vendor.user_selection and 'user-selection' or ''}" t-att-data-vendor-id="vendor.id" t-att-data-field="total_npv">
+                                            <td t-attf-class="vendor-col #{vendor.system_selection and 'system-selection' or ''} #{vendor.user_selection and 'user-selection' or ''}" t-att-data-vendor-id="vendor.partner_id.id" t-att-data-field="total_npv">
                                                 <t t-if="has_npv">
                                                     <!-- Bold and red if this is the lowest non-zero total NPV (selected vendor) -->
                                                     <t t-if="total_npv > 0 and total_npv == min_total_npv">
@@ -1136,7 +1212,7 @@
                                                 </t>
                                             </t>
                                             
-                                            <td t-attf-class="vendor-col text-center #{vendor.system_selection and 'system-selection' or ''}" t-att-data-vendor-id="vendor.id" t-att-data-field="system_total_selection">
+                                            <td t-attf-class="vendor-col text-center #{vendor.system_selection and 'system-selection' or ''}" t-att-data-vendor-id="vendor.partner_id.id" t-att-data-field="system_total_selection">
                                                 <!-- Show badge if this vendor has the lowest non-zero total NPV -->
                                                 <t t-if="has_npv and total_npv > 0 and total_npv == min_total_npv">
                                                     <span class="selection-badge system-badge">S</span>
@@ -1157,13 +1233,13 @@
                                         <td class="field-col"><strong>Kullanıcı Seçimi:</strong></td>
                                         
                                         <t t-foreach="vendors_to_show" t-as="vendor">
-                                            <td t-att-class="'vendor-col text-center ' + (vendor.user_selection and 'user-selection' or '')" t-att-data-vendor-id="vendor.id" t-att-data-field="user_total_selection">
+                                            <td t-att-class="'vendor-col text-center ' + (vendor.user_selection and 'user-selection' or '')" t-att-data-vendor-id="vendor.partner_id.id" t-att-data-field="user_total_selection">
                                                 <div>
                                                     <input  type="checkbox" 
                                                             name="vendor_user_total_selection" 
-                                                            t-att-value="vendor.id" class="form-check-input" 
-                                                            t-att-checked="vendor.user_selection and 'checked'" 
-                                                            t-att-data-vendor-id="vendor.id" 
+                                                            t-att-value="vendor.partner_id.id" class="form-check-input" 
+                                                            t-att-checked="vendor.user_selection and 'checked' or None" 
+                                                            t-att-data-vendor-id="vendor.partner_id.id" 
                                                             onclick="window.VendorComparison.handleCheckboxSelection(this)"/>
                                                     <t t-if="vendor.user_selection">
                                                         <span class="selection-badge user-badge ml-2">K</span>
@@ -1185,7 +1261,7 @@
                                         <td class="field-col"><strong>Tutar:</strong></td>
                                         
                                         <t t-foreach="vendors_to_show" t-as="vendor">
-                                            <td t-attf-class="vendor-col #{vendor.user_selection and 'user-selection' or ''}" t-att-data-vendor-id="vendor.id" t-att-data-field="user_total_amount">
+                                            <td t-attf-class="vendor-col #{vendor.user_selection and 'user-selection' or ''}" t-att-data-vendor-id="vendor.partner_id.id" t-att-data-field="user_total_amount">
                                                 <span>-</span>
                                             </td>
                                         </t>
@@ -1195,7 +1271,7 @@
                                         <td class="field-col"><strong>NPV:</strong></td>
                                         
                                         <t t-foreach="vendors_to_show" t-as="vendor">
-                                            <td t-attf-class="vendor-col #{vendor.user_selection and 'user-selection' or ''}" t-att-data-vendor-id="vendor.id" t-att-data-field="user_total_npv">
+                                            <td t-attf-class="vendor-col #{vendor.user_selection and 'user-selection' or ''}" t-att-data-vendor-id="vendor.partner_id.id" t-att-data-field="user_total_npv">
                                                 <span>-</span>
                                             </td>
                                         </t>

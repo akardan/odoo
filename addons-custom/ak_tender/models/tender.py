@@ -1845,173 +1845,198 @@ class AkTender(models.Model):
             'tag': 'reload',
         }
         
-    def save_user_selection(self, tender_id=None, value=None, is_product_selection=False, is_total_selection=False, is_checked=False):
+    def save_user_selection(self, selections):
         """
-        Save user selection to the database.
+        Save user selections to the database.
         
         Args:
-            tender_id: The ID of the tender
-            value: The value of the checkbox (vendor_id or vendor_id_tender_line_id)
-            is_product_selection: Whether this is a product selection
-            is_total_selection: Whether this is a total selection
-            is_checked: Whether the checkbox is checked
+            selections: Dictionary containing selection data
             
         Returns:
             dict: Result of the operation
         """
-        # Find the tender record
-        # The tender_id parameter is actually the ID of the current tender (self)
-        tender = self
-        if not tender.exists():
-            return {'success': False, 'error': 'Tender not found'}
-            
-        # Ensure we're using the correct environment
-        self = self.with_context(tracking_disable=False)
+        self.ensure_one()
         
-        # Log the input parameters
-        _logger.info("save_user_selection called with: tender_id=%s, value=%s, is_product_selection=%s, is_total_selection=%s, is_checked=%s",
-                    tender_id, value, is_product_selection, is_total_selection, is_checked)
+        _logger.info("=== SAVE USER SELECTION START ===")
+        _logger.info("Tender ID: %s, Tender Round: %s", self.id, self.tender_round)
+        _logger.info("Selections received: %s", selections)
+        
+        # List all purchase orders for this tender
+        all_pos = self.purchase_order_ids
+        _logger.info("All purchase orders for tender: %s", [(po.id, po.partner_id.id, po.partner_id.name, po.tender_round) for po in all_pos])
         
         try:
-            if is_product_selection:
-                # Product selection (vendor_id_tender_line_id)
-                parts = value.split('_')
-                if len(parts) >= 2:
-                    vendor_id = int(parts[0])
-                    tender_line_id = int(parts[1])
-                    
-                    _logger.info("Processing product selection: vendor_id=%s, tender_line_id=%s", vendor_id, tender_line_id)
-                    
-                    # Find the purchase order for this vendor in the current round
-                    po = tender.purchase_order_ids.filtered(lambda p: p.partner_id.id == vendor_id and p.tender_round == tender.tender_round)
-                    _logger.info("Found purchase orders: %s (count: %s)", po.mapped('name'), len(po))
-                    if po:
-                        # Find the purchase order line for this tender line
-                        po_line = po[0].order_line.filtered(lambda l: l.tender_line_id.id == tender_line_id)
-                        _logger.info("Found purchase order lines: %s (count: %s)", po_line.mapped('name'), len(po_line))
-                        if po_line:
-                            # Update the user_selection field
-                            _logger.info("Updating user_selection to %s for po_line: %s", is_checked, po_line.mapped('name'))
-                            # Save which PO and PO line the selection was made on
-                            # Use sudo() to ensure we have the necessary permissions
-                            po_line.sudo().write({
-                                'user_selection': is_checked,
-                                'system_selection': is_checked,  # Also save as system selection
-                                'selection_note': f"Kullanıcı tarafından seçildi: {fields.Datetime.now()}" if is_checked else False
-                            })
-                            # Force a flush to ensure the changes are written to the database
-                            self.env.cr.flush()
-                            
-                            # Also update the PO if a line is selected
-                            if is_checked:
-                                po[0].sudo().write({
-                                    'user_selection': True,
-                                    'system_selection': True,  # Also save as system selection
-                                    'selection_note': f"Kullanıcı tarafından seçildi: {fields.Datetime.now()}"
-                                })
-                                # Force a flush to ensure the changes are written to the database
-                                self.env.cr.flush()
-                                
-                            # Invalidate the cache to ensure fresh data is loaded
-                            po.invalidate_cache()
-                            po_line.invalidate_cache()
-                            
-                            # Log the updated values to verify they were saved
-                            _logger.info("After update - po_line.user_selection: %s, po_line.system_selection: %s",
-                                        po_line.user_selection, po_line.system_selection)
-                            
-                            # Force a database commit to ensure changes are saved
-                            self._cr.commit()
-                            
-                            # If checked, uncheck all other lines for this tender line
-                            if is_checked:
-                                other_po_lines = tender.purchase_order_ids.filtered(
-                                    lambda p: p.tender_round == tender.tender_round
-                                ).mapped('order_line').filtered(
-                                    lambda l: l.tender_line_id.id == tender_line_id and l.id != po_line[0].id
-                                )
-                                other_po_lines.write({'user_selection': False})
-            
-            elif is_total_selection:
-                # Total selection (vendor_id)
-                try:
-                    vendor_id = int(value)
-                except ValueError:
-                    # If value contains an underscore, it might be in the format vendor_id_tender_line_id
-                    if '_' in value:
-                        parts = value.split('_')
-                        if len(parts) >= 1:
-                            vendor_id = int(parts[0])
-                        else:
-                            return {'success': False, 'error': f'Invalid value format: {value}'}
-                    else:
-                        return {'success': False, 'error': f'Invalid vendor_id: {value}'}
+            # Process each selection
+            for i, selection in enumerate(selections):
+                vendor_id = selection.get('vendor_id')
+                tender_line_id = selection.get('tender_line_id')
+                is_checked = selection.get('is_checked', False)
                 
-                _logger.info("Processing total selection: vendor_id=%s", vendor_id)
+                _logger.info("[%s] Processing: vendor_id=%s, tender_line_id=%s, is_checked=%s", 
+                           i, vendor_id, tender_line_id, is_checked)
                 
-                # Find the purchase order for this vendor in the current round
-                po = tender.purchase_order_ids.filtered(lambda p: p.partner_id.id == vendor_id and p.tender_round == tender.tender_round)
-                _logger.info("Found purchase orders: %s", po.mapped('name'))
-                if po:
-                    # Update the user_selection field
-                    _logger.info("Updating user_selection to %s for po: %s", is_checked, po[0].name)
-                    po[0].sudo().write({
-                        'user_selection': is_checked,
-                        'system_selection': is_checked,  # Also save as system selection
-                        'selection_note': f"Kullanıcı tarafından seçildi: {fields.Datetime.now()}" if is_checked else False
-                    })
-                    # Force a flush to ensure the changes are written to the database
-                    self.env.cr.flush()
+                # Find the purchase order
+                po = self.purchase_order_ids.filtered(
+                    lambda p: p.partner_id.id == vendor_id and p.tender_round == self.tender_round
+                )
+                
+                _logger.info("[%s] Found POs: %s", i, [(p.id, p.partner_id.name) for p in po])
+                
+                if not po:
+                    _logger.warning("[%s] No PO found for vendor %s in round %s", i, vendor_id, self.tender_round)
+                    continue
                     
-                    # If the total PO is selected, also mark all its lines as selected
-                    if is_checked:
-                        po[0].order_line.sudo().write({
-                            'user_selection': True,
-                            'system_selection': True,  # Also save as system selection
-                            'selection_note': f"PO seçiminden dolayı seçildi: {fields.Datetime.now()}"
-                        })
-                        # Force a flush to ensure the changes are written to the database
-                        self.env.cr.flush()
+                po = po[0]
+                _logger.info("[%s] Using PO: %s (partner: %s)", i, po.id, po.partner_id.name)
+                
+                if tender_line_id:
+                    # Product selection - update purchase order line
+                    po_lines = po.order_line.filtered(lambda l: l.tender_line_id and l.tender_line_id.id == tender_line_id)
+                    _logger.info("[%s] Found PO lines for tender_line %s: %s", i, tender_line_id, [l.id for l in po_lines])
                     
-                    # Invalidate the cache to ensure fresh data is loaded
-                    po.invalidate_cache()
-                    po[0].order_line.invalidate_cache()
-                    
-                    # Log the updated values to verify they were saved
-                    _logger.info("After update - po.user_selection: %s, po.system_selection: %s",
-                                po[0].user_selection, po[0].system_selection)
-                    
-                    # Force a database commit to ensure changes are saved
-                    self._cr.commit()
-                    
-                    # If checked, uncheck all other purchase orders
-                    if is_checked:
-                        other_pos = tender.purchase_order_ids.filtered(
-                            lambda p: p.id != po[0].id and p.tender_round == tender.tender_round
+                    if po_lines:
+                        po_line = po_lines[0]
+                        _logger.info("[%s] Before update - po_line %s: user_selection=%s", i, po_line.id, po_line.user_selection)
+                        
+                        # Use SQL to ensure the write happens
+                        self.env.cr.execute(
+                            "UPDATE purchase_order_line SET user_selection = %s WHERE id = %s",
+                            (is_checked, po_line.id)
                         )
-                        other_pos.write({'user_selection': False})
+                        _logger.info("[%s] SQL update executed for po_line %s", i, po_line.id)
+                    else:
+                        _logger.warning("[%s] No PO line found for tender_line %s", i, tender_line_id)
+                else:
+                    # Total selection - update purchase order
+                    _logger.info("[%s] Before update - po %s: user_selection=%s", i, po.id, po.user_selection)
+                    
+                    # Use SQL to ensure the write happens
+                    self.env.cr.execute(
+                        "UPDATE purchase_order SET user_selection = %s WHERE id = %s",
+                        (is_checked, po.id)
+                    )
+                    _logger.info("[%s] SQL update executed for po %s", i, po.id)
             
-            # Commit the transaction to ensure changes are saved to the database
-            self._cr.commit()
+            # Commit changes
+            self.env.cr.commit()
+            _logger.info("=== SUCCESSFULLY COMMITTED ALL SELECTIONS ===")
             
-            # Return success message with additional debug info
-            return {
-                'success': True,
-                'message': 'Selection saved successfully',
-                'debug_info': {
-                    'tender_id': tender.id,
-                    'value': value,
-                    'is_product_selection': is_product_selection,
-                    'is_total_selection': is_total_selection,
-                    'is_checked': is_checked
-                }
-            }
+            return {'success': True, 'message': 'Selection saved successfully'}
             
         except Exception as e:
-            _logger.error("Error saving user selection: %s", str(e))
-            # Rollback the transaction in case of error
-            self._cr.rollback()
+            _logger.error("=== ERROR SAVING USER SELECTION: %s ===", str(e))
+            import traceback
+            _logger.error("Traceback: %s", traceback.format_exc())
+            self.env.cr.rollback()
             return {'success': False, 'error': str(e)}
+    
+    def _save_system_selection_line(self, po_line_id, is_selected):
+        """
+        Save system selection for a purchase order line.
+        Called from template during rendering.
+        """
+        try:
+            self.env.cr.execute(
+                "UPDATE purchase_order_line SET system_selection = %s WHERE id = %s",
+                (is_selected, po_line_id)
+            )
+            return True
+        except Exception as e:
+            _logger.error("Error saving system selection for line %s: %s", po_line_id, str(e))
+            return False
+    
+    def _save_system_selection_po(self, po_id, is_selected):
+        """
+        Save system selection for a purchase order.
+        Called from template during rendering.
+        """
+        try:
+            self.env.cr.execute(
+                "UPDATE purchase_order SET system_selection = %s WHERE id = %s",
+                (is_selected, po_id)
+            )
+            return True
+        except Exception as e:
+            _logger.error("Error saving system selection for PO %s: %s", po_id, str(e))
+            return False
+    
+    def calculate_and_save_system_selections(self):
+        """
+        Calculate system selections based on NPV and save to database.
+        Called when report is opened.
+        """
+        self.ensure_one()
+        
+        try:
+            # Get current round purchase orders
+            current_pos = self.purchase_order_ids.filtered(lambda p: p.tender_round == self.tender_round)
+            
+            # Calculate product-level system selections
+            for tender_line in self.tender_lines.filtered(lambda l: l.display_type == 'product'):
+                # Get all vendor lines for this product
+                vendor_lines = []
+                for po in current_pos:
+                    po_line = po.order_line.filtered(lambda l: l.tender_line_id.id == tender_line.id)
+                    if po_line:
+                        vendor_lines.append(po_line[0])
+                
+                # Find minimum NPV/price for this product
+                min_value = None
+                selected_line = None
+                
+                for line in vendor_lines:
+                    # Use NPV if available, otherwise use price_subtotal
+                    value = getattr(line, 'npv_value', 0) if hasattr(line, 'npv_value') and line.npv_value > 0 else line.price_subtotal
+                    if value > 0 and (min_value is None or value < min_value):
+                        min_value = value
+                        selected_line = line
+                
+                # Update system selections for this product
+                for line in vendor_lines:
+                    is_selected = (line == selected_line)
+                    self.env.cr.execute(
+                        "UPDATE purchase_order_line SET system_selection = %s WHERE id = %s",
+                        (is_selected, line.id)
+                    )
+            
+            # Calculate total-level system selections
+            vendor_totals = []
+            for po in current_pos:
+                total_npv = 0
+                total_amount = 0
+                has_npv = False
+                
+                for line in po.order_line.filtered(lambda l: l.tender_line_id and not l.display_type):
+                    total_amount += line.price_subtotal
+                    if hasattr(line, 'npv_value') and line.npv_value > 0:
+                        total_npv += line.npv_value
+                        has_npv = True
+                
+                # Use NPV if available, otherwise use total amount
+                value = total_npv if has_npv and total_npv > 0 else total_amount
+                if value > 0:
+                    vendor_totals.append((po, value))
+            
+            # Find minimum total
+            if vendor_totals:
+                min_total = min(vendor_totals, key=lambda x: x[1])
+                selected_po = min_total[0]
+                
+                # Update system selections for totals
+                for po in current_pos:
+                    is_selected = (po == selected_po)
+                    self.env.cr.execute(
+                        "UPDATE purchase_order SET system_selection = %s WHERE id = %s",
+                        (is_selected, po.id)
+                    )
+            
+            # Commit changes
+            self.env.cr.commit()
+            _logger.info("System selections calculated and saved for tender %s", self.id)
+            
+        except Exception as e:
+            _logger.error("Error calculating system selections: %s", str(e))
+            self.env.cr.rollback()
         
     def save_all_selections(self, tender_id, selections):
         """
