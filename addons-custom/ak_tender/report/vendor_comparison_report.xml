@@ -196,21 +196,15 @@
                                 }).then(function(response) {
                                     return response.json();
                                 }).then(function(data) {
-                                    console.log('Server response:', data);
                                     if (data.error) {
-                                        console.error('Error saving selection:', data.error);
                                         if (data.error.data && data.error.data.message) {
-                                            console.error('Error details:', data.error.data.message);
                                         }
                                     } else if (data.result) {
-                                        console.log('Selection saved successfully:', data.result);
                                         self.updateUserTotals();
                                         self.showRefreshNotification();
                                     } else {
-                                        console.log('Unexpected response format:', data);
                                     }
                                 }).catch(function(error) {
-                                    console.error('Network error:', error);
                                     alert('Seçim kaydedilirken hata oluştu!');
                                     checkbox.checked = !checkbox.checked;
                                 });
@@ -452,7 +446,6 @@
                                         alert("Siparişler oluşturuldu!");
                                         location.reload();
                                     }).catch(function(error) {
-                                        console.error("Error creating orders:", error);
                                         alert("Sipariş oluşturulurken hata oluştu!");
                                     });
                                 } else {
@@ -485,8 +478,6 @@
                                     
                                     return poId;
                                 });
-                                
-                                console.log("Creating orders for vendors:", selections);
                                 
                                 fetch('/web/dataset/call_kw', {
                                     method: 'POST',
