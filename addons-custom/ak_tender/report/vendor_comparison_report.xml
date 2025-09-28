@@ -129,22 +129,51 @@
                                 let selections = [];
                                 
                                 if (isProductSelection) {
-                                    // Product selection: value is "vendor_id_tender_line_id"
+                                    // Product selection: value is "partner_id_tender_line_id"
                                     const parts = value.split('_');
                                     if (parts.length >= 2) {
+                                        const partnerId = parseInt(parts[0]);
+                                        const tenderLineId = parseInt(parts[1]);
+                                        
+                                        // Find PO ID from the checkbox's debug div (more reliable)
+                                        const cell = checkbox.closest('td');
+                                        const debugDiv = cell.querySelector('div[style*="display: none"]');
+                                        let poId = null;
+                                        
+                                        if (debugDiv && debugDiv.textContent.includes('po_id:')) {
+                                            const poIdMatch = debugDiv.textContent.match(/po_id:\s*(\d+)/);
+                                            poId = poIdMatch ? parseInt(poIdMatch[1]) : null;
+                                        }
+                                        
+                                        if (poId) {
+                                            selections.push({
+                                                vendor_id: poId,  // Backend expects PO ID
+                                                tender_line_id: tenderLineId,
+                                                is_checked: isChecked
+                                            });
+                                        }
+                                    }
+                                } else if (isTotalSelection) {
+                                    // Total selection: value is "partner_id"
+                                    const partnerId = parseInt(value);
+                                    
+                                    // Find PO ID from the checkbox's debug div (more reliable)
+                                    const cell = checkbox.closest('td');
+                                    const debugDiv = cell.querySelector('div[style*="display: none"]');
+                                    let poId = null;
+                                    
+                                    if (debugDiv && debugDiv.textContent.includes('po_id:')) {
+                                        const poIdMatch = debugDiv.textContent.match(/po_id:\s*(\d+)/);
+                                        poId = poIdMatch ? parseInt(poIdMatch[1]) : null;
+                                    }
+                                    
+                                    if (poId) {
                                         selections.push({
-                                            vendor_id: parseInt(parts[0]),
-                                            tender_line_id: parseInt(parts[1]),
+                                            vendor_id: poId,  // Backend expects PO ID
+                                            tender_line_id: null,
                                             is_checked: isChecked
                                         });
                                     }
-                                } else if (isTotalSelection) {
-                                    // Total selection: value is "vendor_id"
-                                    selections.push({
-                                        vendor_id: parseInt(value),
-                                        tender_line_id: null,
-                                        is_checked: isChecked
-                                    });
                                 }
                                 
                                 fetch('/web/dataset/call_kw', {
@@ -193,9 +222,18 @@
                                 let grandTotalUserNpv = 0;
                                 let hasAnyUserNpvSelection = false;
                                 const self = this;
+                                const processedPOs = new Set(); // Track processed PO IDs to avoid duplicates
  
                                   vendorColumns.forEach(function(vendorColumn) {
                                       const vendorId = vendorColumn.dataset.vendorId;
+                                      const poId = vendorColumn.dataset.poId;
+                                      
+                                      // Skip if we already processed this PO
+                                      if (processedPOs.has(poId)) {
+                                          return;
+                                      }
+                                      processedPOs.add(poId);
+                                      
                                       let userTotalAmount = 0;
                                       let userTotalNpv = 0;
                                       let hasNpvForVendor = false;
@@ -207,7 +245,7 @@
                                       const isVendorTotalSelected = vendorTotalCheckbox && vendorTotalCheckbox.checked;
  
                                       if (isVendorTotalSelected) {
-                                          // Sum all products for this vendor
+                                          // Sum all products for this specific vendor column
                                           const vendorAmountCells = document.querySelectorAll(
                                               'td[data-vendor-id="' + vendorId + '"][data-field="price_subtotal"]'
                                           );
@@ -242,7 +280,18 @@
                                               const checkboxVendorId = parts[0];
                                               const tenderLineId = parts[1];
  
-                                              if (checkboxVendorId === vendorId) {
+                                              // Get the actual PO ID from this checkbox's debug div
+                                              const cell = checkbox.closest('td');
+                                              const debugDiv = cell.querySelector('div[style*="display: none"]');
+                                              let checkboxPoId = checkboxVendorId;
+                                              
+                                              if (debugDiv && debugDiv.textContent.includes('po_id:')) {
+                                                  const poIdMatch = debugDiv.textContent.match(/po_id:\s*(\d+)/);
+                                                  checkboxPoId = poIdMatch ? poIdMatch[1] : checkboxVendorId;
+                                              }
+                                              
+                                              // Only process if this checkbox belongs to the current PO
+                                              if (checkboxPoId === poId) {
                                                   
                                                   // Find the Tutar row for this tender line
                                                   const allRows = document.querySelectorAll('tr[data-tender-line-id="' + tenderLineId + '"]');
@@ -256,7 +305,8 @@
                                                   });
                                                   
                                                   if (tutarRow) {
-                                                      const amountCell = tutarRow.querySelector('td[data-vendor-id="' + vendorId + '"] span');
+                                                      // Use the PO ID from the checkbox for the cell lookup
+                                                      const amountCell = tutarRow.querySelector('td[data-vendor-id="' + checkboxVendorId + '"] span');
                                                       
                                                       if (amountCell) {
                                                           const amountText = amountCell.textContent || '';
@@ -275,7 +325,8 @@
                                                   });
                                                   
                                                   if (npvRow) {
-                                                      const npvCell = npvRow.querySelector('td[data-vendor-id="' + vendorId + '"] span');
+                                                      // Use the PO ID from the checkbox for the cell lookup
+                                                      const npvCell = npvRow.querySelector('td[data-vendor-id="' + checkboxVendorId + '"] span');
                                                       
                                                       if (npvCell) {
                                                           const npvText = npvCell.textContent || '';
@@ -354,7 +405,27 @@
                             createOrderFromSelection: function(event) {
                                 event.preventDefault();
                                 const selectedProducts = document.querySelectorAll('input[name="vendor_user_selection"]:checked');
-                                const selections = Array.from(selectedProducts).map(function(checkbox) { return checkbox.value; });
+                                const selections = Array.from(selectedProducts).map(function(checkbox) { 
+                                    const value = checkbox.value; // partner_id_tender_line_id format
+                                    const parts = value.split('_');
+                                    if (parts.length >= 2) {
+                                        const partnerId = parseInt(parts[0]);
+                                        const tenderLineId = parts[1];
+                                        
+                                        // Find PO ID from the checkbox's debug div (more reliable)
+                                        const cell = checkbox.closest('td');
+                                        const debugDiv = cell.querySelector('div[style*="display: none"]');
+                                        let poId = partnerId;
+                                        
+                                        if (debugDiv && debugDiv.textContent.includes('po_id:')) {
+                                            const poIdMatch = debugDiv.textContent.match(/po_id:\s*(\d+)/);
+                                            poId = poIdMatch ? poIdMatch[1] : partnerId;
+                                        }
+                                        
+                                        return poId + '_' + tenderLineId;
+                                    }
+                                    return value;
+                                });
                                 const self = this;
                                 
                                 if (selections.length > 0) {
@@ -399,9 +470,23 @@
                                     return;
                                 }
                                 
-                                const vendorIds = Array.from(selectedVendors).map(function(checkbox) { return parseInt(checkbox.value); });
+                                const selections = Array.from(selectedVendors).map(function(checkbox) { 
+                                    const partnerId = parseInt(checkbox.value);
+                                    
+                                    // Find PO ID from the checkbox's debug div (more reliable)
+                                    const cell = checkbox.closest('td');
+                                    const debugDiv = cell.querySelector('div[style*="display: none"]');
+                                    let poId = partnerId;
+                                    
+                                    if (debugDiv && debugDiv.textContent.includes('po_id:')) {
+                                        const poIdMatch = debugDiv.textContent.match(/po_id:\s*(\d+)/);
+                                        poId = poIdMatch ? poIdMatch[1] : partnerId;
+                                    }
+                                    
+                                    return poId;
+                                });
                                 
-                                console.log("Creating orders for vendors:", vendorIds);
+                                console.log("Creating orders for vendors:", selections);
                                 
                                 fetch('/web/dataset/call_kw', {
                                     method: 'POST',
@@ -416,15 +501,26 @@
                                         params: {
                                             model: 'ak.tender',
                                             method: 'create_orders_from_total_selection',
-                                            args: [[self.getTenderId()], vendorIds],
+                                            args: [[self.getTenderId()], selections],
                                             kwargs: {}
                                         }
                                     })
                                 }).then(function(response) {
                                     return response.json();
-                                }).then(function(result) {
-                                    alert("Tedarikçi siparişleri oluşturuldu!");
-                                    location.reload();
+                                }).then(function(response) {
+                                    console.log('Backend response:', response);
+                                    if (response.result && response.result.success) {
+                                        alert(response.result.message || "Tedarikçi siparişleri oluşturuldu!");
+                                        location.reload();
+                                    } else if (response.result && response.result.error) {
+                                        alert("Hata: " + response.result.error);
+                                    } else if (response.error) {
+                                        console.error("Backend error:", response.error);
+                                        alert("Hata: " + (response.error.data ? response.error.data.message : response.error.message));
+                                    } else {
+                                        alert("Tedarikçi siparişleri oluşturuldu!");
+                                        location.reload();
+                                    }
                                 }).catch(function(error) {
                                     console.error("Error creating orders:", error);
                                     alert("Sipariş oluşturulurken hata oluştu!");
@@ -434,6 +530,90 @@
                             getTenderId: function() {
                                 const comparisonTable = document.querySelector(this.config.selectors.comparisonTable);
                                 return parseInt(comparisonTable && comparisonTable.dataset.tenderId);
+                            },
+
+                            refreshReport: function() {
+                                console.log('=== REFRESH BUTTON CLICKED ===');
+                                const self = this;
+                                const tenderId = this.getTenderId();
+                                
+                                // Count current vendors before refresh
+                                const currentVendors = document.querySelectorAll('th.vendor-col[data-vendor-id]');
+                                console.log('Current vendors before refresh:', currentVendors.length);
+                                
+                                // Call get_comparison_data to force refresh
+                                fetch('/web/dataset/call_kw', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'X-Requested-With': 'XMLHttpRequest',
+                                        'X-CSRFToken': this.getCsrfToken()
+                                    },
+                                    body: JSON.stringify({
+                                        jsonrpc: '2.0',
+                                        method: 'call',
+                                        params: {
+                                            model: 'ak.tender',
+                                            method: 'get_comparison_data',
+                                            args: [[tenderId]],
+                                            kwargs: {}
+                                        }
+                                    })
+                                }).then(function(response) {
+                                    return response.json();
+                                }).then(function(data) {
+                                    console.log('Backend refresh completed, reloading page...');
+                                    // After forcing data refresh, reload the page
+                                    window.location.href = window.location.href.split('?')[0] + '?t=' + Date.now();
+                                }).catch(function(error) {
+                                    console.error('Error refreshing data:', error);
+                                    // Fallback to simple reload
+                                    window.location.href = window.location.href.split('?')[0] + '?t=' + Date.now();
+                                });
+                            },
+
+                            deletePurchaseOrder: function(poId, partnerName) {
+                                if (!confirm('Bu siparişi iptal edip silmek istediğinizden emin misiniz?\n\nTedarikçi: ' + partnerName + '\n\nBu işlem geri alınamaz!')) {
+                                    return;
+                                }
+                                
+                                const self = this;
+                                const tenderId = this.getTenderId();
+                                
+                                fetch('/web/dataset/call_kw', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'X-Requested-With': 'XMLHttpRequest',
+                                        'X-CSRFToken': this.getCsrfToken()
+                                    },
+                                    body: JSON.stringify({
+                                        jsonrpc: '2.0',
+                                        method: 'call',
+                                        params: {
+                                            model: 'ak.tender',
+                                            method: 'delete_purchase_order',
+                                            args: [[tenderId], poId],
+                                            kwargs: {}
+                                        }
+                                    })
+                                }).then(function(response) {
+                                    return response.json();
+                                }).then(function(data) {
+                                    if (data.error) {
+                                        alert('Hata: ' + (data.error.data ? data.error.data.message : data.error));
+                                    } else if (data.result) {
+                                        if (data.result.success) {
+                                            alert(data.result.message);
+                                            location.reload();
+                                        } else {
+                                            alert('Hata: ' + data.result.error);
+                                        }
+                                    }
+                                }).catch(function(error) {
+                                    console.error('Error deleting PO:', error);
+                                    alert('Sipariş silinirken hata oluştu!');
+                                });
                             },
 
                             showRefreshNotification: function() {
@@ -453,7 +633,7 @@
                                 `;
                                 notification.innerHTML = `
                                     <i class="fa fa-check"></i> Seçim kaydedildi! 
-                                    <button onclick="window.location.href = window.location.href.split('?')[0] + '?t=' + Date.now()" style="background: none; border: 1px solid white; color: white; margin-left: 10px; padding: 2px 8px; border-radius: 3px; cursor: pointer;">
+                                    <button onclick="window.VendorComparison.refreshReport()" style="background: none; border: 1px solid white; color: white; margin-left: 10px; padding: 2px 8px; border-radius: 3px; cursor: pointer;">
                                         Yenile
                                     </button>
                                 `;
@@ -468,7 +648,16 @@
                             },
 
                             init: function() {
+                                console.log("=== JS INIT DEBUG ===");
                                 console.log("VendorComparison initialized");
+                                
+                                // Count vendor columns
+                                const vendorCols = document.querySelectorAll('th.vendor-col[data-vendor-id]');
+                                console.log('Vendor columns found:', vendorCols.length);
+                                vendorCols.forEach(function(col, index) {
+                                    console.log('Vendor', index + 1, ':', col.textContent.trim());
+                                });
+                                
                                 this.loadInitialState();
                             },
 
@@ -481,8 +670,8 @@
                                     const productCheckboxes = document.querySelectorAll('input[name="vendor_user_selection"]');
                                     console.log('Found product checkboxes:', productCheckboxes.length);
                                     productCheckboxes.forEach(function(checkbox) {
-                                        const row = checkbox.closest('tr');
-                                        const debugDiv = row.querySelector('div[style*="display: none"]');
+                                        const cell = checkbox.closest('td');
+                                        const debugDiv = cell.querySelector('div[style*="display: none"]');
                                         console.log('Checkbox value:', checkbox.value, 'Debug div:', debugDiv ? debugDiv.textContent : 'not found');
                                         if (debugDiv && debugDiv.textContent.includes('user_selection: True')) {
                                             console.log('Setting checkbox checked:', checkbox.value);
@@ -529,6 +718,7 @@
                     <!-- Force refresh data if cache-busting parameter is present -->
                     <t t-set="refresh_param" t-value="request.httprequest.args.get('t')"/>
                     <t t-if="refresh_param">
+                        <t t-set="dummy_refresh" t-value="o.sudo().get_comparison_data()"/>
                         <t t-set="o" t-value="request.env['ak.tender'].sudo().browse(o.id)"/>
                     </t>
                     <!-- Calculate and save system selections -->
@@ -558,7 +748,7 @@
                                     <span class="selection-badge system-badge">S</span> Sistem Seçimi
                                     <span class="selection-badge user-badge ml-2">K</span> Kullanıcı Seçimi
                                 </div>
-                                <button type="button" class="btn btn-sm btn-secondary" onclick="window.location.href = window.location.href.split('?')[0] + '?t=' + Date.now()" title="Seçimleri görmek için raporu yenileyin">
+                                <button type="button" class="btn btn-sm btn-secondary" onclick="window.VendorComparison.refreshReport()" title="Seçimleri görmek için raporu yenileyin">
                                     <i class="fa fa-refresh"></i> Raporu Yenile
                                 </button>
                             </div>
@@ -616,14 +806,42 @@
                                         <th class="product-col">Ürün</th>
                                         <th class="field-col"></th>
                                         
-                                        <!-- Define vendors_to_show -->
-                                        <t t-set="latest_round_pos" t-value="o.purchase_order_ids.filtered(lambda po: po.tender_round == o.tender_round)"/>
-                                        <t t-set="vendors_to_show" t-value="latest_round_pos if latest_round_pos else o.purchase_order_ids"/>
+                                        <!-- Define vendors_to_show - only current round, exclude cancelled -->
+                                        <t t-set="vendors_to_show" t-value="o.purchase_order_ids.filtered(lambda po: po.tender_round == o.tender_round and po.state != 'cancel')"/>
+                                        
+                                        <!-- Debug info -->
+                                        <script>
+                                            console.log('=== TEMPLATE DEBUG ===');
+                                            console.log('Tender ID:', <t t-esc="o.id"/>);
+                                            console.log('Current Round:', <t t-esc="o.tender_round"/>);
+                                            console.log('Total POs:', <t t-esc="len(o.purchase_order_ids)"/>);
+                                            console.log('Filtered POs:', <t t-esc="len(vendors_to_show)"/>);
+                                            <t t-foreach="o.purchase_order_ids" t-as="debug_po">
+                                                console.log('PO:', '<t t-esc="debug_po.name"/>', 'Round:', <t t-esc="debug_po.tender_round"/>, 'State:', '<t t-esc="debug_po.state"/>', 'Partner:', '<t t-esc="debug_po.partner_id.name"/>');
+                                            </t>
+                                            console.log('Showing POs:');
+                                            <t t-foreach="vendors_to_show" t-as="show_po">
+                                                console.log('Show PO:', '<t t-esc="show_po.name"/>', 'Round:', <t t-esc="show_po.tender_round"/>, 'State:', '<t t-esc="show_po.state"/>', 'Partner:', '<t t-esc="show_po.partner_id.name"/>');
+                                            </t>
+                                        </script>
                                         
                                         <!-- Vendor Columns -->
                                         <t t-foreach="vendors_to_show" t-as="vendor">
-                                            <th t-att-class="'vendor-col ' + (vendor.system_selection and 'system-selection ' or '') + (vendor.user_selection and 'user-selection' or '') + ((vendor.state == 'purchase' or vendor.state == 'to approve') and 'confirmed-order' or '')" t-att-data-vendor-id="vendor.partner_id.id">
-                                                <span t-esc="vendor.partner_id.name"/> -
+                                            <th t-att-class="'vendor-col ' + (vendor.system_selection and 'system-selection ' or '') + (vendor.user_selection and 'user-selection' or '') + ((vendor.state == 'purchase' or vendor.state == 'to approve') and 'confirmed-order' or '')" t-att-data-vendor-id="vendor.partner_id.id" t-att-data-po-id="vendor.id">
+                                                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                                                    <div style="flex: 1;">
+                                                        <span t-esc="vendor.partner_id.name"/> - <small>(<span t-esc="vendor.name"/>)</small>
+                                                    </div>
+                                                    <button t-if="vendor.state in ['purchase', 'done'] and o.workflow_current_state_id.code == 'evaluation'" 
+                                                            type="button" 
+                                                            class="btn btn-sm btn-danger" 
+                                                            style="padding: 1px 4px; font-size: 10px; margin-left: 5px;" 
+                                                            title="Bu siparişi iptal et ve sil"
+                                                            t-att-onclick="'window.VendorComparison.deletePurchaseOrder(' + str(vendor.id) + ', \'' + vendor.partner_id.name + '\')'"
+                                                            >
+                                                        <i class="fa fa-trash" style="font-size: 8px;"></i>
+                                                    </button>
+                                                </div>
                                                 <!-- Purchase Order Status -->
                                                 <span t-if="vendor.state == 'draft'" style="color: #6c757d; font-weight: bold;">
                                                     <span class="selection-badge" style="background-color: #6c757d; color: white;">RFQ</span>
@@ -655,7 +873,8 @@
                                                 </t>
                                                 <!-- Debug info -->
                                                 <div style="display: none;">
-                                                    <small>vendor_id: <t t-esc="vendor.id"/></small>
+                                                    <small>partner_id: <t t-esc="vendor.partner_id.id"/></small>
+                                                    <small>po_id: <t t-esc="vendor.id"/></small>
                                                     <small>user_selection: <t t-esc="vendor.user_selection"/></small>
                                                     <small>state: <t t-esc="vendor.state"/></small>
                                                 </div>
@@ -1064,7 +1283,8 @@
                                                             <!-- Debug info -->
                                                             <div style="display: none;">
                                                                 <small>line_id: <t t-esc="vendor_line.id if vendor_line else 'None'"/></small>
-                                                                <small>vendor_id: <t t-esc="vendor.id"/></small>
+                                                                <small>partner_id: <t t-esc="vendor.partner_id.id"/></small>
+                                                                <small>po_id: <t t-esc="vendor.id"/></small>
                                                                 <small>user_selection: <t t-esc="vendor_line.user_selection if vendor_line else 'None'"/></small>
                                                                 <small>system_selection: <t t-esc="vendor_line.system_selection if vendor_line else 'None'"/></small>
                                                             </div>
@@ -1147,8 +1367,23 @@
                                         <t t-foreach="vendors_to_collected" t-as="vendor_collect">
                                             <t t-set="has_npv" t-value="False"/>
                                             <t t-set="vendor_total_npv" t-value="0"/>
+                                            <t t-set="vendor_total_amount" t-value="0"/>
+                                            <t t-set="has_incomplete_offer" t-value="False"/>
+                                            
+                                            <!-- Check if vendor has lines for all tender products -->
+                                            <t t-set="tender_product_count" t-value="len(o.tender_lines.filtered(lambda l: l.display_type == 'product'))"/>
+                                            <t t-set="po_product_count" t-value="len(vendor_collect.order_line.filtered(lambda l: l.tender_line_id and not l.display_type))"/>
+                                            
+                                            <t t-if="po_product_count &lt; tender_product_count">
+                                                <t t-set="has_incomplete_offer" t-value="True"/>
+                                            </t>
+                                            
                                             <t t-foreach="vendor_collect.order_line" t-as="line">
                                                 <t t-if="line.tender_line_id and not line.display_type">
+                                                    <t t-set="vendor_total_amount" t-value="vendor_total_amount + line.price_subtotal"/>
+                                                    <t t-if="line.price_subtotal &lt;= 0">
+                                                        <t t-set="has_incomplete_offer" t-value="True"/>
+                                                    </t>
                                                     <t t-foreach="line._fields" t-as="field">
                                                         <t t-if="field == 'npv_value'">
                                                             <t t-set="has_npv" t-value="True"/>
@@ -1157,8 +1392,12 @@
                                                     </t>
                                                 </t>
                                             </t>
-                                            <t t-if="has_npv and vendor_total_npv > 0">
-                                                <t t-set="total_npvs" t-value="total_npvs + [vendor_total_npv]"/>
+                                            <!-- Skip POs that have incomplete offers -->
+                                            <t t-if="not has_incomplete_offer">
+                                                <t t-set="value" t-value="vendor_total_npv if has_npv and vendor_total_npv > 0 else vendor_total_amount"/>
+                                                <t t-if="value > 0">
+                                                    <t t-set="total_npvs" t-value="total_npvs + [vendor_total_npv if has_npv and vendor_total_npv > 0 else vendor_total_amount]"/>
+                                                </t>
                                             </t>
                                         </t>
                                         <!-- Find minimum non-zero total NPV -->
@@ -1213,13 +1452,36 @@
                                             </t>
                                             
                                             <td t-attf-class="vendor-col text-center #{vendor.system_selection and 'system-selection' or ''}" t-att-data-vendor-id="vendor.partner_id.id" t-att-data-field="system_total_selection">
-                                                <!-- Show badge if this vendor has the lowest non-zero total NPV -->
-                                                <t t-if="has_npv and total_npv > 0 and total_npv == min_total_npv">
-                                                    <span class="selection-badge system-badge">S</span>
-                                                    <input type="hidden" name="vendor_total_selection" t-att-value="vendor.id" checked="checked"/>
+                                                <!-- Check if this vendor has incomplete offer -->
+                                                <t t-set="vendor_has_incomplete_offer" t-value="False"/>
+                                                
+                                                <!-- Check if vendor has lines for all tender products -->
+                                                <t t-set="tender_product_count" t-value="len(o.tender_lines.filtered(lambda l: l.display_type == 'product'))"/>
+                                                <t t-set="po_product_count" t-value="len(vendor.order_line.filtered(lambda l: l.tender_line_id and not l.display_type))"/>
+                                                
+                                                <t t-if="po_product_count &lt; tender_product_count">
+                                                    <t t-set="vendor_has_incomplete_offer" t-value="True"/>
                                                 </t>
-                                                <t t-elif="vendor.system_selection">
-                                                    <span class="selection-badge system-badge">S</span>
+                                                
+                                                <t t-foreach="vendor.order_line" t-as="check_line">
+                                                    <t t-if="check_line.tender_line_id and not check_line.display_type and check_line.price_subtotal &lt;= 0">
+                                                        <t t-set="vendor_has_incomplete_offer" t-value="True"/>
+                                                    </t>
+                                                </t>
+                                                
+                                                <!-- Only show system selection if vendor doesn't have incomplete offer -->
+                                                <t t-if="not vendor_has_incomplete_offer">
+                                                    <!-- Show badge if this vendor has the lowest non-zero total NPV -->
+                                                    <t t-if="has_npv and total_npv > 0 and total_npv == min_total_npv">
+                                                        <span class="selection-badge system-badge">S</span>
+                                                        <input type="hidden" name="vendor_total_selection" t-att-value="vendor.id" checked="checked"/>
+                                                    </t>
+                                                    <t t-elif="vendor.system_selection">
+                                                        <span class="selection-badge system-badge">S</span>
+                                                    </t>
+                                                    <t t-else="">
+                                                        <span>-</span>
+                                                    </t>
                                                 </t>
                                                 <t t-else="">
                                                     <span>-</span>
@@ -1247,7 +1509,8 @@
                                                 </div>
                                                 <!-- Debug info -->
                                                 <div style="display: none;">
-                                                    <small>vendor_id: <t t-esc="vendor.id"/></small>
+                                                    <small>partner_id: <t t-esc="vendor.partner_id.id"/></small>
+                                                    <small>po_id: <t t-esc="vendor.id"/></small>
                                                     <small>user_selection: <t t-esc="vendor.user_selection"/></small>
                                                     <small>system_selection: <t t-esc="vendor.system_selection"/></small>
                                                 </div>

@@ -1035,18 +1035,43 @@ class AkTender(models.Model):
         """
         self.ensure_one()
         
-        # Get vendors (purchase orders)
+        # Comprehensive cache invalidation
+        self._invalidate_cache()
+        self.env.invalidate_all()
+        
+        # Force refresh of all related data from database
+        self.env.cr.execute("SELECT 1")  # Force database sync
+        
+        # Re-read the tender record from database to get fresh data
+        fresh_tender = self.env['ak.tender'].browse(self.id)
+        
+        # Get fresh purchase orders directly from database
+        self.env.cr.execute("""
+            SELECT id FROM purchase_order 
+            WHERE tender_id = %s AND tender_round = %s AND state != 'cancel'
+            ORDER BY id
+        """, (self.id, self.tender_round))
+        
+        po_ids = [row[0] for row in self.env.cr.fetchall()]
+        tender_pos = self.env['purchase.order'].sudo().browse(po_ids)
+        
+        _logger.info("=== RAPOR VERİLERİ DEBUG (FRESH) ===")
+        _logger.info("Tender ID: %s, Round: %s", self.id, self.tender_round)
+        _logger.info("Fresh PO sayısı: %s", len(tender_pos))
+        
+        # Build vendors list
         vendors = []
-        for po in self.purchase_order_ids:
+        for po in tender_pos:
             vendors.append({
                 'id': po.id,
                 'partner_id': po.partner_id.id,
                 'partner_name': po.partner_id.name,
             })
+            _logger.info("Rapora eklenen PO: %s (%s)", po.name, po.partner_id.name)
         
         # Get tender lines with vendor data
         tender_lines = []
-        for line in self.tender_lines:
+        for line in fresh_tender.sudo().tender_lines:
             line_data = {
                 'id': line.id,
                 'name': line.name,
@@ -1059,7 +1084,7 @@ class AkTender(models.Model):
             }
             
             # Add vendor-specific data for this line
-            for po in self.purchase_order_ids:
+            for po in tender_pos:
                 po_line = po.order_line.filtered(lambda l: l.tender_line_id.id == line.id)
                 if po_line:
                     po_line = po_line[0]  # Take the first one if multiple
@@ -1780,70 +1805,86 @@ class AkTender(models.Model):
             }
         }
         
-    def create_orders_from_total_selection(self, vendor_ids, use_npv=False):
+    def create_orders_from_total_selection(self, po_ids, use_npv=False):
         """
-        Create purchase orders from the selected vendors based on total amount or NPV.
+        Create purchase orders from the selected purchase orders based on total amount or NPV.
         
         Args:
-            vendor_ids (list): List of vendor (purchase order) IDs to create orders from
+            po_ids (list): List of purchase order IDs to create orders from
             use_npv (bool): Whether to use NPV for selection instead of total amount
             
         Returns:
             dict: Action to reload the page
         """
         self.ensure_one()
-        if not vendor_ids:
+        _logger.info("=== CREATE ORDERS FROM TOTAL SELECTION ===")
+        _logger.info("Tender ID: %s, PO IDs: %s", self.id, po_ids)
+        
+        if not po_ids:
+            _logger.warning("No PO IDs provided")
             return {'type': 'ir.actions.act_window_close'}
+            
+        # Convert string IDs to integers if needed
+        if isinstance(po_ids[0], str):
+            po_ids = [int(po_id) for po_id in po_ids]
             
         # Get the selected purchase orders
-        selected_pos = self.env['purchase.order'].browse(vendor_ids)
+        selected_pos = self.env['purchase.order'].browse(po_ids)
+        _logger.info("Found POs: %s", [(po.id, po.name, po.partner_id.name) for po in selected_pos])
+        
         if not selected_pos:
+            _logger.warning("No POs found for IDs: %s", po_ids)
             return {'type': 'ir.actions.act_window_close'}
             
-        # Create confirmed purchase orders from the selected ones
-        created_orders = self.env['purchase.order']
-        for po in selected_pos:
-            # Create a new purchase order
-            new_po = po.copy({
-                'state': 'purchase',
-                'date_approve': fields.Datetime.now(),
-                'tender_id': self.id,
-                'origin': f"{self.code} - {po.name}",
-                'tender_round': self.tender_round,
-                'system_selection': use_npv,  # Mark as system selection if using NPV
-                'user_selection': not use_npv,  # Mark as user selection if not using NPV
-                'selection_note': _("NPV bazlı sistem seçimi") if use_npv else _("Toplam bazlı kullanıcı seçimi"),
-            })
-            
-            # Update the lines to use NPV values if requested
-            if use_npv:
-                for line in new_po.order_line:
-                    if hasattr(line, 'npv_value') and line.npv_value:
-                        # Use NPV value for pricing
-                        line.price_unit = line.npv_value / line.product_qty if line.product_qty else 0
-                        # Mark line as system selection
-                        line.system_selection = True
-                        line.selection_note = _("NPV bazlı sistem seçimi")
-            else:
-                # Mark all lines as user selection
-                for line in new_po.order_line:
-                    line.user_selection = True
-                    line.selection_note = _("Toplam bazlı kullanıcı seçimi")
-                
-            created_orders += new_po
-            
-        # Log the creation
-        self.message_post(
-            body=_("%s sipariş(ler) oluşturuldu: %s") % (
-                len(created_orders), ", ".join(created_orders.mapped('name'))
-            ),
-            subtype_xmlid='mail.mt_note'
-        )
+        # Confirm the selected purchase orders
+        confirmed_orders = self.env['purchase.order']
         
-        return {
-            'type': 'ir.actions.client',
-            'tag': 'reload',
-        }
+        try:
+            for po in selected_pos:
+                _logger.info("Converting PO: %s (ID: %s, State: %s)", po.name, po.id, po.state)
+                
+                # Update selection fields
+                po.write({'user_selection': True})
+                
+                # Update lines
+                for line in po.order_line:
+                    line.write({'user_selection': True})
+                
+                # Confirm if not already confirmed
+                if po.state in ['draft', 'sent']:
+                    po.button_confirm()
+                    po.write({
+                        'date_approve': fields.Datetime.now(),
+                        'state': 'purchase'
+                    })
+                
+                confirmed_orders += po
+                
+        except Exception as e:
+            _logger.error("Error creating orders: %s", str(e))
+            import traceback
+            _logger.error("Traceback: %s", traceback.format_exc())
+            return {'success': False, 'error': str(e)}
+            
+        if confirmed_orders:
+            # Log the creation
+            self.message_post(
+                body=_("%s sipariş(ler) onaylandı: %s") % (
+                    len(confirmed_orders), ", ".join(confirmed_orders.mapped('name'))
+                ),
+                subtype_xmlid='mail.mt_note'
+            )
+            
+            _logger.info("Successfully confirmed %s orders", len(confirmed_orders))
+            return {
+                'success': True,
+                'message': f'{len(confirmed_orders)} sipariş başarıyla onaylandı',
+                'type': 'ir.actions.client',
+                'tag': 'reload',
+            }
+        else:
+            _logger.warning("No orders were created")
+            return {'success': False, 'error': 'Hiç sipariş oluşturulamadı'}
         
     def save_user_selection(self, selections):
         """
@@ -1875,9 +1916,9 @@ class AkTender(models.Model):
                 _logger.info("[%s] Processing: vendor_id=%s, tender_line_id=%s, is_checked=%s", 
                            i, vendor_id, tender_line_id, is_checked)
                 
-                # Find the purchase order
+                # Find the purchase order by ID (vendor_id is actually PO ID)
                 po = self.purchase_order_ids.filtered(
-                    lambda p: p.partner_id.id == vendor_id and p.tender_round == self.tender_round
+                    lambda p: p.id == vendor_id and p.tender_round == self.tender_round
                 )
                 
                 _logger.info("[%s] Found POs: %s", i, [(p.id, p.partner_id.name) for p in po])
@@ -1919,6 +1960,15 @@ class AkTender(models.Model):
             
             # Commit changes
             self.env.cr.commit()
+            
+            # Force cache invalidation to ensure fresh data on next read
+            self.env.invalidate_all()
+            self._invalidate_cache()
+            
+            # Also invalidate related models
+            self.env['purchase.order'].invalidate_cache()
+            self.env['purchase.order.line'].invalidate_cache()
+            
             _logger.info("=== SUCCESSFULLY COMMITTED ALL SELECTIONS ===")
             
             return {'success': True, 'message': 'Selection saved successfully'}
@@ -1970,6 +2020,8 @@ class AkTender(models.Model):
         try:
             # Get current round purchase orders
             current_pos = self.purchase_order_ids.filtered(lambda p: p.tender_round == self.tender_round)
+            _logger.info("=== SYSTEM SELECTION CALCULATION START ===")
+            _logger.info("Tender ID: %s, Round: %s, POs: %s", self.id, self.tender_round, len(current_pos))
             
             # Calculate product-level system selections
             for tender_line in self.tender_lines.filtered(lambda l: l.display_type == 'product'):
@@ -2001,38 +2053,73 @@ class AkTender(models.Model):
             
             # Calculate total-level system selections
             vendor_totals = []
+            excluded_pos_info = []
+            
             for po in current_pos:
                 total_npv = 0
                 total_amount = 0
                 has_npv = False
+                has_incomplete_offer = False
+                
+                # Check if PO has lines for all tender products
+                tender_product_count = len(self.tender_lines.filtered(lambda l: l.display_type == 'product'))
+                po_product_count = len(po.order_line.filtered(lambda l: l.tender_line_id and not l.display_type))
+                
+                if po_product_count < tender_product_count:
+                    has_incomplete_offer = True
+                    _logger.info("PO %s (%s) has incomplete offer: %s/%s products", po.id, po.partner_id.name, po_product_count, tender_product_count)
                 
                 for line in po.order_line.filtered(lambda l: l.tender_line_id and not l.display_type):
                     total_amount += line.price_subtotal
+                    if line.price_subtotal <= 0.01:
+                        has_incomplete_offer = True
+                        _logger.info("PO %s (%s) has zero/low amount line: %s (amount: %s)", po.id, po.partner_id.name, line.product_id.name if line.product_id else 'No product', line.price_subtotal)
                     if hasattr(line, 'npv_value') and line.npv_value > 0:
                         total_npv += line.npv_value
                         has_npv = True
                 
+                # Skip POs that have incomplete offers
+                if has_incomplete_offer:
+                    excluded_pos_info.append((po.id, po.partner_id.name, "incomplete_offer"))
+                    continue
+                    
                 # Use NPV if available, otherwise use total amount
                 value = total_npv if has_npv and total_npv > 0 else total_amount
                 if value > 0:
                     vendor_totals.append((po, value))
+                else:
+                    excluded_pos_info.append((po.id, po.partner_id.name, "zero_value"))
+            
+            _logger.info("Vendor totals: %s", [(po.id, po.partner_id.name, value) for po, value in vendor_totals])
+            _logger.info("Excluded POs: %s", excluded_pos_info)
             
             # Find minimum total
             if vendor_totals:
                 min_total = min(vendor_totals, key=lambda x: x[1])
                 selected_po = min_total[0]
+                _logger.info("Selected PO for system selection: %s (%s)", selected_po.id, selected_po.partner_id.name)
                 
-                # Update system selections for totals
-                for po in current_pos:
+                # Update system selections for totals - only for POs in vendor_totals
+                for po, value in vendor_totals:
                     is_selected = (po == selected_po)
+                    _logger.info("Setting PO %s (%s) system_selection = %s", po.id, po.partner_id.name, is_selected)
                     self.env.cr.execute(
                         "UPDATE purchase_order SET system_selection = %s WHERE id = %s",
                         (is_selected, po.id)
                     )
+                
+                # Clear system selection for POs not in vendor_totals (incomplete offers)
+                excluded_pos = current_pos.filtered(lambda p: p not in [po for po, _ in vendor_totals])
+                for po in excluded_pos:
+                    _logger.info("Clearing system_selection for excluded PO %s (%s)", po.id, po.partner_id.name)
+                    self.env.cr.execute(
+                        "UPDATE purchase_order SET system_selection = %s WHERE id = %s",
+                        (False, po.id)
+                    )
             
             # Commit changes
             self.env.cr.commit()
-            _logger.info("System selections calculated and saved for tender %s", self.id)
+            _logger.info("=== SYSTEM SELECTION CALCULATION COMPLETED ===")
             
         except Exception as e:
             _logger.error("Error calculating system selections: %s", str(e))
@@ -2059,13 +2146,19 @@ class AkTender(models.Model):
                     tender_id, selections)
         
         try:
+            # First, clear all user selections for this tender round
+            all_po_lines = tender.purchase_order_ids.filtered(
+                lambda p: p.tender_round == tender.tender_round
+            ).mapped('order_line')
+            all_po_lines.write({'user_selection': False})
+            
             # Process product selections
             if 'product' in selections:
                 for selection in selections['product']:
                     value = selection.get('value')
                     is_checked = selection.get('isChecked')
                     
-                    if value:
+                    if value and is_checked:  # Only process checked selections
                         parts = value.split('_')
                         if len(parts) >= 2:
                             vendor_id = int(parts[0])
@@ -2077,17 +2170,14 @@ class AkTender(models.Model):
                                 # Find the purchase order line for this tender line
                                 po_line = po[0].order_line.filtered(lambda l: l.tender_line_id.id == tender_line_id)
                                 if po_line:
-                                    # Update the user_selection field
-                                    po_line.write({'user_selection': is_checked})
-                                    
-                                    # If checked, uncheck all other lines for this tender line
-                                    if is_checked:
-                                        other_po_lines = tender.purchase_order_ids.filtered(
-                                            lambda p: p.tender_round == tender.tender_round
-                                        ).mapped('order_line').filtered(
-                                            lambda l: l.tender_line_id.id == tender_line_id and l.id != po_line[0].id
-                                        )
-                                        other_po_lines.write({'user_selection': False})
+                                    # Set this line as user selected
+                                    po_line.write({'user_selection': True})
+            
+            # Clear all PO user selections for this tender round
+            all_pos = tender.purchase_order_ids.filtered(
+                lambda p: p.tender_round == tender.tender_round
+            )
+            all_pos.write({'user_selection': False})
             
             # Process total selections
             if 'total' in selections:
@@ -2095,21 +2185,14 @@ class AkTender(models.Model):
                     value = selection.get('value')
                     is_checked = selection.get('isChecked')
                     
-                    if value:
+                    if value and is_checked:  # Only process checked selections
                         vendor_id = int(value)
                         
                         # Find the purchase order for this vendor in the current round
                         po = tender.purchase_order_ids.filtered(lambda p: p.partner_id.id == vendor_id and p.tender_round == tender.tender_round)
                         if po:
-                            # Update the user_selection field
-                            po[0].write({'user_selection': is_checked})
-                            
-                            # If checked, uncheck all other purchase orders
-                            if is_checked:
-                                other_pos = tender.purchase_order_ids.filtered(
-                                    lambda p: p.id != po[0].id and p.tender_round == tender.tender_round
-                                )
-                                other_pos.write({'user_selection': False})
+                            # Set this PO as user selected
+                            po[0].write({'user_selection': True})
             
             # Force commit to ensure changes are saved
             self.env.cr.commit()
@@ -2120,90 +2203,260 @@ class AkTender(models.Model):
             _logger.error("Error saving all selections: %s", str(e))
             return {'success': False, 'error': str(e)}
     
-    def create_orders_from_selections(self, selection_ids):
+    def delete_purchase_order(self, po_id):
+        """
+        Delete a user-created purchase order after cancelling it.
+        Only works for orders created from tender selections.
+        
+        Args:
+            po_id (int): The ID of the purchase order to delete
+            
+        Returns:
+            dict: Result of the operation
+        """
+        self.ensure_one()
+        _logger.info("=== SİPARİŞ SİLME BAŞLADI ===")
+        _logger.info("Tender ID: %s, PO ID: %s", self.id, po_id)
+        
+        try:
+            # Find the purchase order
+            po = self.env['purchase.order'].browse(po_id)
+            if not po.exists():
+                return {'success': False, 'error': 'Satınalma siparişi bulunamadı'}
+            
+            # Check if it belongs to this tender
+            if po.tender_id.id != self.id:
+                return {'success': False, 'error': 'Bu sipariş bu ihaleye ait değil'}
+            
+            # Only allow deletion of user-created orders (purchase/done state)
+            if po.state not in ['purchase', 'done']:
+                return {'success': False, 'error': 'Sadece oluşturulmuş siparişler silinebilir'}
+            
+            partner_name = po.partner_id.name
+            po_name = po.name
+            
+            # Cancel and delete the order
+            po.button_cancel()
+            po.unlink()
+            _logger.info("Sipariş iptal edilip silindi: %s - %s", partner_name, po_name)
+            
+            return {
+                'success': True, 
+                'message': f'{partner_name} tedarikçisinin siparişi ({po_name}) iptal edilip silindi'
+            }
+            
+        except Exception as e:
+            _logger.error("Sipariş silme hatası: %s", str(e))
+            return {'success': False, 'error': str(e)}
+    
+    def create_orders_from_selections(self, selections):
         """
         Create purchase orders from the selected product-vendor combinations.
         
         Args:
-            selection_ids (list): List of strings in format "product_id:vendor_id"
+            selections (list): List of strings in format "po_id_tender_line_id"
             
         Returns:
             dict: Action to reload the page
         """
         self.ensure_one()
-        if not selection_ids:
-            return {'type': 'ir.actions.act_window_close'}
-            
-        # Parse the selection IDs
-        selections = []
-        for selection in selection_ids:
-            parts = selection.split(':')
-            if len(parts) == 2:
-                try:
-                    product_id = int(parts[0])
-                    vendor_id = int(parts[1])
-                    selections.append((product_id, vendor_id))
-                except ValueError:
-                    continue
+        _logger.info("=== SİPARİŞ OLUŞTURMA BAŞLADI ===")
+        _logger.info("Tender ID: %s, Selections: %s", self.id, selections)
         
         if not selections:
+            _logger.warning("Seçim yapılmadı, işlem iptal ediliyor")
             return {'type': 'ir.actions.act_window_close'}
             
-        # Group selections by vendor
-        vendor_products = {}
-        for product_id, vendor_id in selections:
-            if vendor_id not in vendor_products:
-                vendor_products[vendor_id] = []
-            vendor_products[vendor_id].append(product_id)
+        # Parse the selection values (format: "po_id_tender_line_id")
+        po_products = {}
+        for selection in selections:
+            parts = selection.split('_')
+            if len(parts) >= 2:
+                try:
+                    po_id = int(parts[0])
+                    tender_line_id = int(parts[1])
+                    
+                    if po_id not in po_products:
+                        po_products[po_id] = []
+                    po_products[po_id].append(tender_line_id)
+                    _logger.info("Seçim parse edildi - PO: %s, Tender Line: %s", po_id, tender_line_id)
+                except ValueError as e:
+                    _logger.error("Seçim parse hatası: %s - %s", selection, str(e))
+                    continue
+        
+        _logger.info("Parse edilen po_products: %s", po_products)
+        
+        if not po_products:
+            _logger.warning("Parse edilen seçim bulunamadı, işlem iptal ediliyor")
+            return {'type': 'ir.actions.act_window_close'}
             
-        # Create purchase orders for each vendor
+        # Get existing user-selected orders for this tender
+        existing_orders = self.env['purchase.order'].search([
+            ('tender_id', '=', self.id),
+            ('state', 'in', ['purchase', 'done']),
+            ('user_selection', '=', True)
+        ])
+        
+        updated_orders = self.env['purchase.order']
         created_orders = self.env['purchase.order']
-        for vendor_id, product_ids in vendor_products.items():
-            # Find the vendor's purchase order in the tender
-            vendor_po = self.purchase_order_ids.filtered(lambda po: po.partner_id.id == vendor_id and po.tender_round == self.tender_round)
-            if not vendor_po:
+        
+        # Process each PO selection
+        for po_id, tender_line_ids in po_products.items():
+            # Find the source purchase order by ID
+            source_po = self.purchase_order_ids.filtered(lambda po: po.id == po_id and po.tender_round == self.tender_round)
+            
+            if not source_po:
+                _logger.warning("PO ID %s bulunamadı", po_id)
                 continue
                 
-            # Create a new purchase order
-            new_po = vendor_po[0].copy({
-                'state': 'purchase',
-                'date_approve': fields.Datetime.now(),
-                'tender_id': self.id,
-                'origin': f"{self.code} - {vendor_po[0].name}",
-                'tender_round': self.tender_round,
-                'user_selection': True,  # Mark as user selection
-                'system_selection': False,
-                'selection_note': _("Ürün bazlı kullanıcı seçimi"),
-            })
+            source_po = source_po[0]
+            _logger.info("Kaynak PO: %s (ID: %s, Partner: %s)", source_po.name, source_po.id, source_po.partner_id.name)
             
-            # Keep only the selected product lines
-            lines_to_keep = []
-            for line in new_po.order_line:
-                if line.product_id and line.product_id.id in product_ids:
-                    lines_to_keep.append(line.id)
-                    # Mark line as user selection
-                    line.user_selection = True
-                    line.system_selection = False
-                    line.selection_note = _("Ürün bazlı kullanıcı seçimi")
+            # Check if there's an existing order for this partner
+            existing_order = existing_orders.filtered(lambda o: o.partner_id.id == source_po.partner_id.id)
             
-            # Remove unselected lines
-            new_po.order_line.filtered(lambda l: l.id not in lines_to_keep).unlink()
+            if existing_order:
+                # Update existing order
+                _logger.info("Partner %s için mevcut sipariş güncelleniyor: %s", source_po.partner_id.name, existing_order[0].name)
+                
+                # Get current lines in the existing order
+                current_line_ids = existing_order[0].order_line.filtered(lambda l: l.tender_line_id).mapped('tender_line_id.id')
+                new_line_ids = set(tender_line_ids)
+                current_line_ids_set = set(current_line_ids)
+                
+                if new_line_ids == current_line_ids_set:
+                    _logger.info("Partner %s için seçimler aynı, güncelleme gerekmiyor", source_po.partner_id.name)
+                    updated_orders += existing_order[0]
+                    continue
+                
+                # Lines are different, need to update
+                _logger.info("Partner %s için satırlar değişmiş, güncelleniyor", source_po.partner_id.name)
+                
+                # Cancel existing order and create new one
+                existing_order[0].button_cancel()
+                _logger.info("Eski sipariş iptal edildi: %s", existing_order[0].name)
             
-            if new_po.order_line:
+            # Create new order (either first time or replacement)
+            _logger.info("Partner %s için yeni sipariş oluşturuluyor, tender lines: %s", source_po.partner_id.name, tender_line_ids)
+            
+            try:
+                # Get selected lines from source PO
+                selected_lines = source_po.order_line.filtered(
+                    lambda l: l.tender_line_id and l.tender_line_id.id in tender_line_ids
+                )
+                
+                if not selected_lines:
+                    _logger.warning("PO %s için seçili satır bulunamadı", source_po.name)
+                    continue
+                
+                _logger.info("Seçili satır sayısı: %s", len(selected_lines))
+                
+                # Create new PO without lines first
+                new_po_vals = {
+                    'partner_id': source_po.partner_id.id,
+                    'state': 'draft',
+                    'tender_id': self.id,
+                    'origin': f"{self.code} - {source_po.name}",
+                    'tender_round': self.tender_round,
+                    'user_selection': True,
+                    'system_selection': False,
+                    'selection_note': _("Ürün bazlı kullanıcı seçimi"),
+                    'company_id': source_po.company_id.id,
+                    'currency_id': source_po.currency_id.id,
+                    'date_order': source_po.date_order,
+                    'payment_term_id': source_po.payment_term_id.id if source_po.payment_term_id else False,
+                }
+                
+                new_po = self.env['purchase.order'].with_context(from_tender=True).create(new_po_vals)
+                _logger.info("Yeni PO oluşturuldu: %s (ID: %s)", new_po.name, new_po.id)
+                
+                # Clear any auto-created lines first
+                if new_po.order_line:
+                    new_po.order_line.unlink()
+                    _logger.info("Otomatik oluşturulan satırlar temizlendi")
+                
+                # Copy selected lines with all their values
+                for original_line in selected_lines:
+                    # Check if this line was also selected by system
+                    was_system_selected = original_line.system_selection
+                    
+                    # Copy line with all values
+                    line_vals = {
+                        'order_id': new_po.id,
+                        'product_id': original_line.product_id.id,
+                        'name': original_line.name,
+                        'product_qty': original_line.product_qty,
+                        'product_uom': original_line.product_uom.id,
+                        'price_unit': original_line.price_unit,
+                        'discount': getattr(original_line, 'discount', 0.0),
+                        'date_planned': original_line.date_planned,
+                        'taxes_id': [(6, 0, original_line.taxes_id.ids)],
+                        'tender_line_id': original_line.tender_line_id.id,
+                        'sequence': original_line.sequence,
+                        'display_type': original_line.display_type,
+                        'user_selection': True,
+                        'system_selection': was_system_selected,
+                    }
+                    
+                    # Copy custom fields if they exist
+                    if hasattr(original_line, 'alt_materials'):
+                        line_vals['alt_materials'] = original_line.alt_materials
+                    if hasattr(original_line, 'npv_value'):
+                        line_vals['npv_value'] = original_line.npv_value
+                    if hasattr(original_line, 'warranty_period'):
+                        line_vals['warranty_period'] = original_line.warranty_period
+                    
+                    # Set appropriate note
+                    if was_system_selected:
+                        line_vals['selection_note'] = _("Ürün bazlı kullanıcı ve sistem seçimi")
+                        _logger.info("Satır kopyalandı (hem kullanıcı hem sistem seçimi): %s", original_line.product_id.name)
+                    else:
+                        line_vals['selection_note'] = _("Ürün bazlı kullanıcı seçimi")
+                        _logger.info("Satır kopyalandı (sadece kullanıcı seçimi): %s", original_line.product_id.name)
+                    
+                    self.env['purchase.order.line'].create(line_vals)
+                
+                # Now confirm the purchase order
+                new_po.button_confirm()
+                new_po.write({
+                    'date_approve': fields.Datetime.now(),
+                    'state': 'purchase'
+                })
                 created_orders += new_po
-            else:
-                # If no lines remain, delete the order
-                new_po.unlink()
+                _logger.info("Sipariş başarıyla oluşturuldu ve onaylandı: %s", new_po.name)
+                    
+            except Exception as e:
+                _logger.error("PO %s için sipariş oluşturma hatası: %s", source_po.name, str(e))
+                import traceback
+                _logger.error("Traceback: %s", traceback.format_exc())
+                continue
             
-        # Log the creation
-        if created_orders:
+        _logger.info("Toplam oluşturulan sipariş sayısı: %s", len(created_orders))
+        
+        # Log the results
+        all_processed_orders = created_orders + updated_orders
+        
+        if all_processed_orders:
+            created_names = created_orders.mapped('name') if created_orders else []
+            updated_names = updated_orders.mapped('name') if updated_orders else []
+            
+            _logger.info("Oluşturulan siparişler: %s", created_names)
+            _logger.info("Güncellenen siparişler: %s", updated_names)
+            
+            message_parts = []
+            if created_orders:
+                message_parts.append(_("%s yeni sipariş oluşturuldu: %s") % (len(created_orders), ", ".join(created_names)))
+            if updated_orders:
+                message_parts.append(_("%s sipariş güncellendi: %s") % (len(updated_orders), ", ".join(updated_names)))
+            
             self.message_post(
-                body=_("%s sipariş(ler) oluşturuldu: %s") % (
-                    len(created_orders), ", ".join(created_orders.mapped('name'))
-                ),
+                body="<br/>".join(message_parts),
                 subtype_xmlid='mail.mt_note'
             )
+        else:
+            _logger.warning("Hiç sipariş oluşturulamadı veya güncellenmedi!")
             
+        _logger.info("=== SİPARİŞ OLUŞTURMA TAMAMLANDI ===")
         return {
             'type': 'ir.actions.client',
             'tag': 'reload',
