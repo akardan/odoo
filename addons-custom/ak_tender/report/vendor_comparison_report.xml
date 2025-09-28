@@ -353,12 +353,12 @@
 
                             createOrderFromSelection: function(event) {
                                 event.preventDefault();
-                                const selectedProducts = document.querySelectorAll('input[name="vendor_product_selection"]:checked');
+                                const selectedProducts = document.querySelectorAll('input[name="vendor_user_selection"]:checked');
                                 const selections = Array.from(selectedProducts).map(function(checkbox) { return checkbox.value; });
                                 const self = this;
                                 
                                 if (selections.length > 0) {
-                                    fetch('/web/dataset/call_kw/ak.tender/create_orders_from_selections', {
+                                    fetch('/web/dataset/call_kw', {
                                         method: 'POST',
                                         headers: {
                                             'Content-Type': 'application/json',
@@ -371,7 +371,7 @@
                                             params: {
                                                 model: 'ak.tender',
                                                 method: 'create_orders_from_selections',
-                                                args: [self.getTenderId(), selections],
+                                                args: [[self.getTenderId()], selections],
                                                 kwargs: {}
                                             }
                                         })
@@ -403,7 +403,7 @@
                                 
                                 console.log("Creating orders for vendors:", vendorIds);
                                 
-                                fetch('/web/dataset/call_kw/ak.tender/create_orders_from_total_selection', {
+                                fetch('/web/dataset/call_kw', {
                                     method: 'POST',
                                     headers: {
                                         'Content-Type': 'application/json',
@@ -416,7 +416,7 @@
                                         params: {
                                             model: 'ak.tender',
                                             method: 'create_orders_from_total_selection',
-                                            args: [self.getTenderId(), vendorIds],
+                                            args: [[self.getTenderId()], vendorIds],
                                             kwargs: {}
                                         }
                                     })
