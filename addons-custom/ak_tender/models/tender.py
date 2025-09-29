@@ -124,8 +124,8 @@ class AkTenderLine(models.Model):
     def write(self, vals):
         """Satır güncellendiğinde tender'ın hedef fiyatını güncelle"""
         result = super(AkTenderLine, self).write(vals)
-        # Eğer target_price veya quantity değişmişse tender'ın hedef fiyatını güncelle
-        if 'target_price' in vals or 'quantity' in vals:
+        # Eğer target_price, quantity veya currency_id değişmişse tender'ın hedef fiyatını güncelle
+        if 'target_price' in vals or 'quantity' in vals or 'currency_id' in vals:
             for line in self:
                 if line.tender_id and line.display_type == 'product':
                     line.tender_id.calculate_total_target_price()
@@ -155,11 +155,11 @@ class AkTenderLine(models.Model):
         # Otel konaklaması ürünü seçildiğinde
         self._onchange_product_id_hotel()
         
-    @api.onchange('tender_id')
-    def _onchange_tender_id(self):
-        """Update currency when tender changes"""
-        if self.tender_id and self.tender_id.currency_id:
-            self.currency_id = self.tender_id.currency_id
+    @api.onchange('currency_id')
+    def _onchange_currency_id(self):
+        """Para birimi değiştiğinde tender'ın hedef fiyatını güncelle"""
+        if self.display_type == 'product' and self.tender_id:
+            self.tender_id.calculate_total_target_price()
     
     @api.onchange('product_id')
     def _onchange_product_id_hotel(self):
@@ -558,16 +558,70 @@ class AkTender(models.Model):
     target_price = fields.Monetary(string=_('Hedef Fiyat'), currency_field='currency_id',
                                 help=_("Satın Alma Direktörü tarafından belirlenen hedef fiyat."))
     
+    def _convert_currency_two_stage(self, amount, from_currency, to_currency, date=None):
+        """
+        İki aşamalı para birimi dönüşümü: kaynak -> şirket -> hedef
+        
+        Args:
+            amount: Dönüştürülecek tutar
+            from_currency: Kaynak para birimi
+            to_currency: Hedef para birimi
+            date: Dönüşüm tarihi (varsayılan: bugün)
+            
+        Returns:
+            float: Dönüştürülmüş tutar
+        """
+        if not date:
+            date = fields.Date.today()
+            
+        if from_currency == to_currency:
+            return amount
+            
+        try:
+            # 1. Aşama: Kaynak para biriminden şirket para birimine
+            company_amount = from_currency._convert(
+                amount,
+                self.company_id.currency_id,
+                self.company_id,
+                date
+            )
+            
+            # 2. Aşama: Şirket para biriminden hedef para birimine
+            converted_amount = self.company_id.currency_id._convert(
+                company_amount,
+                to_currency,
+                self.company_id,
+                date
+            )
+            return converted_amount
+        except Exception:
+            # Dönüşüm başarısız olursa orijinal değeri döndür
+            return amount
+    
     def calculate_total_target_price(self):
         """
         Tüm ihale kalemlerinin toplam hedef fiyatını hesapla ve tender'ın hedef fiyatını güncelle
+        Para birimi dönüşümü ile birlikte
         """
         self.ensure_one()
         
         total = 0.0
+        tender_currency = self.currency_id
+        
         for line in self.tender_lines:
             if line.display_type == 'product' and line.target_price and line.quantity:
-                total += line.target_price * line.quantity
+                line_total = line.target_price * line.quantity
+                
+                # Para birimi dönüşümü yap - iki aşamalı
+                if line.currency_id and line.currency_id != tender_currency:
+                    converted_amount = self._convert_currency_two_stage(
+                        line_total,
+                        line.currency_id,
+                        tender_currency
+                    )
+                    total += converted_amount
+                else:
+                    total += line_total
         
         self.target_price = total
         return total
@@ -1209,11 +1263,11 @@ class AkTender(models.Model):
     @api.onchange('currency_id')
     def _onchange_currency_id(self):
         """
-        Update currency on all tender lines when the tender's currency changes.
+        Tender para birimi değiştiğinde hedef fiyatı yeniden hesapla
+        Tender line para birimlerini zorla değiştirmez
         """
-        if self.currency_id and self.tender_lines:
-            for line in self.tender_lines:
-                line.currency_id = self.currency_id
+        if self.currency_id:
+            self.calculate_total_target_price()
     
     @api.onchange('tender_template_id')
     def _onchange_tender_template_id(self):
