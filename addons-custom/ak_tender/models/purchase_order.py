@@ -174,14 +174,34 @@ class PurchaseOrder(models.Model):
     def calculate_total_npv(self):
         """
         Calculate the total NPV value for the order based on the NPV values of its lines.
+        Convert each line's NPV to PO currency before summing.
         """
         for order in self:
             # Calculate NPV for each line
             for line in order.order_line:
                 line.calculate_npv()
             
-            # Sum up the NPV values of all lines
-            total_npv = sum(line.npv_value for line in order.order_line)
+            # Sum up the NPV values with currency conversion to PO currency
+            total_npv = 0.0
+            order_currency = order.currency_id
+            
+            for line in order.order_line:
+                if line.npv_value and line.tender_line_currency_id:
+                    if line.tender_line_currency_id == order_currency:
+                        # Same currency, add directly
+                        total_npv += line.npv_value
+                    else:
+                        # Convert from tender line currency to PO currency
+                        converted_npv = line._convert_currency_two_stage(
+                            line.npv_value,
+                            line.tender_line_currency_id,
+                            order_currency
+                        )
+                        total_npv += converted_npv
+                elif line.npv_value:
+                    # No tender line currency, assume PO currency
+                    total_npv += line.npv_value
+            
             order.total_npv = total_npv
         
         return True

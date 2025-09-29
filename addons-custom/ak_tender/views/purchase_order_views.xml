@@ -15,13 +15,24 @@
                     <field name="tender_id" readonly="1" force_save="1"/>
                     <field name="tender_round"  readonly="1" invisible="tender_id == False"/>
                 </xpath>
+                <xpath expr="//field[@name='tax_totals']" position="after">
+                    <field name="payment_term_id" string="Ödeme Koşulları" invisible="tender_id == False"/>
+                    <field name="total_npv" widget="monetary" options="{'currency_field': 'currency_id'}" string="Toplam NPV" invisible="tender_id == False" class="oe_subtotal_footer_separator"/>
+                </xpath>
                 <xpath expr="//field[@name='order_line']//field[@name='product_id']" position="before">
                     <field name="tender_line_id" readonly="1" optional="show"/>
                 </xpath>
                 <xpath expr="//field[@name='order_line']//field[@name='product_qty']" position="before">
                     <field name="alt_materials" readonly="1" optional="show"/>
                 </xpath>
+                <xpath expr="//field[@name='order_line']//field[@name='price_unit']" position="replace">
+                    <field name="line_price_unit" string="Birim Fiyat"/>
+                    <field name="line_currency_id" groups="base.group_multi_currency" optional="show"/>
+                    <field name="price_unit" string="Birim Fiyat (PO Currency)" readonly="1" optional="show"/>
+                </xpath>
                 <xpath expr="//field[@name='order_line']//field[@name='price_subtotal']" position="after">
+                    <field name="npv_value" widget="monetary" options="{'currency_field': 'tender_line_currency_id'}" string="NPV" optional="show" groups="ak_tender.group_tender_manager"/>
+                    <field name="tender_line_currency_id" invisible="1"/>
                     <field name="system_selection" string="S.S." optional="show"/>
                     <field name="user_selection" string="K.S." optional="show"/>
                 </xpath>
