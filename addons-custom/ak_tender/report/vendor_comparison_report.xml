@@ -979,7 +979,13 @@
 
                                             <!-- Birim Fiyat row -->
                                             <tr t-att-data-tender-line-id="tender_line.id">
-                                                <td class="field-col"><strong>Birim Fiyat:</strong></td>
+                                                <td class="field-col">
+                                                    <strong>Birim Fiyat:</strong>
+                                                    <br/>
+                                                    <small style="color: #dc3545; font-weight: bold;">
+                                                        <span t-field="tender_line.target_price" t-options='{"widget": "monetary", "display_currency": tender_line.currency_id}'/>
+                                                    </small>
+                                                </td>
                                                 <t t-foreach="vendors_to_show" t-as="vendor">
                                                     <t t-set="vendor_line" t-value="False"/>
                                                     <t t-foreach="vendor.order_line" t-as="line">
@@ -989,7 +995,12 @@
                                                     </t>
 
                                                     <td t-attf-class="vendor-col #{vendor_line and vendor_line.system_selection and 'system-selection' or ''} #{vendor_line and vendor_line.user_selection and 'user-selection' or ''}" t-att-data-vendor-id="vendor.partner_id.id" t-att-data-field="price_unit">
-                                                        <span t-if="vendor_line" t-field="vendor_line.price_unit" t-options='{"widget": "monetary", "display_currency": vendor_line.currency_id}'/>
+                                                        <t t-if="vendor_line">
+                                                            <span t-field="vendor_line.line_price_unit" t-options='{"widget": "monetary", "display_currency": vendor_line.line_currency_id}'/>
+                                                            <small t-if="vendor_line.line_currency_id != vendor.currency_id" class="text-muted d-block">
+                                                                (<span t-field="vendor_line.price_unit" t-options='{"widget": "monetary", "display_currency": vendor.currency_id}'/>)
+                                                            </small>
+                                                        </t>
                                                         <span t-else="">-</span>
                                                     </td>
                                                 </t>
@@ -1060,7 +1071,10 @@
                                                     
                                                     <td t-attf-class="vendor-col #{vendor_line and vendor_line.system_selection and 'system-selection' or ''} #{vendor_line and vendor_line.user_selection and 'user-selection' or ''}" t-att-data-vendor-id="vendor.partner_id.id" t-att-data-field="price_subtotal">
                                                         <t t-if="vendor_line">
-                                                            <span t-field="vendor_line.price_subtotal"/>
+                                                            <span t-field="vendor_line.price_subtotal" t-options='{"widget": "monetary", "display_currency": vendor.currency_id}'/>
+                                                            <small t-if="vendor_line.line_currency_id != vendor.currency_id" class="text-muted d-block">
+                                                                (<span t-field="vendor_line.line_price_unit" t-options='{"widget": "monetary", "display_currency": vendor_line.line_currency_id}'/> × <span t-field="vendor_line.product_qty"/>)
+                                                            </small>
                                                         </t>
                                                         <span t-else="">-</span>
                                                     </td>
@@ -1115,9 +1129,9 @@
                                                             <!-- Show NPV value, bold and red if it's the lowest -->
                                                             <t t-if="has_npv">
                                                                 <t t-if="vendor_line.npv_value > 0 and vendor_line.npv_value == min_npv">
-                                                                    <b><font color="#dc3545"><span t-field="vendor_line.npv_value" t-options='{"widget": "monetary", "display_currency": vendor_line.currency_id}'/></font></b>
+                                                                    <b><font color="#dc3545"><span t-field="vendor_line.npv_value" t-options='{"widget": "monetary", "display_currency": vendor_line.tender_line_currency_id}'/></font></b>
                                                                 </t>
-                                                                <span t-else="" t-field="vendor_line.npv_value" t-options='{"widget": "monetary", "display_currency": vendor_line.currency_id}'/>
+                                                                <span t-else="" t-field="vendor_line.npv_value" t-options='{"widget": "monetary", "display_currency": vendor_line.tender_line_currency_id}'/>
                                                             </t>
                                                             <span t-else="">-</span>
                                                         </t>
@@ -1618,7 +1632,7 @@
                                                 <t t-set="vendor_line" t-value="vendor.order_line.filtered(lambda l: l.tender_line_id.id == line.id)[:1]"/>
                                                 <td>
                                                     <t t-if="vendor_line">
-                                                        <span t-field="vendor_line.price_subtotal"/>
+                                                        <span t-field="vendor_line.price_subtotal" t-options='{"widget": "monetary", "display_currency": vendor.currency_id}'/>
                                                     </t>
                                                     <t t-else="">-</t>
                                                 </td>
@@ -1632,8 +1646,9 @@
                                                     <t t-if="vendor_line and hasattr(vendor_line, 'npv_value')">
                                                         <span t-if="vendor_line.npv_value == min(o.purchase_order_ids.filtered(lambda po: po.tender_round == o.tender_round).mapped('order_line').filtered(lambda l: l.tender_line_id.id == line.id and hasattr(l, 'npv_value')).mapped('npv_value') or [0])"
                                                               t-field="vendor_line.npv_value"
+                                                              t-options='{"widget": "monetary", "display_currency": vendor_line.tender_line_currency_id}'
                                                               class="npv-selected"/>
-                                                        <span t-else="" t-field="vendor_line.npv_value"/>
+                                                        <span t-else="" t-field="vendor_line.npv_value" t-options='{"widget": "monetary", "display_currency": vendor_line.tender_line_currency_id}'/>
                                                     </t>
                                                     <t t-else="">-</t>
                                                 </td>

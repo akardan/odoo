@@ -558,7 +558,7 @@ class AkTender(models.Model):
     target_price = fields.Monetary(string=_('Hedef Fiyat'), currency_field='currency_id',
                                 help=_("Satın Alma Direktörü tarafından belirlenen hedef fiyat."))
     
-    def _convert_currency_two_stage(self, amount, from_currency, to_currency, date=None):
+    def _convert_currency_two_stage(self, amount, from_currency, to_currency, company=None, date=None):
         """
         İki aşamalı para birimi dönüşümü: kaynak -> şirket -> hedef
         
@@ -566,6 +566,7 @@ class AkTender(models.Model):
             amount: Dönüştürülecek tutar
             from_currency: Kaynak para birimi
             to_currency: Hedef para birimi
+            company: Şirket (varsayılan: self.company_id)
             date: Dönüşüm tarihi (varsayılan: bugün)
             
         Returns:
@@ -574,6 +575,9 @@ class AkTender(models.Model):
         if not date:
             date = fields.Date.today()
             
+        if not company:
+            company = self.company_id
+            
         if from_currency == to_currency:
             return amount
             
@@ -581,16 +585,16 @@ class AkTender(models.Model):
             # 1. Aşama: Kaynak para biriminden şirket para birimine
             company_amount = from_currency._convert(
                 amount,
-                self.company_id.currency_id,
-                self.company_id,
+                company.currency_id,
+                company,
                 date
             )
             
             # 2. Aşama: Şirket para biriminden hedef para birimine
-            converted_amount = self.company_id.currency_id._convert(
+            converted_amount = company.currency_id._convert(
                 company_amount,
                 to_currency,
-                self.company_id,
+                company,
                 date
             )
             return converted_amount

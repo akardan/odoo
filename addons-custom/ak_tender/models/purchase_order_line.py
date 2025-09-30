@@ -280,6 +280,24 @@ class PurchaseOrderLine(models.Model):
         
         return True
     
+    def fix_empty_names(self):
+        """Fix empty name fields in existing records"""
+        empty_name_lines = self.search([
+            ('name', 'in', ['', False]),
+            ('display_type', 'not in', ['line_section', 'line_note'])
+        ])
+        
+        for line in empty_name_lines:
+            new_name = _('Product Description')
+            if line.product_id:
+                new_name = line.product_id.name or line.product_id.display_name or new_name
+            elif line.tender_line_id:
+                new_name = line.tender_line_id.name or new_name
+            
+            line.with_context(skip_validation=True).write({'name': new_name})
+        
+        return len(empty_name_lines)
+    
     @api.model
     def create(self, vals):
         # Check if this is a section or note line
@@ -336,6 +354,19 @@ class PurchaseOrderLine(models.Model):
         return line
     
     def write(self, vals):
+        # Ensure name field is not empty for product lines
+        if 'name' in vals and not vals['name']:
+            for line in self:
+                if line.display_type not in ('line_section', 'line_note'):
+                    # Set name from product or tender line if available
+                    if line.product_id:
+                        vals['name'] = line.product_id.name or line.product_id.display_name or _('Product')
+                    elif line.tender_line_id:
+                        vals['name'] = line.tender_line_id.name or _('Tender Line')
+                    else:
+                        vals['name'] = _('Product Description')
+                    break
+        
         # For section and note lines, ensure certain fields are set to NULL/False
         for line in self:
             if line.display_type in ('line_section', 'line_note'):
