@@ -13,3 +13,5 @@ class AkWorkflowDefinition(models.Model):
                                        domain="[('workflow_id', '=', id)]")
     state_ids = fields.One2many('ak.workflow.state', 'workflow_id', string='States')
     transition_ids = fields.One2many('ak.workflow.transition', 'workflow_id', string='Transitions')
+    dynamic_parameter_ids = fields.Many2many('ak.workflow.dynamic.parameter', 'ak_workflow_definition_dynamic_parameter_rel',
+                                             'workflow_definition_id', 'dynamic_parameter_id', string='Dynamic Parameters')

@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <record id="ak_workflow_dynamic_parameter_view_form" model="ir.ui.view">
+            <field name="name">ak.workflow.dynamic.parameter.form</field>
+            <field name="model">ak.workflow.dynamic.parameter</field>
+            <field name="arch" type="xml">
+                <form string="Workflow Dynamic Parameter">
+                    <sheet>
+                        <group>
+                            <field name="name" readonly="1"/>
+                            <field name="model_id"/>
+                            <field name="workflow_ids" widget="many2many_tags"/>
+                            <field name="model_name" invisible="1"/>
+                            <field name="domain_filter" widget="domain" options="{'model': 'model_name', 'foldable': true}"/>
+                            <field name="field_name"/>
+                            <field name="model_field" string="Model Field (Backup)"/>
+                            <field name="field_value_int"/>
+                            <field name="field_value_str"/>
+                            <field name="field_value_float"/>
+                            <field name="field_value_bool"/>
+                            <field name="field_value_date"/>
+                            <field name="field_value_datetime"/>
+                            <field name="active"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="ak_workflow_dynamic_parameter_view_tree" model="ir.ui.view">
+            <field name="name">ak.workflow.dynamic.parameter.tree</field>
+            <field name="model">ak.workflow.dynamic.parameter</field>
+            <field name="arch" type="xml">
+                <list string="Workflow Dynamic Parameters">
+                    <field name="name"/>
+                    <field name="model_id"/>
+                    <field name="model_field"/>
+                    <field name="field_value_int"/>
+                    <field name="active"/>
+                </list>
+            </field>
+        </record>
+
+        <record id="action_ak_workflow_dynamic_parameter" model="ir.actions.act_window">
+            <field name="name">Workflow Dynamic Parameters</field>
+            <field name="res_model">ak.workflow.dynamic.parameter</field>
+            <field name="view_mode">list,form</field>
+        </record>
+
+       
+
+    </data>
+</odoo>

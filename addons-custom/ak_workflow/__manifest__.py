@@ -30,6 +30,7 @@
     },
     'data': [
         'data/mail_templates.xml',
+        'views/ak_workflow_dynamic_parameter_views.xml',
         'views/ak_workflow_definition_views.xml',
         'views/ak_workflow_state_views.xml',
         'views/ak_workflow_transition_views.xml',

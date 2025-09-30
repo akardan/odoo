@@ -11,7 +11,8 @@
         <menuitem id="menu_workflow_definitions" name="Workflows" parent="menu_workflow_configuration" action="ak_workflow.ak_workflow_definition_action" sequence="10"/>
         <menuitem id="menu_workflow_states" name="States" parent="menu_workflow_configuration" action="action_ak_workflow_state" sequence="20"/>
         <menuitem id="menu_workflow_transitions" name="Transitions" parent="menu_workflow_configuration" action="action_ak_workflow_transition" sequence="30"/>
-        <menuitem id="menu_workflow_actions" name="Actions" parent="menu_workflow_configuration" action="action_ak_workflow_action" sequence="40"/>
+        <menuitem id="menu_workflow_dynamic_parameter_" name="Dynamic Parameters" parent="menu_workflow_configuration" action="action_ak_workflow_dynamic_parameter" sequence="40"/>
+        <menuitem id="menu_workflow_actions" name="Actions" parent="menu_workflow_configuration" action="action_ak_workflow_action" sequence="50"/>
         <menuitem id="menu_workflow_import" name="Import Workflow" parent="menu_workflow_configuration" action="ak_workflow.action_workflow_import" sequence="100"/>
     </data>
 </odoo>

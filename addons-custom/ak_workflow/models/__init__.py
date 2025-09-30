@@ -7,3 +7,4 @@ from . import ak_workflow_action
 from . import ak_workflow_mixin
 from . import workflow_analytics
 from . import ak_workflow_transition_history
+from . import ak_workflow_dynamic_parameter

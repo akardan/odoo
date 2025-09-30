@@ -41,6 +41,9 @@
                                     </list>
                                 </field>
                             </page>
+                            <page string="Parameters">
+                                <field name="dynamic_parameter_ids" widget="many2many" />
+                            </page>
                         </notebook>
                     </sheet>
                 </form>
@@ -62,7 +65,7 @@
         <record id="ak_workflow_definition_action" model="ir.actions.act_window">
             <field name="name">Workflow Definitions</field>
             <field name="res_model">ak.workflow.definition</field>
-            <field name="view_mode">tree,form</field>
+            <field name="view_mode">list,form</field>
         </record>
 
     </data>
