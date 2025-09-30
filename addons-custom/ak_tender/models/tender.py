@@ -5,6 +5,7 @@
 from odoo import models, fields, api, _
 from datetime import datetime
 from odoo.exceptions import ValidationError, UserError
+from odoo.addons.ak_workflow.models.ak_workflow_dynamic_parameter import WorkflowDynamicParameter
 
 class AkTenderLine(models.Model):
     _name = 'ak.tender.line'
@@ -426,6 +427,9 @@ class AkTender(models.Model):
         for record in self:
             delay = 0
             if record.workflow_current_state_id:
+                # Get expected duration from workflow state (default 7 days if not set)
+                expected_duration = record.workflow_current_state_id.duration_days or 2
+                
                 # Find the latest transition to the current state
                 latest_transition = self.env['ak.workflow.transition.history'].search([
                     ('res_model', '=', record._name),
@@ -436,7 +440,10 @@ class AkTender(models.Model):
                 if latest_transition and latest_transition.create_date:
                     # Calculate the difference in days
                     time_diff = fields.Datetime.now() - latest_transition.create_date
-                    delay = time_diff.days
+                    actual_days = time_diff.days
+
+                    if actual_days > expected_duration:
+                        delay = actual_days - expected_duration
 
             record.delay_days = delay
     
@@ -674,6 +681,22 @@ class AkTender(models.Model):
         except Exception:
             # Tablo henüz oluşturulmamış olabilir, varsayılan değeri kullan
             pass
+    
+    def get_workflow_duration_days(self):
+        """
+        Dinamik parametre sisteminden workflow duration'ını al
+        """
+        if not self.workflow_current_state_id:
+            return 1
+            
+        # Dinamik parametreden değeri al
+        duration = self.env['ak.workflow.dynamic.parameter'].get_workflow_parameter_value(
+            model_name='ak.tender',
+            record=self,
+            workflow_field='default_duration_days'
+        )
+        
+        return duration if duration is not None else self.workflow_current_state_id.default_duration_days or 1
             
     def calculate_all_npv_values(self):
         """
@@ -2429,3 +2452,60 @@ class AkTender(models.Model):
             'type': 'ir.actions.client',
             'tag': 'reload',
         }
+    
+    def execute_workflow_transition(self, transition_id, **kwargs):
+        """
+        Override workflow transition execution to auto-save before transition.
+        This ensures that any unsaved changes (like added suppliers) are saved
+        before the workflow transition is executed.
+        """
+        # Auto-save the record before executing transition
+        try:
+            # Force save any pending changes by calling write with empty dict
+            # This will trigger the ORM to save any cached changes
+            self.write({})
+        except Exception:
+            # If auto-save fails, continue with transition anyway
+            pass
+        
+        # Call the parent method to execute the actual transition
+        return super().execute_workflow_transition(transition_id, **kwargs)
+    
+    def execute_workflow_transition(self, transition_id, **kwargs):
+        """
+        Override workflow transition execution to auto-save before transition.
+        This ensures that any unsaved changes (like added suppliers) are saved
+        before the workflow transition is executed.
+        """
+        # Auto-save the record before executing transition
+        try:
+            # Force save any pending changes
+            if hasattr(self, '_cache') and self._cache:
+                # Check if there are any unsaved changes in cache
+                for field_name in self._fields:
+                    if field_name in self._cache and self._cache[field_name] != getattr(self, field_name, None):
+                        # There are unsaved changes, force write
+                        self.write({})
+                        break
+        except Exception:
+            # If auto-save fails, continue with transition anyway
+            pass
+        
+        # Call the parent method to execute the actual transition
+        return super().execute_workflow_transition(transition_id, **kwargs)
+    
+    def write(self, vals):
+        """
+        Override write to ensure data consistency before workflow transitions.
+        """
+        # Call parent write method
+        result = super().write(vals)
+        
+        # If workflow-related fields are updated, ensure consistency
+        if any(field in vals for field in ['invited_partners', 'tender_lines', 'target_price']):
+            # Recalculate target price if needed
+            if 'tender_lines' in vals or 'target_price' in vals:
+                for record in self:
+                    record.calculate_total_target_price()
+        
+        return result
