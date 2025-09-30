@@ -32,7 +32,9 @@ class WorkflowButtonGroup extends Component {
         this.state.transitions = transitionsData;
     }
 
-    onButtonClick(transitionId) {
+    async onButtonClick(transitionId) {
+        // Automatically save the record before triggering the transition
+        await this.record.save();
         this.action.doAction({
             type: "ir.actions.act_window",
             res_model: "ak.workflow.transition.wizard",
