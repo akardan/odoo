@@ -95,6 +95,7 @@ function initializePortalPurchaseEdit() {
                     
                     // Get all editable fields for this line
                     var priceInput = row.querySelector('input[name="price_unit_line_' + lineId + '"]');
+                    var currencyInput = row.querySelector('select[name="currency_line_' + lineId + '"]');
                     var dateInput = row.querySelector('input[name="delivery_date_line_' + lineId + '"]');
                     var warrantyInput = row.querySelector('select[name="warranty_period_line_' + lineId + '"]');
                     var supplierRefInput = row.querySelector('input[name="supplier_ref_line_' + lineId + '"]'); // Now hidden
@@ -109,6 +110,7 @@ function initializePortalPurchaseEdit() {
                     
                     // Get values
                     var priceUnit = parseFloat(priceInput.value);
+                    var currency = currencyInput && currencyInput.value ? parseInt(currencyInput.value) : false;
                     var deliveryDate = dateInput ? dateInput.value : null;
                     var warrantyPeriod = warrantyInput && warrantyInput.value ? parseInt(warrantyInput.value) : false;
                     var supplierRef = supplierRefInput ? supplierRefInput.value : '';
@@ -136,9 +138,14 @@ function initializePortalPurchaseEdit() {
                     // Prepare line data
                     var lineData = {
                         line_id: parseInt(lineId),
-                        price_unit: priceUnit,
+                        line_price_unit: priceUnit,
                         discount: discount
                     };
+                    
+                    // Add currency if selected
+                    if (currency) {
+                        lineData.line_currency_id = currency;
+                    }
                     
                     // Add optional fields if they have values
                     if (deliveryDate) {
@@ -267,74 +274,10 @@ function initializePortalPurchaseEdit() {
                                 successMessageShown = true;
                             }
                             
-                            // Add success class to all inputs
-                            editableFields.forEach(function(field) {
-                                field.classList.add('is-valid');
-                            });
-                            
-                            // Update the total amount on the left side if it exists
-                            // Handle nested result structure
-                            if (data.result && data.result.result && data.result.result.amount_total) {
-                                // Use the nested result
-                                data.result = data.result.result;
-                            }
-                            
-                            if (data.result && data.result.amount_total) {
-                                // Try to find the total amount element by its data-id attribute
-                                var totalAmountElement = document.querySelector('[data-id="total_amount"]');
-                                if (totalAmountElement) {
-                                    // Get the updated amount from the response
-                                    var amountTotal = data.result.amount_total;
-                                    
-                                    // If the response contains HTML (like <span class="o_price_total">$ 44.000,00</span>)
-                                    // Extract just the text
-                                    if (amountTotal.includes('<')) {
-                                        var tempDiv = document.createElement('div');
-                                        tempDiv.innerHTML = amountTotal;
-                                        amountTotal = tempDiv.textContent || tempDiv.innerText || '';
-                                    }
-                                    
-                                    // Update the element
-                                    totalAmountElement.textContent = amountTotal;
-                                    
-                                    // Force a refresh of the element
-                                    totalAmountElement.style.display = 'none';
-                                    setTimeout(function() {
-                                        totalAmountElement.style.display = '';
-                                    }, 10);
-                                } else {
-                                    // Try alternative selectors
-                                    var alternativeElement = document.querySelector('h4[t-field="order.amount_total"]');
-                                    if (alternativeElement) {
-                                        alternativeElement.textContent = amountTotal;
-                                    } else {
-                                        // Try a more generic approach - find any element that might contain the total
-                                        var possibleElements = document.querySelectorAll('h1, h2, h3, h4, h5, h6, .o_portal_sidebar');
-                                        
-                                        // Try to find an element that contains currency symbols or numbers
-                                        for (var i = 0; i < possibleElements.length; i++) {
-                                            var el = possibleElements[i];
-                                            if (el.textContent.match(/[$€£¥]|[0-9,.]/)) {
-                                                el.textContent = amountTotal;
-                                                break;
-                                            }
-                                        }
-                                        
-                                        // As a last resort, force a page reload after a short delay
-                                        setTimeout(function() {
-                                            window.location.reload();
-                                        }, 1000);
-                                    }
-                                }
-                            }
-                            
-                            // Remove success class after a delay
+                            // Reload the page to show updated values
                             setTimeout(function() {
-                                editableFields.forEach(function(field) {
-                                    field.classList.remove('is-valid');
-                                });
-                                saveInProgress = false;
-                            }, 2000);
+                                window.location.reload();
+                            }, 500);
                             
                         } catch (e) {
                             console.error('Error parsing response:', e);

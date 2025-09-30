@@ -188,6 +188,7 @@ class TenderPortal(CustomerPortal): # Inherit from CustomerPortal for standard l
                 results = []
                 
                 for line_data in lines:
+                    _logger.info(f"Processing line_data: {line_data}")
                     line_id = line_data.get('line_id')
                     if not line_id:
                         continue
@@ -205,13 +206,22 @@ class TenderPortal(CustomerPortal): # Inherit from CustomerPortal for standard l
                     # Prepare values to update
                     vals = {}
                     
-                    # Handle price_unit update
-                    if 'price_unit' in line_data:
+                    # Handle line_price_unit update
+                    if 'line_price_unit' in line_data:
                         try:
-                            price_unit = float(line_data.get('price_unit'))
-                            vals['price_unit'] = price_unit
+                            line_price_unit = float(line_data.get('line_price_unit'))
+                            vals['line_price_unit'] = line_price_unit
                         except (ValueError, TypeError) as e:
-                            _logger.warning(f"Invalid price_unit value: {line_data.get('price_unit')}, error: {str(e)}")
+                            _logger.warning(f"Invalid line_price_unit value: {line_data.get('line_price_unit')}, error: {str(e)}")
+                            continue
+                    
+                    # Handle line_currency_id update
+                    if 'line_currency_id' in line_data:
+                        try:
+                            line_currency_id = int(line_data.get('line_currency_id'))
+                            vals['line_currency_id'] = line_currency_id
+                        except (ValueError, TypeError) as e:
+                            _logger.warning(f"Invalid line_currency_id value: {line_data.get('line_currency_id')}, error: {str(e)}")
                             continue
                     
                     # Handle discount update
@@ -327,14 +337,23 @@ class TenderPortal(CustomerPortal): # Inherit from CustomerPortal for standard l
                 # Prepare values to update
                 vals = {}
                 
-                # Handle price_unit update
-                if 'price_unit' in kw:
+                # Handle line_price_unit update
+                if 'line_price_unit' in kw:
                     try:
-                        price_unit = float(kw.get('price_unit'))
-                        vals['price_unit'] = price_unit
+                        line_price_unit = float(kw.get('line_price_unit'))
+                        vals['line_price_unit'] = line_price_unit
                     except (ValueError, TypeError) as e:
-                        _logger.warning(f"Invalid price_unit value: {kw.get('price_unit')}, error: {str(e)}")
-                        return {'error': 'Invalid price value'}
+                        _logger.warning(f"Invalid line_price_unit value: {kw.get('line_price_unit')}, error: {str(e)}")
+                        return {'error': 'Invalid line price value'}
+                
+                # Handle line_currency_id update
+                if 'line_currency_id' in kw:
+                    try:
+                        line_currency_id = int(kw.get('line_currency_id'))
+                        vals['line_currency_id'] = line_currency_id
+                    except (ValueError, TypeError) as e:
+                        _logger.warning(f"Invalid line_currency_id value: {kw.get('line_currency_id')}, error: {str(e)}")
+                        return {'error': 'Invalid line currency value'}
                 
                 # Handle discount update
                 if 'discount' in kw:
@@ -390,9 +409,10 @@ class TenderPortal(CustomerPortal): # Inherit from CustomerPortal for standard l
                 if vals:
                     line.write(vals)
                     
-                    # Recompute the order if price or discount was updated
-                    if 'price_unit' in vals or 'discount' in vals:
-                        order_sudo._amount_all()
+                    # Recompute the order if price, currency or discount was updated
+                    if 'line_price_unit' in vals or 'line_currency_id' in vals or 'discount' in vals:
+                        # The _compute_price_unit method will handle currency conversion automatically
+                        pass  # Odoo will handle the computation automatically
                 
                 # Update payment term if provided
                 if payment_term_id:
@@ -427,8 +447,8 @@ class TenderPortal(CustomerPortal): # Inherit from CustomerPortal for standard l
                     }
                 }
                 
-                # Add price-related values if price or discount was updated
-                if 'price_unit' in vals or 'discount' in vals:
+                # Add price-related values if price, currency or discount was updated
+                if 'line_price_unit' in vals or 'line_currency_id' in vals or 'discount' in vals:
                     result.update({
                         'price_subtotal': request.env['ir.qweb.field.monetary'].value_to_html(
                             line.price_subtotal, {'display_currency': order_sudo.currency_id}),

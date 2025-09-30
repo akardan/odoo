@@ -298,14 +298,20 @@
                                             </div>
                                         </td>
                                         <td t-if="display_price_and_taxes" t-attf-class="text-end {{ 'd-none d-sm-table-cell' if report_type == 'html' else '' }}">
-                                            <!-- Editable unit price field -->
+                                            <!-- Editable unit price field (line currency) -->
                                             <input type="number"
                                                 t-attf-name="price_unit_line_{{line.id}}"
                                                 class="form-control form-control-sm text-end editable-field"
                                                 style="width: 100%; font-size: 0.9em;"
                                                 step="0.01"
                                                 min="0"
-                                                t-att-value="line.price_unit" />
+                                                t-att-value="line.line_price_unit or line.price_unit" />
+                                            
+                                            <!-- Converted price (PO currency) - read only -->
+                                            <div class="mt-1" style="font-size: 0.8em; color: #666;">
+                                                <strong>PO Currency:</strong>
+                                                <span t-field="line.price_unit" t-options='{"widget": "monetary", "display_currency": order.currency_id}'/>
+                                            </div>
                                             
                                             <!-- Target price (read-only) with currency symbol only -->
                                             <div class="mt-2" t-if="line.tender_line_id and line.tender_line_id.target_price" style="color: red;">
@@ -320,7 +326,7 @@
                                                 class="form-select form-select-sm editable-field"
                                                 style="font-size: 0.9em; width: 100%; min-width: 80px;">
                                                 <t t-foreach="request.env['res.currency'].sudo().search([])" t-as="currency">
-                                                    <option t-att-value="currency.id" t-att-selected="currency.id == line.currency_id.id">
+                                                    <option t-att-value="currency.id" t-att-selected="currency.id == (line.line_currency_id.id if line.line_currency_id else line.order_id.currency_id.id)">
                                                         <t t-esc="currency.name"/>
                                                     </option>
                                                 </t>
