@@ -306,6 +306,9 @@ class TenderPortal(CustomerPortal): # Inherit from CustomerPortal for standard l
                 
                 # Recompute the order totals
                 order_sudo._amount_all()
+
+                # Send email notification to the purchaser
+                order_sudo._send_supplier_tender_update_email()
                 
                 # Prepare the response
                 response = {
@@ -434,6 +437,9 @@ class TenderPortal(CustomerPortal): # Inherit from CustomerPortal for standard l
                                 _logger.warning(f"Invalid payment_term_id value: {payment_term_id}, error: {str(e)}")
                     except Exception as e:
                         _logger.exception(f"Error updating payment term: {str(e)}")
+
+                # Send email notification to the purchaser
+                order_sudo._send_supplier_tender_update_email()
                 
                 # Return updated values in the format expected by the JavaScript
                 result = {

@@ -446,7 +446,21 @@ class AkTender(models.Model):
                         delay = actual_days - expected_duration
 
             record.delay_days = delay
-    
+            
+
+            
+    total_new_message_count = fields.Integer(
+        string=_('Toplam Yeni Mesaj'),
+        compute='_compute_total_new_message_count',
+        store=False,
+        help=_("Bu ihaleye bağlı tekliflerdeki toplam yeni mesaj sayısı.")
+    )
+
+    @api.depends('purchase_order_ids.new_message_count')
+    def _compute_total_new_message_count(self):
+        for record in self:
+            record.total_new_message_count = sum(po.new_message_count for po in record.purchase_order_ids)
+            
     # ERP Entegrasyon Alanları (Simülasyon)
     erp_pr_id = fields.Char(string=_('ERP SAT No'), copy=False,
                              help=_("İlgili ERP Satın Alma Talebi Numarası (entegrasyon ile gelecek)."))
@@ -487,8 +501,8 @@ class AkTender(models.Model):
     # TEKLİF DOKÜMANINA GÖRE REVİZE EDİLEN DURUM ALANI
 
     tender_type = fields.Selection([
-        ('direct', _('Direkt Satın Alma')),
-        ('indirect', _('Endirekt Satın Alma')),
+        ('direct', _('Direkt Satınalma')),
+        ('indirect', _('Endirekt Satınalma')),
         ('mice', _('MICE İhaleler')),
         ('promotion', _('Promosyon ve Kırtasiye'))
     ], string=_('İhale Tipi'), default='direct', required=True)
@@ -693,7 +707,7 @@ class AkTender(models.Model):
         duration = self.env['ak.workflow.dynamic.parameter'].get_workflow_parameter_value(
             model_name='ak.tender',
             record=self,
-            workflow_field='default_duration_days'
+            model_field='default_duration_days'
         )
         
         return duration if duration is not None else self.workflow_current_state_id.default_duration_days or 1
@@ -780,20 +794,8 @@ class AkTender(models.Model):
     @api.depends('purchase_order_ids', 'tender_round', 'workflow_current_state_id')
     def _compute_offer_count(self):
         for tender in self:
-            state_code = tender.workflow_current_state_id.code if tender.workflow_current_state_id else None
-            
-            # Aktif bir ihale durumu ise mevcut tur tekliflerini say
-            if state_code in ('first_tender_round', 'new_tender_round', 'target_price_set'):
-                # Mevcut turdaki teklifleri say
-                tender.offer_count = len(tender.purchase_order_ids.filtered(lambda o: o.tender_round == tender.tender_round))
-            elif state_code in ('evaluation', 'approved', 'done'):
-                # Değerlendirme ve sonraki aşamalarda tüm teklifleri say
-                tender.offer_count = len(tender.purchase_order_ids)
-            else:
-                # Diğer durumlarda (draft, cancel) sıfır
-                tender.offer_count = 0
-
-    
+            # state_code = tender.workflow_current_state_id.code if tender.workflow_current_state_id else None
+            tender.offer_count = len(tender.purchase_order_ids.filtered(lambda o: o.tender_round == tender.tender_round))
     
     @api.depends('purchase_order_ids')
     def _compute_purchase_order_count(self):
@@ -1623,12 +1625,16 @@ class AkTender(models.Model):
                 'product_qty': product_qty,
                 'product_uom': product_uom,
                 'price_unit': prev_line.price_unit or 0.0,
+                'line_currency_id': prev_line.line_currency_id.id,
+                'line_price_unit': prev_line.line_price_unit,
+                'discount': prev_line.discount if hasattr(prev_line, 'discount') else 0.0,
                 'date_planned': date_planned,
                 'taxes_id': [(6, 0, prev_line.taxes_id.ids)],
                 'tender_line_id': prev_line.tender_line_id.id if prev_line.tender_line_id else False,
                 'sequence': prev_line.sequence,
+                'display_type': prev_line.display_type,
                 'alt_materials': prev_line.alt_materials if hasattr(prev_line, 'alt_materials') else False,
-                'discount': prev_line.discount if hasattr(prev_line, 'discount') else 0.0,
+                
             }
             
             return self.env['purchase.order.line'].create(line_vals)
@@ -1666,7 +1672,9 @@ class AkTender(models.Model):
                 'name': tender_line.name or tender_line.product_id.name,
                 'product_qty': quantity,
                 'product_uom': product_uom,
-                'price_unit': tender_line.target_price or 0.0,
+                'price_unit': 0.0,
+                'line_currency_id': tender_line.currency_id.id,
+                'line_price_unit': tender_line.target_price or 0.0,
                 'date_planned': date_planned,
                 'tender_line_id': tender_line.id,
             }
@@ -2390,6 +2398,8 @@ class AkTender(models.Model):
                         'product_qty': original_line.product_qty,
                         'product_uom': original_line.product_uom.id,
                         'price_unit': original_line.price_unit,
+                        'line_currency_id': original_line.line_currency_id.id,
+                        'line_price_unit': original_line.line_price_unit,
                         'discount': getattr(original_line, 'discount', 0.0),
                         'date_planned': original_line.date_planned,
                         'taxes_id': [(6, 0, original_line.taxes_id.ids)],

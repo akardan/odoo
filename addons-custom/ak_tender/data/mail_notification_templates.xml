@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- Email template for notifying purchaser about supplier tender update -->
+        <record id="email_template_supplier_tender_update" model="mail.template">
+            <field name="name">Supplier Tender Update Notification</field>
+            <field name="model_id" ref="purchase.model_purchase_order"/>
+            <field name="subject">Tedarikçi Teklifi Güncellendi: {{ object.name }}</field>
+            <field name="email_from"></field>
+            <field name="email_to">{{ object.user_id.email_formatted }}</field>
+            <field name="body_html" type="html">
+                <div style="margin: 0px; padding: 0px;">
+                    <p style="margin: 0px; padding: 0px; font-size: 13px;">
+                        Merhaba <t t-out="object.user_id.name or ''"/>,
+                        <br/><br/>
+                        <t t-out="object.partner_id.name or ''"/> adlı tedarikçi,
+                        <a t-attf-href="{{ object.get_base_url() }}/web#id={{ object.id }}&amp;model=purchase.order&amp;view_type=form" style="text-decoration:none;"><t t-out="object.name or ''"/></a>
+                        numaralı teklifi portal üzerinden güncellemiştir.
+                        <br/><br/>
+                        Teklif detaylarını incelemek için aşağıdaki bağlantıyı kullanabilirsiniz:
+                        <br/>
+                        <div style="margin: 16px 0px 16px 0px;">
+                            <a t-attf-href="{{ object.get_base_url() }}/web#id={{ object.id }}&amp;model=purchase.order&amp;view_type=form" style="padding: 8px 16px 8px 16px; font-size: 14px; color: #FFFFFF; text-decoration: none !important; background-color: #875A7B; border: 0px solid #875A7B; border-radius:3px">
+                                Teklifi Görüntüle
+                            </a>
+                        </div>
+                        <br/><br/>
+                        Saygılarımızla,
+                        <br/>
+                        <t t-out="user.company_id.name or ''"/>
+                    </p>
+                </div>
+            </field>
+            <field name="auto_delete" eval="True"/>
+        </record>
+    </data>
+</odoo>

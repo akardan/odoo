@@ -462,6 +462,15 @@
                     </div>
                 </div>
             </section>
+            
+            <!-- Add the Chatter (Communication) section -->
+            <section id="portal_chatter" class="mt-5">
+                <h4 class="">İletişim</h4>
+                <hr class="mt-0 mb-1"/>
+                <t t-call="portal.message_thread">
+                    <t t-set="object" t-value="order"/>
+                </t>
+            </section>
         </div>
     </template>
     

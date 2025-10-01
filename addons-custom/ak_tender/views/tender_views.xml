@@ -250,6 +250,8 @@
                                         <field name="state"/>
                                         <field name="system_selection" string="S.S." optional="show"/>
                                         <field name="user_selection" string="K.S." optional="show"/>
+                                        <field name="new_message_count" string="Mesajlar" widget="badge" optional="show"/>
+                                        
                                     </list>
                                 </field>
                                 <group class="oe_subtotal_footer oe_right">
@@ -516,12 +518,13 @@
                     <field name="start_date"/>
                     <field name="end_date"/>
                     <field name="request_date" optional="show"/>
-                    <field name="target_price" widget="monetary" options="{'currency_field': 'currency_id'}" width="20%"/>
-                    <field name="currency_id" invisible="1"/>
+                    <field name="target_price" widget="monetary" options="{'currency_field': 'currency_id'}"/>
+                    <field name="currency_id" column_invisible="1"/>
                     <field name="workflow_current_state_id" widget="badge"/>
                     <field name="delay_days" string="Gecikme Günü"/>
-                    <field name="is_urgent" widget="boolean_toggle"/>
+                    <field name="is_urgent" string="Acil" widget="boolean_toggle"/>
                     <field name="winning_supplier_ids" widget="many2many_tags" optional="show"/>
+                    <field name="total_new_message_count" string="Mesajlar" widget="badge" optional="show"/>
                     <!-- <field name="use_economic_data" widget="boolean_toggle" optional="hide"/>
                     <field name="economic_data_source" optional="hide"/> -->
                 </list>
@@ -548,7 +551,7 @@
                     <filter name="filter_done" string="Tamamlanmış İhaleler" domain="[('workflow_current_state_id.code', '=', 'done')]"/>
                     <separator/>
                     <filter name="filter_urgent" string="Acil Talepler" domain="[('is_urgent', '=', True)]"/>
-                    <filter name="filter_economic_data" string="Ekonomik Veri Kullanan" domain="[('use_economic_data', '=', True)]"/>
+                    <!-- <filter name="filter_economic_data" string="Ekonomik Veri Kullanan" domain="[('use_economic_data', '=', True)]"/> -->
                     <filter name="filter_request_date_today" string="Bugün Talep Edilenler" domain="[('request_date', '=', context_today())]"/>
                     <filter name="filter_request_date_week" string="Bu Hafta Talep Edilenler" domain="[('request_date', '>=', (context_today() + relativedelta(weeks=-1, days=1, weekday=0)).strftime('%Y-%m-%d')), ('request_date', '&lt;=', (context_today() + relativedelta(weekday=6)).strftime('%Y-%m-%d'))]"/>
                     <separator/>
@@ -565,7 +568,7 @@
             <field name="name">ak.tender.kanban</field>
             <field name="model">ak.tender</field>
             <field name="arch" type="xml">
-                <kanban default_group_by="workflow_current_state_id" class="o_kanban_dashboard o_tender_kanban" edit="false" sample="1">
+                <kanban default_group_by="workflow_current_state_id" class="o_kanban_dashboard o_tender_kanban" edit="false" sample="1" group_create="false" group_delete="false" group_edit="false" groups_limit="10" expand_groups="true" load_more_on_reload="true">
                     <field name="id"/>
                     <field name="workflow_current_state_id"/>
                     <field name="workflow_state"/>
@@ -579,7 +582,7 @@
                     <field name="invited_partners"/>
                     <field name="currency_id"/>
                     <field name="target_price"/>
-                    <field name="winning_order_ids" widget="many2many_tags"/>
+                    <field name="winning_supplier_ids" widget="many2many_tags"/>
                     <field name="purchase_order_count"/>
                     <field name="offer_count"/>
                     <field name="create_date"/>
@@ -695,12 +698,12 @@
                                     </div>
                                     
                                     <!-- Winning Result -->
-                                    <div class="d-flex mb-1" t-if="record.winning_order_ids.raw_value">
+                                    <div class="d-flex mb-1" t-if="record.winning_supplier_ids.raw_value">
                                         <span class="me-auto text-success o_form_label">
                                             <i class="fa fa-trophy"/> Kazanan
                                         </span>
                                         <span class="text-success fw-bold">
-                                            <field name="winning_order_ids" options="{'no_open': True}"/>
+                                            <field name="winning_supplier_ids" options="{'no_open': True}"/>
                                         </span>
                                     </div>
                                 </div>

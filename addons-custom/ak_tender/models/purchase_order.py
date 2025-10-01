@@ -1,3 +1,4 @@
+
 # -*- coding: utf-8 -*-
 
 from odoo import models, fields, api, _
@@ -9,50 +10,57 @@ _logger = logging.getLogger(__name__)
 class PurchaseOrder(models.Model):
     _inherit = 'purchase.order'
 
-    # Fields from ak.tender.result
     tender_id = fields.Many2one('ak.tender', string='İhale', ondelete='restrict')
-    
-    # The domain for partner_id will be handled in the view to ensure correctness.
-
     offer_date = fields.Datetime(string='Teklif Tarihi', default=fields.Datetime.now, readonly=True)
     tender_round = fields.Integer(string='Teklif Turu', default=1, help="Bu teklifin hangi turda sunulduğu (1, 2, 3...).")
-    
-    # currency_id is already in purchase.order
-    
-    # total_price is amount_total in purchase.order
-
-    # payment_terms_id is already in purchase.order
     guarantee_period = fields.Char(string='Garanti Süresi', help="Tedarikçinin sunduğu garanti süresi (örn: 2 Yıl).")
-    # notes is notes in purchase.order
-    
-    # status is state in purchase.order
-
-    # purchase_order_id is self.id now.
-    
     # NPV calculation fields
     total_npv = fields.Monetary(string='Toplam NPV Değeri', currency_field='currency_id',
                                help="Tüm satırların NPV değerlerinin toplamı.", readonly=True)
-    
     is_readonly = fields.Boolean(compute='_compute_is_readonly', store=False)
-    
     # Selection fields
     system_selection = fields.Boolean(
         string='Sistem Seçimi',
         default=False,
         help="Bu sipariş sistem tarafından otomatik olarak seçildi (NPV veya diğer kriterlere göre)"
     )
-    
     user_selection = fields.Boolean(
         string='Kullanıcı Seçimi',
         default=False,
         help="Bu sipariş kullanıcı tarafından karşılaştırma ekranında manuel olarak seçildi"
     )
-    
     selection_note = fields.Text(
         string='Seçim Notu',
         help="Sistem Seçiminden farklı ise, ilgili notlar (neden seçildi, hangi kriterlere göre seçildi, vb.)"
     )
 
+    new_message_count = fields.Integer(
+        string=_('Mesajlar'),
+        compute='_compute_new_message_count',
+        store=False,
+        help=_("Bu teklife ait yeni mesajların sayısı.")
+    )
+
+    @api.depends('message_ids')
+    def _compute_new_message_count(self):
+        for record in self:
+            record.new_message_count = len(record.message_ids.filtered(
+                lambda msg: msg.message_type in ['comment', 'email'] and 
+                        msg.author_id == record.partner_id
+            ))
+    
+    # def _compute_new_message_count(self):
+    #     for record in self:
+    #         # Assuming 'message_unread' is not directly available or causing issues,
+    #         # we count all messages for now. If a specific "unread" logic is needed,
+    #         # it would require a custom tracking mechanism (e.g., a custom message_read_date per user).
+    #         record.new_message_count = self.env['mail.message'].sudo().search_count([
+    #             ('res_id', '=', record.id),
+    #             ('model', '=', 'purchase.order'),
+    #             ('message_type', 'in', ['comment', 'email'])
+    #         ])
+
+    
     @api.depends('tender_id.workflow_current_state_id', 'tender_round')
     def _compute_is_readonly(self):
         for record in self:
@@ -62,7 +70,6 @@ class PurchaseOrder(models.Model):
             state_code = record.tender_id.workflow_current_state_id.code if record.tender_id.workflow_current_state_id else None
             if state_code == 'completed' or state_code == 'cancelled':
                 record.is_readonly = True
-    
     
     @api.constrains('tender_id', 'order_line')
     def _check_alternative_products(self):
@@ -222,6 +229,10 @@ class PurchaseOrder(models.Model):
         """Override to recalculate NPV when payment term changes"""
         result = super(PurchaseOrder, self).write(vals)
         
+    def write(self, vals):
+        """Override to recalculate NPV when payment term changes"""
+        result = super(PurchaseOrder, self).write(vals)
+        
         if 'payment_term_id' in vals:
             self.calculate_total_npv()
             
@@ -239,4 +250,19 @@ class PurchaseOrder(models.Model):
             if order.partner_id not in order.message_partner_ids:
                 order.message_subscribe([order.partner_id.id])
         return True
-        
+
+    def _send_supplier_tender_update_email(self):
+        """
+        Sends an email notification to the purchaser (user_id) when a supplier updates their tender.
+        """
+        self.ensure_one()
+        if self.user_id and self.user_id.email_formatted:
+            template = self.env.ref('ak_tender.email_template_supplier_tender_update', raise_if_not_found=False)
+            if template:
+                template.send_mail(self.id, force_send=True, email_values={'email_to': self.user_id.email_formatted})
+                _logger.info(f"Email notification sent to purchaser {self.user_id.email_formatted} for tender update on {self.name}")
+            else:
+                _logger.warning("Mail template 'email_template_supplier_tender_update' not found.")
+        else:
+            _logger.warning(f"Purchaser (user_id) or their email not found for order {self.name}. Email notification skipped.")
+

@@ -29,6 +29,7 @@
         'data/server_actions.xml',
         'data/economic_data.xml',
         'data/mail_templates.xml',
+        'data/mail_notification_templates.xml',
         'views/tender_sequence.xml',
         'views/purchase_order_line_views.xml',
         'views/purchase_order_views.xml',
