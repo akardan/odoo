@@ -3,6 +3,10 @@
 import base64
 import io
 import logging
+import tempfile
+import os
+import zipfile
+import xml.etree.ElementTree as ET
 from odoo import api, fields, models, _
 from odoo.exceptions import UserError
 from datetime import datetime, timedelta
@@ -10,16 +14,23 @@ from datetime import datetime, timedelta
 _logger = logging.getLogger(__name__)
 
 try:
-    import openpyxl
+    import pandas as pd
 except ImportError:
-    _logger.debug('Cannot import openpyxl')
-    openpyxl = None
+    pd = None
 
-try:
-    import xlrd
-except ImportError:
-    _logger.debug('Cannot import xlrd')
-    xlrd = None
+def _install_pandas():
+    global pd
+    if pd:
+        return True
+    import subprocess
+    import sys
+    try:
+        subprocess.check_call([sys.executable, '-m', 'pip', 'install', 'pandas', 'xlrd==1.2.0', 'openpyxl', 'lxml'])
+        import pandas as pd
+        return True
+    except Exception as e:
+        _logger.error(f"pandas kurulum hatası: {str(e)}")
+        return False
 
 
 class SatImportWizard(models.TransientModel):
@@ -75,37 +86,163 @@ class SatImportWizard(models.TransientModel):
         }
 
     def _read_excel_file(self):
-        """Excel dosyasını oku"""
+        """Excel dosyasını oku - xlsx, xls, XML Excel ve ZIP formatlarını destekler"""
+        if not pd and not _install_pandas():
+            raise UserError(_('pandas kütüphanesi gerekli'))
+            
         data = base64.b64decode(self.excel_file)
+        
+        # ZIP dosya kontrolü
+        if self._is_zip_file(data):
+            _logger.info("ZIP dosyası tespit edildi, içindeki Excel dosyası çıkarılıyor")
+            data = self._extract_excel_from_zip(data)
+        
+        # XML Excel formatı kontrol et - daha kapsamlı kontrol
+        data_start = data[:200].lower()
+        is_xml = (b'<?xml' in data_start and 
+                 (b'<workbook' in data_start or b'ss:workbook' in data_start or 
+                  b'workbook' in data[:1000].lower()))
+        
+        if is_xml:
+            _logger.info("XML Excel formatı tespit edildi")
+            return self._read_xml_excel(data)
+        
+        # Normal Excel formatları (xlsx, xls)
         file_extension = self.file_name.split('.')[-1].lower() if self.file_name else 'xlsx'
         
         try:
-            if file_extension == 'xlsx' and openpyxl:
-                return openpyxl.load_workbook(io.BytesIO(data), read_only=True, data_only=True)
-            elif file_extension == 'xls' and xlrd:
-                return xlrd.open_workbook(file_contents=data)
-            else:
-                raise UserError(_('Desteklenmeyen dosya formatı'))
+            _logger.info(f"Excel dosyası pandas ile okunuyor: {file_extension}")
+            
+            # Önce otomatik engine ile dene
+            try:
+                return pd.read_excel(io.BytesIO(data), sheet_name=None)
+            except Exception as auto_error:
+                _logger.debug(f"Otomatik engine hatası: {auto_error}")
+                
+                # Manuel engine seçimi
+                if file_extension == 'xls':
+                    # XLS için xlrd engine
+                    try:
+                        return pd.read_excel(io.BytesIO(data), sheet_name=None, engine='xlrd')
+                    except Exception as xlrd_error:
+                        _logger.debug(f"xlrd engine hatası: {xlrd_error}")
+                        # Son çare olarak openpyxl dene
+                        return pd.read_excel(io.BytesIO(data), sheet_name=None, engine='openpyxl')
+                else:
+                    # XLSX için openpyxl engine
+                    try:
+                        return pd.read_excel(io.BytesIO(data), sheet_name=None, engine='openpyxl')
+                    except Exception as openpyxl_error:
+                        _logger.debug(f"openpyxl engine hatası: {openpyxl_error}")
+                        # Son çare olarak xlrd dene
+                        return pd.read_excel(io.BytesIO(data), sheet_name=None, engine='xlrd')
+                        
         except Exception as e:
-            raise UserError(f"Excel dosyası okunamadı: {str(e)}")
+            raise UserError(f"Excel dosyası okunamadı. Desteklenen formatlar: .xlsx, .xls, XML Excel. Hata: {str(e)}")
+    
+    def _read_xml_excel(self, data):
+        """XML Excel formatını oku"""
+        import xml.etree.ElementTree as ET
+        import tempfile
+        import os
+        
+        try:
+            # Geçici dosya oluştur
+            with tempfile.NamedTemporaryFile(mode='wb', delete=False, suffix='.xml') as temp_file:
+                temp_file.write(data)
+                temp_path = temp_file.name
+            
+            try:
+                tree = ET.parse(temp_path)
+                root = tree.getroot()
+                
+                # Namespace tanımla
+                ns = {'ss': 'urn:schemas-microsoft-com:office:spreadsheet'}
+                
+                # Worksheet bul
+                worksheet = root.find('.//ss:Worksheet', ns)
+                if worksheet is None:
+                    # Namespace olmadan dene
+                    worksheet = root.find('.//Worksheet')
+                
+                if worksheet is None:
+                    raise UserError('XML dosyasında Worksheet bulunamadı')
+                
+                # Table bul
+                table = worksheet.find('.//ss:Table', ns)
+                if table is None:
+                    table = worksheet.find('.//Table')
+                
+                if table is None:
+                    raise UserError('XML dosyasında Table bulunamadı')
+                
+                rows = table.findall('.//ss:Row', ns)
+                if not rows:
+                    rows = table.findall('.//Row')
+                
+                # Veriyi oku
+                data_rows = []
+                for row in rows:
+                    row_data = []
+                    cells = row.findall('.//ss:Cell', ns)
+                    if not cells:
+                        cells = row.findall('.//Cell')
+                    
+                    for cell in cells:
+                        data_elem = cell.find('.//ss:Data', ns)
+                        if data_elem is None:
+                            data_elem = cell.find('.//Data')
+                        
+                        if data_elem is not None:
+                            row_data.append(data_elem.text if data_elem.text else '')
+                        else:
+                            row_data.append('')
+                    
+                    if row_data:  # Boş satırları atlama
+                        data_rows.append(row_data)
+                
+                # DataFrame oluştur
+                if len(data_rows) > 1:
+                    df = pd.DataFrame(data_rows[1:], columns=data_rows[0])
+                elif len(data_rows) == 1:
+                    df = pd.DataFrame(columns=data_rows[0])
+                else:
+                    df = pd.DataFrame()
+                
+                # Worksheet adını al
+                sheet_name = worksheet.get('{urn:schemas-microsoft-com:office:spreadsheet}Name', 'Sheet1')
+                if not sheet_name:
+                    sheet_name = worksheet.get('Name', 'Sheet1')
+                
+                return {sheet_name: df}
+                
+            finally:
+                # Geçici dosyayı sil
+                os.unlink(temp_path)
+                
+        except ET.ParseError as e:
+            raise UserError(f'XML parse hatası: {str(e)}')
+        except Exception as e:
+            raise UserError(f'XML Excel okunamadı: {str(e)}')
 
     def _process_sat_data(self, workbook, stats):
         """ILP(300) sayfasından ihale tanımlarını işle"""
         # Sayfa kontrolü ve veri okuma
         sheet_name = self.sheet_name
         
-        if hasattr(workbook, 'sheetnames'):  # openpyxl
-            if sheet_name not in workbook.sheetnames:
-                raise UserError(_(f'{sheet_name} sayfası bulunamadı'))
-            rows = list(workbook[sheet_name].iter_rows(values_only=True))
-        else:  # xlrd
-            if sheet_name not in workbook.sheet_names():
-                raise UserError(_(f'{sheet_name} sayfası bulunamadı'))
-            sheet = workbook.sheet_by_name(sheet_name)
-            rows = [sheet.row_values(i) for i in range(sheet.nrows)]
-
-        if len(rows) <= 1:
+        # pandas DataFrame dict
+        _logger.info(f"Mevcut sayfalar: {list(workbook.keys())}")
+        if sheet_name not in workbook:
+            # İlk mevcut sayfayı kullan
+            sheet_name = list(workbook.keys())[0]
+            _logger.info(f"'{self.sheet_name}' bulunamadı, '{sheet_name}' sayfası kullanılıyor")
+        
+        df = workbook[sheet_name]
+        if df.empty:
             raise UserError(_(f'{sheet_name} sayfası boş'))
+        
+        # DataFrame'i rows formatına çevir
+        rows = [df.columns.tolist()] + df.values.tolist()
 
         # Veri satırlarını işle (başlık atla)
         for row_idx, row in enumerate(rows[1:], start=2):
