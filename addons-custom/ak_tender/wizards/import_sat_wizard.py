@@ -7,6 +7,10 @@ import tempfile
 import os
 import zipfile
 import xml.etree.ElementTree as ET
+import imaplib
+import email
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 from odoo import api, fields, models, _
 from odoo.exceptions import UserError
 from datetime import datetime, timedelta
@@ -142,9 +146,6 @@ class SatImportWizard(models.TransientModel):
     
     def _read_xml_excel(self, data):
         """XML Excel formatını oku"""
-        import xml.etree.ElementTree as ET
-        import tempfile
-        import os
         
         try:
             # Geçici dosya oluştur
@@ -224,6 +225,39 @@ class SatImportWizard(models.TransientModel):
             raise UserError(f'XML parse hatası: {str(e)}')
         except Exception as e:
             raise UserError(f'XML Excel okunamadı: {str(e)}')
+    
+    def _is_zip_file(self, data):
+        """Dosyanın ZIP olup olmadığını kontrol et"""
+        return data.startswith(b'PK\x03\x04') or data.startswith(b'PK\x05\x06') or data.startswith(b'PK\x07\x08')
+    
+    def _extract_excel_from_zip(self, zip_data):
+        """ZIP dosyasından Excel dosyasını çıkar"""
+        try:
+            with zipfile.ZipFile(io.BytesIO(zip_data), 'r') as zip_file:
+                # ZIP içindeki dosyaları listele
+                file_list = zip_file.namelist()
+                _logger.info(f"ZIP içindeki dosyalar: {file_list}")
+                
+                # Excel dosyası ara (.xlsx, .xls, .xml uzantılı)
+                excel_file = None
+                for file_name in file_list:
+                    if file_name.lower().endswith(('.xlsx', '.xls', '.xml')):
+                        excel_file = file_name
+                        break
+                
+                if not excel_file:
+                    raise UserError(_('ZIP dosyasında Excel dosyası bulunamadı'))
+                
+                _logger.info(f"ZIP'den çıkarılan Excel dosyası: {excel_file}")
+                
+                # Excel dosyasını çıkar
+                with zip_file.open(excel_file) as excel_data:
+                    return excel_data.read()
+                    
+        except zipfile.BadZipFile:
+            raise UserError(_('Geçersiz ZIP dosyası'))
+        except Exception as e:
+            raise UserError(f'ZIP dosyası işlenemedi: {str(e)}')
 
     def _process_sat_data(self, workbook, stats):
         """ILP(300) sayfasından ihale tanımlarını işle"""
@@ -741,6 +775,86 @@ class SatImportWizard(models.TransientModel):
                 'type': 'success' if stats['sat']['errors'] == 0 else 'warning',
             }
         }
+
+    @api.model
+    def import_sat_from_email(self):
+        """Email kutusundan SAT dosyalarını oku ve import et"""
+        stats = {'sat': {'processed': 0, 'created': 0, 'updated': 0, 'skipped': 0, 'errors': 0}}
+        
+        try:
+            # Email bağlantı bilgileri
+            email_host = 'mail.ilko.com.tr'
+            email_user = 'ilkoisdata@ilko.com.tr'
+            email_pass = self.env['ir.config_parameter'].sudo().get_param('ak_tender.email_password', '')
+            
+            if not email_pass:
+                _logger.error("Email şifresi ayarlanmamış")
+                return stats
+            
+            # IMAP bağlantısı
+            mail = imaplib.IMAP4_SSL(email_host)
+            mail.login(email_user, email_pass)
+            mail.select('inbox')
+            
+            # Bugünün emaillerini ara
+            today = datetime.now().strftime('%d-%b-%Y')
+            result, data = mail.search(None, f'(SINCE "{today}")')
+            
+            if result != 'OK':
+                _logger.error("Email arama hatası")
+                return stats
+            
+            email_ids = data[0].split()
+            _logger.info(f"{len(email_ids)} email bulundu")
+            
+            for email_id in email_ids:
+                try:
+                    # Email içeriğini al
+                    result, data = mail.fetch(email_id, '(RFC822)')
+                    if result != 'OK':
+                        continue
+                    
+                    raw_email = data[0][1]
+                    email_message = email.message_from_bytes(raw_email)
+                    
+                    # Ekleri kontrol et
+                    for part in email_message.walk():
+                        if part.get_content_disposition() == 'attachment':
+                            filename = part.get_filename()
+                            if filename and any(filename.lower().endswith(ext) for ext in ['.xlsx', '.xls', '.xml', '.zip']):
+                                _logger.info(f"Excel eki bulundu: {filename}")
+                                
+                                # Dosya içeriğini al
+                                file_data = part.get_payload(decode=True)
+                                
+                                # Import et
+                                file_stats = self.import_sat_from_file(
+                                    file_data=file_data,
+                                    file_name=filename,
+                                    sheet_name='ILP(300)',
+                                    update_existing=True
+                                )
+                                
+                                # İstatistikleri birleştir
+                                for key in stats['sat']:
+                                    stats['sat'][key] += file_stats['sat'][key]
+                                
+                                # Emaili işaretli olarak işaretle
+                                mail.store(email_id, '+FLAGS', '\\Seen')
+                                
+                except Exception as e:
+                    _logger.error(f"Email işleme hatası: {str(e)}")
+                    stats['sat']['errors'] += 1
+            
+            mail.close()
+            mail.logout()
+            
+            _logger.info(f"Email import tamamlandı: {stats}")
+            return stats
+            
+        except Exception as e:
+            _logger.error(f"Email import hatası: {str(e)}", exc_info=True)
+            return stats
 
     # Reusable function for automated jobs
     @api.model
