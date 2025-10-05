@@ -518,9 +518,12 @@
                            decoration-success="tender_type == 'indirect'"
                            decoration-warning="tender_type == 'promotion'"
                            decoration-info="tender_type == 'mice'"/>
-                    <field name="start_date"/>
-                    <field name="end_date"/>
+                    <field name="start_date" optional="show"/>
+                    <field name="end_date" optional="show"/>
                     <field name="request_date" optional="show"/>
+                    <field name="tender_round" string="Teklif Turu" widget="badge" optional="show"/>
+                    <field name="invited_partners" widget="many2many_tags" optional="hide"/>
+                    <field name="offer_count" string="Teklif Sayısı" widget="badge" optional="show"/>
                     <field name="target_price" widget="monetary" options="{'currency_field': 'currency_id'}"/>
                     <field name="currency_id" column_invisible="1"/>
                     <field name="workflow_current_state_id" widget="badge"/>
@@ -739,22 +742,28 @@
 
                             <!-- Footer Stats -->
                             <div name="card_content" class="row mt-auto">
+                                <div class="d-flex flex-column align-items-center col-3 border-end">
+                                    <span class="fw-bold text-info">
+                                        <field name="tender_round"/>.
+                                    </span>
+                                    <span class="text-muted text-center" title="Teklif Turu">Tur</span>
+                                </div>
                                 <a name="action_view_offers" type="object"
-                                   class="d-flex flex-column align-items-center col-4 border-end">
+                                   class="d-flex flex-column align-items-center col-3 border-end">
                                     <span class="fw-bold text-primary">
                                         <t t-esc="record.invited_partners.raw_value.length"/>
                                     </span>
-                                    <span class="text-muted text-truncate mw-100" title="Davet Edilen">Davet Edilen</span>
+                                    <span class="text-muted text-truncate mw-100" title="Davetli">Davetli</span>
                                 </a>
 
-                                <div class="d-flex flex-column align-items-center col-4 border-end">
+                                <div class="d-flex flex-column align-items-center col-3 border-end">
                                     <span class="fw-bold text-success">
                                         <field name="offer_count"/>
                                     </span>
-                                    <span class="text-muted text-truncate mw-100" title="Teklif Sayısı">Teklif Sayısı</span>
+                                    <span class="text-muted text-truncate mw-100" title="Teklif">Teklif</span>
                                 </div>
                                 
-                                <div class="d-flex flex-column align-items-center col-4">
+                                <div class="d-flex flex-column align-items-center col-3">
                                     <span class="fw-bold text-warning">
                                         <t t-if="record.target_price.raw_value">
                                             <i class="fa fa-check"/>

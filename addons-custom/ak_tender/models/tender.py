@@ -1760,12 +1760,12 @@ class AkTender(models.Model):
         # Get our custom mail template
         template_id = False
         try:
-            # Use our custom template with the View Quotation button
-            template_id = self.env['ir.model.data']._xmlid_lookup('ak_tender.email_template_edi_purchase_custom')[1]
+            # Use our custom template with the tender number
+            template_id = self.env.ref('ak_tender.email_template_edi_purchase_custom').id
         except ValueError:
             # Fall back to the standard template if our custom one is not found
             try:
-                template_id = self.env['ir.model.data']._xmlid_lookup('purchase.email_template_edi_purchase')[1]
+                template_id = self.env.ref('purchase.email_template_edi_purchase').id
             except ValueError:
                 pass
             

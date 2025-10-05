@@ -798,7 +798,8 @@
                                         <th class="field-col"></th>
                                         
                                         <!-- Define vendors_to_show - only current round, exclude cancelled -->
-                                        <t t-set="vendors_to_show" t-value="o.purchase_order_ids.filtered(lambda po: po.tender_round == o.tender_round and po.state != 'cancel')"/>
+                                        <!-- <t t-set="vendors_to_show" t-value="o.purchase_order_ids.filtered(lambda po: po.tender_round == o.tender_round and po.state != 'cancel').sorted(key=lambda po: (po.state, po.amount_total, po.id), reverse=(False, False, False))"/> -->
+                                        <t t-set="vendors_to_show" t-value="o.purchase_order_ids.filtered(lambda po: po.tender_round == o.tender_round and po.state != 'cancel').sorted(key=lambda po: ({'done': 0, 'to approve': 1, 'purchase': 2, 'sent': 3, 'rfq': 4}.get(po.state, 99), po.amount_total, po.id))"/>
                                         
                                         <!-- Debug info -->
                                         <script>
