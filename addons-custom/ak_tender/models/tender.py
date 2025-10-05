@@ -6,6 +6,28 @@ from odoo import models, fields, api, _
 from datetime import datetime
 from odoo.exceptions import ValidationError, UserError
 from odoo.addons.ak_workflow.models.ak_workflow_dynamic_parameter import WorkflowDynamicParameter
+import io
+import base64
+import subprocess
+import sys
+
+try:
+    import pandas as pd
+except ImportError:
+    try:
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "pandas"])
+        import pandas as pd
+    except Exception:
+        raise UserError(_("Pandas kütüphanesi bulunamadı ve otomatik olarak kurulamadı. Lütfen manuel olarak kurun: pip install pandas"))
+
+try:
+    from bs4 import BeautifulSoup
+except ImportError:
+    try:
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "beautifulsoup4"])
+        from bs4 import BeautifulSoup
+    except Exception:
+        raise UserError(_("BeautifulSoup4 kütüphanesi bulunamadı ve otomatik olarak kurulamadı. Lütfen manuel olarak kurun: pip install beautifulsoup4"))
 
 class AkTenderLine(models.Model):
     _name = 'ak.tender.line'
@@ -2469,4 +2491,133 @@ class AkTender(models.Model):
         return {
             'type': 'ir.actions.client',
             'tag': 'reload',
+        }
+
+    @api.model
+    def export_comparison_report_to_excel(self, tender_id, table_html):
+        """
+        Exports the given HTML table content to an Excel file.
+        """
+        self = self.sudo()
+        tender = self.browse(tender_id)
+        if not tender:
+            raise UserError(_("İhale bulunamadı."))
+
+        # Parse HTML table using BeautifulSoup
+        soup = BeautifulSoup(table_html, 'html.parser')
+        table = soup.find('table', class_='comparison-table')
+
+        if not table:
+            raise UserError(_("HTML içeriğinde karşılaştırma tablosu bulunamadı."))
+
+        # Extract table headers - handle colspan
+        headers = []
+        thead = table.find('thead')
+        if thead:
+            header_rows = thead.find_all('tr')
+            for header_row in header_rows:
+                for th in header_row.find_all('th'):
+                    colspan_attr = th.get('colspan')
+                    colspan_value = int(colspan_attr or 1)
+                    
+                    header_text = th.get_text(strip=True)
+                    if header_text:  # Only add non-empty headers
+                        for i in range(colspan_value): # Changed _ to i
+                            headers.append(header_text)
+
+        # If no headers found, create default ones
+        if not headers:
+            headers = ['Ürün', 'Alan']  # Default headers
+
+        # Extract table rows
+        data = []
+        rows = table.find('tbody').find_all('tr')
+        
+        # Keep track of rowspan cells
+        rowspan_tracker = {}
+
+        for r_idx, row in enumerate(rows):
+            cols = row.find_all(['td', 'th'])
+            row_data = []
+            col_position = 0
+            
+            for col in cols:
+                # Skip positions occupied by rowspan from previous rows
+                while rowspan_tracker.get((r_idx, col_position)):
+                    row_data.append(rowspan_tracker[(r_idx, col_position)])
+                    col_position += 1
+                
+                # Get colspan safely
+                colspan_attr = col.get('colspan')
+                colspan_value = int(colspan_attr or 1)
+                
+                # Get rowspan safely
+                rowspan_attr = col.get('rowspan')
+                rowspan_value = int(rowspan_attr or 1)
+                    
+                cell_text = col.get_text(strip=True)
+                
+                # Add cell value for each colspan
+                for i in range(colspan_value): # Changed _ to i
+                    row_data.append(cell_text)
+                    col_position += 1
+                
+                # Track rowspan cells for future rows
+                if rowspan_value > 1:
+                    for i in range(1, rowspan_value):
+                        for j in range(colspan_value):
+                            rowspan_tracker[(r_idx + i, col_position - colspan_value + j)] = cell_text
+
+            data.append(row_data)
+
+        # Determine the maximum number of columns
+        if data:
+            max_cols = max([len(row) for row in data])
+        else:
+            max_cols = len(headers) if headers else 0
+        
+        # Pad rows to have the same number of columns
+        for row in data:
+            while len(row) < max_cols:
+                row.append('')
+
+        # Ensure headers match the number of columns
+        while len(headers) < max_cols:
+            headers.append(f'Column {len(headers) + 1}')
+        
+        # Truncate headers if they exceed max_cols
+        headers = headers[:max_cols]
+
+        # Create DataFrame
+        df = pd.DataFrame(data, columns=headers)
+
+        # Remove rows that are entirely empty (e.g., due to rowspan handling)
+        df = df.loc[(df != '').any(axis=1)]
+
+        # Generate Excel file
+        output = io.BytesIO()
+        writer = pd.ExcelWriter(output, engine='xlsxwriter')
+        df.to_excel(writer, sheet_name='Tedarikçi Karşılaştırma', index=False)
+        writer.close()
+        output.seek(0)
+        excel_file = base64.b64encode(output.read())
+
+        # Create an attachment and return its download action
+        attachment = self.env['ir.attachment'].create({
+            'name': f"Tedarikci_Karsilastirma_{tender.code}.xlsx",
+            'type': 'binary',
+            'datas': excel_file,
+            'res_model': 'ak.tender',
+            'res_id': tender.id,
+            'mimetype': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        })
+
+        return {
+            'action': {
+                'id': attachment.id,
+                'name': _('Tedarikçi Karşılaştırma Raporu'),
+                'type': 'ir.actions.act_url',
+                'url': f'/web/content/{attachment.id}?download=true',
+                'target': 'new',
+            }
         }

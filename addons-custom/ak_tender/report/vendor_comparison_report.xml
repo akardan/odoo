@@ -518,6 +518,59 @@
                                 });
                             },
 
+                            exportToExcel: function() {
+                                console.log('=== EXPORT TO EXCEL BUTTON CLICKED ===');
+                                const tenderId = this.getTenderId();
+                                const comparisonTable = document.querySelector(this.config.selectors.comparisonTable);
+                                
+                                if (!comparisonTable) {
+                                    alert("Karşılaştırma tablosu bulunamadı.");
+                                    return;
+                                }
+
+                                // Clone the table to remove interactive elements before sending
+                                const clonedTable = comparisonTable.cloneNode(true);
+                                // Remove checkboxes and badges from the cloned table for export
+                                clonedTable.querySelectorAll('input[type="checkbox"], .selection-badge').forEach(el => el.remove());
+                                // Remove hidden debug divs
+                                clonedTable.querySelectorAll('div[style*="display: none"]').forEach(el => el.remove());
+
+                                const tableHtml = clonedTable.outerHTML;
+
+                                fetch('/web/dataset/call_kw', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'X-Requested-With': 'XMLHttpRequest',
+                                        'X-CSRFToken': this.getCsrfToken()
+                                    },
+                                    body: JSON.stringify({
+                                        jsonrpc: '2.0',
+                                        method: 'call',
+                                        params: {
+                                            model: 'ak.tender',
+                                            method: 'export_comparison_report_to_excel',
+                                            args: [[tenderId], tableHtml],
+                                            kwargs: {}
+                                        }
+                                    })
+                                }).then(function(response) {
+                                    return response.json();
+                                }).then(function(data) {
+                                    if (data.error) {
+                                        alert('Hata: ' + (data.error.data ? data.error.data.message : data.error));
+                                    } else if (data.result && data.result.action) {
+                                        // Trigger file download
+                                        window.location = '/web/content/' + data.result.action.id + '?download=true';
+                                    } else {
+                                        alert("Excel dosyası oluşturulurken bilinmeyen bir hata oluştu.");
+                                    }
+                                }).catch(function(error) {
+                                    console.error('Error exporting to Excel:', error);
+                                    alert("Excel'e aktarılırken hata oluştu!");
+                                });
+                            },
+
                             getTenderId: function() {
                                 const comparisonTable = document.querySelector(this.config.selectors.comparisonTable);
                                 return parseInt(comparisonTable && comparisonTable.dataset.tenderId);
@@ -739,6 +792,9 @@
                                     <span class="selection-badge system-badge">S</span> Sistem Seçimi
                                     <span class="selection-badge user-badge ml-2">K</span> Kullanıcı Seçimi
                                 </div>
+                                <button type="button" class="btn btn-sm btn-secondary" onclick="window.VendorComparison.exportToExcel()" title="Raporu Excel'e Aktar" style="margin-right: 5px;">
+                                    <i class="fa fa-file-excel-o"></i> Excel'e Aktar
+                                </button>
                                 <button type="button" class="btn btn-sm btn-secondary" onclick="window.VendorComparison.refreshReport()" title="Seçimleri görmek için raporu yenileyin">
                                     <i class="fa fa-refresh"></i> Raporu Yenile
                                 </button>
@@ -795,7 +851,7 @@
                                 <thead>
                                     <tr>
                                         <th class="product-col">Ürün</th>
-                                        <th class="field-col"></th>
+                                        <th class="field-col">Alanlar</th>
                                         
                                         <!-- Define vendors_to_show - only current round, exclude cancelled -->
                                         <!-- <t t-set="vendors_to_show" t-value="o.purchase_order_ids.filtered(lambda po: po.tender_round == o.tender_round and po.state != 'cancel').sorted(key=lambda po: (po.state, po.amount_total, po.id), reverse=(False, False, False))"/> -->
