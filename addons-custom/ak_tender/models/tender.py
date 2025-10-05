@@ -497,6 +497,13 @@ class AkTender(models.Model):
         help=_("Ekonomik verilerin alınacağı kaynak."))
     economic_notes = fields.Text(string=_('Ekonomik Değerlendirme Notları'),
                                 help=_("Ekonomik değerlendirme ile ilgili notlar."))
+   
+    location_dest_id = fields.Many2one(
+       comodel_name="stock.location",
+       string=_("Teslim Yeri"),
+       domain=[("usage", "in", ["internal", "transit"])],
+       help=_("İhale için varsayılan teslim yeri.")
+   )
     
     # TEKLİF DOKÜMANINA GÖRE REVİZE EDİLEN DURUM ALANI
 
@@ -1566,6 +1573,7 @@ class AkTender(models.Model):
             'tender_round': supplier_info['round'],
             'company_id': self.env.company.id,
             'currency_id': self.currency_id.id,
+            'location_dest_id': self.location_dest_id.id if self.location_dest_id else False, # Transfer delivery location
         }
         
         # If this is a subsequent round, copy payment terms from the previous purchase order

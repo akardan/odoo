@@ -35,13 +35,15 @@
                     <field name="tender_line_currency_id" invisible="1"/>
                     <field name="system_selection" string="S.S." optional="show"/>
                     <field name="user_selection" string="K.S." optional="show"/>
+                    <field name="expiry_date" optional="show" invisible="not parent.tender_id"/>
                 </xpath>
                 
                 <xpath expr="//notebook" position="inside">
                     <page string="İhale Bilgileri" name="tender_info" invisible="tender_id == False">
                         <group>
                             <group>
-                                <field name="guarantee_period"/>
+                                <field name="location_dest_id"/>
+                                <field name="guarantee_period" invisible="tender_id.tender_type in ['direct', 'indirect']"/>
                             </group>
                         </group>
                     </page>

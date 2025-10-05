@@ -11,92 +11,7 @@
     
     <!-- Copy of purchase.purchase_order_portal_content -->
     <template id="ak_purchase_order_portal_content" name="AK Purchase Order Portal Content">
-        <!-- Add JavaScript for attachment preview -->
-        <script type="text/javascript">
-            function previewAttachment(model, id, field, filename) {
-                // Determine file type based on extension
-                var isImage = /\.(jpg|jpeg|png|gif|bmp)$/i.test(filename);
-                var isPdf = /\.pdf$/i.test(filename);
-                
-                // Get the content URL
-                var contentUrl = '/web/content?model=' + model + '&amp;id=' + id + '&amp;field=' + field + '&amp;filename=' + filename;
-                
-                // Create modal for preview
-                var modal = document.createElement('div');
-                modal.className = 'modal fade';
-                modal.id = 'attachmentPreviewModal';
-                modal.setAttribute('tabindex', '-1');
-                modal.setAttribute('role', 'dialog');
-                modal.setAttribute('aria-hidden', 'true');
-                
-                var modalDialog = document.createElement('div');
-                modalDialog.className = 'modal-dialog modal-lg';
-                modalDialog.setAttribute('role', 'document');
-                
-                var modalContent = document.createElement('div');
-                modalContent.className = 'modal-content';
-                
-                var modalHeader = document.createElement('div');
-                modalHeader.className = 'modal-header';
-                
-                var modalTitle = document.createElement('h5');
-                modalTitle.className = 'modal-title';
-                modalTitle.textContent = filename;
-                
-                var closeButton = document.createElement('button');
-                closeButton.type = 'button';
-                closeButton.className = 'close';
-                closeButton.setAttribute('data-dismiss', 'modal');
-                closeButton.setAttribute('aria-label', 'Close');
-                closeButton.innerHTML = '<span aria-hidden="true">&amp;times;</span>';
-                
-                modalHeader.appendChild(modalTitle);
-                modalHeader.appendChild(closeButton);
-                
-                var modalBody = document.createElement('div');
-                modalBody.className = 'modal-body text-center';
-                
-                // Add content based on file type
-                if (isImage) {
-                    var img = document.createElement('img');
-                    img.src = contentUrl;
-                    img.className = 'img-fluid';
-                    img.style.maxHeight = '70vh';
-                    modalBody.appendChild(img);
-                } else if (isPdf) {
-                    var iframe = document.createElement('iframe');
-                    iframe.src = contentUrl;
-                    iframe.width = '100%';
-                    iframe.height = '85vh';
-                    iframe.style.minHeight = '600px';
-                    modalBody.appendChild(iframe);
-                } else {
-                    // For other file types, show download link
-                    var downloadLink = document.createElement('a');
-                    downloadLink.href = contentUrl;
-                    downloadLink.className = 'btn btn-primary';
-                    downloadLink.target = '_blank';
-                    downloadLink.innerHTML = '<i class="fa fa-download"></i> İndir';
-                    modalBody.appendChild(downloadLink);
-                }
-                
-                modalContent.appendChild(modalHeader);
-                modalContent.appendChild(modalBody);
-                modalDialog.appendChild(modalContent);
-                modal.appendChild(modalDialog);
-                
-                // Add modal to body
-                document.body.appendChild(modal);
-                
-                // Show modal
-                $(modal).modal('show');
-                
-                // Remove modal from DOM when hidden
-                $(modal).on('hidden.bs.modal', function () {
-                    document.body.removeChild(modal);
-                });
-            }
-        </script>
+
         
         <!-- Visible indicator to show this is our custom template -->
         <!-- <div class="alert alert-info">
@@ -136,11 +51,15 @@
                     <div class="col-lg-6">
                         <strong class="d-block mb-1">From:</strong>
                         <address t-field="order.company_id.partner_id" t-options='{"widget": "contact", "fields": ["address", "name"], "no_marker": True}'/>
-                        <strong>Confirmation Date:</strong> <span t-field="order.date_approve" t-options='{"widget": "date"}'/><br/>
                         <div t-att-class="'d-inline' if order.date_planned else 'd-none'">
-                            <strong>Receipt Date:</strong><span class="ms-1" t-field="order.date_planned" t-options='{"widget": "date"}'/>
+                            <strong>Delivery Date:</strong><span class="ms-1" t-field="order.date_planned" t-options='{"widget": "date"}'/>
+                        </div>
+                        <div class="col-lg-6">
+                            <strong class="d-block mb-1">Delivery Location:</strong>
+                            <span t-field="order.location_dest_id.display_name"/>
                         </div>
                     </div>
+                    <strong>Confirmation Date:</strong> <span t-field="order.date_approve" t-options='{"widget": "date"}'/><br/>
                 </div>
 
                 <t t-set="invoices" t-value="[i for i in order.invoice_ids if i.state not in ['draft', 'cancel']]"/>
@@ -186,7 +105,8 @@
                                 <th class="text-end" t-if="not update_dates and order.state in ['purchase', 'done']" style="width: 8%;">Amount</th>
                                 <!-- Additional columns for editable fields -->
                                 <th class="text-end" style="width: 7%;">Teslimat Tar.</th>
-                                <th class="text-end" style="width: 6%;">Garanti</th>
+                                <th class="text-end" t-if="order.tender_id.tender_type not in ['direct', 'indirect']" style="width: 6%;">Garanti</th>
+                                <th class="text-end" t-if="order.tender_id.tender_type in ['direct', 'indirect']" style="width: 7%;">SKT</th>
                             </tr>
                         </thead>
                         <tbody class="purchase_tbody">
@@ -201,7 +121,7 @@
                                     <t t-if="not line.display_type">
                                         <td id="product_name">
                                             <div class="d-flex">
-                                                <img t-att-src="image_data_uri(resize_to_48(line.product_id.image_1024))" alt="Product" class="d-none d-lg-inline"/>
+                                                <!-- <img t-att-src="image_data_uri(resize_to_48(line.product_id.image_1024))" alt="Product" class="d-none d-lg-inline"/> -->
                                                 <span t-field="line.product_id.display_name"/>
                                             </div>
                                             
@@ -279,7 +199,7 @@
                                         <td class="text-end">
                                             <div id="quote_qty">
                                                 <span t-field="line.product_qty"/>
-                                                <span t-field="line.product_uom" groups="uom.group_uom"/>
+                                                <span t-field="line.product_uom"/>
                                             </div>
                                         </td>
                                         <td t-if="update_dates" class="text-end">
@@ -379,17 +299,25 @@
                                         </td>
                                         
                                         <!-- Warranty Period -->
-                                        <td class="text-end">
+                                        <td class="text-end" t-if="order.tender_id.tender_type not in ['direct', 'indirect']">
                                             <select t-attf-name="warranty_period_line_{{line.id}}"
                                                 class="form-control form-control-sm editable-field"
                                                 style="font-size: 0.9em; width: 100%;">
                                                 <option value="">Seçiniz</option>
-                                                <option value="1" t-att-selected="line.warranty_period == 1">1 Ay</option>
-                                                <option value="3" t-att-selected="line.warranty_period == 3">3 Ay</option>
-                                                <option value="6" t-att-selected="line.warranty_period == 6">6 Ay</option>
-                                                <option value="12" t-att-selected="line.warranty_period == 12">12 Ay</option>
-                                                <option value="24" t-att-selected="line.warranty_period == 24">24 Ay</option>
+                                                <option value="1" t-att-selected="line.warranty_period == '1'">1 Ay</option>
+                                                <option value="3" t-att-selected="line.warranty_period == '3'">3 Ay</option>
+                                                <option value="6" t-att-selected="line.warranty_period == '6'">6 Ay</option>
+                                                <option value="12" t-att-selected="line.warranty_period == '12'">12 Ay</option>
+                                                <option value="24" t-att-selected="line.warranty_period == '24'">24 Ay</option>
                                             </select>
+                                        </td>
+                                        <!-- Expiry Date -->
+                                        <td class="text-end" t-if="order.tender_id.tender_type in ['direct', 'indirect']">
+                                            <input type="date"
+                                                t-attf-name="expiry_date_line_{{line.id}}"
+                                                class="form-control form-control-sm editable-field"
+                                                style="font-size: 0.9em; width: 100%;"
+                                                t-att-value="line.expiry_date and line.expiry_date.strftime('%Y-%m-%d') or ''"/>
                                         </td>
                                     </t>
                                     <t t-if="line.display_type == 'line_section'">

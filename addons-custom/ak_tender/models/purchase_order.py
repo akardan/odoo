@@ -11,6 +11,13 @@ class PurchaseOrder(models.Model):
     _inherit = 'purchase.order'
 
     tender_id = fields.Many2one('ak.tender', string='İhale', ondelete='restrict')
+    tender_type = fields.Selection(related='tender_id.tender_type', string="İhale Tipi", store=True)
+    location_dest_id = fields.Many2one(
+        comodel_name="stock.location",
+        string=_("Teslim Yeri"),
+        domain=[("usage", "in", ["internal", "transit"])],
+        help=_("İhale için varsayılan teslim yeri.")
+    )
     offer_date = fields.Datetime(string='Teklif Tarihi', default=fields.Datetime.now, readonly=True)
     tender_round = fields.Integer(string='Teklif Turu', default=1, help="Bu teklifin hangi turda sunulduğu (1, 2, 3...).")
     guarantee_period = fields.Char(string='Garanti Süresi', help="Tedarikçinin sunduğu garanti süresi (örn: 2 Yıl).")

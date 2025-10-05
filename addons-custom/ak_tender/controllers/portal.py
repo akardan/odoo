@@ -475,3 +475,67 @@ class TenderPortal(CustomerPortal): # Inherit from CustomerPortal for standard l
         except Exception as e:
             _logger.exception(f"Error in portal_update_supplier_order: {str(e)}")
             return {'error': str(e)}
+    
+    @http.route(['/tender/attachment/<int:tender_line_id>/<field>'], type='http', auth="public", website=True)
+    def tender_attachment_download(self, tender_line_id, field, access_token=None, **kw):
+        """Download tender line attachments with access token validation"""
+        try:
+            # Get the tender line
+            tender_line = request.env['ak.tender.line'].sudo().browse(tender_line_id)
+            if not tender_line.exists():
+                return request.not_found()
+            
+            # Check if user has access via purchase order access token
+            if access_token:
+                # Find purchase order with this tender line and access token
+                purchase_order = request.env['purchase.order'].sudo().search([
+                    ('order_line.tender_line_id', '=', tender_line_id),
+                    ('access_token', '=', access_token)
+                ], limit=1)
+                
+                if not purchase_order:
+                    return request.not_found()
+            else:
+                # Check if user is logged in and has access
+                if request.env.user._is_public():
+                    return request.not_found()
+            
+            # Get the attachment field
+            if field not in ['attachment1', 'attachment2']:
+                return request.not_found()
+            
+            attachment_data = getattr(tender_line, field, None)
+            if not attachment_data:
+                return request.not_found()
+            
+            # Get filename
+            filename_field = f'{field}_filename'
+            filename = getattr(tender_line, filename_field, f'{field}.bin')
+            
+            # Return the file for preview
+            # Determine content type based on file extension
+            import mimetypes
+            import base64
+            
+            content_type, _ = mimetypes.guess_type(filename)
+            if not content_type:
+                content_type = 'application/octet-stream'
+            
+            # Decode base64 data
+            try:
+                decoded_data = base64.b64decode(attachment_data)
+            except Exception as e:
+                _logger.error(f"Error decoding attachment data: {str(e)}")
+                return request.not_found()
+            
+            return request.make_response(
+                decoded_data,
+                headers=[
+                    ('Content-Type', content_type),
+                    ('Content-Disposition', f'inline; filename="{filename}"')
+                ]
+            )
+            
+        except Exception as e:
+            _logger.exception(f"Error downloading tender attachment: {str(e)}")
+            return request.not_found()

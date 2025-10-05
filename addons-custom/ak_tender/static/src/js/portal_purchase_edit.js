@@ -12,6 +12,142 @@ var portalPurchaseEditInitialized = false;
 var saveInProgress = false;
 var successMessageShown = false;
 
+// Global function for attachment preview
+window.previewAttachment = function(model, id, field, filename) {
+    try {
+        // Determine file type based on extension
+        var isImage = /\.(jpg|jpeg|png|gif|bmp)$/i.test(filename);
+        var isPdf = /\.pdf$/i.test(filename);
+        
+        // Get the content URL - check if access_token exists in URL
+        var urlParams = new URLSearchParams(window.location.search);
+        var accessToken = urlParams.get('access_token');
+        var contentUrl;
+        
+        if (accessToken) {
+            // For portal users with access token, use our custom route
+            contentUrl = '/tender/attachment/' + id + '/' + field + '?access_token=' + accessToken;
+        } else {
+            // For logged in users without access token, use standard web/content route
+            contentUrl = '/web/content?model=' + model + '&id=' + id + '&field=' + field + '&filename=' + filename;
+        }
+        
+        // Create modal for preview
+        var modal = document.createElement('div');
+        modal.className = 'modal fade';
+        modal.id = 'attachmentPreviewModal';
+        modal.setAttribute('tabindex', '-1');
+        modal.setAttribute('role', 'dialog');
+        modal.setAttribute('aria-hidden', 'true');
+        
+        var modalDialog = document.createElement('div');
+        modalDialog.className = 'modal-dialog modal-lg';
+        modalDialog.setAttribute('role', 'document');
+        
+        var modalContent = document.createElement('div');
+        modalContent.className = 'modal-content';
+        
+        var modalHeader = document.createElement('div');
+        modalHeader.className = 'modal-header';
+        
+        var modalTitle = document.createElement('h5');
+        modalTitle.className = 'modal-title';
+        modalTitle.textContent = filename;
+        
+        var closeButton = document.createElement('button');
+        closeButton.type = 'button';
+        closeButton.className = 'btn-close';
+        closeButton.setAttribute('data-dismiss', 'modal');
+        closeButton.setAttribute('data-bs-dismiss', 'modal');
+        closeButton.setAttribute('aria-label', 'Close');
+        
+        // Add click handler for manual close
+        closeButton.onclick = function() {
+            if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+                var bsModal = bootstrap.Modal.getInstance(modal);
+                if (bsModal) {
+                    bsModal.hide();
+                }
+            } else if (typeof $ !== 'undefined') {
+                $(modal).modal('hide');
+            } else {
+                modal.style.display = 'none';
+                document.body.removeChild(modal);
+            }
+        };
+        
+        modalHeader.appendChild(modalTitle);
+        modalHeader.appendChild(closeButton);
+        
+        var modalBody = document.createElement('div');
+        modalBody.className = 'modal-body text-center';
+        
+        // Add content based on file type
+        if (isImage) {
+            var img = document.createElement('img');
+            img.src = contentUrl;
+            img.className = 'img-fluid';
+            img.style.maxHeight = '70vh';
+            modalBody.appendChild(img);
+        } else if (isPdf) {
+            var iframe = document.createElement('iframe');
+            iframe.src = contentUrl;
+            iframe.width = '100%';
+            iframe.height = '85vh';
+            iframe.style.minHeight = '600px';
+            modalBody.appendChild(iframe);
+        } else {
+            // For other file types, show download link
+            var downloadLink = document.createElement('a');
+            downloadLink.href = contentUrl;
+            downloadLink.className = 'btn btn-primary';
+            downloadLink.target = '_blank';
+            downloadLink.innerHTML = '<i class="fa fa-download"></i> İndir';
+            modalBody.appendChild(downloadLink);
+        }
+        
+        modalContent.appendChild(modalHeader);
+        modalContent.appendChild(modalBody);
+        modalDialog.appendChild(modalContent);
+        modal.appendChild(modalDialog);
+        
+        // Add modal to body
+        document.body.appendChild(modal);
+        
+        // Show modal using Bootstrap's modal method if available, otherwise use jQuery
+        if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+            var bsModal = new bootstrap.Modal(modal);
+            bsModal.show();
+            
+            // Remove modal from DOM when hidden
+            modal.addEventListener('hidden.bs.modal', function () {
+                document.body.removeChild(modal);
+            });
+        } else if (typeof $ !== 'undefined') {
+            $(modal).modal('show');
+            
+            // Remove modal from DOM when hidden
+            $(modal).on('hidden.bs.modal', function () {
+                document.body.removeChild(modal);
+            });
+        } else {
+            // Fallback: just show the modal
+            modal.style.display = 'block';
+            modal.classList.add('show');
+            
+            // Add close functionality
+            closeButton.onclick = function() {
+                modal.style.display = 'none';
+                document.body.removeChild(modal);
+            };
+        }
+        
+    } catch (e) {
+        console.error('Error in previewAttachment:', e);
+        alert('Dosya önizlemesi açılırken bir hata oluştu.');
+    }
+};
+
 // Execute immediately and also on DOMContentLoaded to ensure it runs
 function initializePortalPurchaseEdit() {
     // Skip if already initialized

@@ -9,6 +9,7 @@ class PurchaseOrderLine(models.Model):
     # 'result_id' is now 'order_id' which is already on the model.
     
     tender_line_id = fields.Many2one('ak.tender.line', string='İhale Kalemi', ondelete='set null')
+    tender_type = fields.Selection(related='order_id.tender_id.tender_type', string="İhale Tipi", store=True)
     
     # Otel seçimi için
     hotel_partner_id = fields.Many2one(
@@ -34,14 +35,21 @@ class PurchaseOrderLine(models.Model):
     # Alternative product support is handled by alt_materials field
     
     # Additional fields for supplier portal editing
-    warranty_period = fields.Integer(
-        string='Garanti Süresi (Ay)',
-        help='Tedarikçi tarafından sunulan garanti süresi (ay olarak)'
-    )
+    warranty_period = fields.Selection([
+        ('1' , ' 1 Ay'),
+        ('3' , ' 3 Ay'),
+        ('6' , ' 6 Ay'),
+        ('12', '12 Ay'),
+        ('24', '24 Ay'),
+    ], string='Garanti Süresi', help="Tedarikçi tarafından sunulan garanti süresi.")
     
     supplier_ref = fields.Char(
         string='Tedarikçi Referansı',
         help='Bu ürün için tedarikçinin referans veya parça numarası'
+    )
+    expiry_date = fields.Date(
+        string='SKT',
+        help='Ürünün son kullanma tarihi.'
     )
     
     alt_materials = fields.Text(
