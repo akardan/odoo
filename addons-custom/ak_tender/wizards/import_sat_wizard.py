@@ -605,6 +605,30 @@ class SatImportWizard(models.TransientModel):
         _logger.info(f"İhale kalemi oluşturuldu: {tender_line.name} (ID: {tender_line.id})")
         return tender_line
 
+    def _generate_material_code(self):
+        """Yeni malzeme kodu oluştur - 900000001'dan başlayan sequence kullanarak"""
+        # Son kullanılan kodu bul
+        last_product = self.env['product.product'].search([
+            ('default_code', 'like', '9%')
+        ], order='default_code desc', limit=1)
+        
+        if last_product and last_product.default_code:
+            try:
+                # Son koddan bir sonraki numarayı al
+                last_code = int(last_product.default_code)
+                new_code = last_code + 1
+                _logger.info(f"Son malzeme kodu: {last_code}, Yeni kod: {new_code}")
+            except ValueError:
+                # Kod sayısal değilse, başlangıç değerini kullan
+                new_code = 900000001
+                _logger.warning(f"Son kod sayısal değil: {last_product.default_code}, Başlangıç değeri kullanılıyor: {new_code}")
+        else:
+            # Hiç kod yoksa, başlangıç değerini kullan
+            new_code = 900000001
+            _logger.info(f"Hiç malzeme kodu bulunamadı, Başlangıç değeri kullanılıyor: {new_code}")
+        
+        return str(new_code)
+
     def _find_or_create_product(self, data):
         """Ürünü bul, yoksa oluştur"""
         product = False
@@ -617,9 +641,11 @@ class SatImportWizard(models.TransientModel):
         
         _logger.info(f"Ürün aranıyor: Kod={material_code}, Ad={material_name}, Data={data}")
         
+        # Malzeme kodu boşsa, yeni bir kod oluştur
         if not material_code:
-            _logger.warning(f"Malzeme kodu bulunamadı: {data}")
-            return None
+            _logger.warning(f"Malzeme kodu boş, yeni kod oluşturuluyor")
+            material_code = self._generate_material_code()
+            _logger.info(f"Yeni malzeme kodu oluşturuldu: {material_code}")
             
         # Önce malzeme kodu ile ürün ara (default_code)
         product = self.env['product.product'].search([
