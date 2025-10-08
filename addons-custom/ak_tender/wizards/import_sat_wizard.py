@@ -606,29 +606,30 @@ class SatImportWizard(models.TransientModel):
         return tender_line
 
     def _generate_material_code(self):
-        """Yeni malzeme kodu oluştur - 900000001'dan başlayan sequence kullanarak"""
-        # Son kullanılan kodu bul
-        last_product = self.env['product.product'].search([
-            ('default_code', 'like', '9%')
-        ], order='default_code desc', limit=1)
+        """Yeni malzeme kodu oluştur - Odoo sequence kullanarak"""
         
-        if last_product and last_product.default_code:
-            try:
-                # Son koddan bir sonraki numarayı al
-                last_code = int(last_product.default_code)
-                new_code = last_code + 1
-                _logger.info(f"Son malzeme kodu: {last_code}, Yeni kod: {new_code}")
-            except ValueError:
-                # Kod sayısal değilse, başlangıç değerini kullan
-                new_code = 900000001
-                _logger.warning(f"Son kod sayısal değil: {last_product.default_code}, Başlangıç değeri kullanılıyor: {new_code}")
-        else:
-            # Hiç kod yoksa, başlangıç değerini kullan
-            new_code = 900000001
-            _logger.info(f"Hiç malzeme kodu bulunamadı, Başlangıç değeri kullanılıyor: {new_code}")
+        # Sequence var mı kontrol et, yoksa oluştur
+        sequence = self.env['ir.sequence'].search([
+            ('code', '=', 'product.material.code')
+        ], limit=1)
         
-        return str(new_code)
-
+        if not sequence:
+            _logger.info("Material code sequence oluşturuluyor")
+            sequence = self.env['ir.sequence'].sudo().create({
+                'name': 'Malzeme Kodu',
+                'code': 'product.material.code',
+                'implementation': 'standard',
+                'prefix': '',
+                'padding': 9,  # 9 hane = 9xxxxxxxx
+                'number_increment': 1,
+                'number_next': 900000001,
+            })
+        
+        # Yeni kod al
+        new_code = sequence.next_by_id()
+        _logger.info(f"Yeni malzeme kodu oluşturuldu: {new_code}")
+        return new_code
+    
     def _find_or_create_product(self, data):
         """Ürünü bul, yoksa oluştur"""
         product = False
