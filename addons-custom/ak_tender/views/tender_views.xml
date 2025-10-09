@@ -415,10 +415,13 @@
                                 <field name="transition_history_ids" readonly="1">
                                     <list>
                                         <field name="transition_id"/>
+                                        <field name="stage_id"/>
                                         <field name="from_state_id"/>
                                         <field name="to_state_id"/>
+                                        <!-- <field name="status"/> -->
                                         <field name="user_id"/>
                                         <field name="create_date" string="Date"/>
+                                        <field name="elapsed_time_display"/>
                                         <field name="comment"/>
                                     </list>
                                 </field>
