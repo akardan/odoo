@@ -4,7 +4,7 @@
         <div class="o_workflow_button_group d-flex flex-nowrap">
             <t t-foreach="state.transitions" t-as="transition" t-key="transition.id">
                 <button t-att-class="'btn ' + (transition.button_class || 'btn-primary') + ' me-1'" t-on-click="() => this.onButtonClick(transition.id)">
-                    <t t-esc="transition.name"/>
+                    <t t-esc="transition.button_label || transition.name"/>
                 </button>
             </t>
         </div>

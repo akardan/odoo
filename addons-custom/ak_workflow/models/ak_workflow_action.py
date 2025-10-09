@@ -30,6 +30,8 @@ class AkWorkflowAction(models.Model):
     )
     trigger_state_id = fields.Many2one('ak.workflow.state', 'Trigger State')
     transition_id = fields.Many2one('ak.workflow.transition', 'Transition')
+    stage_id = fields.Many2one('ak.workflow.transition.stage', 'Stage',
+                               help="Eğer belirtilirse, bu aksiyon sadece bu stage tamamlandığında çalışır")
     
     # Action Configuration
     sequence = fields.Integer('Sequence', default=10)

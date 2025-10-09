@@ -7,6 +7,8 @@ access_ak_workflow_transition_user,ak.workflow.transition.user,model_ak_workflow
 access_ak_workflow_transition_manager,ak.workflow.transition.manager,model_ak_workflow_transition,base.group_system,1,1,1,1
 access_ak_workflow_action_user,ak.workflow.action.user,model_ak_workflow_action,base.group_user,1,1,1,0
 access_ak_workflow_action_manager,ak.workflow.action.manager,model_ak_workflow_action,base.group_system,1,1,1,1
+access_ak_workflow_transition_stage_user,ak.workflow.transition.stage.user,model_ak_workflow_transition_stage,base.group_user,1,1,1,0
+access_ak_workflow_transition_stage_manager,ak.workflow.transition.stage.manager,model_ak_workflow_transition_stage,base.group_system,1,1,1,1
 access_ak_workflow_transition_wizard,ak.workflow.transition.wizard,model_ak_workflow_transition_wizard,base.group_user,1,1,1,1
 access_ak_workflow_transition_history,ak.workflow.transition.history,model_ak_workflow_transition_history,base.group_user,1,0,0,0
 access_ak_workflow_dynamic_parameter_user,ak.workflow.dynamic.parameter.user,model_ak_workflow_dynamic_parameter,base.group_user,1,1,1,0

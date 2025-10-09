@@ -88,6 +88,64 @@
                                     </form>
                                 </field>
                             </page>
+                            <page string="Aşamalar" name="stages">
+                                <group>
+                                    <field name="stage_count" readonly="1"/>
+                                    <field name="has_stages" invisible="1"/>
+                                </group>
+                                <field name="stage_ids">
+                                    <list>
+                                        <field name="sequence" widget="handle"/>
+                                        <field name="name"/>
+                                        <field name="code"/>
+                                        <field name="button_label"/>
+                                        <field name="condition_type"/>
+                                        <field name="active"/>
+                                    </list>
+                                    <form>
+                                        <sheet>
+                                            <group>
+                                                <group>
+                                                    <field name="name"/>
+                                                    <field name="code"/>
+                                                    <field name="sequence"/>
+                                                </group>
+                                                <group>
+                                                    <field name="button_label"/>
+                                                    <field name="button_class"/>
+                                                    <field name="icon"/>
+                                                    <field name="active"/>
+                                                </group>
+                                            </group>
+                                            <notebook>
+                                                <page string="Security">
+                                                    <field name="group_ids" widget="many2many_tags"/>
+                                                </page>
+                                                <page string="Conditions">
+                                                    <group>
+                                                        <field name="condition_type"/>
+                                                        <field name="condition_expression" invisible="condition_type != 'python'"/>
+                                                    </group>
+                                                </page>
+                                                <page string="Actions">
+                                                    <field name="action_ids">
+                                                        <list>
+                                                            <field name="sequence" widget="handle"/>
+                                                            <field name="name"/>
+                                                            <field name="action_type"/>
+                                                            <field name="active"/>
+                                                        </list>
+                                                    </field>
+                                                </page>
+                                            </notebook>
+                                        </sheet>
+                                    </form>
+                                </field>
+                                <div class="alert alert-info" role="alert">
+                                    <strong>ℹ️ Aşamalı Geçiş:</strong> Eğer aşamalar tanımlarsanız, geçiş sırayla her aşamadan geçecektir. 
+                                    Tüm aşamalar tamamlandığında hedef state'e geçiş yapılır. Aşama yoksa direkt geçiş yapılır.
+                                </div>
+                            </page>
                         </notebook>
                     </sheet>
                 </form>

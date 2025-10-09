@@ -38,6 +38,7 @@ class AkWorkflowTransition(models.Model):
     sequence = fields.Integer('Sequence', default=10)
     button_label = fields.Char('Button Label', translate=True,
                                help="Label shown on transition button")
+    button_label_computed = fields.Char('Computed Button Label', compute='_compute_button_label_computed')
     button_class = fields.Selection([
         ('btn-primary', 'Primary (Blue)'),
         ('btn-success', 'Success (Green)'),
@@ -84,9 +85,26 @@ class AkWorkflowTransition(models.Model):
     )
     
     
+    # Stages (Sub-transitions)
+    stage_ids = fields.One2many(
+        'ak.workflow.transition.stage',
+        'transition_id',
+        string='Transition Stages',
+        help="Aşamalı onay için alt geçişler. Boş ise direkt geçiş yapılır."
+    )
+    stage_count = fields.Integer('Stage Count', compute='_compute_stage_count', store=True)
+    has_stages = fields.Boolean('Has Stages', compute='_compute_stage_count', store=True)
+    
+    @api.depends('stage_ids')
+    def _compute_stage_count(self):
+        for transition in self:
+            transition.stage_count = len(transition.stage_ids)
+            transition.has_stages = bool(transition.stage_ids)
+    
     # Actions
     action_ids = fields.One2many('ak.workflow.action', 'transition_id',
-                                 string='Transition Actions')
+                                 string='Transition Actions',
+                                 help="Tüm aşamalar tamamlandıktan sonra çalışacak aksiyonlar")
     
     # Notifications
     send_notification = fields.Boolean('Send Notification', default=True)
@@ -96,6 +114,38 @@ class AkWorkflowTransition(models.Model):
     )
     
     active = fields.Boolean('Active', default=True)
+    
+    @api.depends('stage_ids')
+    def _compute_stage_count(self):
+        for transition in self:
+            transition.stage_count = len(transition.stage_ids)
+            transition.has_stages = bool(transition.stage_ids)
+    
+    def _compute_button_label_computed(self):
+        """
+        Dinamik button label hesapla - stage varsa stage label'ı göster
+        """
+        for transition in self:
+            # Context'ten record bilgisini al
+            record_id = self.env.context.get('record_id')
+            model_name = self.env.context.get('model_name')
+            
+            if transition.has_stages and record_id and model_name:
+                try:
+                    record = self.env[model_name].browse(record_id)
+                    next_stage = transition.get_next_pending_stage(record)
+                    
+                    if next_stage and next_stage.button_label:
+                        transition.button_label_computed = next_stage.button_label
+                    elif next_stage:
+                        transition.button_label_computed = next_stage.name
+                    else:
+                        # Tüm stage'ler tamamlanmış
+                        transition.button_label_computed = transition.button_label or transition.name
+                except:
+                    transition.button_label_computed = transition.button_label or transition.name
+            else:
+                transition.button_label_computed = transition.button_label or transition.name
     
     @api.depends('name', 'from_state_id.name', 'to_state_id.name')
     def _compute_display_name(self):
@@ -218,6 +268,60 @@ class AkWorkflowTransition(models.Model):
             body += _("<br/>Comment: %s") % comment
         record.message_post(body=body)
 
+    def get_next_pending_stage(self, record):
+        """
+        Kayıt için bir sonraki bekleyen stage'i döndür
+        """
+        self.ensure_one()
+        
+        if not self.has_stages:
+            return False
+        
+        # Eğer mevcut stage yoksa VEYA başka bir transition'a aitse, ilk stage'i döndür
+        if not record.workflow_current_stage_id or record.workflow_current_stage_id.transition_id != self:
+            first_stage = self.stage_ids.sorted('sequence')[:1]
+            if record.workflow_current_stage_id:
+                _logger.info(f"   Current stage belongs to different transition, returning first: {first_stage.name if first_stage else 'None'}")
+            else:
+                _logger.info(f"   No current stage, returning first: {first_stage.name if first_stage else 'None'}")
+            return first_stage
+        
+        # Mevcut stage'den sonraki stage'i bul
+        current_sequence = record.workflow_current_stage_id.sequence
+        next_stage = self.stage_ids.filtered(lambda s: s.sequence > current_sequence).sorted('sequence')[:1]
+        
+        _logger.info(f"   Current stage: {record.workflow_current_stage_id.name}, Next: {next_stage.name if next_stage else 'None (all completed)'}")
+        
+        return next_stage if next_stage else False
+    
+    def are_all_stages_completed(self, record):
+        """
+        Tüm stage'ler tamamlandı mı kontrol et
+        """
+        self.ensure_one()
+        
+        if not self.has_stages:
+            return True
+        
+        # SADECE MEVCUT STATE'DEKİ TAMAMLANMIŞ STAGE'LER
+        completed_stage_ids = self.env['ak.workflow.transition.history'].search([
+            ('res_model', '=', record._name),
+            ('res_id', '=', record.id),
+            ('transition_id', '=', self.id),
+            ('from_state_id', '=', record.workflow_current_state_id.id),  # Mevcut state
+            ('status', '=', 'completed'),
+            ('stage_id', '!=', False)
+        ]).mapped('stage_id').ids
+        
+        # Unique stage ID'lerini al
+        unique_completed_stages = set(completed_stage_ids)
+        required_stage_ids = set(self.stage_ids.ids)
+        
+        _logger.info(f"   Completed stages: {unique_completed_stages}, Required: {required_stage_ids}")
+        
+        # Tüm gerekli stage'ler tamamlandı mı?
+        return required_stage_ids.issubset(unique_completed_stages)
+    
     def execute_on_record(self):
         self.ensure_one()
         record_id = self.env.context.get('active_id')
@@ -250,10 +354,89 @@ class AkWorkflowTransition(models.Model):
 
         comment = self.env.context.get('comment')
         old_state = record.workflow_current_state_id
-        record.workflow_current_state_id = self.to_state_id
-        self._log_transition(record, old_state, 'completed', comment)
         
-        for action in self.action_ids:
-            action.execute_action(record)
+        # Eğer stage'ler varsa, stage bazlı işlem yap
+        _logger.info(f"🔍 Checking stages for transition {self.name}: has_stages={self.has_stages}, stage_count={self.stage_count}")
+        _logger.info(f"   Stage IDs: {self.stage_ids.ids}")
+        _logger.info(f"   Current state: {record.workflow_current_state_id.name}")
+        
+        if self.has_stages:
+            _logger.info(f"   ✓ Transition {self.name} has {len(self.stage_ids)} stages")
+            next_stage = self.get_next_pending_stage(record)
+            _logger.info(f"   Next pending stage: {next_stage.name if next_stage else 'None (all completed)'}")
+            
+            if next_stage:
+                _logger.info(f"   ⚡ Executing stage: {next_stage.name} (sequence: {next_stage.sequence})")
+                
+                # Mevcut stage'i ÖNCE güncelle (execute'dan önce) ve veritabanına yaz
+                record.write({'workflow_current_stage_id': next_stage.id})
+                _logger.info(f"   Updated workflow_current_stage_id to: {next_stage.name}")
+                
+                # Stage'i çalıştır
+                next_stage.execute_stage(record, comment)
+                
+                # Bir sonraki stage var mı kontrol et
+                next_next_stage = self.get_next_pending_stage(record)
+                
+                if not next_next_stage:
+                    # Tüm stage'ler tamamlandı, state değiştir
+                    _logger.info(f"   🎉 All stages completed! Changing state from '{old_state.name}' to '{self.to_state_id.name}'")
+                    record.write({
+                        'workflow_current_state_id': self.to_state_id.id,
+                        'workflow_current_stage_id': False
+                    })
+                    
+                    # Chatter'a mesaj at
+                    body = _(
+                        "<strong>✅ Tüm Aşamalar Tamamlandı - State Değişti</strong><br/>"
+                        "From: <strong>%(from)s</strong> → To: <strong>%(to)s</strong>"
+                    ) % {
+                        'from': old_state.name,
+                        'to': self.to_state_id.name
+                    }
+                    record.message_post(body=body)
+                    
+                    # Entry actions for new state
+                    record._execute_state_actions('entry')
+                    
+                    # Ana transition aksiyonlarını çalıştır (sadece stage'e bağlı olmayanlar)
+                    for action in self.action_ids:
+                        if not action.stage_id:
+                            action.execute_action(record)
+                    
+                    _logger.info(f"   ✅ Transition completed successfully")
+                else:
+                    # Henüz tamamlanmamış stage'ler var
+                    _logger.info(f"   ⏸️  Stage completed, next stage: {next_next_stage.name}")
+                    
+                    body = _(
+                        "<strong>⏳ Aşama Tamamlandı - Sonraki Aşama Bekleniyor</strong><br/>"
+                        "Tamamlanan Aşama: <strong>%(stage)s</strong><br/>"
+                        "Sonraki Aşama: <strong>%(next)s</strong>"
+                    ) % {
+                        'stage': next_stage.name,
+                        'next': next_next_stage.name
+                    }
+                    record.message_post(body=body)
+            else:
+                _logger.warning(f"   ⚠️  No next stage found!")
+                raise UserError(_("Tüm aşamalar zaten tamamlanmış."))
+        else:
+            # Stage yoksa direkt geçiş yap
+            _logger.info(f"   ℹ️  No stages defined, proceeding directly to state change")
+            _logger.info(f"   🔄 Changing state from '{old_state.name}' to '{self.to_state_id.name}'")
+            record.workflow_current_state_id = self.to_state_id
+            
+            # History kaydı oluştur (mixin'deki metodu kullan)
+            record._log_transition(self, old_state, 'completed', comment)
+            
+            # Entry actions for new state
+            record._execute_state_actions('entry')
+            
+            # Execute all transition actions
+            for action in self.action_ids:
+                action.execute_action(record)
+            
+            _logger.info(f"   ✅ Transition completed successfully")
         
         return True

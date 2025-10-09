@@ -26,6 +26,13 @@ class AkWorkflowMixin(models.AbstractModel):
         copy=False,
         help="Current state of the record in the workflow."
     )
+    workflow_current_stage_id = fields.Many2one(
+        'ak.workflow.transition.stage',
+        string='Current Stage',
+        help="Mevcut aşama (stage'li transition'lar için)",
+        tracking=True,
+        copy=False
+    )
     workflow_state = fields.Char(
         related='workflow_current_state_id.code',
         string='Workflow State Code',
@@ -154,22 +161,12 @@ class AkWorkflowMixin(models.AbstractModel):
             # Execute exit actions for the old state
             self._execute_state_actions('exit', state=old_state)
             
-            # Update the state
-            self.workflow_current_state_id = transition.to_state_id
-            
-            # Log the transition
-            self._log_transition(transition, old_state, 'completed', comment)
-            
-            # Execute entry actions for the new state
-            self._execute_state_actions('entry')
-            
-            # Execute transition actions
-            for action in transition.action_ids:
-                try:
-                    action.execute_action(self)
-                except Exception as e:
-                    _logger.error(f"Error executing action {action.name} during transition: {str(e)}")
-                    # Continue with other actions even if one fails
+            # Use transition's execute_on_record method which handles stages
+            transition.with_context(
+                active_id=self.id,
+                active_model=self._name,
+                comment=comment
+            ).execute_on_record()
             
             _logger.info(f"Transition '{transition.name}' completed successfully")
             
@@ -223,10 +220,30 @@ class AkWorkflowMixin(models.AbstractModel):
         self._compute_available_transitions()
         transitions = []
         for transition in self.workflow_available_transition_ids:
+            # Stage varsa, bir sonraki stage'in label'ını kullan
+            button_label = transition.button_label or transition.name
+            
+            # Stage kontrolü - cache'i yenile
+            transition.invalidate_recordset(['stage_ids', 'stage_count', 'has_stages'])
+            
+            _logger.info(f"Transition '{transition.name}': has_stages={transition.has_stages}, stage_count={transition.stage_count}")
+            
+            if transition.has_stages:
+                next_stage = transition.get_next_pending_stage(self)
+                _logger.info(f"  Next stage for '{transition.name}': {next_stage.name if next_stage else 'None (all completed or no stages)'}")
+                _logger.info(f"  Current state: {self.workflow_current_state_id.name} (ID: {self.workflow_current_state_id.id})")
+                if next_stage:
+                    button_label = next_stage.button_label or next_stage.name
+                    _logger.info(f"  Using stage button label: {button_label}")
+                else:
+                    _logger.info(f"  Using transition button label: {button_label}")
+            
             transitions.append({
                 'id': transition.id,
-                'name': transition.button_label or transition.name,
+                'name': button_label,
+                'button_label': button_label,
                 'button_class': transition.button_class,
+                'has_stages': transition.has_stages,
             })
         return transitions
 
