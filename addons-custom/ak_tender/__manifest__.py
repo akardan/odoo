@@ -19,7 +19,7 @@
     'category': 'Purchases',
     'version': '0.5', # Versiyon yükseltildi
     'sequence': -225,
-    'depends': ['base', 'web', 'purchase', 'stock', 'mail', 'contacts', 'product', 'portal', 'ak_workflow', 'sale'],
+    'depends': ['base', 'web', 'purchase', 'stock', 'mail', 'contacts', 'product', 'portal', 'ak_workflow', 'sale', 'product_matrix'],
     'data': [
         'security/security_groups.xml',
         'security/security_rules.xml',
@@ -30,6 +30,7 @@
         'data/economic_data.xml',
         'data/mail_templates.xml',
         'data/mail_notification_templates.xml',
+        'data/email_import_cron.xml',
         'views/tender_sequence.xml',
         'views/purchase_order_line_views.xml',
         'views/purchase_order_views.xml',
@@ -63,6 +64,8 @@
     'assets': {
         'web.assets_backend': [
             'ak_tender/static/src/css/tender.css',
+            'ak_tender/static/src/js/tender_product_field.js',
+            'ak_tender/static/src/js/tender_product_field.xml',
         ],
         'web.assets_frontend': [
             'ak_tender/static/src/js/portal_purchase_edit.js',

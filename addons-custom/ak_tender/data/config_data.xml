@@ -21,5 +21,10 @@
             <field name="key">ak_tender_npv_interest_rate</field>
             <field name="value">10.0</field>
         </record>
+        
+        <record id="ak_tender_email_password" model="ir.config_parameter">
+            <field name="key">ak_tender.email_password</field>
+            <field name="value">Ilko2019*</field>
+        </record>
     </data>
 </odoo>

@@ -54,6 +54,9 @@
                             </h1>
                             <field name="workflow_definition_id" options="{'no_create': True}" domain="[('model_name', '=', 'ak.tender')]" style="min-width: 300px; flex: 0 0 auto; max-width: 20%;"/>
                         </div>
+                        <field name="grid" invisible="1"/>
+                        <field name="grid_product_tmpl_id" invisible="1"/>
+                        <field name="grid_update" invisible="1"/>
                         <group>
                             <group>
                                 <field name="code" readonly="1"/>
@@ -98,17 +101,28 @@
                                         <field name="sequence" widget="handle"/>
                                         <field name="display_type" column_invisible="True"/>
                                         <field name="product_id"
-                                               optional="show"
+                                               widget="product_label_section_and_note_field"
+                                               readonly="0"
+                                               required="not display_type"
                                                domain="[('purchase_ok', '=', True)]"
-                                               widget="many2one"
-                                               placeholder="Type to find a product..."/>
+                                               column_invisible="1"/>
+                                        <field name="product_template_id"
+                                               string="Product"
+                                               readonly="0"
+                                               required="not display_type"
+                                               domain="[('purchase_ok', '=', True)]"
+                                               widget="tender_product_many2one"
+                                               context="{'partner_id': False}"/>
+                                        <field name="name" widget="section_and_note_text" optional="show"/>
+                                        <field name="product_template_attribute_value_ids" column_invisible="1"/>
+                                        <field name="product_no_variant_attribute_value_ids" column_invisible="1"/>
+                                        <field name="is_configurable_product" column_invisible="1"/>
                                         <field name="hotel_partner_id"
                                                optional="show"
                                                widget="many2one"
                                                options="{'no_create': True, 'no_open': True}"
                                                column_invisible="parent.tender_type != 'mice'"
                                                invisible="is_hotel_accommodation != True"/>
-                                        <field name="name"/>
                                         <field name="days" column_invisible="parent.tender_type != 'mice'" />
                                         <field name="quantity"/>
                                         <field name="uom_id"/>

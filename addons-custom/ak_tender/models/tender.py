@@ -10,6 +10,7 @@ import io
 import base64
 import subprocess
 import sys
+import json
 
 try:
     import pandas as pd
@@ -94,6 +95,29 @@ class AkTenderLine(models.Model):
     is_image1 = fields.Boolean(string="Is Image 1", compute="_compute_attachment_types")
     is_pdf1 = fields.Boolean(string="Is PDF 1", compute="_compute_attachment_types")
     is_image2 = fields.Boolean(string="Is Image 2", compute="_compute_attachment_types")
+    
+    # Product Matrix fields for variant support
+    product_template_id = fields.Many2one(
+        'product.template',
+        string='Product Template',
+        related="product_id.product_tmpl_id",
+        store=True,
+        readonly=False,
+        domain=[('purchase_ok', '=', True)]
+    )
+    is_configurable_product = fields.Boolean(
+        'Is the product configurable?', 
+        related="product_template_id.has_configurable_attributes"
+    )
+    product_template_attribute_value_ids = fields.Many2many(
+        related='product_id.product_template_attribute_value_ids', 
+        readonly=True
+    )
+    product_no_variant_attribute_value_ids = fields.Many2many(
+        'product.template.attribute.value', 
+        string='Product attribute values that do not create variants', 
+        ondelete='restrict'
+    )
     is_pdf2 = fields.Boolean(string="Is PDF 2", compute="_compute_attachment_types")
     
     @api.depends('attachment1_filename', 'attachment2_filename')
@@ -167,6 +191,10 @@ class AkTenderLine(models.Model):
                 self.name = self.product_id.description_purchase
             else:
                 self.name = self.product_id.get_product_multiline_description_sale()
+        
+        # Add variant attributes to name
+        for no_variant_attribute_value in self.product_no_variant_attribute_value_ids:
+            self.name += "\n" + no_variant_attribute_value.attribute_id.name + ': ' + no_variant_attribute_value.name
         
         # Calculate target price based on days and quantity
         if self.product_id and self.product_id.list_price:
@@ -559,6 +587,12 @@ class AkTender(models.Model):
                               help=_("İhale ile ilgili detaylı bilgiler ve şartnameler."))
     
     # İhale Kalemleri (One2many ilişki) - İhalenin temelini oluşturur
+    
+    # Product Matrix fields for variant selection
+    grid_product_tmpl_id = fields.Many2one('product.template', store=False, help="Technical field for product_matrix functionalities.")
+    grid_update = fields.Boolean(default=False, store=False, help="Whether the grid field contains a new matrix to apply or not.")
+    grid = fields.Char(store=False, help="Technical storage of grid. \nIf grid_update, will be loaded on the tender. \nIf not, represents the matrix to open.")
+    report_grids = fields.Boolean(string="Print Variant Grids", default=True, help="If set, the matrix of configurable products will be shown on the report of this tender.")
     tender_lines = fields.One2many('ak.tender.line', 'tender_id', string=_('İhale Kalemleri'), required=True)
 
     # Davetli Tedarikçiler (Many2many ilişki)
@@ -858,6 +892,110 @@ class AkTender(models.Model):
         # The workflow initialization is now correctly handled by the ak.workflow.mixin's create method.
         records = super().create(vals_list)
         return records
+
+    @api.onchange('grid_product_tmpl_id')
+    def _set_grid_up(self):
+        """Set up the grid when a product template is selected"""
+        if self.grid_product_tmpl_id:
+            self.grid_update = False
+            self.grid = json.dumps(self._get_matrix(self.grid_product_tmpl_id))
+
+    @api.onchange('grid')
+    def _apply_grid(self):
+        """Apply the grid changes to tender lines"""
+        if self.grid and self.grid_update:
+            grid = json.loads(self.grid)
+            product_template = self.env['product.template'].browse(grid['product_template_id'])
+            product_ids = set()
+            dirty_cells = grid['changes']
+            Attrib = self.env['product.template.attribute.value']
+            default_line_vals = {}
+            new_lines = []
+            
+            for cell in dirty_cells:
+                combination = Attrib.browse(cell['ptav_ids'])
+                no_variant_attribute_values = combination - combination._without_no_variant_attributes()
+
+                # create or find product variant from combination
+                product = product_template._create_product_variant(combination)
+                
+                # Find existing tender lines with this product
+                tender_lines = self.tender_lines.filtered(
+                    lambda line: (line._origin or line).product_id == product and 
+                    (line._origin or line).product_no_variant_attribute_value_ids == no_variant_attribute_values
+                )
+
+                # Calculate quantity difference
+                old_qty = sum(tender_lines.mapped('quantity'))
+                qty = cell['qty']
+                diff = qty - old_qty
+
+                if not diff:
+                    continue
+
+                product_ids.add(product.id)
+
+                if tender_lines:
+                    if qty == 0:
+                        # Remove lines if qty was set to 0 in matrix
+                        self.tender_lines -= tender_lines
+                    else:
+                        if len(tender_lines) > 1:
+                            raise ValidationError(_("You cannot change the quantity of a product present in multiple tender lines."))
+                        else:
+                            tender_lines[0].quantity = qty
+                else:
+                    if not default_line_vals:
+                        TenderLine = self.env['ak.tender.line']
+                        default_line_vals = TenderLine.default_get(TenderLine._fields.keys())
+                    
+                    last_sequence = self.tender_lines[-1:].sequence
+                    if last_sequence:
+                        default_line_vals['sequence'] = last_sequence
+                    
+                    # Prepare product description with variant attributes
+                    product_name = product.display_name
+                    for no_variant_attribute_value in no_variant_attribute_values:
+                        product_name += "\n" + no_variant_attribute_value.attribute_id.name + ': ' + no_variant_attribute_value.name
+                    
+                    new_lines.append((0, 0, dict(
+                        default_line_vals,
+                        product_id=product.id,
+                        name=product_name,
+                        quantity=qty,
+                        product_no_variant_attribute_value_ids=no_variant_attribute_values.ids)
+                    ))
+            
+            if product_ids:
+                if new_lines:
+                    # Add new tender lines
+                    self.update(dict(tender_lines=new_lines))
+
+    def _get_matrix(self, product_template):
+        """Get the matrix for a product template"""
+        def has_ptavs(line, sorted_attr_ids):
+            ptav = line.product_template_attribute_value_ids.ids
+            pnav = line.product_no_variant_attribute_value_ids.ids
+            pav = pnav + ptav
+            pav.sort()
+            return pav == sorted_attr_ids
+        
+        matrix = product_template._get_template_matrix(
+            company_id=self.company_id,
+            currency_id=self.currency_id)
+        
+        if self.tender_lines:
+            lines = matrix['matrix']
+            tender_lines = self.tender_lines.filtered(lambda line: line.product_template_id == product_template)
+            for line in lines:
+                for cell in line:
+                    if not cell.get('name', False):
+                        line = tender_lines.filtered(lambda line: has_ptavs(line, cell['ptav_ids']))
+                        if line:
+                            cell.update({
+                                'qty': sum(line.mapped('quantity'))
+                            })
+        return matrix
         
     def increment_tender_round(self):
         """

@@ -805,56 +805,110 @@ class SatImportWizard(models.TransientModel):
 
     @api.model
     def import_sat_from_email(self):
-        """Email kutusundan SAT dosyalarını oku ve import et"""
+        """
+        Email kutusundan SAT dosyalarını oku ve import et
+        
+        İlkoisdata@ilko.com.tr email kutusunu kontrol eder ve
+        "ME5A Günlük Rapor Sonuçları" konulu yeni gelen mailleri bulur.
+        Ekindeki "ME5A Günlük Rapor Sonuçları.ZIP" isimli dosyayı alır ve
+        import işlemine sanki dosyayı kullanıcı yüklemiş gibi devam eder.
+        """
         stats = {'sat': {'processed': 0, 'created': 0, 'updated': 0, 'skipped': 0, 'errors': 0}}
+        processed_emails = 0
         
         try:
-            # Email bağlantı bilgileri
-            email_host = 'mail.ilko.com.tr'
+            # Email bağlantı bilgileri - Office 365
+            email_host = 'outlook.office365.com'
             email_user = 'ilkoisdata@ilko.com.tr'
             email_pass = self.env['ir.config_parameter'].sudo().get_param('ak_tender.email_password', '')
             
             if not email_pass:
-                _logger.error("Email şifresi ayarlanmamış")
+                _logger.error("Email şifresi ayarlanmamış. Lütfen ak_tender.email_password parametresini ayarlayın.")
                 return stats
+            
+            _logger.info(f"Email bağlantısı kuruluyor: {email_user}@{email_host}")
             
             # IMAP bağlantısı
             mail = imaplib.IMAP4_SSL(email_host)
             mail.login(email_user, email_pass)
             mail.select('inbox')
             
-            # Bugünün emaillerini ara
-            today = datetime.now().strftime('%d-%b-%Y')
-            result, data = mail.search(None, f'(SINCE "{today}")')
+            _logger.info("Email kutusuna bağlanıldı, okunmamış emailler aranıyor...")
+            
+            # Okunmamış ve "ME5A Günlük Rapor Sonuçları" konulu emailleri ara
+            # UNSEEN: okunmamış emailler
+            # SUBJECT: konu içeren emailler
+            result, data = mail.search(None, '(UNSEEN SUBJECT "ME5A Günlük Rapor Sonuçları")')
             
             if result != 'OK':
                 _logger.error("Email arama hatası")
+                mail.close()
+                mail.logout()
                 return stats
             
             email_ids = data[0].split()
-            _logger.info(f"{len(email_ids)} email bulundu")
+            _logger.info(f"{len(email_ids)} adet okunmamış 'ME5A Günlük Rapor Sonuçları' konulu email bulundu")
             
+            if not email_ids:
+                _logger.info("İşlenecek yeni email bulunamadı")
+                mail.close()
+                mail.logout()
+                return stats
+            
+            # Her bir emaili işle
             for email_id in email_ids:
                 try:
+                    _logger.info(f"Email işleniyor: ID={email_id.decode()}")
+                    
                     # Email içeriğini al
                     result, data = mail.fetch(email_id, '(RFC822)')
                     if result != 'OK':
+                        _logger.warning(f"Email alınamadı: ID={email_id.decode()}")
                         continue
                     
                     raw_email = data[0][1]
                     email_message = email.message_from_bytes(raw_email)
                     
+                    # Email konusunu kontrol et
+                    subject = email_message.get('Subject', '')
+                    _logger.info(f"Email konusu: {subject}")
+                    
+                    # Gönderen bilgisi
+                    from_addr = email_message.get('From', '')
+                    _logger.info(f"Gönderen: {from_addr}")
+                    
+                    # Tarih bilgisi
+                    date_str = email_message.get('Date', '')
+                    _logger.info(f"Tarih: {date_str}")
+                    
                     # Ekleri kontrol et
+                    attachment_found = False
                     for part in email_message.walk():
                         if part.get_content_disposition() == 'attachment':
                             filename = part.get_filename()
-                            if filename and any(filename.lower().endswith(ext) for ext in ['.xlsx', '.xls', '.xml', '.zip']):
-                                _logger.info(f"Excel eki bulundu: {filename}")
+                            
+                            if not filename:
+                                continue
+                            
+                            _logger.info(f"Ek dosya bulundu: {filename}")
+                            
+                            # "ME5A Günlük Rapor Sonuçları.ZIP" dosyasını ara
+                            # Büyük/küçük harf duyarsız karşılaştırma
+                            if filename.lower() == 'me5a günlük rapor sonuçları.zip':
+                                _logger.info(f"Hedef ZIP dosyası bulundu: {filename}")
+                                attachment_found = True
                                 
                                 # Dosya içeriğini al
                                 file_data = part.get_payload(decode=True)
                                 
+                                if not file_data:
+                                    _logger.error(f"Dosya içeriği alınamadı: {filename}")
+                                    continue
+                                
+                                _logger.info(f"Dosya boyutu: {len(file_data)} bytes")
+                                
                                 # Import et
+                                _logger.info(f"Import işlemi başlatılıyor: {filename}")
                                 file_stats = self.import_sat_from_file(
                                     file_data=file_data,
                                     file_name=filename,
@@ -866,19 +920,33 @@ class SatImportWizard(models.TransientModel):
                                 for key in stats['sat']:
                                     stats['sat'][key] += file_stats['sat'][key]
                                 
-                                # Emaili işaretli olarak işaretle
+                                _logger.info(f"Dosya import edildi: {filename}, İstatistikler: {file_stats}")
+                                
+                                # Emaili okundu olarak işaretle
                                 mail.store(email_id, '+FLAGS', '\\Seen')
+                                _logger.info(f"Email okundu olarak işaretlendi: ID={email_id.decode()}")
+                                
+                                processed_emails += 1
+                                break  # Bu emaildeki diğer ekleri kontrol etmeye gerek yok
+                    
+                    if not attachment_found:
+                        _logger.warning(f"Email'de 'ME5A Günlük Rapor Sonuçları.ZIP' dosyası bulunamadı: ID={email_id.decode()}")
+                        # Yine de okundu olarak işaretle ki bir daha işlenmesin
+                        mail.store(email_id, '+FLAGS', '\\Seen')
                                 
                 except Exception as e:
-                    _logger.error(f"Email işleme hatası: {str(e)}")
+                    _logger.error(f"Email işleme hatası: ID={email_id.decode() if email_id else 'unknown'}, Hata: {str(e)}", exc_info=True)
                     stats['sat']['errors'] += 1
             
             mail.close()
             mail.logout()
             
-            _logger.info(f"Email import tamamlandı: {stats}")
+            _logger.info(f"Email import tamamlandı. İşlenen email sayısı: {processed_emails}, İstatistikler: {stats}")
             return stats
             
+        except imaplib.IMAP4.error as e:
+            _logger.error(f"IMAP bağlantı hatası: {str(e)}", exc_info=True)
+            return stats
         except Exception as e:
             _logger.error(f"Email import hatası: {str(e)}", exc_info=True)
             return stats
