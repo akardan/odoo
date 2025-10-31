@@ -39,5 +39,46 @@
              parent="menu_ak_tender_configuration"
              action="action_import_sat_wizard"
              sequence="20"/>
+   
+   <!-- İhale Tipi Kuralları Menü Grubu -->
+   <menuitem id="menu_tender_type_rules"
+             name="İhale Tipi Kuralları"
+             parent="menu_ak_tender_configuration"
+             sequence="40"/>
+   
+   <!-- İhale Tipi Matrisi -->
+   <menuitem id="menu_tender_type_matrix"
+             name="İhale Tipi Matrisi"
+             parent="menu_tender_type_rules"
+             action="action_tender_type_matrix"
+             sequence="1"/>
+   
+   <!-- Özel Kurallar -->
+   <menuitem id="menu_tender_type_special_rule"
+             name="Özel Kurallar"
+             parent="menu_tender_type_rules"
+             action="action_tender_type_special_rule"
+             sequence="10"/>
+   
+   <!-- Satınalma Grupları -->
+   <menuitem id="menu_tender_type_purchasing_group"
+             name="Satınalma Grupları"
+             parent="menu_tender_type_rules"
+             action="action_tender_type_purchasing_group"
+             sequence="20"/>
+   
+   <!-- Malzeme Grupları -->
+   <menuitem id="menu_tender_type_material_group"
+             name="Malzeme Grupları"
+             parent="menu_tender_type_rules"
+             action="action_tender_type_material_group"
+             sequence="30"/>
+   
+   <!-- Üretim Yerleri -->
+   <menuitem id="menu_tender_type_production_location"
+             name="Üretim Yerleri"
+             parent="menu_tender_type_rules"
+             action="action_tender_type_production_location"
+             sequence="40"/>
              
 </odoo>

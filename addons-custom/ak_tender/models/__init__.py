@@ -12,3 +12,4 @@ from . import tier_definition
 from . import set_target_price_wizard
 from . import economic_data
 from . import email_import
+from . import tender_type_rule

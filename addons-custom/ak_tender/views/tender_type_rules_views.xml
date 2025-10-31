@@ -1,0 +1,472 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    
+    <!-- ============================================ -->
+    <!-- MALZEME GRUPLARI (Material Groups)          -->
+    <!-- ============================================ -->
+    
+    <!-- Tree View -->
+    <record id="view_tender_type_material_group_tree" model="ir.ui.view">
+        <field name="name">tender.type.material.group.tree</field>
+        <field name="model">tender.type.material.group</field>
+        <field name="arch" type="xml">
+            <tree string="Material Groups" decoration-muted="not active">
+                <field name="code"/>
+                <field name="name"/>
+                <field name="code_prefix"/>
+                <field name="default_tender_type"/>
+                <field name="active" widget="boolean_toggle"/>
+            </tree>
+        </field>
+    </record>
+    
+    <!-- Form View -->
+    <record id="view_tender_type_material_group_form" model="ir.ui.view">
+        <field name="name">tender.type.material.group.form</field>
+        <field name="model">tender.type.material.group</field>
+        <field name="arch" type="xml">
+            <form string="Material Group">
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <widget name="web_ribbon" title="Archived" bg_color="text-bg-danger" invisible="active"/>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="active" invisible="1"/>
+                            <field name="code"/>
+                            <field name="name"/>
+                            <field name="code_prefix"/>
+                        </group>
+                        <group>
+                            <field name="default_tender_type"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="description" placeholder="Açıklama..."/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+    
+    <!-- Search View -->
+    <record id="view_tender_type_material_group_search" model="ir.ui.view">
+        <field name="name">tender.type.material.group.search</field>
+        <field name="model">tender.type.material.group</field>
+        <field name="arch" type="xml">
+            <search string="Material Groups">
+                <field name="code"/>
+                <field name="name"/>
+                <field name="code_prefix"/>
+                <filter string="Active" name="active" domain="[('active', '=', True)]"/>
+                <filter string="Archived" name="inactive" domain="[('active', '=', False)]"/>
+                <separator/>
+                <filter string="Direct" name="direct" domain="[('default_tender_type', '=', 'direct')]"/>
+                <filter string="Indirect" name="indirect" domain="[('default_tender_type', '=', 'indirect')]"/>
+                <filter string="Promotion" name="promotion" domain="[('default_tender_type', '=', 'promotion')]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Tender Type" name="group_tender_type" context="{'group_by': 'default_tender_type'}"/>
+                    <filter string="Code Prefix" name="group_code_prefix" context="{'group_by': 'code_prefix'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+    
+    <!-- Action -->
+    <record id="action_tender_type_material_group" model="ir.actions.act_window">
+        <field name="name">Material Groups</field>
+        <field name="res_model">tender.type.material.group</field>
+        <field name="view_mode">tree,form</field>
+        <field name="context">{'search_default_active': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Malzeme Grubu Tanımla
+            </p>
+            <p>
+                SAP malzeme gruplarını ve varsayılan ihale tiplerini tanımlayın.
+            </p>
+        </field>
+    </record>
+    
+    <!-- ============================================ -->
+    <!-- SATINALMA GRUPLARI (Purchasing Groups)      -->
+    <!-- ============================================ -->
+    
+    <!-- Tree View -->
+    <record id="view_tender_type_purchasing_group_tree" model="ir.ui.view">
+        <field name="name">tender.type.purchasing.group.tree</field>
+        <field name="model">tender.type.purchasing.group</field>
+        <field name="arch" type="xml">
+            <tree string="Purchasing Groups" decoration-muted="not active">
+                <field name="code"/>
+                <field name="name"/>
+                <field name="tender_type"/>
+                <field name="responsible_names"/>
+                <field name="active" widget="boolean_toggle"/>
+            </tree>
+        </field>
+    </record>
+    
+    <!-- Form View -->
+    <record id="view_tender_type_purchasing_group_form" model="ir.ui.view">
+        <field name="name">tender.type.purchasing.group.form</field>
+        <field name="model">tender.type.purchasing.group</field>
+        <field name="arch" type="xml">
+            <form string="Purchasing Group">
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <widget name="web_ribbon" title="Archived" bg_color="text-bg-danger" invisible="active"/>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="active" invisible="1"/>
+                            <field name="code"/>
+                            <field name="name"/>
+                        </group>
+                        <group>
+                            <field name="tender_type"/>
+                            <field name="responsible_names"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="description" placeholder="Açıklama..."/>
+                    </group>
+                    <group string="Responsible Users">
+                        <field name="responsible_user_ids" widget="many2many_tags" nolabel="1"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+    
+    <!-- Search View -->
+    <record id="view_tender_type_purchasing_group_search" model="ir.ui.view">
+        <field name="name">tender.type.purchasing.group.search</field>
+        <field name="model">tender.type.purchasing.group</field>
+        <field name="arch" type="xml">
+            <search string="Purchasing Groups">
+                <field name="code"/>
+                <field name="name"/>
+                <field name="responsible_names"/>
+                <filter string="Active" name="active" domain="[('active', '=', True)]"/>
+                <filter string="Archived" name="inactive" domain="[('active', '=', False)]"/>
+                <separator/>
+                <filter string="Direct" name="direct" domain="[('tender_type', '=', 'direct')]"/>
+                <filter string="Indirect" name="indirect" domain="[('tender_type', '=', 'indirect')]"/>
+                <filter string="Promotion" name="promotion" domain="[('tender_type', '=', 'promotion')]"/>
+                <filter string="MICE" name="mice" domain="[('tender_type', '=', 'mice')]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Tender Type" name="group_tender_type" context="{'group_by': 'tender_type'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+    
+    <!-- Action -->
+    <record id="action_tender_type_purchasing_group" model="ir.actions.act_window">
+        <field name="name">Purchasing Groups</field>
+        <field name="res_model">tender.type.purchasing.group</field>
+        <field name="view_mode">tree,form</field>
+        <field name="context">{'search_default_active': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Satınalma Grubu Tanımla
+            </p>
+            <p>
+                SAP satınalma gruplarını ve ihale tiplerini tanımlayın.
+            </p>
+        </field>
+    </record>
+    
+    <!-- ============================================ -->
+    <!-- ÖZEL KURALLAR (Special Rules)               -->
+    <!-- ============================================ -->
+    
+    <!-- Tree View -->
+    <record id="view_tender_type_special_rule_tree" model="ir.ui.view">
+        <field name="name">tender.type.special.rule.tree</field>
+        <field name="model">tender.type.special.rule</field>
+        <field name="arch" type="xml">
+            <tree string="Special Rules" decoration-muted="not active">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="material_group_prefix"/>
+                <field name="purchasing_group_code"/>
+                <field name="tender_type"/>
+                <field name="responsible_names"/>
+                <field name="active" widget="boolean_toggle"/>
+            </tree>
+        </field>
+    </record>
+    
+    <!-- Form View -->
+    <record id="view_tender_type_special_rule_form" model="ir.ui.view">
+        <field name="name">tender.type.special.rule.form</field>
+        <field name="model">tender.type.special.rule</field>
+        <field name="arch" type="xml">
+            <form string="Special Rule">
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <widget name="web_ribbon" title="Archived" bg_color="text-bg-danger" invisible="active"/>
+                    </div>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" placeholder="Kural Adı..."/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="active" invisible="1"/>
+                            <field name="sequence"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Conditions" name="conditions">
+                            <group>
+                                <group string="Material Group">
+                                    <field name="material_group_prefix" placeholder="e.g., 6, 9"/>
+                                    <div class="text-muted">
+                                        Malzeme grubu bu değerle başlıyorsa kural uygulanır
+                                    </div>
+                                </group>
+                                <group string="Purchasing Group">
+                                    <field name="purchasing_group_code" placeholder="e.g., 110, 114"/>
+                                    <div class="text-muted">
+                                        Satınalma grubu bu değere eşitse kural uygulanır
+                                    </div>
+                                </group>
+                            </group>
+                            <div class="alert alert-info" role="alert">
+                                <strong>Not:</strong> En az bir koşul belirtilmelidir. Her iki koşul da belirtilirse, ikisi de sağlanmalıdır.
+                            </div>
+                        </page>
+                        <page string="Result" name="result">
+                            <group>
+                                <group>
+                                    <field name="tender_type"/>
+                                    <field name="responsible_names"/>
+                                </group>
+                            </group>
+                            <group>
+                                <field name="notes" placeholder="Kural açıklaması..."/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+    
+    <!-- Search View -->
+    <record id="view_tender_type_special_rule_search" model="ir.ui.view">
+        <field name="name">tender.type.special.rule.search</field>
+        <field name="model">tender.type.special.rule</field>
+        <field name="arch" type="xml">
+            <search string="Special Rules">
+                <field name="name"/>
+                <field name="material_group_prefix"/>
+                <field name="purchasing_group_code"/>
+                <filter string="Active" name="active" domain="[('active', '=', True)]"/>
+                <filter string="Archived" name="inactive" domain="[('active', '=', False)]"/>
+                <separator/>
+                <filter string="Direct" name="direct" domain="[('tender_type', '=', 'direct')]"/>
+                <filter string="Indirect" name="indirect" domain="[('tender_type', '=', 'indirect')]"/>
+                <filter string="Promotion" name="promotion" domain="[('tender_type', '=', 'promotion')]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Tender Type" name="group_tender_type" context="{'group_by': 'tender_type'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+    
+    <!-- Action -->
+    <record id="action_tender_type_special_rule" model="ir.actions.act_window">
+        <field name="name">Special Rules</field>
+        <field name="res_model">tender.type.special.rule</field>
+        <field name="view_mode">tree,form</field>
+        <field name="context">{'search_default_active': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Özel Kural Tanımla
+            </p>
+            <p>
+                İstisna durumlar için özel kurallar tanımlayın (örn: 6XXX hizmet alımları, 9XXX yedek parçalar).
+            </p>
+        </field>
+    </record>
+    
+    <!-- ============================================ -->
+    <!-- ÜRETİM YERLERİ (Production Locations)       -->
+    <!-- ============================================ -->
+    
+    <!-- Tree View -->
+    <record id="view_tender_type_production_location_tree" model="ir.ui.view">
+        <field name="name">tender.type.production.location.tree</field>
+        <field name="model">tender.type.production.location</field>
+        <field name="arch" type="xml">
+            <tree string="Production Locations" decoration-muted="not active">
+                <field name="code"/>
+                <field name="name"/>
+                <field name="default_tender_type"/>
+                <field name="active" widget="boolean_toggle"/>
+            </tree>
+        </field>
+    </record>
+    
+    <!-- Form View -->
+    <record id="view_tender_type_production_location_form" model="ir.ui.view">
+        <field name="name">tender.type.production.location.form</field>
+        <field name="model">tender.type.production.location</field>
+        <field name="arch" type="xml">
+            <form string="Production Location">
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <widget name="web_ribbon" title="Archived" bg_color="text-bg-danger" invisible="active"/>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="active" invisible="1"/>
+                            <field name="code"/>
+                            <field name="name"/>
+                        </group>
+                        <group>
+                            <field name="default_tender_type"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="description" placeholder="Açıklama..."/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+    
+    <!-- Search View -->
+    <record id="view_tender_type_production_location_search" model="ir.ui.view">
+        <field name="name">tender.type.production.location.search</field>
+        <field name="model">tender.type.production.location</field>
+        <field name="arch" type="xml">
+            <search string="Production Locations">
+                <field name="code"/>
+                <field name="name"/>
+                <filter string="Active" name="active" domain="[('active', '=', True)]"/>
+                <filter string="Archived" name="inactive" domain="[('active', '=', False)]"/>
+                <separator/>
+                <filter string="Direct" name="direct" domain="[('default_tender_type', '=', 'direct')]"/>
+                <filter string="Indirect" name="indirect" domain="[('default_tender_type', '=', 'indirect')]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Tender Type" name="group_tender_type" context="{'group_by': 'default_tender_type'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+    
+    <!-- Action -->
+    <record id="action_tender_type_production_location" model="ir.actions.act_window">
+        <field name="name">Production Locations</field>
+        <field name="res_model">tender.type.production.location</field>
+        <field name="view_mode">tree,form</field>
+        <field name="context">{'search_default_active': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Üretim Yeri Tanımla
+            </p>
+            <p>
+                SAP üretim yerlerini ve varsayılan ihale tiplerini tanımlayın.
+            </p>
+        </field>
+    </record>
+    
+    <!-- ============================================ -->
+    <!-- TENDER TYPE MATRIX (Dashboard)              -->
+    <!-- ============================================ -->
+    
+    <!-- Form View -->
+    <record id="view_tender_type_matrix_form" model="ir.ui.view">
+        <field name="name">tender.type.matrix.form</field>
+        <field name="model">tender.type.matrix</field>
+        <field name="arch" type="xml">
+            <form string="Tender Type Matrix" create="false" delete="false">
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" readonly="1"/>
+                        </h1>
+                    </div>
+                    <div class="alert alert-info" role="alert">
+                        <strong>İhale Tipi Belirleme Öncelik Sırası:</strong>
+                        <ol>
+                            <li>Özel Kurallar (6XXX ve 9XXX için)</li>
+                            <li>Satınalma Grubu</li>
+                            <li>Malzeme Grubu</li>
+                            <li>Üretim Yeri</li>
+                            <li>Varsayılan (indirect)</li>
+                        </ol>
+                    </div>
+                    <notebook>
+                        <page string="Special Rules" name="special_rules">
+                            <field name="special_rule_ids" nolabel="1">
+                                <tree>
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="name"/>
+                                    <field name="material_group_prefix"/>
+                                    <field name="purchasing_group_code"/>
+                                    <field name="tender_type"/>
+                                    <field name="active" widget="boolean_toggle"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Purchasing Groups" name="purchasing_groups">
+                            <field name="purchasing_group_ids" nolabel="1">
+                                <tree>
+                                    <field name="code"/>
+                                    <field name="name"/>
+                                    <field name="tender_type"/>
+                                    <field name="responsible_names"/>
+                                    <field name="active" widget="boolean_toggle"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Material Groups" name="material_groups">
+                            <field name="material_group_ids" nolabel="1">
+                                <tree>
+                                    <field name="code"/>
+                                    <field name="name"/>
+                                    <field name="default_tender_type"/>
+                                    <field name="active" widget="boolean_toggle"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Production Locations" name="production_locations">
+                            <field name="production_location_ids" nolabel="1">
+                                <tree>
+                                    <field name="code"/>
+                                    <field name="name"/>
+                                    <field name="default_tender_type"/>
+                                    <field name="active" widget="boolean_toggle"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+    
+    <!-- Action -->
+    <record id="action_tender_type_matrix" model="ir.actions.act_window">
+        <field name="name">Tender Type Matrix</field>
+        <field name="res_model">tender.type.matrix</field>
+        <field name="view_mode">form</field>
+        <field name="target">current</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                İhale Tipi Belirleme Matrisi
+            </p>
+            <p>
+                Tüm kuralları tek bir ekranda görüntüleyin ve yönetin.
+            </p>
+        </field>
+    </record>
+    
+</odoo>

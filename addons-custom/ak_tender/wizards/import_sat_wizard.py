@@ -22,6 +22,13 @@ try:
 except ImportError:
     pd = None
 
+try:
+    import msal
+    import requests
+except ImportError:
+    msal = None
+    requests = None
+
 def _install_pandas():
     global pd
     if pd:
@@ -34,6 +41,24 @@ def _install_pandas():
         return True
     except Exception as e:
         _logger.error(f"pandas kurulum hatası: {str(e)}")
+        return False
+
+def _install_msal_and_requests():
+    """Microsoft OAuth2 için gerekli kütüphaneleri yükle"""
+    global msal, requests
+    if msal and requests:
+        return True
+    import subprocess
+    import sys
+    try:
+        _logger.info("msal ve requests kütüphaneleri yükleniyor...")
+        subprocess.check_call([sys.executable, '-m', 'pip', 'install', 'msal', 'requests'])
+        import msal
+        import requests
+        _logger.info("msal ve requests başarıyla yüklendi")
+        return True
+    except Exception as e:
+        _logger.error(f"msal/requests kurulum hatası: {str(e)}")
         return False
 
 
@@ -491,47 +516,42 @@ class SatImportWizard(models.TransientModel):
             'tender_type': 'direct',  # Varsayılan olarak direkt satın alma
         }
         
-        # Öncelikle mal grubuna göre tender_type belirle
-        material_group = data.get('material_group')
-        if material_group:
-            # Etken Madde, Yardımcı Madde, Pellet Etken Madde
-            if material_group.startswith('1000'):
-                vals['tender_type'] = 'direct'
-            # Granül/Bulk, Tablet/kapsül, Kaplı Tablet, vb.
-            elif material_group.startswith('2000'):
-                vals['tender_type'] = 'direct'
-            # Katı Ürünler, Likit Ürünler, vb.
-            elif material_group.startswith('3000'):
-                vals['tender_type'] = 'direct'
-            # PVC, Alüminyum Folyo, Şişe, vb.
-            elif material_group.startswith('4000'):
-                vals['tender_type'] = 'direct'
-            # Promosyon
-            elif material_group.startswith('5000'):
-                vals['tender_type'] = 'promotion'
-            # Fason İşçilik, Laboratuar Test, Eğitim-Danışmanlık, vb.
-            elif material_group.startswith('6000'):
-                vals['tender_type'] = 'indirect'
-            # Tanıtım Numuneleri, Tanıtım Malzemeleri
-            elif material_group.startswith('7000'):
-                vals['tender_type'] = 'promotion'
-            # Satış Hizmet
-            elif material_group.startswith('8000'):
-                vals['tender_type'] = 'indirect'
-            # Demirbaş, Yedek Parça, vb.
-            elif material_group.startswith('9000'):
-                vals['tender_type'] = 'indirect'
+        # Model-based tender type determination
+        # Use the tender.type.matrix model to determine tender type
+        matrix_model = self.env['tender.type.matrix']
         
-        # Mal grubu belirlenemezse, üretim yerine göre tender_type belirle
-        if not material_group:
-            production_location = data.get('production_location')
-            if production_location:
-                if production_location == '2100':  # İlko
-                    vals['tender_type'] = 'direct'
-                elif production_location == '2000':  # Merkez
-                    vals['tender_type'] = 'indirect'
-                elif production_location == '1100':  # İlkopol
-                    vals['tender_type'] = 'indirect'
+        material_group = data.get('material_group')
+        purchasing_group = data.get('purchasing_group')
+        production_location = data.get('production_location')
+        
+        # Determine tender type using the matrix model
+        result = matrix_model.determine_tender_type(
+            material_group=material_group,
+            purchasing_group=purchasing_group,
+            production_location=production_location
+        )
+        
+        # Set tender type from result
+        vals['tender_type'] = result.get('tender_type', 'indirect')
+        
+        # Log the decision for debugging
+        _logger.info(
+            "Tender type determined: %s (Source: %s) for SAT: %s, MG: %s, PG: %s, PL: %s",
+            result.get('tender_type'),
+            result.get('decision_source'),
+            data.get('sat_number'),
+            material_group,
+            purchasing_group,
+            production_location
+        )
+        
+        # Add notes if available
+        if result.get('notes'):
+            notes = '\n'.join(result.get('notes', []))
+            if vals.get('description'):
+                vals['description'] += f"\n\n[Tender Type Decision]\n{notes}"
+            else:
+                vals['description'] = f"[Tender Type Decision]\n{notes}"
         
         return vals
 
@@ -803,153 +823,237 @@ class SatImportWizard(models.TransientModel):
             }
         }
 
+    def _get_microsoft_access_token(self):
+        """
+        Microsoft Graph API için OAuth2 access token al
+        
+        Microsoft Entra (Azure AD) üzerinden OAuth2 authentication kullanarak
+        access token alır. Basic authentication yerine modern OAuth2 kullanır.
+        """
+        if not msal and not _install_msal_and_requests():
+            raise UserError(_('msal kütüphanesi yüklenemedi. Lütfen manuel olarak "pip install msal requests" komutunu çalıştırın.'))
+        
+        # Azure AD credentials - System parameters'dan al
+        client_id = self.env['ir.config_parameter'].sudo().get_param('ak_tender.azure_client_id', '')
+        client_secret = self.env['ir.config_parameter'].sudo().get_param('ak_tender.azure_client_secret', '')
+        tenant_id = self.env['ir.config_parameter'].sudo().get_param('ak_tender.azure_tenant_id', '')
+        
+        if not all([client_id, client_secret, tenant_id]):
+            raise UserError(_(
+                'Azure AD credentials eksik. Lütfen aşağıdaki system parameters\'ı ayarlayın:\n'
+                '- ak_tender.azure_client_id\n'
+                '- ak_tender.azure_client_secret\n'
+                '- ak_tender.azure_tenant_id'
+            ))
+        
+        _logger.info(f"Microsoft OAuth2 token alınıyor - Tenant: {tenant_id}")
+        
+        # MSAL authority URL
+        authority = f"https://login.microsoftonline.com/{tenant_id}"
+        
+        # Scopes - Microsoft Graph API için
+        scopes = ["https://graph.microsoft.com/.default"]
+        
+        try:
+            # Confidential client application oluştur
+            app = msal.ConfidentialClientApplication(
+                client_id=client_id,
+                client_credential=client_secret,
+                authority=authority
+            )
+            
+            # Access token al (client credentials flow)
+            result = app.acquire_token_for_client(scopes=scopes)
+            
+            if "access_token" in result:
+                _logger.info("Microsoft OAuth2 token başarıyla alındı")
+                return result["access_token"]
+            else:
+                error_msg = result.get("error_description", result.get("error", "Bilinmeyen hata"))
+                _logger.error(f"Token alınamadı: {error_msg}")
+                raise UserError(_(f"Microsoft OAuth2 token alınamadı: {error_msg}"))
+                
+        except Exception as e:
+            _logger.error(f"OAuth2 token alma hatası: {str(e)}", exc_info=True)
+            raise UserError(_(f"OAuth2 authentication hatası: {str(e)}"))
+
     @api.model
     def import_sat_from_email(self):
         """
         Email kutusundan SAT dosyalarını oku ve import et
         
-        İlkoisdata@ilko.com.tr email kutusunu kontrol eder ve
-        "ME5A Günlük Rapor Sonuçları" konulu yeni gelen mailleri bulur.
-        Ekindeki "ME5A Günlük Rapor Sonuçları.ZIP" isimli dosyayı alır ve
-        import işlemine sanki dosyayı kullanıcı yüklemiş gibi devam eder.
+        Microsoft Graph API ve OAuth2 kullanarak ilkoisdata@ilko.com.tr
+        email kutusunu kontrol eder ve "ME5A Günlük Rapor Sonuçları" konulu
+        yeni gelen mailleri bulur. Ekindeki "ME5A Günlük Rapor Sonuçları.ZIP"
+        isimli dosyayı alır ve import işlemine devam eder.
+        
+        NOT: Microsoft'un "Improving Security" kapsamında Basic Authentication
+        devre dışı bırakılmıştır. Bu nedenle OAuth2 kullanılması zorunludur.
         """
+        if not (msal and requests) and not _install_msal_and_requests():
+            raise UserError(_('msal ve requests kütüphaneleri yüklenemedi. Lütfen manuel olarak "pip install msal requests" komutunu çalıştırın.'))
+        
         stats = {'sat': {'processed': 0, 'created': 0, 'updated': 0, 'skipped': 0, 'errors': 0}}
         processed_emails = 0
         
         try:
-            # Email bağlantı bilgileri - Office 365
-            email_host = 'outlook.office365.com'
-            email_user = 'ilkoisdata@ilko.com.tr'
-            email_pass = self.env['ir.config_parameter'].sudo().get_param('ak_tender.email_password', '')
+            # OAuth2 access token al
+            access_token = self._get_microsoft_access_token()
             
-            if not email_pass:
-                _logger.error("Email şifresi ayarlanmamış. Lütfen ak_tender.email_password parametresini ayarlayın.")
-                return stats
+            # Email kullanıcısı
+            email_user = self.env['ir.config_parameter'].sudo().get_param(
+                'ak_tender.email_user',
+                'ilkoisdata@ilko.com.tr'
+            )
             
-            _logger.info(f"Email bağlantısı kuruluyor: {email_user}@{email_host}")
+            _logger.info(f"Microsoft Graph API ile email okunuyor: {email_user}")
             
-            # IMAP bağlantısı
-            mail = imaplib.IMAP4_SSL(email_host)
-            mail.login(email_user, email_pass)
-            mail.select('inbox')
+            # Microsoft Graph API endpoint
+            graph_url = f"https://graph.microsoft.com/v1.0/users/{email_user}/messages"
             
-            _logger.info("Email kutusuna bağlanıldı, okunmamış emailler aranıyor...")
+            # Headers
+            headers = {
+                'Authorization': f'Bearer {access_token}',
+                'Content-Type': 'application/json'
+            }
             
             # Okunmamış ve "ME5A Günlük Rapor Sonuçları" konulu emailleri ara
-            # UNSEEN: okunmamış emailler
-            # SUBJECT: konu içeren emailler
-            result, data = mail.search(None, '(UNSEEN SUBJECT "ME5A Günlük Rapor Sonuçları")')
+            # $filter: OData query syntax kullanarak filtreleme
+            # isRead eq false: okunmamış emailler
+            # contains(subject, '...'): konu içeren emailler
+            params = {
+                '$filter': "isRead eq false and contains(subject, 'ME5A Günlük Rapor Sonuçları')",
+                '$select': 'id,subject,from,receivedDateTime,hasAttachments',
+                '$orderby': 'receivedDateTime desc',
+                '$top': 50  # Son 50 email
+            }
             
-            if result != 'OK':
-                _logger.error("Email arama hatası")
-                mail.close()
-                mail.logout()
-                return stats
+            _logger.info("Okunmamış emailler aranıyor...")
+            response = requests.get(graph_url, headers=headers, params=params)
             
-            email_ids = data[0].split()
-            _logger.info(f"{len(email_ids)} adet okunmamış 'ME5A Günlük Rapor Sonuçları' konulu email bulundu")
+            if response.status_code != 200:
+                _logger.error(f"Email listesi alınamadı: {response.status_code} - {response.text}")
+                raise UserError(_(f"Email listesi alınamadı: {response.status_code}"))
             
-            if not email_ids:
+            messages = response.json().get('value', [])
+            _logger.info(f"{len(messages)} adet okunmamış 'ME5A Günlük Rapor Sonuçları' konulu email bulundu")
+            
+            if not messages:
                 _logger.info("İşlenecek yeni email bulunamadı")
-                mail.close()
-                mail.logout()
                 return stats
             
             # Her bir emaili işle
-            for email_id in email_ids:
+            for message in messages:
                 try:
-                    _logger.info(f"Email işleniyor: ID={email_id.decode()}")
+                    message_id = message.get('id')
+                    subject = message.get('subject', '')
+                    from_addr = message.get('from', {}).get('emailAddress', {}).get('address', '')
+                    received_date = message.get('receivedDateTime', '')
+                    has_attachments = message.get('hasAttachments', False)
                     
-                    # Email içeriğini al
-                    result, data = mail.fetch(email_id, '(RFC822)')
-                    if result != 'OK':
-                        _logger.warning(f"Email alınamadı: ID={email_id.decode()}")
+                    _logger.info(f"Email işleniyor: ID={message_id}")
+                    _logger.info(f"Konu: {subject}")
+                    _logger.info(f"Gönderen: {from_addr}")
+                    _logger.info(f"Tarih: {received_date}")
+                    
+                    if not has_attachments:
+                        _logger.warning(f"Email'de ek yok: ID={message_id}")
+                        # Okundu olarak işaretle
+                        self._mark_email_as_read(email_user, message_id, access_token)
                         continue
                     
-                    raw_email = data[0][1]
-                    email_message = email.message_from_bytes(raw_email)
+                    # Ekleri al
+                    attachments_url = f"https://graph.microsoft.com/v1.0/users/{email_user}/messages/{message_id}/attachments"
+                    attachments_response = requests.get(attachments_url, headers=headers)
                     
-                    # Email konusunu kontrol et
-                    subject = email_message.get('Subject', '')
-                    _logger.info(f"Email konusu: {subject}")
+                    if attachments_response.status_code != 200:
+                        _logger.error(f"Ekler alınamadı: {attachments_response.status_code}")
+                        continue
                     
-                    # Gönderen bilgisi
-                    from_addr = email_message.get('From', '')
-                    _logger.info(f"Gönderen: {from_addr}")
-                    
-                    # Tarih bilgisi
-                    date_str = email_message.get('Date', '')
-                    _logger.info(f"Tarih: {date_str}")
+                    attachments = attachments_response.json().get('value', [])
+                    _logger.info(f"{len(attachments)} adet ek bulundu")
                     
                     # Ekleri kontrol et
                     attachment_found = False
-                    for part in email_message.walk():
-                        if part.get_content_disposition() == 'attachment':
-                            filename = part.get_filename()
+                    for attachment in attachments:
+                        filename = attachment.get('name', '')
+                        _logger.info(f"Ek dosya: {filename}")
+                        
+                        # "ME5A Günlük Rapor Sonuçları.ZIP" dosyasını ara
+                        # Büyük/küçük harf duyarsız karşılaştırma
+                        if filename.lower() == 'me5a günlük rapor sonuçları.zip':
+                            _logger.info(f"Hedef ZIP dosyası bulundu: {filename}")
+                            attachment_found = True
                             
-                            if not filename:
+                            # Dosya içeriğini al (base64 encoded)
+                            content_bytes = attachment.get('contentBytes', '')
+                            
+                            if not content_bytes:
+                                _logger.error(f"Dosya içeriği alınamadı: {filename}")
                                 continue
                             
-                            _logger.info(f"Ek dosya bulundu: {filename}")
+                            # Base64 decode
+                            file_data = base64.b64decode(content_bytes)
+                            _logger.info(f"Dosya boyutu: {len(file_data)} bytes")
                             
-                            # "ME5A Günlük Rapor Sonuçları.ZIP" dosyasını ara
-                            # Büyük/küçük harf duyarsız karşılaştırma
-                            if filename.lower() == 'me5a günlük rapor sonuçları.zip':
-                                _logger.info(f"Hedef ZIP dosyası bulundu: {filename}")
-                                attachment_found = True
-                                
-                                # Dosya içeriğini al
-                                file_data = part.get_payload(decode=True)
-                                
-                                if not file_data:
-                                    _logger.error(f"Dosya içeriği alınamadı: {filename}")
-                                    continue
-                                
-                                _logger.info(f"Dosya boyutu: {len(file_data)} bytes")
-                                
-                                # Import et
-                                _logger.info(f"Import işlemi başlatılıyor: {filename}")
-                                file_stats = self.import_sat_from_file(
-                                    file_data=file_data,
-                                    file_name=filename,
-                                    sheet_name='ILP(300)',
-                                    update_existing=True
-                                )
-                                
-                                # İstatistikleri birleştir
-                                for key in stats['sat']:
-                                    stats['sat'][key] += file_stats['sat'][key]
-                                
-                                _logger.info(f"Dosya import edildi: {filename}, İstatistikler: {file_stats}")
-                                
-                                # Emaili okundu olarak işaretle
-                                mail.store(email_id, '+FLAGS', '\\Seen')
-                                _logger.info(f"Email okundu olarak işaretlendi: ID={email_id.decode()}")
-                                
-                                processed_emails += 1
-                                break  # Bu emaildeki diğer ekleri kontrol etmeye gerek yok
+                            # Import et
+                            _logger.info(f"Import işlemi başlatılıyor: {filename}")
+                            file_stats = self.import_sat_from_file(
+                                file_data=file_data,
+                                file_name=filename,
+                                sheet_name='ILP(300)',
+                                update_existing=True
+                            )
+                            
+                            # İstatistikleri birleştir
+                            for key in stats['sat']:
+                                stats['sat'][key] += file_stats['sat'][key]
+                            
+                            _logger.info(f"Dosya import edildi: {filename}, İstatistikler: {file_stats}")
+                            
+                            # Emaili okundu olarak işaretle
+                            self._mark_email_as_read(email_user, message_id, access_token)
+                            
+                            processed_emails += 1
+                            break  # Bu emaildeki diğer ekleri kontrol etmeye gerek yok
                     
                     if not attachment_found:
-                        _logger.warning(f"Email'de 'ME5A Günlük Rapor Sonuçları.ZIP' dosyası bulunamadı: ID={email_id.decode()}")
+                        _logger.warning(f"Email'de 'ME5A Günlük Rapor Sonuçları.ZIP' dosyası bulunamadı: ID={message_id}")
                         # Yine de okundu olarak işaretle ki bir daha işlenmesin
-                        mail.store(email_id, '+FLAGS', '\\Seen')
+                        self._mark_email_as_read(email_user, message_id, access_token)
                                 
                 except Exception as e:
-                    _logger.error(f"Email işleme hatası: ID={email_id.decode() if email_id else 'unknown'}, Hata: {str(e)}", exc_info=True)
+                    _logger.error(f"Email işleme hatası: ID={message.get('id', 'unknown')}, Hata: {str(e)}", exc_info=True)
                     stats['sat']['errors'] += 1
-            
-            mail.close()
-            mail.logout()
             
             _logger.info(f"Email import tamamlandı. İşlenen email sayısı: {processed_emails}, İstatistikler: {stats}")
             return stats
             
-        except imaplib.IMAP4.error as e:
-            _logger.error(f"IMAP bağlantı hatası: {str(e)}", exc_info=True)
-            return stats
         except Exception as e:
             _logger.error(f"Email import hatası: {str(e)}", exc_info=True)
-            return stats
+            raise UserError(_(f"Email import hatası: {str(e)}"))
+    
+    def _mark_email_as_read(self, email_user, message_id, access_token):
+        """Email'i okundu olarak işaretle"""
+        try:
+            update_url = f"https://graph.microsoft.com/v1.0/users/{email_user}/messages/{message_id}"
+            headers = {
+                'Authorization': f'Bearer {access_token}',
+                'Content-Type': 'application/json'
+            }
+            data = {
+                'isRead': True
+            }
+            
+            response = requests.patch(update_url, headers=headers, json=data)
+            
+            if response.status_code == 200:
+                _logger.info(f"Email okundu olarak işaretlendi: ID={message_id}")
+            else:
+                _logger.warning(f"Email okundu olarak işaretlenemedi: {response.status_code} - {response.text}")
+                
+        except Exception as e:
+            _logger.error(f"Email işaretleme hatası: {str(e)}", exc_info=True)
 
     # Reusable function for automated jobs
     @api.model
