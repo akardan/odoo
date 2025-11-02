@@ -10,13 +10,13 @@
         <field name="name">tender.type.material.group.tree</field>
         <field name="model">tender.type.material.group</field>
         <field name="arch" type="xml">
-            <tree string="Material Groups" decoration-muted="not active">
+            <list string="Material Groups" decoration-muted="not active">
                 <field name="code"/>
                 <field name="name"/>
                 <field name="code_prefix"/>
                 <field name="default_tender_type"/>
                 <field name="active" widget="boolean_toggle"/>
-            </tree>
+            </list>
         </field>
     </record>
     
@@ -76,7 +76,7 @@
     <record id="action_tender_type_material_group" model="ir.actions.act_window">
         <field name="name">Material Groups</field>
         <field name="res_model">tender.type.material.group</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">list,form</field>
         <field name="context">{'search_default_active': 1}</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
@@ -97,13 +97,13 @@
         <field name="name">tender.type.purchasing.group.tree</field>
         <field name="model">tender.type.purchasing.group</field>
         <field name="arch" type="xml">
-            <tree string="Purchasing Groups" decoration-muted="not active">
+            <list string="Purchasing Groups" decoration-muted="not active">
                 <field name="code"/>
                 <field name="name"/>
                 <field name="tender_type"/>
                 <field name="responsible_names"/>
                 <field name="active" widget="boolean_toggle"/>
-            </tree>
+            </list>
         </field>
     </record>
     
@@ -166,7 +166,7 @@
     <record id="action_tender_type_purchasing_group" model="ir.actions.act_window">
         <field name="name">Purchasing Groups</field>
         <field name="res_model">tender.type.purchasing.group</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">list,form</field>
         <field name="context">{'search_default_active': 1}</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
@@ -187,7 +187,7 @@
         <field name="name">tender.type.special.rule.tree</field>
         <field name="model">tender.type.special.rule</field>
         <field name="arch" type="xml">
-            <tree string="Special Rules" decoration-muted="not active">
+            <list string="Special Rules" decoration-muted="not active">
                 <field name="sequence" widget="handle"/>
                 <field name="name"/>
                 <field name="material_group_prefix"/>
@@ -195,7 +195,7 @@
                 <field name="tender_type"/>
                 <field name="responsible_names"/>
                 <field name="active" widget="boolean_toggle"/>
-            </tree>
+            </list>
         </field>
     </record>
     
@@ -283,7 +283,7 @@
     <record id="action_tender_type_special_rule" model="ir.actions.act_window">
         <field name="name">Special Rules</field>
         <field name="res_model">tender.type.special.rule</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">list,form</field>
         <field name="context">{'search_default_active': 1}</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
@@ -304,12 +304,12 @@
         <field name="name">tender.type.production.location.tree</field>
         <field name="model">tender.type.production.location</field>
         <field name="arch" type="xml">
-            <tree string="Production Locations" decoration-muted="not active">
+            <list string="Production Locations" decoration-muted="not active">
                 <field name="code"/>
                 <field name="name"/>
                 <field name="default_tender_type"/>
                 <field name="active" widget="boolean_toggle"/>
-            </tree>
+            </list>
         </field>
     </record>
     
@@ -365,7 +365,7 @@
     <record id="action_tender_type_production_location" model="ir.actions.act_window">
         <field name="name">Production Locations</field>
         <field name="res_model">tender.type.production.location</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">list,form</field>
         <field name="context">{'search_default_active': 1}</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
@@ -406,45 +406,45 @@
                     <notebook>
                         <page string="Special Rules" name="special_rules">
                             <field name="special_rule_ids" nolabel="1">
-                                <tree>
+                                <list>
                                     <field name="sequence" widget="handle"/>
                                     <field name="name"/>
                                     <field name="material_group_prefix"/>
                                     <field name="purchasing_group_code"/>
                                     <field name="tender_type"/>
                                     <field name="active" widget="boolean_toggle"/>
-                                </tree>
+                                </list>
                             </field>
                         </page>
                         <page string="Purchasing Groups" name="purchasing_groups">
                             <field name="purchasing_group_ids" nolabel="1">
-                                <tree>
+                                <list>
                                     <field name="code"/>
                                     <field name="name"/>
                                     <field name="tender_type"/>
                                     <field name="responsible_names"/>
                                     <field name="active" widget="boolean_toggle"/>
-                                </tree>
+                                </list>
                             </field>
                         </page>
                         <page string="Material Groups" name="material_groups">
                             <field name="material_group_ids" nolabel="1">
-                                <tree>
+                                <list>
                                     <field name="code"/>
                                     <field name="name"/>
                                     <field name="default_tender_type"/>
                                     <field name="active" widget="boolean_toggle"/>
-                                </tree>
+                                </list>
                             </field>
                         </page>
                         <page string="Production Locations" name="production_locations">
                             <field name="production_location_ids" nolabel="1">
-                                <tree>
+                                <list>
                                     <field name="code"/>
                                     <field name="name"/>
                                     <field name="default_tender_type"/>
                                     <field name="active" widget="boolean_toggle"/>
-                                </tree>
+                                </list>
                             </field>
                         </page>
                     </notebook>
@@ -459,6 +459,7 @@
         <field name="res_model">tender.type.matrix</field>
         <field name="view_mode">form</field>
         <field name="target">current</field>
+        <field name="res_id" ref="tender_type_matrix_default"/>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
                 İhale Tipi Belirleme Matrisi

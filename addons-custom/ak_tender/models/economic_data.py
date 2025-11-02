@@ -18,6 +18,20 @@ class AkTenderEconomicData(models.Model):
         help=_("Bu ekonomik verilerin geçerli olduğu para birimi.")
     )
     
+    # Güncel Kur Değeri
+    exchange_rate = fields.Float(
+        string=_('Güncel Kur'),
+        compute='_compute_exchange_rate',
+        digits=(12, 6),
+        help=_("Para biriminin şirket para birimine göre güncel kur değeri.")
+    )
+    
+    exchange_rate_display = fields.Char(
+        string=_('Kur Bilgisi'),
+        compute='_compute_exchange_rate',
+        help=_("Para birimi ve güncel kur değeri.")
+    )
+    
     # NPV Hesaplama Oranı
     npv_rate = fields.Float(
         string=_('NPV Oranı (%)'),
@@ -70,6 +84,34 @@ class AkTenderEconomicData(models.Model):
     _sql_constraints = [
         ('name_currency_uniq', 'unique(name, currency_id, company_id)', _('Bu para birimi için bu tanım zaten mevcut!'))
     ]
+    
+    @api.depends('currency_id')
+    def _compute_exchange_rate(self):
+        """
+        Para biriminin şirket para birimine göre güncel kur değerini hesaplar.
+        """
+        for record in self:
+            if record.currency_id:
+                company_currency = record.company_id.currency_id or self.env.company.currency_id
+                
+                if record.currency_id == company_currency:
+                    # Aynı para birimi ise kur 1.0
+                    record.exchange_rate = 1.0
+                    record.exchange_rate_display = f"{record.currency_id.name} (1.0 = {company_currency.name})"
+                else:
+                    # Farklı para birimi ise güncel kuru hesapla
+                    # 1 birim yabancı para = X birim şirket para birimi
+                    rate = record.currency_id._convert(
+                        1.0,
+                        company_currency,
+                        record.company_id or self.env.company,
+                        fields.Date.context_today(record)
+                    )
+                    record.exchange_rate = rate
+                    record.exchange_rate_display = f"{record.currency_id.name} (1.0 = {rate:.6f} {company_currency.name})"
+            else:
+                record.exchange_rate = 0.0
+                record.exchange_rate_display = ""
     
     @api.model
     def get_default_npv_rate(self, currency_id=None):

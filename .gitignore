@@ -52,4 +52,12 @@ package.json
 venv/
 /venv/
 sessions/
+
+# Sensitive configuration files - DO NOT COMMIT
+**/azure_config_data.xml.local
+**/credentials.xml
+**/*_credentials*.xml
+**/*_secrets*.xml
+*.env.local
+.env.production
 odoo.log

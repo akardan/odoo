@@ -16,6 +16,7 @@
                         <group>
                             <field name="active" widget="boolean_toggle"/>
                             <field name="currency_id" options="{'no_create': True}"/>
+                            <field name="exchange_rate_display" readonly="1"/>
                             <field name="npv_rate"/>
                             <field name="inflation_rate"/>
                             <field name="interest_rate"/>
@@ -45,6 +46,7 @@
             <list string="Ekonomik Veriler">
                 <field name="name"/>
                 <field name="currency_id"/>
+                <field name="exchange_rate_display"/>
                 <field name="npv_rate"/>
                 <field name="inflation_rate"/>
                 <field name="interest_rate"/>

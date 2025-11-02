@@ -325,5 +325,13 @@
             <field name="default_tender_type">indirect</field>
         </record>
         
+        <!-- ============================================ -->
+        <!-- TENDER TYPE MATRIX (Singleton Record)       -->
+        <!-- ============================================ -->
+        
+        <record id="tender_type_matrix_default" model="tender.type.matrix">
+            <field name="name">Tender Type Matrix</field>
+        </record>
+        
     </data>
 </odoo>

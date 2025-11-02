@@ -22,3 +22,13 @@ access_ak_tender_economic_data_manager,ak.tender.economic.data.manager,model_ak_
 access_ak_tender_economic_data_user,ak.tender.economic.data.user,model_ak_tender_economic_data,ak_tender.group_tender_user,1,1,1,0
 access_ak_tender_economic_data_requester,ak.tender.economic.data.requester,model_ak_tender_economic_data,ak_tender.group_tender_requester,1,0,0,0
 access_ak_tender_email_import,ak.tender.email.import,model_ak_tender_email_import,,1,1,1,1
+access_tender_type_material_group_user,access.tender.type.material.group.user,model_tender_type_material_group,base.group_user,1,0,0,0
+access_tender_type_material_group_manager,access.tender.type.material.group.manager,model_tender_type_material_group,ak_tender.group_tender_manager,1,1,1,1
+access_tender_type_purchasing_group_user,access.tender.type.purchasing.group.user,model_tender_type_purchasing_group,base.group_user,1,0,0,0
+access_tender_type_purchasing_group_manager,access.tender.type.purchasing.group.manager,model_tender_type_purchasing_group,ak_tender.group_tender_manager,1,1,1,1
+access_tender_type_special_rule_user,access.tender.type.special.rule.user,model_tender_type_special_rule,base.group_user,1,0,0,0
+access_tender_type_special_rule_manager,access.tender.type.special.rule.manager,model_tender_type_special_rule,ak_tender.group_tender_manager,1,1,1,1
+access_tender_type_production_location_user,access.tender.type.production.location.user,model_tender_type_production_location,base.group_user,1,0,0,0
+access_tender_type_production_location_manager,access.tender.type.production.location.manager,model_tender_type_production_location,ak_tender.group_tender_manager,1,1,1,1
+access_tender_type_matrix_user,access.tender.type.matrix.user,model_tender_type_matrix,base.group_user,1,0,0,0
+access_tender_type_matrix_manager,access.tender.type.matrix.manager,model_tender_type_matrix,ak_tender.group_tender_manager,1,1,1,1

@@ -24,7 +24,6 @@
         'security/security_groups.xml',
         'security/security_rules.xml',
         'security/ir.model.access.csv',
-        'security/tender_type_rules_security.csv',
         'data/config_data.xml',
         'data/azure_config_data.xml',
         'data/workflow_templates.xml',
