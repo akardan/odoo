@@ -25,7 +25,6 @@
         'security/security_rules.xml',
         'security/ir.model.access.csv',
         'data/config_data.xml',
-        'data/azure_config_data.xml',
         'data/workflow_templates.xml',
         'data/server_actions.xml',
         'data/economic_data.xml',

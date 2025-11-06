@@ -917,15 +917,14 @@ class SatImportWizard(models.TransientModel):
                 'Content-Type': 'application/json'
             }
             
-            # Okunmamış ve "ME5A Günlük Rapor Sonuçları" konulu emailleri ara
-            # $filter: OData query syntax kullanarak filtreleme
-            # isRead eq false: okunmamış emailler
-            # contains(subject, '...'): konu içeren emailler
+            # Okunmamış emailleri ara (basit filtre)
+            # NOT: contains() fonksiyonu bazı Exchange yapılandırmalarında sorun çıkarabiliyor
+            # Bu yüzden önce sadece okunmamış emailleri alıp, sonra konu filtrelemesi yapıyoruz
             params = {
-                '$filter': "isRead eq false and contains(subject, 'ME5A Günlük Rapor Sonuçları')",
+                '$filter': "isRead eq false",
                 '$select': 'id,subject,from,receivedDateTime,hasAttachments',
                 '$orderby': 'receivedDateTime desc',
-                '$top': 50  # Son 50 email
+                '$top': 100  # Son 100 okunmamış email
             }
             
             _logger.info("Okunmamış emailler aranıyor...")
@@ -935,8 +934,12 @@ class SatImportWizard(models.TransientModel):
                 _logger.error(f"Email listesi alınamadı: {response.status_code} - {response.text}")
                 raise UserError(_(f"Email listesi alınamadı: {response.status_code}"))
             
-            messages = response.json().get('value', [])
-            _logger.info(f"{len(messages)} adet okunmamış 'ME5A Günlük Rapor Sonuçları' konulu email bulundu")
+            all_messages = response.json().get('value', [])
+            _logger.info(f"{len(all_messages)} adet okunmamış email bulundu")
+            
+            # Konu filtrelemesi - Python tarafında yap
+            messages = [msg for msg in all_messages if 'ME5A Günlük Rapor Sonuçları' in msg.get('subject', '')]
+            _logger.info(f"{len(messages)} adet 'ME5A Günlük Rapor Sonuçları' konulu email bulundu")
             
             if not messages:
                 _logger.info("İşlenecek yeni email bulunamadı")
