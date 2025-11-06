@@ -52,7 +52,7 @@ def _install_msal_and_requests():
     import sys
     try:
         _logger.info("msal ve requests kütüphaneleri yükleniyor...")
-        subprocess.check_call([sys.executable, '-m', 'pip', 'install', 'msal', 'requests'])
+        subprocess.check_call([sys.executable, '-m', 'pip', 'install', '--break-system-packages', 'msal', 'requests'])
         import msal
         import requests
         _logger.info("msal ve requests başarıyla yüklendi")
