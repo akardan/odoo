@@ -26,5 +26,11 @@
             <field name="key">ak_tender.email_password</field>
             <field name="value">Ilko2019*</field>
         </record>
+        
+        <!-- Set website title to Ilkois -->
+        <record id="web_base_title" model="ir.config_parameter">
+            <field name="key">web.base.title</field>
+            <field name="value">Ilkois</field>
+        </record>
     </data>
 </odoo>
