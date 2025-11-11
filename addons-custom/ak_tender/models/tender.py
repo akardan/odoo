@@ -3,7 +3,7 @@
 # ak_tender/models/tender.py
 
 from odoo import models, fields, api, _
-from datetime import datetime
+from datetime import datetime, timedelta
 from odoo.exceptions import ValidationError, UserError
 from odoo.addons.ak_workflow.models.ak_workflow_dynamic_parameter import WorkflowDynamicParameter
 import io
@@ -11,6 +11,9 @@ import base64
 import subprocess
 import sys
 import json
+import logging
+
+_logger = logging.getLogger(__name__)
 
 try:
     import pandas as pd
