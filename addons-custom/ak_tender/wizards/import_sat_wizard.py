@@ -406,7 +406,7 @@ class SatImportWizard(models.TransientModel):
             'company_code': safe_get(17),  # Üretim yeri (İlko 2100, Merkez 2000, ilkopol 1100)
             'request_date': safe_date(18),  # Talep tarihi
             # İndeks 19: Yaratıldı (şu an kullanılmıyor)
-            # İndeks 20: Talep eden (şu an kullanılmıyor)
+            'requester': safe_get(20),  # Talep eden (SAP'ta SAT'ı açan kullanıcı)
             'requirement_number': safe_get(21),  # İhtiyaç numarası
             # İndeks 22: İstenen satıcı (şu an kullanılmıyor)
             # İndeks 23: Sabit satıcı (şu an kullanılmıyor)
@@ -509,6 +509,7 @@ class SatImportWizard(models.TransientModel):
             'erp_pr_id': data.get('erp_pr_id'),
             'erp_company_code': data.get('company_code'),
             'erp_plant_code': data.get('plant_code'),
+            'erp_requester': data.get('requester'),  # SAP'ta SAT'ı açan kullanıcı
             'required_delivery_date': data.get('required_delivery_date'),
             'request_date': request_date,  # Talep tarihi
             'start_date': start_date,  # Başlangıç tarihi

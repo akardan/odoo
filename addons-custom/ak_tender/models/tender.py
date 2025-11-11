@@ -469,8 +469,14 @@ class AkTender(models.Model):
                        help=_("İhale sürecinin başlığı veya kısa adı."))
     code = fields.Char(string=_('İhale Kodu'), required=True, copy=False, readonly=True,
                        default=lambda self: _('New'))
+    buyer_id = fields.Many2one('res.users', string=_('Satın Alma Uzmanı'),
+                              default=lambda self: self.env.user,
+                              tracking=True,
+                              help=_("Bu ihaleden sorumlu satın alma uzmanı."))
 
     delay_days = fields.Integer(string=_('Gecikme Günü'), compute='_compute_delay_days', store=False)
+    workflow_step_deadline = fields.Datetime(string=_('Adım Bitiş Tarihi'), compute='_compute_workflow_step_deadline', store=False,
+                                            help=_("Mevcut iş akışı adımının bitmesi gereken tarih ve saat."))
 
     @api.depends('workflow_current_state_id', 'transition_history_ids.create_date')
     def _compute_delay_days(self):
@@ -496,6 +502,40 @@ class AkTender(models.Model):
                         delay = actual_days - expected_duration
 
             record.delay_days = delay
+    
+    @api.depends('workflow_current_state_id', 'transition_history_ids.create_date')
+    def _compute_workflow_step_deadline(self):
+        """Mevcut iş akışı adımının bitiş tarihini hesapla ve yarım saatlere yuvarla"""
+        for record in self:
+            deadline = False
+            if record.workflow_current_state_id:
+                # Get expected duration from workflow state (default 1 days if not set)
+                expected_duration = record.workflow_current_state_id.default_duration_days or 1
+                
+                # Find the latest transition to the current state
+                latest_transition = self.env['ak.workflow.transition.history'].search([
+                    ('res_model', '=', record._name),
+                    ('res_id', '=', record.id),
+                    ('to_state_id', '=', record.workflow_current_state_id.id),
+                ], order='create_date desc', limit=1)
+                
+                if latest_transition and latest_transition.create_date:
+                    # Calculate deadline: transition date + expected duration
+                    deadline = latest_transition.create_date + timedelta(days=expected_duration)
+                    
+                    # Round to nearest half hour (00 or 30 minutes)
+                    minute = deadline.minute
+                    if minute < 15:
+                        # Round down to :00
+                        deadline = deadline.replace(minute=0, second=0, microsecond=0)
+                    elif minute < 45:
+                        # Round to :30
+                        deadline = deadline.replace(minute=30, second=0, microsecond=0)
+                    else:
+                        # Round up to next hour :00
+                        deadline = deadline.replace(minute=0, second=0, microsecond=0) + timedelta(hours=1)
+            
+            record.workflow_step_deadline = deadline
             
 
             
@@ -516,6 +556,8 @@ class AkTender(models.Model):
                              help=_("İlgili ERP Satın Alma Talebi Numarası (entegrasyon ile gelecek)."))
     erp_company_code = fields.Char(string=_('ERP Şirket Kodu'), help=_("İlgili ERP Şirket Kodu (entegrasyon ile gelecek)."))
     erp_plant_code = fields.Char(string=_('ERP Tesis Kodu'), help=_("İlgili ERP Tesis Kodu (entegrasyon ile gelecek)."))
+    erp_requester = fields.Char(string=_('SAT Talep Eden'), copy=False,
+                                help=_("SAP'ta SAT'ı açan kullanıcı bilgisi (entegrasyon ile gelecek)."))
     
     # Toplu Satın Alma Optimizasyonu için alanlar
     related_pr_ids = fields.Char(string=_('İlişkili SAT Numaraları'),
@@ -597,9 +639,36 @@ class AkTender(models.Model):
 
     # Davetli Tedarikçiler (Many2many ilişki)
     invited_partners = fields.Many2many('res.partner', string=_('Davetli Tedarikçiler'),
-                                       domain=[('supplier_rank', '>=', 0)],
-                                       help=_("Bu ihaleye davet edilecek tedarikçiler."))
+                                       domain="[('supplier_rank', '>=', 0), '|', ('id', 'in', allowed_supplier_ids), ('id', 'not in', allowed_supplier_ids if allowed_supplier_ids else [])]",
+                                       help=_("Bu ihaleye davet edilecek tedarikçiler. Tek ürünlü ihalelerde, ürünün tanımlı tedarikçileri varsa sadece onlar gösterilir."))
+    allowed_supplier_ids = fields.Many2many('res.partner', string='İzin Verilen Tedarikçiler',
+                                           compute='_compute_allowed_supplier_ids', store=False,
+                                           help="Tek ürünlü ihalelerde ürünün tedarikçileri, çok ürünlü ihalelerde tüm tedarikçiler")
 
+    @api.depends('tender_lines.product_id')
+    def _compute_allowed_supplier_ids(self):
+        """
+        Tek ürünlü ihalelerde ürünün tedarikçilerini hesapla.
+        Çok ürünlü ihalelerde veya ürünün tedarikçisi yoksa tüm tedarikçilere izin ver.
+        """
+        for record in self:
+            allowed_suppliers = self.env['res.partner']
+            
+            # Sadece ürün satırlarını al (section ve note hariç)
+            product_lines = record.tender_lines.filtered(lambda l: l.display_type == 'product' and l.product_id)
+            
+            # Tek ürünlü ihale kontrolü
+            if len(product_lines) == 1:
+                product = product_lines[0].product_id
+                # Ürünün tedarikçilerini al (seller_ids)
+                if product.seller_ids:
+                    # seller_ids'den partner'ları al
+                    allowed_suppliers = product.seller_ids.mapped('partner_id')
+                    _logger.info(f"Tek ürünlü ihale: {record.name}, Ürün: {product.name}, Tedarikçi sayısı: {len(allowed_suppliers)}")
+            
+            # Eğer allowed_suppliers boşsa, tüm tedarikçilere izin ver (domain'de zaten supplier_rank kontrolü var)
+            record.allowed_supplier_ids = allowed_suppliers
+    
     # Kazanan Teklifler (SAS)
     winning_order_ids = fields.Many2many('purchase.order', string=_('Kazanan Teklifler (SAS)'), compute='_compute_winning_orders', store=True, readonly=True)
     
@@ -1684,7 +1753,8 @@ class AkTender(models.Model):
         ])
         
         # Only copy purchase orders with total amount > 0 (supplier has submitted an offer)
-        valid_previous_pos = previous_pos.filtered(lambda po: po.amount_total > 0)
+        # and exclude cancelled purchase orders
+        valid_previous_pos = previous_pos.filtered(lambda po: po.amount_total > 0 and po.state != 'cancel')
         
         for prev_po in valid_previous_pos:
             # Check if a purchase order already exists for this supplier in the current round

@@ -61,7 +61,14 @@
     <t t-if="object.tender_id">
         <div style="margin: 15px 0; padding: 10px; background-color: #f8f9fa; border-left: 4px solid #875A7B;">
             <strong>İhale No:</strong> <t t-out="object.tender_id.code or ''">İHALE001</t><br/>
-            <strong>SAT Kodu:</strong> <t t-out="object.tender_id.name or ''">SAT Kodu</t>
+            <strong>SAT Kodu:</strong> <t t-out="object.tender_id.name or ''">SAT Kodu</t><br/>
+            <strong>Teklif Turu:</strong> <t t-out="object.tender_round or '1'">1</t><br/>
+            <t t-if="object.tender_id.workflow_step_deadline">
+                <strong style="color: #d9534f;">Teklif Verme Son Tarihi:</strong>
+                <span style="background-color: #fcf8e3; padding: 3px 8px; border-radius: 3px; font-weight: bold; color: #8a6d3b;">
+                    <t t-out="object.tender_id.workflow_step_deadline.strftime('%d/%m/%Y %H:%M') or ''">31/12/2024 17:00</t>
+                </span>
+            </t>
         </div>
     </t>
     
