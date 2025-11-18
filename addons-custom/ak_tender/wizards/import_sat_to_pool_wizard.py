@@ -288,6 +288,11 @@ class SatToPoolImportWizard(models.TransientModel):
             raise UserError(_(f'{sheet_name} sayfası boş'))
         
         rows = [df.columns.tolist()] + df.values.tolist()
+        
+        # Kolon mapping'ini başlık satırından oluştur
+        header_row = rows[0]
+        column_map = self._build_column_map(header_row)
+        _logger.info(f"Kolon mapping: {column_map}")
 
         for row_idx, row in enumerate(rows[1:], start=2):
             stats['lines']['processed'] += 1
@@ -297,7 +302,7 @@ class SatToPoolImportWizard(models.TransientModel):
                     stats['lines']['skipped'] += 1
                     continue
 
-                sat_data = self._extract_sat_data(row)
+                sat_data = self._extract_sat_data(row, column_map)
                 
                 # SAT numarası kontrolü
                 if not sat_data.get('erp_pr_id'):
@@ -327,25 +332,95 @@ class SatToPoolImportWizard(models.TransientModel):
         # Hata detaylarını kaydet
         if error_details:
             stats['error_log'] = '\n'.join(error_details[:100])  # İlk 100 hatayı göster
+    
+    def _build_column_map(self, header_row):
+        """Başlık satırından kolon mapping'i oluştur"""
+        # Türkçe ve İngilizce başlık eşleşmeleri
+        column_patterns = {
+            'erp_pr_id': ['SAT Numarası', 'SAT No', 'PR Number', 'Satınalma Talebi'],
+            'sequence': ['Kalem', 'Kalem No', 'Item', 'Sıra'],
+            'processing_status': ['İşleme Durumu', 'Durum', 'Status', 'Processing Status'],
+            'deletion_indicator': ['Silme', 'Silme Göstergesi', 'Deletion', 'Del.Ind'],
+            'item_type': ['Kalem Tipi', 'Item Type', 'Tip'],
+            'account_assignment_type': ['Hesap Atama', 'Account Assignment', 'Acc.Assgmt'],
+            'material_code': ['Malzeme', 'Malzeme Kodu', 'Material', 'Material Code'],
+            'name': ['Malzeme Tanımı', 'Tanım', 'Description', 'Material Description', 'Kısa Metin'],
+            'unit_of_measure': ['Ölçü Birimi', 'Birim', 'Unit', 'UoM'],
+            'delivery_date_type': ['Teslimat Tarihi Tipi', 'Delivery Date Type'],
+            'required_delivery_date': ['Teslimat Tarihi', 'Delivery Date', 'Talep Tarihi'],
+            'material_group': ['Mal Grubu', 'Material Group', 'MG'],
+            'approval_indicator': ['Onay', 'Onay Göstergesi', 'Approval', 'Approval Indicator'],
+            'plant_code': ['Üretim Yeri', 'Tesis', 'Plant', 'Plant Code'],
+            'purchasing_group': ['Satınalma Grubu', 'SA Grubu', 'Purchasing Group', 'Pur.Group'],
+            'quantity': ['Miktar', 'Quantity', 'Qty'],
+            'company_code': ['Şirket', 'Şirket Kodu', 'Company', 'Company Code'],
+            'request_date': ['Talep Tarihi', 'Request Date', 'Oluşturma Tarihi'],
+            'requester': ['Talep Eden', 'Requester', 'Oluşturan'],
+            'requirement_number': ['Gereksinim No', 'Requirement', 'Req.No'],
+            'delivering_production_location': ['Teslim Yeri', 'Delivery Location', 'Del.Location'],
+            'purchasing_organization': ['Satınalma Organizasyonu', 'Pur.Org', 'Purchasing Org'],
+            'framework_agreement': ['Çerçeve Anlaşma', 'Framework Agreement', 'Outline Agreement'],
+            'purchasing_info_record': ['Satınalma Bilgi Kaydı', 'Info Record', 'Pur.Info Record'],
+            'manufacturer_part_number': ['Üretici Parça No', 'Manufacturer Part', 'Mfr Part No'],
+        }
+        
+        column_map = {}
+        
+        # Her başlık için index bul
+        for idx, header in enumerate(header_row):
+            if not header:
+                continue
+            
+            header_str = str(header).strip()
+            
+            # Her field için pattern'leri kontrol et
+            for field_name, patterns in column_patterns.items():
+                for pattern in patterns:
+                    if pattern.lower() in header_str.lower():
+                        column_map[field_name] = idx
+                        _logger.info(f"Kolon bulundu: {field_name} = Index {idx} ({header_str})")
+                        break
+                if field_name in column_map:
+                    break
+        
+        # Eksik kritik kolonları kontrol et
+        required_fields = ['erp_pr_id', 'sequence', 'material_code', 'name']
+        missing_fields = [f for f in required_fields if f not in column_map]
+        if missing_fields:
+            _logger.warning(f"Eksik kritik kolonlar: {missing_fields}")
+        
+        return column_map
 
-    def _extract_sat_data(self, row):
-        """Satırdan SAT verilerini çıkar"""
-        def safe_get(index, default=''):
+    def _extract_sat_data(self, row, column_map):
+        """Satırdan SAT verilerini çıkar - kolon mapping kullanarak"""
+        def safe_get(field_name, default=''):
+            """Kolon mapping'den field'ı al"""
             try:
+                if field_name not in column_map:
+                    return default
+                index = column_map[field_name]
                 value = row[index] if len(row) > index and row[index] is not None else default
                 return str(value).strip() if value else default
             except:
                 return default
 
-        def safe_float(index, default=0.0):
+        def safe_float(field_name, default=0.0):
+            """Kolon mapping'den float field'ı al"""
             try:
+                if field_name not in column_map:
+                    return default
+                index = column_map[field_name]
                 value = row[index] if len(row) > index and row[index] is not None else None
                 return float(value) if value else default
             except:
                 return default
                 
-        def safe_date(index, default=None):
+        def safe_date(field_name, default=None):
+            """Kolon mapping'den date field'ı al"""
             try:
+                if field_name not in column_map:
+                    return default
+                index = column_map[field_name]
                 value = row[index] if len(row) > index and row[index] is not None else None
                 if not value:
                     return default
@@ -361,33 +436,63 @@ class SatToPoolImportWizard(models.TransientModel):
                 return default
             except:
                 return default
+        
+        def safe_approval_indicator(field_name, default=''):
+            """
+            approval_indicator için özel fonksiyon
+            SAP'den datetime gelebiliyor ama Selection field bekliyor ('X', 'Z', '2')
+            """
+            try:
+                if field_name not in column_map:
+                    return default
+                index = column_map[field_name]
+                value = row[index] if len(row) > index and row[index] is not None else None
+                if not value:
+                    return default
+                
+                # Datetime ise boş dön (Selection field datetime kabul etmez)
+                if isinstance(value, datetime):
+                    return default
+                
+                # String ise ve datetime formatında ise boş dön
+                value_str = str(value).strip()
+                if 'T' in value_str or '-' in value_str:  # datetime formatı
+                    return default
+                
+                # Geçerli değerler: 'X', 'Z', '2'
+                if value_str in ['X', 'Z', '2']:
+                    return value_str
+                
+                return default
+            except:
+                return default
 
         return {
-            'erp_pr_id': safe_get(0),
-            'sequence': safe_get(1),
-            'processing_status': safe_get(2),
-            'deletion_indicator': safe_get(3),
-            'item_type': safe_get(4),
-            'account_assignment_type': safe_get(5),
-            'material_code': safe_get(6),
-            'name': safe_get(7),
-            'unit_of_measure': safe_get(8),
-            'delivery_date_type': safe_get(9),
-            'required_delivery_date': safe_date(10),
-            'material_group': safe_get(11),
-            'approval_indicator': safe_get(12),
-            'plant_code': safe_get(14),
-            'purchasing_group': safe_get(15),
-            'quantity': safe_float(16, 0.0),
-            'company_code': safe_get(17),
-            'request_date': safe_date(18),
-            'requester': safe_get(20),
-            'requirement_number': safe_get(21),
-            'delivering_production_location': safe_get(24),
-            'purchasing_organization': safe_get(25),
-            'framework_agreement': safe_get(26),
-            'purchasing_info_record': safe_get(28),
-            'manufacturer_part_number': safe_get(29),
+            'erp_pr_id': safe_get('erp_pr_id'),
+            'sequence': safe_get('sequence'),
+            'processing_status': safe_get('processing_status'),
+            'deletion_indicator': safe_get('deletion_indicator'),
+            'item_type': safe_get('item_type'),
+            'account_assignment_type': safe_get('account_assignment_type'),
+            'material_code': safe_get('material_code'),
+            'name': safe_get('name'),
+            'unit_of_measure': safe_get('unit_of_measure'),
+            'delivery_date_type': safe_get('delivery_date_type'),
+            'required_delivery_date': safe_date('required_delivery_date'),
+            'material_group': safe_get('material_group'),
+            'approval_indicator': safe_approval_indicator('approval_indicator'),
+            'plant_code': safe_get('plant_code'),
+            'purchasing_group': safe_get('purchasing_group'),
+            'quantity': safe_float('quantity', 0.0),
+            'company_code': safe_get('company_code'),
+            'request_date': safe_date('request_date'),
+            'requester': safe_get('requester'),
+            'requirement_number': safe_get('requirement_number'),
+            'delivering_production_location': safe_get('delivering_production_location'),
+            'purchasing_organization': safe_get('purchasing_organization'),
+            'framework_agreement': safe_get('framework_agreement'),
+            'purchasing_info_record': safe_get('purchasing_info_record'),
+            'manufacturer_part_number': safe_get('manufacturer_part_number'),
         }
 
     def _add_to_pool(self, data, stats):

@@ -105,6 +105,7 @@
                                     <list editable="bottom">
                                         <field name="sequence" widget="handle"/>
                                         <field name="display_type" column_invisible="True"/>
+                                        <field name="requisition_line_ids" widget="many2many_tags" optional="hide"/>
                                         <field name="product_id"
                                                widget="product_label_section_and_note_field"
                                                readonly="0"

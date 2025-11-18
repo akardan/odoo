@@ -179,7 +179,8 @@ class TenderTypeMatrix(models.Model):
         Returns:
             dict: {
                 'tender_type': str,
-                'responsible': str, 
+                'responsible': str,
+                'responsible_user_ids': recordset,
                 'decision_source': str,
                 'notes': list
             }
@@ -187,6 +188,7 @@ class TenderTypeMatrix(models.Model):
         result = {
             'tender_type': None,
             'responsible': None,
+            'responsible_user_ids': self.env['res.users'],
             'decision_source': None,
             'notes': []
         }
@@ -215,6 +217,7 @@ class TenderTypeMatrix(models.Model):
                 if mg_match and pg_match:
                     result['tender_type'] = rule.tender_type
                     result['responsible'] = rule.responsible_names
+                    result['responsible_user_ids'] = self.env['res.users']
                     result['decision_source'] = f'special_rule_{rule.id}'
                     result['notes'].append(f'Special Rule: {rule.name}')
                     if rule.notes:
@@ -225,6 +228,7 @@ class TenderTypeMatrix(models.Model):
                 if mg_match:
                     result['tender_type'] = rule.tender_type
                     result['responsible'] = rule.responsible_names
+                    result['responsible_user_ids'] = self.env['res.users']
                     result['decision_source'] = f'special_rule_{rule.id}'
                     result['notes'].append(f'Special Rule: {rule.name}')
                     if rule.notes:
@@ -235,6 +239,7 @@ class TenderTypeMatrix(models.Model):
                 if pg_match:
                     result['tender_type'] = rule.tender_type
                     result['responsible'] = rule.responsible_names
+                    result['responsible_user_ids'] = self.env['res.users']
                     result['decision_source'] = f'special_rule_{rule.id}'
                     result['notes'].append(f'Special Rule: {rule.name}')
                     if rule.notes:
@@ -253,6 +258,7 @@ class TenderTypeMatrix(models.Model):
             if pg_record:
                 result['tender_type'] = pg_record.tender_type
                 result['responsible'] = pg_record.responsible_names
+                result['responsible_user_ids'] = pg_record.responsible_user_ids
                 result['decision_source'] = 'purchasing_group'
                 result['notes'].append(f'Purchasing Group: {pg_record.name}')
                 return result

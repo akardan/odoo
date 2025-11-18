@@ -2,6 +2,7 @@
 
 from odoo import models, fields, api, _
 from odoo.exceptions import ValidationError, UserError
+from datetime import datetime
 import logging
 
 _logger = logging.getLogger(__name__)
@@ -102,7 +103,7 @@ class PurchaseRequisition(models.Model):
             rec.preview_groups = preview
     
     def action_create_tenders_from_lines(self):
-        """Seçili SAT kalemlerinden ihaleler oluştur"""
+        """Seçili SAT kalemlerinden ihaleler oluştur - UI action"""
         if not self:
             raise UserError(_('Lütfen en az bir SAT seçin.'))
         
@@ -110,25 +111,39 @@ class PurchaseRequisition(models.Model):
         all_lines = self.mapped('line_ids')
         
         # İşlenebilir kalemleri filtrele
-        valid_lines = all_lines.filtered(lambda l: 
-            l.line_processing_status == 'N' and 
+        valid_lines = all_lines.filtered(lambda l:
+            l.line_processing_status == 'N' and
             not l.deletion_indicator
         )
         
         if not valid_lines:
             raise UserError(_('İşlenebilir kalem bulunamadı.'))
         
-        # İhale oluşturma wizard'ını aç
-        return {
-            'name': _('İhale Oluştur'),
-            'type': 'ir.actions.act_window',
-            'res_model': 'ak.tender.create.from.requisition.wizard',
-            'view_mode': 'form',
-            'target': 'new',
-            'context': {
-                'default_requisition_line_ids': [(6, 0, valid_lines.ids)],
+        # Direkt ihale oluştur
+        created_tenders = valid_lines.create_tenders_from_lines()
+        
+        if not created_tenders:
+            raise UserError(_('İhale oluşturulamadı.'))
+        
+        # İhaleleri göster
+        if len(created_tenders) == 1:
+            return {
+                'type': 'ir.actions.act_window',
+                'name': _('Oluşturulan İhale'),
+                'res_model': 'ak.tender',
+                'view_mode': 'form',
+                'res_id': created_tenders.id,
+                'target': 'current',
             }
-        }
+        else:
+            return {
+                'type': 'ir.actions.act_window',
+                'name': _('Oluşturulan İhaleler'),
+                'res_model': 'ak.tender',
+                'view_mode': 'tree,form',
+                'domain': [('id', 'in', created_tenders.ids)],
+                'target': 'current',
+            }
 
 
 class PurchaseRequisitionLine(models.Model):
@@ -331,6 +346,7 @@ class PurchaseRequisitionLine(models.Model):
             )
             
             tender_type = tender_info.get('tender_type', 'indirect')
+            responsible_users = tender_info.get('responsible_user_ids', self.env['res.users'])
             
             # Grup bilgisini oluştur
             parts = []
@@ -348,11 +364,14 @@ class PurchaseRequisitionLine(models.Model):
                 parts.append(f"SG: {rec.purchasing_group}")
             if rec.erp_company_code:
                 parts.append(f"Şirket: {rec.erp_company_code}")
+            if responsible_users:
+                user_names = ', '.join(responsible_users.mapped('name'))
+                parts.append(f"Sorumlu: {user_names}")
             
             rec.tender_group_info = ' | '.join(parts) if parts else 'Grup belirlenemedi'
     
     def action_create_tender(self):
-        """Seçili SAT kalemlerinden ihale oluştur"""
+        """Seçili SAT kalemlerinden ihale oluştur - UI action"""
         if not self:
             raise UserError(_('Lütfen en az bir SAT kalemi seçin.'))
         
@@ -362,17 +381,31 @@ class PurchaseRequisitionLine(models.Model):
         if not valid_lines:
             raise UserError(_('Seçili kalemler zaten işlenmiş veya silinmiş.'))
         
-        # İhale oluşturma wizard'ını aç
-        return {
-            'name': _('İhale Oluştur'),
-            'type': 'ir.actions.act_window',
-            'res_model': 'ak.tender.create.from.requisition.wizard',
-            'view_mode': 'form',
-            'target': 'new',
-            'context': {
-                'default_requisition_line_ids': [(6, 0, valid_lines.ids)],
+        # Direkt ihale oluştur
+        created_tenders = valid_lines.create_tenders_from_lines()
+        
+        if not created_tenders:
+            raise UserError(_('İhale oluşturulamadı.'))
+        
+        # İhaleleri göster
+        if len(created_tenders) == 1:
+            return {
+                'type': 'ir.actions.act_window',
+                'name': _('Oluşturulan İhale'),
+                'res_model': 'ak.tender',
+                'view_mode': 'form',
+                'res_id': created_tenders.id,
+                'target': 'current',
             }
-        }
+        else:
+            return {
+                'type': 'ir.actions.act_window',
+                'name': _('Oluşturulan İhaleler'),
+                'res_model': 'ak.tender',
+                'view_mode': 'tree,form',
+                'domain': [('id', 'in', created_tenders.ids)],
+                'target': 'current',
+            }
     
     def action_view_tender(self):
         """İlişkili ihaleyi görüntüle"""
@@ -412,6 +445,20 @@ class PurchaseRequisitionLine(models.Model):
         groups = {}
         matrix = lines.env['tender.type.matrix']
         
+        _logger.info(f"  Gruplama başlıyor: {len(lines)} kalem")
+        
+        # Ürünü olmayan kalemleri kontrol et
+        lines_without_product = lines.filtered(lambda l: not l.product_id)
+        if lines_without_product:
+            _logger.warning(f"  ⚠ {len(lines_without_product)} kalemin ürünü yok!")
+            # Sadece ürünü olanları işle
+            lines = lines.filtered(lambda l: l.product_id)
+            _logger.info(f"  Ürünü olan kalemler: {len(lines)}")
+        
+        if not lines:
+            _logger.error("  ✗ Ürünü olan kalem bulunamadı!")
+            return groups
+        
         for line in lines:
             # İhale tipi kurallarına göre belirle
             tender_info = matrix.determine_tender_type(
@@ -433,10 +480,239 @@ class PurchaseRequisitionLine(models.Model):
                     'material_group': line.material_group,
                     'purchasing_group': line.purchasing_group,
                     'company_code': line.erp_company_code,
-                    'responsible': tender_info.get('responsible'),
+                    'responsible_user_ids': tender_info.get('responsible_user_ids', self.env['res.users']),
                     'decision_source': tender_info.get('decision_source'),
                 }
             
             groups[group_key]['line_ids'].append(line.id)
         
+        _logger.info(f"  ✓ {len(groups)} grup oluşturuldu")
+        return groups
+    
+    def create_tenders_from_lines(self):
+        """
+        SAT kalemlerinden otomatik ihale oluştur
+        Hem manuel hem de otomasyonda kullanılabilir
+        
+        Returns:
+            ak.tender recordset: Oluşturulan ihaleler
+        """
+        _logger.info("=" * 80)
+        _logger.info("İHALE OLUŞTURMA BAŞLADI")
+        _logger.info("=" * 80)
+        
+        if not self:
+            # Eğer self boşsa, tüm işlenebilir kalemleri al
+            self = self.env['purchase.requisition.line'].search([
+                ('line_processing_status', '=', 'N'),
+                ('deletion_indicator', '=', False)
+            ])
+            _logger.info(f"Tüm işlenebilir SAT kalemleri alındı: {len(self)} kalem")
+        else:
+            _logger.info(f"Seçili SAT kalemleri: {len(self)} kalem")
+        
+        if not self:
+            _logger.info("İhale oluşturulacak SAT kalemi bulunamadı")
+            return self.env['ak.tender']
+        
+        # Ürünü olmayan kalemlere ürün oluştur
+        lines_without_product = self.filtered(lambda l: not l.product_id)
+        if lines_without_product:
+            _logger.info(f"{len(lines_without_product)} SAT kalemi için ürün oluşturuluyor...")
+            created_count = 0
+            for line in lines_without_product:
+                try:
+                    product = line._ensure_product()
+                    if product:
+                        line.product_id = product  # Direkt atama, write() yerine
+                        created_count += 1
+                        _logger.info(f"  ✓ SAT {line.erp_pr_id}/{line.erp_pr_item} -> Ürün: {product.name}")
+                except Exception as e:
+                    _logger.error(f"  ✗ SAT {line.erp_pr_id}/{line.erp_pr_item} için ürün oluşturulamadı: {str(e)}")
+            _logger.info(f"✓ {created_count}/{len(lines_without_product)} ürün oluşturuldu")
+        
+        # Kalemleri grupla
+        _logger.info(f"SAT kalemleri gruplandırılıyor...")
+        groups = self.group_lines_for_tender(self)
+        
+        if not groups:
+            _logger.warning(f"✗ {len(self)} SAT kalemi için ihale grubu oluşturulamadı")
+            return self.env['ak.tender']
+        
+        _logger.info(f"✓ {len(groups)} ihale grubu oluşturuldu")
+        
+        created_tenders = self.env['ak.tender']
+        
+        for idx, (group_key, group_data) in enumerate(groups.items(), 1):
+            _logger.info(f"\n--- İhale {idx}/{len(groups)} oluşturuluyor ---")
+            tender_type = group_data['tender_type']
+            line_ids = group_data['line_ids']
+            
+            # Grup kalemlerini al
+            group_lines = self.env['purchase.requisition.line'].browse(line_ids)
+            
+            if not group_lines:
+                _logger.warning(f"✗ Grup {idx}: Kalem bulunamadı")
+                continue
+            
+            _logger.info(f"Grup {idx}: Tip={tender_type}, Kalem sayısı={len(group_lines)}")
+            
+            # İhale adı oluştur
+            tender_name = self._generate_tender_name(tender_type, group_lines[0])
+            _logger.info(f"İhale adı: {tender_name}")
+            
+            # Sorumlu kullanıcıyı al
+            responsible_user_ids = group_data.get('responsible_user_ids', self.env['res.users'])
+            responsible_id = False
+            
+            if responsible_user_ids:
+                # İlk kullanıcıyı buyer_id olarak ata
+                responsible_id = responsible_user_ids[0].id
+                _logger.info(f"Sorumlu: {responsible_user_ids[0].name}")
+            
+            try:
+                # İhale oluştur
+                from datetime import datetime, timedelta
+                
+                tender_vals = {
+                    'name': tender_name,
+                    'tender_type': tender_type,
+                    'start_date': datetime.now(),
+                    'end_date': datetime.now() + timedelta(days=7),  # 7 gün sonra
+                }
+                
+                # Sorumlu varsa ekle (buyer_id alanına)
+                if responsible_id:
+                    tender_vals['buyer_id'] = responsible_id
+                
+                tender = self.env['ak.tender'].create(tender_vals)
+                _logger.info(f"✓ İhale oluşturuldu: ID={tender.id}, Name={tender.name}")
+                
+                # Kalemleri ekle
+                self._create_tender_lines(tender, group_lines)
+                
+                # SAT kalemlerini güncelle
+                group_lines.write({'line_processing_status': 'T'})
+                _logger.info(f"✓ {len(group_lines)} SAT kalemi 'İhaleye Alındı' olarak işaretlendi")
+                
+                created_tenders |= tender
+                
+            except Exception as e:
+                _logger.error(f"✗ İhale {idx} oluşturulurken hata: {str(e)}", exc_info=True)
+        
+        _logger.info("=" * 80)
+        _logger.info(f"✓ TOPLAM {len(created_tenders)} İHALE OLUŞTURULDU")
+        _logger.info(f"✓ TOPLAM {len(self)} SAT KALEMİ İŞLENDİ")
+        _logger.info("=" * 80)
+        return created_tenders
+    
+    def _create_tender_lines(self, tender, requisition_lines):
+        """İhale kalemlerini oluştur"""
+        _logger.info(f"  İhale kalemleri oluşturuluyor: {len(requisition_lines)} kalem")
+        
+        for req_line in requisition_lines:
+            try:
+                # İhale kalemi oluştur
+                tender_line_vals = {
+                    'tender_id': tender.id,
+                    'product_id': req_line.product_id.id,
+                    'name': req_line.product_id.name or req_line.material_code,
+                    'quantity': req_line.product_qty,
+                    'uom_id': req_line.product_uom_id.id,
+                    'required_delivery_date': req_line.required_delivery_date,
+                    'display_type': 'product',
+                }
+                
+                tender_line = self.env['ak.tender.line'].create(tender_line_vals)
+                
+                # SAT kalemi ile ilişkilendir
+                req_line.write({'tender_line_id': tender_line.id})
+                
+                _logger.info(f"  ✓ İhale kalemi oluşturuldu: SAT {req_line.erp_pr_id}/{req_line.erp_pr_item} -> Tender Line {tender_line.id}")
+                
+            except Exception as e:
+                _logger.error(f"  ✗ İhale kalemi oluşturulamadı: SAT {req_line.erp_pr_id}/{req_line.erp_pr_item} - Hata: {str(e)}")
+                raise
+    
+    def _generate_tender_name(self, tender_type, sample_line=None):
+        """
+        İhale adı oluştur
+        Format: SAT_NO-SIRA (örn: 20012977-1, 10006707-2)
+        """
+        if not sample_line or not sample_line.erp_pr_id:
+            # SAT numarası yoksa eski format kullan
+            type_labels = {
+                'direct': 'Direkt',
+                'indirect': 'Endirekt',
+                'promotion': 'Promosyon',
+                'mice': 'MICE'
+            }
+            type_label = type_labels.get(tender_type, tender_type)
+            date_str = datetime.now().strftime('%Y%m%d')
+            sequence = self.env['ir.sequence'].next_by_code('ak.tender') or '001'
+            return f"İHALE_{type_label}_{date_str}_{sequence}"
+        
+        # SAT numarasını al ve başındaki sıfırları kaldır
+        sat_no = sample_line.erp_pr_id.lstrip('0')
+        
+        # Aynı SAT numarasıyla kaç ihale var kontrol et
+        existing_tenders = self.env['ak.tender'].search([
+            ('name', 'like', f'{sat_no}-%')
+        ])
+        
+        # Sıra numarasını belirle
+        if existing_tenders:
+            # Mevcut ihalelerin sıra numaralarını bul
+            max_seq = 0
+            for tender in existing_tenders:
+                try:
+                    # "20012977-3" formatından "3" ü çıkar
+                    seq_part = tender.name.split('-')[-1]
+                    seq_num = int(seq_part)
+                    if seq_num > max_seq:
+                        max_seq = seq_num
+                except (ValueError, IndexError):
+                    continue
+            next_seq = max_seq + 1
+        else:
+            next_seq = 1
+        
+        return f"{sat_no}-{next_seq}"
+    
+    def _ensure_product(self):
+        """Kalem için ürün oluştur veya bul"""
+        self.ensure_one()
+        
+        material_code = self.material_code
+        if not material_code:
+            # Malzeme kodu yoksa oluştur
+            material_code = f"SAT_{self.erp_pr_id}_{self.erp_pr_item}"
+        
+        # Önce kod ile ara
+        product = self.env['product.product'].search([
+            ('default_code', '=', material_code)
+        ], limit=1)
+        
+        if product:
+            return product
+        
+        # Ürün adı
+        product_name = f"SAT {self.erp_pr_id}/{self.erp_pr_item}"
+        if self.material_code:
+            product_name = f"{self.material_code} - {product_name}"
+        
+        # Ürün oluştur
+        product_vals = {
+            'name': product_name,
+            'default_code': material_code,
+            'type': 'product',
+            'purchase_ok': True,
+            'sale_ok': False,
+            'categ_id': self.env.ref('product.product_category_all').id,
+        }
+        
+        product = self.env['product.product'].create(product_vals)
+        _logger.info(f"Ürün oluşturuldu: {product.name} ({product.default_code})")
+        
+        return product
         return groups

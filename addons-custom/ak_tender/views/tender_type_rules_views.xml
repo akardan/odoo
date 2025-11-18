@@ -101,6 +101,7 @@
                 <field name="code"/>
                 <field name="name"/>
                 <field name="tender_type"/>
+                <field name="responsible_user_ids" widget="many2many_tags"/>
                 <field name="responsible_names"/>
                 <field name="active" widget="boolean_toggle"/>
             </list>
@@ -422,6 +423,7 @@
                                     <field name="code"/>
                                     <field name="name"/>
                                     <field name="tender_type"/>
+                                    <field name="responsible_user_ids" widget="many2many_tags"/>
                                     <field name="responsible_names"/>
                                     <field name="active" widget="boolean_toggle"/>
                                 </list>

@@ -8,7 +8,14 @@
             <list string="SAT Havuzu"
                   decoration-success="line_processing_status == 'T'"
                   decoration-info="line_processing_status == 'N'"
-                  decoration-muted="deletion_indicator == True">
+                  decoration-muted="deletion_indicator == True"
+                  multi_edit="1">
+                <header>
+                    <button name="action_create_tender"
+                            string="Seçili Kalemlerden İhale Oluştur"
+                            type="object"
+                            class="btn-primary"/>
+                </header>
                 <field name="erp_pr_id" string="SAT No"/>
                 <field name="erp_pr_item" string="Kalem"/>
                 <field name="material_code" string="Malzeme Kodu" optional="show"/>
@@ -231,6 +238,44 @@
         </field>
     </record>
 
+    <!-- Server Action: Otomatik İhale Oluştur -->
+    <record id="action_server_create_tenders_auto" model="ir.actions.server">
+        <field name="name">Tüm SAT'lardan Otomatik İhale Oluştur</field>
+        <field name="model_id" ref="purchase_requisition.model_purchase_requisition_line"/>
+        <field name="binding_model_id" ref="purchase_requisition.model_purchase_requisition_line"/>
+        <field name="state">code</field>
+        <field name="code">
+# Tüm işlenebilir SAT kalemlerini al ve ihale oluştur
+lines = env['purchase.requisition.line'].search([
+    ('line_processing_status', '=', 'N'),
+    ('deletion_indicator', '=', False)
+])
+if lines:
+    created_tenders = lines.create_tenders_from_lines()
+    if created_tenders:
+        action = {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': 'Başarılı',
+                'message': f'{len(created_tenders)} ihale oluşturuldu, {len(lines)} SAT kalemi işlendi.',
+                'type': 'success',
+                'sticky': True,
+            }
+        }
+else:
+    action = {
+        'type': 'ir.actions.client',
+        'tag': 'display_notification',
+        'params': {
+            'title': 'Bilgi',
+            'message': 'İşlenebilir SAT kalemi bulunamadı.',
+            'type': 'info',
+        }
+    }
+        </field>
+    </record>
+
     <!-- Menu Items -->
     <menuitem id="menu_sat_pool_root"
               name="SAT Havuzu"
@@ -248,5 +293,11 @@
               parent="menu_sat_pool_root"
               action="action_purchase_requisition_sat"
               sequence="20"/>
+    
+    <menuitem id="menu_sat_pool_auto_create"
+              name="Otomatik İhale Oluştur"
+              parent="menu_sat_pool_root"
+              action="action_server_create_tenders_auto"
+              sequence="30"/>
 
 </odoo>

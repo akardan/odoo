@@ -117,9 +117,17 @@ class AkTenderLine(models.Model):
         readonly=True
     )
     product_no_variant_attribute_value_ids = fields.Many2many(
-        'product.template.attribute.value', 
-        string='Product attribute values that do not create variants', 
+        'product.template.attribute.value',
+        string='Product attribute values that do not create variants',
         ondelete='restrict'
+    )
+    
+    # SAT İlişkisi
+    requisition_line_ids = fields.One2many(
+        'purchase.requisition.line',
+        'tender_line_id',
+        string='SAT Kalemleri',
+        help="Bu ihale kalemine bağlı SAT kalemleri"
     )
     is_pdf2 = fields.Boolean(string="Is PDF 2", compute="_compute_attachment_types")
     
