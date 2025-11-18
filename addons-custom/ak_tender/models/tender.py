@@ -1915,7 +1915,7 @@ class AkTender(models.Model):
                 'product_uom': product_uom,
                 'price_unit': 0.0,
                 'line_currency_id': tender_line.currency_id.id,
-                'line_price_unit': tender_line.target_price or 0.0,
+                'line_price_unit': 0.0,  # First round: do not use sales price (target_price)
                 'date_planned': date_planned,
                 'tender_line_id': tender_line.id,
             }
