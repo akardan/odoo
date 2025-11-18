@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Import SAT to Pool Wizard Form View -->
+    <record id="view_import_sat_to_pool_wizard_form" model="ir.ui.view">
+        <field name="name">import.sat.to.pool.wizard.form</field>
+        <field name="model">import.sat.to.pool.wizard</field>
+        <field name="arch" type="xml">
+            <form string="SAT Havuzuna İmport">
+                <field name="state" invisible="1"/>
+                <group invisible="state == 'done'">
+                    <group>
+                        <field name="excel_file" filename="file_name"/>
+                        <field name="file_name" invisible="1"/>
+                    </group>
+                    <group>
+                        <field name="sheet_name"/>
+                        <field name="update_existing"/>
+                    </group>
+                </group>
+                <group invisible="state != 'done'">
+                    <field name="error_log" widget="text" nolabel="1"/>
+                </group>
+                <footer>
+                    <button name="action_import_to_pool" string="Havuza Aktar" type="object" class="btn-primary" invisible="state == 'done'"/>
+                    <button string="Kapat" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Import SAT to Pool Wizard Action -->
+    <record id="action_import_sat_to_pool_wizard" model="ir.actions.act_window">
+        <field name="name">SAT Havuzuna İmport</field>
+        <field name="res_model">import.sat.to.pool.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <!-- Menu Item -->
+    <menuitem id="menu_import_sat_to_pool"
+              name="SAT İmport (Havuz)"
+              parent="ak_tender.menu_sat_pool_root"
+              action="action_import_sat_to_pool_wizard"
+              sequence="30"/>
+
+</odoo>

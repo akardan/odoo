@@ -19,7 +19,7 @@
     'category': 'Purchases',
     'version': '0.5', # Versiyon yükseltildi
     'sequence': -225,
-    'depends': ['base', 'web', 'purchase', 'stock', 'mail', 'contacts', 'product', 'portal', 'ak_workflow', 'sale', 'product_matrix'],
+    'depends': ['base', 'web', 'purchase', 'purchase_requisition', 'stock', 'mail', 'contacts', 'product', 'portal', 'ak_workflow', 'sale', 'product_matrix'],
     'data': [
         'security/security_groups.xml',
         'security/security_rules.xml',
@@ -51,6 +51,8 @@
         'wizards/import_supplier_wizard_views.xml',
         'wizards/import_sat_wizard_views.xml',
         'wizards/tender_template_selection_wizard_views.xml',
+        'views/purchase_requisition_views.xml',
+        'wizards/import_sat_to_pool_wizard_views.xml',
         'views/menu.xml',
         'report/vendor_comparison_report.xml',
     ],
