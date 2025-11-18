@@ -42,7 +42,7 @@ class SatToPoolImportWizard(models.TransientModel):
     file_name = fields.Char(string='Dosya Adı')
     sheet_name = fields.Char(string='Sayfa Adı', default='ILP(300)')
     update_existing = fields.Boolean(string='Mevcut Kayıtları Güncelle', default=True)
-    error_log = fields.Text(string='Hata Detayları', readonly=True)
+    error_log = fields.Html(string='Hata Detayları', readonly=True)
     state = fields.Selection([
         ('draft', 'Taslak'),
         ('done', 'Tamamlandı'),
@@ -292,9 +292,25 @@ class SatToPoolImportWizard(models.TransientModel):
         # Kolon mapping'ini başlık satırından oluştur
         header_row = rows[0]
         column_map = self._build_column_map(header_row)
+        _logger.info(f"Excel başlık satırı: {header_row[:20]}")  # İlk 20 kolon
         _logger.info(f"Kolon mapping: {column_map}")
+        
+        # Debug bilgilerini HTML formatında error_details'e ekle
+        error_details.append("<h3>DEBUG BİLGİLERİ</h3>")
+        error_details.append(f"<p><strong>Excel başlık (ilk 10):</strong><br/>{header_row[:10]}</p>")
+        error_details.append(f"<p><strong>Bulunan kolonlar ({len(column_map)}):</strong><br/>{', '.join(list(column_map.keys()))}</p>")
+        error_details.append(f"<p><strong>Toplam satır:</strong> {len(rows)-1}</p>")
+        error_details.append("<hr/>")
+        error_details.append("<h4>İlk 3 Satırın Datası:</h4>")
+        
+        # İlk 3 satırın verilerini debug için logla
+        debug_row_count = 0
 
         for row_idx, row in enumerate(rows[1:], start=2):
+            # İlk 3 satırı debug için logla
+            if debug_row_count < 3:
+                _logger.info(f"Satır {row_idx} verisi (ilk 20 kolon): {row[:20]}")
+                debug_row_count += 1
             stats['lines']['processed'] += 1
             
             try:
@@ -304,15 +320,29 @@ class SatToPoolImportWizard(models.TransientModel):
 
                 sat_data = self._extract_sat_data(row, column_map)
                 
+                # İlk 3 satırın extract edilen datasını logla ve error_details'e ekle
+                if row_idx <= 4:  # İlk 3 veri satırı (satır 2,3,4)
+                    debug_msg = f"<p><strong>Satır {row_idx}:</strong><br/>" \
+                               f"&nbsp;&nbsp;SAT: {sat_data.get('erp_pr_id')}<br/>" \
+                               f"&nbsp;&nbsp;İşleme Durumu: '{sat_data.get('processing_status')}'<br/>" \
+                               f"&nbsp;&nbsp;Malzeme: {sat_data.get('material_code')}<br/>" \
+                               f"&nbsp;&nbsp;Tanım: {sat_data.get('name')[:50] if sat_data.get('name') else 'N/A'}</p>"
+                    _logger.info(f"Satır {row_idx}: SAT={sat_data.get('erp_pr_id')}, Status={sat_data.get('processing_status')}")
+                    error_details.append(debug_msg)
+                
                 # SAT numarası kontrolü
                 if not sat_data.get('erp_pr_id'):
                     stats['lines']['skipped'] += 1
-                    error_details.append(f"Satır {row_idx}: SAT numarası eksik")
+                    if row_idx <= 10:  # İlk 10 satır için detay
+                        error_details.append(f"<p style='color:orange'>⚠ Satır {row_idx}: SAT numarası eksik</p>")
                     continue
                 
                 # İşleme durumu kontrolü - 'N' olanları işle
-                if sat_data.get('processing_status') != 'N':
+                processing_status = sat_data.get('processing_status', '')
+                if processing_status != 'N':
                     stats['lines']['skipped'] += 1
+                    if row_idx <= 10:  # İlk 10 satır için detay
+                        error_details.append(f"<p style='color:red'>✗ Satır {row_idx} - SAT {sat_data.get('erp_pr_id')}: İşleme durumu '<strong>{processing_status}</strong>' != 'N', atlandı</p>")
                     continue
                 
                 # Silme göstergesi kontrolü
@@ -331,37 +361,37 @@ class SatToPoolImportWizard(models.TransientModel):
         
         # Hata detaylarını kaydet
         if error_details:
-            stats['error_log'] = '\n'.join(error_details[:100])  # İlk 100 hatayı göster
+            stats['error_log'] = ''.join(error_details[:100])  # İlk 100 hatayı göster
     
     def _build_column_map(self, header_row):
         """Başlık satırından kolon mapping'i oluştur"""
         # Türkçe ve İngilizce başlık eşleşmeleri
         column_patterns = {
-            'erp_pr_id': ['SAT Numarası', 'SAT No', 'PR Number', 'Satınalma Talebi'],
-            'sequence': ['Kalem', 'Kalem No', 'Item', 'Sıra'],
-            'processing_status': ['İşleme Durumu', 'Durum', 'Status', 'Processing Status'],
-            'deletion_indicator': ['Silme', 'Silme Göstergesi', 'Deletion', 'Del.Ind'],
-            'item_type': ['Kalem Tipi', 'Item Type', 'Tip'],
-            'account_assignment_type': ['Hesap Atama', 'Account Assignment', 'Acc.Assgmt'],
-            'material_code': ['Malzeme', 'Malzeme Kodu', 'Material', 'Material Code'],
-            'name': ['Malzeme Tanımı', 'Tanım', 'Description', 'Material Description', 'Kısa Metin'],
-            'unit_of_measure': ['Ölçü Birimi', 'Birim', 'Unit', 'UoM'],
-            'delivery_date_type': ['Teslimat Tarihi Tipi', 'Delivery Date Type'],
-            'required_delivery_date': ['Teslimat Tarihi', 'Delivery Date', 'Talep Tarihi'],
-            'material_group': ['Mal Grubu', 'Material Group', 'MG'],
-            'approval_indicator': ['Onay', 'Onay Göstergesi', 'Approval', 'Approval Indicator'],
-            'plant_code': ['Üretim Yeri', 'Tesis', 'Plant', 'Plant Code'],
-            'purchasing_group': ['Satınalma Grubu', 'SA Grubu', 'Purchasing Group', 'Pur.Group'],
-            'quantity': ['Miktar', 'Quantity', 'Qty'],
-            'company_code': ['Şirket', 'Şirket Kodu', 'Company', 'Company Code'],
-            'request_date': ['Talep Tarihi', 'Request Date', 'Oluşturma Tarihi'],
-            'requester': ['Talep Eden', 'Requester', 'Oluşturan'],
-            'requirement_number': ['Gereksinim No', 'Requirement', 'Req.No'],
-            'delivering_production_location': ['Teslim Yeri', 'Delivery Location', 'Del.Location'],
-            'purchasing_organization': ['Satınalma Organizasyonu', 'Pur.Org', 'Purchasing Org'],
-            'framework_agreement': ['Çerçeve Anlaşma', 'Framework Agreement', 'Outline Agreement'],
-            'purchasing_info_record': ['Satınalma Bilgi Kaydı', 'Info Record', 'Pur.Info Record'],
-            'manufacturer_part_number': ['Üretici Parça No', 'Manufacturer Part', 'Mfr Part No'],
+            'erp_pr_id': ['satınalma talebi', 'sat numarası', 'sat no', 'pr number'],
+            'sequence': ['sat kalemi', 'kalem', 'kalem no', 'item', 'sıra'],
+            'processing_status': ['işleme durumu', 'durum', 'status', 'processing status'],
+            'deletion_indicator': ['silme göstergesi', 'silme', 'deletion', 'del.ind'],
+            'item_type': ['kalem tipi', 'item type', 'tip'],
+            'account_assignment_type': ['hesap tayini', 'hesap atama', 'account assignment', 'acc.assgmt'],
+            'material_code': ['malzeme', 'malzeme kodu', 'material', 'material code'],
+            'name': ['kısa metin', 'malzeme tanımı', 'tanım', 'description', 'material description'],
+            'quantity': ['talep miktarı', 'miktar', 'quantity', 'qty'],
+            'unit_of_measure': ['ölçü birimi', 'birim', 'unit', 'uom'],
+            'delivery_date_type': ['teslimat tarihi tipi', 'delivery date type'],
+            'required_delivery_date': ['teslimat tarihi', 'delivery date', 'talep tarihi'],
+            'material_group': ['mal grubu', 'material group', 'mg'],
+            'approval_indicator': ['onay göstergesi', 'onay', 'approval', 'approval indicator'],
+            'plant_code': ['üretim yeri', 'tesis', 'plant', 'plant code'],
+            'purchasing_group': ['satınalma grubu', 'sa grubu', 'purchasing group', 'pur.group'],
+            'company_code': ['şirket kodu', 'şirket', 'company', 'company code'],
+            'request_date': ['talep tarihi', 'request date', 'oluşturma tarihi'],
+            'requester': ['talep eden', 'requester', 'oluşturan'],
+            'requirement_number': ['gereksinim no', 'requirement', 'req.no'],
+            'delivering_production_location': ['teslim yeri', 'delivery location', 'del.location'],
+            'purchasing_organization': ['satınalma organizasyonu', 'pur.org', 'purchasing org'],
+            'framework_agreement': ['çerçeve anlaşma', 'framework agreement', 'outline agreement'],
+            'purchasing_info_record': ['satınalma bilgi kaydı', 'info record', 'pur.info record'],
+            'manufacturer_part_number': ['üretici parça no', 'manufacturer part', 'mfr part no'],
         }
         
         column_map = {}

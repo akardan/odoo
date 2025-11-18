@@ -332,6 +332,7 @@ class SupplierImportWizard(models.TransientModel):
         vals = {
             'name': data['name'],
             'is_company': True,
+            'lang': 'tr_TR',  # Varsayılan dil Türkçe
         }
         
         # Odoo 18'de tedarikçi sınıflandırması değişmiş olabilir
