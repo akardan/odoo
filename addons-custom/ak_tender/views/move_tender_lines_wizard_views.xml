@@ -39,16 +39,5 @@
             <field name="binding_type">action</field>
         </record>
 
-        <!-- Server Action: Trigger Move Tender Lines Wizard -->
-        <record id="action_server_move_tender_lines" model="ir.actions.server">
-            <field name="name">Yeni İhaleye Taşı</field>
-            <field name="model_id" ref="ak_tender.model_ak_tender"/>
-            <field name="binding_model_id" ref="ak_tender.model_ak_tender"/>
-            <field name="state">code</field>
-            <field name="code">
-action = model.env.ref('ak_tender.action_ak_tender_move_lines_wizard').read()[0]
-action['context'] = {'active_id': records.id}
-            </field>
-        </record>
     </data>
 </odoo>
