@@ -2025,6 +2025,9 @@ class AkTender(models.Model):
         # Send email for each purchase order and mark as sent
         sent_count = 0
         for po in purchase_orders:
+            if not po.partner_id.email:
+                _logger.warning("Skipping email for Purchase Order %s (ID: %s): Partner %s has no email address.", po.name, po.id, po.partner_id.display_name)
+                continue
             try:
                 # Get the template with proper rendering
                 template = self.env['mail.template'].browse(template_id)
@@ -2054,7 +2057,11 @@ class AkTender(models.Model):
                 
                 sent_count += 1
             except Exception as e:
-                pass
+                _logger.error("Failed to send email for Purchase Order %s (ID: %s): %s", po.name, po.id, e)
+                # We continue to the next PO, but log the error.
+                # If we want to stop the process on error, we should raise the exception.
+                # For now, we just log and continue.
+                continue
         
         return {
             'type': 'ir.actions.client',

@@ -32,6 +32,7 @@
         'data/mail_templates.xml',
         'data/mail_notification_templates.xml',
         'data/email_import_cron.xml',
+        'data/payment_terms_data.xml',
         'views/tender_sequence.xml',
         'views/purchase_order_line_views.xml',
         'views/purchase_order_views.xml',
@@ -54,6 +55,7 @@
         'views/purchase_requisition_views.xml',
         'wizards/import_sat_to_pool_wizard_views.xml',
         'views/menu.xml',
+        'views/move_tender_lines_wizard_views.xml',
         'report/vendor_comparison_report.xml',
     ],
     'demo': [

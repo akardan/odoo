@@ -325,6 +325,16 @@ function initializePortalPurchaseEdit() {
                 var paymentTermSelect = document.querySelector('select[name="payment_term_id"]');
                 var paymentTermId = paymentTermSelect ? paymentTermSelect.value : false;
                 
+                // Validate payment term
+                if (!paymentTermId || paymentTermId === "") {
+                    alert('Hata: Lütfen Ödeme Koşulu seçiniz.');
+                    paymentTermSelect.classList.add('is-invalid');
+                    button.disabled = false;
+                    button.innerHTML = '<i class="fa fa-save"></i> Tüm Değişiklikleri Kaydet';
+                    saveInProgress = false;
+                    return;
+                }
+                
                 // Prepare params object for all lines
                 var params = {
                     order_id: parseInt(orderId),

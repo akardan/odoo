@@ -52,10 +52,10 @@
                         <strong class="d-block mb-1">From:</strong>
                         <address t-field="order.company_id.partner_id" t-options='{"widget": "contact", "fields": ["address", "name"], "no_marker": True}'/>
                         <div t-att-class="'d-inline' if order.date_planned else 'd-none'">
-                            <strong>Delivery Date:</strong><span class="ms-1" t-field="order.date_planned" t-options='{"widget": "date"}'/>
+                            <strong>Teslimat Tarihi:</strong><span class="ms-1" t-field="order.date_planned" t-options='{"widget": "date"}'/>
                         </div>
                         <div class="col-lg-6">
-                            <strong class="d-block mb-1">Delivery Location:</strong>
+                            <strong class="d-block mb-1">Teslimat Yeri:</strong>
                             <span t-field="order.location_dest_id.display_name"/>
                         </div>
                     </div>
@@ -94,15 +94,15 @@
                         <t t-set="display_price_and_taxes" t-value="not update_dates and order.state in ['sent', 'purchase', 'done']"/>
                         <thead class="bg-100">
                             <tr>
-                                <th class="text-start" style="width: 30%;">Products</th>
+                                <th class="text-start" style="width: 30%;">Ürünler</th>
                                 <th class="text-center" style="width: 3%;"><i class="fa fa-info-circle"></i></th>
                                 <th class="text-end" style="width: 6%;">Miktar</th>
-                                <th t-if="update_dates" class="text-end" style="width: 10%;">Scheduled Date</th>
+                                <th t-if="update_dates" class="text-end" style="width: 10%;">Planlanan Tarih</th>
                                 <th t-if="display_price_and_taxes" t-attf-class="text-end {{ 'd-none d-sm-table-cell' if report_type == 'html' else '' }}" style="width: 12%;">Birim Fiyatı</th>
                                 <th t-if="display_price_and_taxes" t-attf-class="text-end {{ 'd-none d-sm-table-cell' if report_type == 'html' else '' }}" style="width: 6%;">Kur</th>
                                 <th t-if="display_price_and_taxes" t-attf-class="text-end {{ 'd-none d-sm-table-cell' if report_type == 'html' else '' }}" style="width: 8%;">İnd.%</th>
                                 <th t-if="display_price_and_taxes" t-attf-class="text-end {{ 'd-none d-md-table-cell' if report_type == 'html' else '' }}" style="width: 8%;">KDV</th>
-                                <th class="text-end" t-if="not update_dates and order.state in ['purchase', 'done']" style="width: 8%;">Amount</th>
+                                <th class="text-end" t-if="not update_dates and order.state in ['purchase', 'done']" style="width: 8%;">Miktar</th>
                                 <!-- Additional columns for editable fields -->
                                 <th class="text-end" style="width: 7%;">Teslimat Tar.</th>
                                 <th class="text-end" t-if="order.tender_id.tender_type not in ['direct', 'indirect']" style="width: 6%;">Garanti</th>
@@ -350,15 +350,6 @@
                     </table>
                 </div>
 
-                <!-- Document-level save button -->
-                <div class="row mb-4">
-                    <div class="col-12 text-end">
-                        <button id="save-all-btn" class="btn btn-primary"
-                                t-att-disabled="order.tender_id.workflow_current_state_id.code not in ['first_tender_round', 'new_tender_round'] or order.tender_round != order.tender_id.tender_round or None">
-                            <i class="fa fa-save"></i> Tüm Değişiklikleri Kaydet
-                        </button>
-                    </div>
-                </div>
 
                 <div id="total" t-if="order.state in ['purchase', 'done']" class="row" name="total" style="page-break-inside: avoid;">
                     <div t-attf-class="#{'col-4' if report_type != 'html' else 'col-sm-7 col-md-5'} ms-auto">
@@ -374,11 +365,11 @@
             </section>
 
             <section class="mt-5">
-                <h4 class="">Ödeme Koşulu</h4>
+                <h4 class="">Ödeme Koşulu <span class="text-danger">*</span></h4>
                 <hr class="mt-0 mb-1"/>
                 <div class="row">
                     <div class="col-md-6">
-                        <select t-attf-name="payment_term_id" class="form-select form-select-sm editable-field" style="font-size: 0.9em; width: 100%;">
+                        <select t-attf-name="payment_term_id" class="form-select form-select-sm editable-field" style="font-size: 0.9em; width: 100%;" required="required">
                             <option value="">Seçiniz</option>
                             <t t-foreach="request.env['account.payment.term'].sudo().search([])" t-as="term">
                                 <option t-att-value="term.id" t-att-selected="order.payment_term_id and order.payment_term_id.id == term.id">
@@ -390,6 +381,15 @@
                     </div>
                 </div>
             </section>
+            <!-- Document-level save button -->
+            <div class="row mb-4">
+                <div class="col-12 text-end">
+                    <button id="save-all-btn" class="btn btn-primary"
+                            t-att-disabled="order.tender_id.workflow_current_state_id.code not in ['first_tender_round', 'new_tender_round'] or order.tender_round != order.tender_id.tender_round or None">
+                        <i class="fa fa-save"></i> Tüm Değişiklikleri Kaydet
+                    </button>
+                </div>
+            </div>
             
             <!-- Add the Chatter (Communication) section -->
             <section id="portal_chatter" class="mt-5">

@@ -47,6 +47,41 @@ class SatToPoolImportWizard(models.TransientModel):
         ('draft', 'Taslak'),
         ('done', 'Tamamlandı'),
     ], default='draft')
+
+    COLUMN_INDICES = {
+        'erp_pr_id': 0,
+        'sequence': 1,
+        'processing_status': 2,
+        'deletion_indicator': 3,
+        'item_type': 4,
+        'account_assignment_type': 5,
+        'material_code': 6,
+        'name': 7,
+        'quantity': 8,
+        'unit_of_measure': 9,
+        'delivery_date_type': 10,
+        'required_delivery_date': 11,
+        'request_date': 12,
+        'material_group': 13,
+        'plant_code': 14,  # O kolonu - Üretim yeri (aynı zamanda şirket kodu için kullanılıyor)
+        'storage_location': 15,
+        'purchasing_group': 16,
+        'requester': 17,
+        'requirement_number': 18,
+        'vendor_preferred': 19,
+        'vendor_fixed': 20,
+        'delivering_production_location': 21,
+        'purchasing_organization': 22,
+        'framework_agreement': 23,
+        'purchasing_info_record': 24,
+        'requester_comment': 25,
+        'manufacturer_part_number': 26,
+        'pr_count': 27,
+        'po_number': 28,
+        'approval_indicator': 29,
+        'approval_date': 30,
+        'erp_requester': 31,
+    }
     
     def action_import_to_pool(self):
         """Excel'den SAT'ları havuza aktar"""
@@ -223,9 +258,9 @@ class SatToPoolImportWizard(models.TransientModel):
                         data_rows.append(row_data)
                 
                 if len(data_rows) > 1:
-                    df = pd.DataFrame(data_rows[1:], columns=data_rows[0])
+                    df = pd.DataFrame(data_rows[1:], columns=data_rows[0], dtype=str)
                 elif len(data_rows) == 1:
-                    df = pd.DataFrame(columns=data_rows[0])
+                    df = pd.DataFrame(columns=data_rows[0], dtype=str)
                 else:
                     df = pd.DataFrame()
                 
@@ -289,19 +324,17 @@ class SatToPoolImportWizard(models.TransientModel):
         
         rows = [df.columns.tolist()] + df.values.tolist()
         
-        # Kolon mapping'ini başlık satırından oluştur
-        header_row = rows[0]
-        column_map = self._build_column_map(header_row)
-        _logger.info(f"Excel başlık satırı: {header_row[:20]}")  # İlk 20 kolon
-        _logger.info(f"Kolon mapping: {column_map}")
+        # Sabit kolon indeksleri
+        column_map = self.COLUMN_INDICES
+        _logger.info(f"Excel başlık satırı: {rows[0][:20]}")  # İlk 20 kolon
+        _logger.info(f"Kolon indeksleri: {column_map}")
         
-        # Debug bilgilerini HTML formatında error_details'e ekle
-        error_details.append("<h3>DEBUG BİLGİLERİ</h3>")
-        error_details.append(f"<p><strong>Excel başlık (ilk 10):</strong><br/>{header_row[:10]}</p>")
-        error_details.append(f"<p><strong>Bulunan kolonlar ({len(column_map)}):</strong><br/>{', '.join(list(column_map.keys()))}</p>")
-        error_details.append(f"<p><strong>Toplam satır:</strong> {len(rows)-1}</p>")
-        error_details.append("<hr/>")
-        error_details.append("<h4>İlk 3 Satırın Datası:</h4>")
+        # Debug bilgilerini text formatında error_details'e ekle
+        error_details.append("\n=== DEBUG BİLGİLERİ ===\n")
+        error_details.append(f"Excel başlık (ilk 10): {rows[0][:10]}\n")
+        error_details.append(f"Bulunan kolonlar ({len(column_map)}): {', '.join(list(column_map.keys()))}\n")
+        error_details.append(f"Toplam satır: {len(rows)-1}\n")
+        error_details.append("\n--- İlk 3 Satırın Datası ---\n")
         
         # İlk 3 satırın verilerini debug için logla
         debug_row_count = 0
@@ -322,11 +355,13 @@ class SatToPoolImportWizard(models.TransientModel):
                 
                 # İlk 3 satırın extract edilen datasını logla ve error_details'e ekle
                 if row_idx <= 4:  # İlk 3 veri satırı (satır 2,3,4)
-                    debug_msg = f"<p><strong>Satır {row_idx}:</strong><br/>" \
-                               f"&nbsp;&nbsp;SAT: {sat_data.get('erp_pr_id')}<br/>" \
-                               f"&nbsp;&nbsp;İşleme Durumu: '{sat_data.get('processing_status')}'<br/>" \
-                               f"&nbsp;&nbsp;Malzeme: {sat_data.get('material_code')}<br/>" \
-                               f"&nbsp;&nbsp;Tanım: {sat_data.get('name')[:50] if sat_data.get('name') else 'N/A'}</p>"
+                    debug_msg = f"\nSatır {row_idx}:\n" \
+                                f"  SAT: {sat_data.get('erp_pr_id')}\n" \
+                                f"  İşleme Durumu: '{sat_data.get('processing_status')}'\n" \
+                                f"  Malzeme: {sat_data.get('material_code')}\n" \
+                                f"  Tanım: {sat_data.get('name')[:50] if sat_data.get('name') else 'N/A'}\n" \
+                                f"  Talep Tarihi: {sat_data.get('request_date')}\n" \
+                                f"  Teslim Tarihi: {sat_data.get('required_delivery_date')}\n"
                     _logger.info(f"Satır {row_idx}: SAT={sat_data.get('erp_pr_id')}, Status={sat_data.get('processing_status')}")
                     error_details.append(debug_msg)
                 
@@ -334,7 +369,7 @@ class SatToPoolImportWizard(models.TransientModel):
                 if not sat_data.get('erp_pr_id'):
                     stats['lines']['skipped'] += 1
                     if row_idx <= 10:  # İlk 10 satır için detay
-                        error_details.append(f"<p style='color:orange'>⚠ Satır {row_idx}: SAT numarası eksik</p>")
+                        error_details.append(f"⚠ Satır {row_idx}: SAT numarası eksik\n")
                     continue
                 
                 # İşleme durumu kontrolü - 'N' olanları işle
@@ -342,7 +377,7 @@ class SatToPoolImportWizard(models.TransientModel):
                 if processing_status != 'N':
                     stats['lines']['skipped'] += 1
                     if row_idx <= 10:  # İlk 10 satır için detay
-                        error_details.append(f"<p style='color:red'>✗ Satır {row_idx} - SAT {sat_data.get('erp_pr_id')}: İşleme durumu '<strong>{processing_status}</strong>' != 'N', atlandı</p>")
+                        error_details.append(f"✗ Satır {row_idx} - SAT {sat_data.get('erp_pr_id')}: İşleme durumu '{processing_status}' != 'N', atlandı\n")
                     continue
                 
                 # Silme göstergesi kontrolü
@@ -363,119 +398,98 @@ class SatToPoolImportWizard(models.TransientModel):
         if error_details:
             stats['error_log'] = ''.join(error_details[:100])  # İlk 100 hatayı göster
     
-    def _build_column_map(self, header_row):
-        """Başlık satırından kolon mapping'i oluştur"""
-        # Türkçe ve İngilizce başlık eşleşmeleri
-        column_patterns = {
-            'erp_pr_id': ['satınalma talebi', 'sat numarası', 'sat no', 'pr number'],
-            'sequence': ['sat kalemi', 'kalem', 'kalem no', 'item', 'sıra'],
-            'processing_status': ['işleme durumu', 'durum', 'status', 'processing status'],
-            'deletion_indicator': ['silme göstergesi', 'silme', 'deletion', 'del.ind'],
-            'item_type': ['kalem tipi', 'item type', 'tip'],
-            'account_assignment_type': ['hesap tayini', 'hesap atama', 'account assignment', 'acc.assgmt'],
-            'material_code': ['malzeme', 'malzeme kodu', 'material', 'material code'],
-            'name': ['kısa metin', 'malzeme tanımı', 'tanım', 'description', 'material description'],
-            'quantity': ['talep miktarı', 'miktar', 'quantity', 'qty'],
-            'unit_of_measure': ['ölçü birimi', 'birim', 'unit', 'uom'],
-            'delivery_date_type': ['teslimat tarihi tipi', 'delivery date type'],
-            'required_delivery_date': ['teslimat tarihi', 'delivery date', 'talep tarihi'],
-            'material_group': ['mal grubu', 'material group', 'mg'],
-            'approval_indicator': ['onay göstergesi', 'onay', 'approval', 'approval indicator'],
-            'plant_code': ['üretim yeri', 'tesis', 'plant', 'plant code'],
-            'purchasing_group': ['satınalma grubu', 'sa grubu', 'purchasing group', 'pur.group'],
-            'company_code': ['şirket kodu', 'şirket', 'company', 'company code'],
-            'request_date': ['talep tarihi', 'request date', 'oluşturma tarihi'],
-            'requester': ['talep eden', 'requester', 'oluşturan'],
-            'requirement_number': ['gereksinim no', 'requirement', 'req.no'],
-            'delivering_production_location': ['teslim yeri', 'delivery location', 'del.location'],
-            'purchasing_organization': ['satınalma organizasyonu', 'pur.org', 'purchasing org'],
-            'framework_agreement': ['çerçeve anlaşma', 'framework agreement', 'outline agreement'],
-            'purchasing_info_record': ['satınalma bilgi kaydı', 'info record', 'pur.info record'],
-            'manufacturer_part_number': ['üretici parça no', 'manufacturer part', 'mfr part no'],
-        }
-        
-        column_map = {}
-        
-        # Her başlık için index bul
-        for idx, header in enumerate(header_row):
-            if not header:
-                continue
-            
-            header_str = str(header).strip()
-            
-            # Her field için pattern'leri kontrol et
-            for field_name, patterns in column_patterns.items():
-                for pattern in patterns:
-                    if pattern.lower() in header_str.lower():
-                        column_map[field_name] = idx
-                        _logger.info(f"Kolon bulundu: {field_name} = Index {idx} ({header_str})")
-                        break
-                if field_name in column_map:
-                    break
-        
-        # Eksik kritik kolonları kontrol et
-        required_fields = ['erp_pr_id', 'sequence', 'material_code', 'name']
-        missing_fields = [f for f in required_fields if f not in column_map]
-        if missing_fields:
-            _logger.warning(f"Eksik kritik kolonlar: {missing_fields}")
-        
-        return column_map
 
     def _extract_sat_data(self, row, column_map):
-        """Satırdan SAT verilerini çıkar - kolon mapping kullanarak"""
-        def safe_get(field_name, default=''):
-            """Kolon mapping'den field'ı al"""
+        """Satırdan SAT verilerini çıkar - sabit indeksleri kullanarak"""
+        def safe_get(index, default=''):
+            """Belirtilen indeksten field'ı al"""
             try:
-                if field_name not in column_map:
-                    return default
-                index = column_map[field_name]
                 value = row[index] if len(row) > index and row[index] is not None else default
-                return str(value).strip() if value else default
-            except:
+                return str(value).replace('\x00', '').strip()
+            except IndexError:
+                _logger.warning(f"IndexError: Kolon indeksi {index} satırda bulunamadı. Varsayılan değer kullanılıyor.")
+                return default
+            except Exception as e:
+                _logger.error(f"safe_get hata: Index {index}, Hata: {str(e)}")
                 return default
 
-        def safe_float(field_name, default=0.0):
-            """Kolon mapping'den float field'ı al"""
+        def safe_float(index, default=0.0):
+            """Belirtilen indeksten float field'ı al"""
             try:
-                if field_name not in column_map:
-                    return default
-                index = column_map[field_name]
                 value = row[index] if len(row) > index and row[index] is not None else None
                 return float(value) if value else default
-            except:
+            except IndexError:
+                _logger.warning(f"IndexError: Kolon indeksi {index} satırda bulunamadı. Varsayılan değer kullanılıyor.")
+                return default
+            except Exception as e:
+                _logger.error(f"safe_float hata: Index {index}, Hata: {str(e)}")
                 return default
                 
-        def safe_date(field_name, default=None):
-            """Kolon mapping'den date field'ı al"""
+        def safe_date(index, default=None):
+            """Belirtilen indeksten date field'ı al"""
             try:
-                if field_name not in column_map:
-                    return default
-                index = column_map[field_name]
                 value = row[index] if len(row) > index and row[index] is not None else None
-                if not value:
+                _logger.debug(f"safe_date: Index {index} için gelen değer: '{value}' (type: {type(value)})")
+                if value is None or (isinstance(value, str) and not value.strip()):
+                    _logger.debug(f"safe_date: Index {index} için değer boş veya sadece boşluk, varsayılan dönülüyor.")
+                    return default
+                if pd and pd.isna(value):
+                    _logger.debug(f"safe_date: Index {index} için pd.isna(value) True, varsayılan dönülüyor.")
                     return default
                 
                 if isinstance(value, datetime):
+                    _logger.debug(f"safe_date: Index {index} için datetime objesi, date'e çevriliyor: {value.date()}")
                     return value.date()
+                elif isinstance(value, (int, float)):
+                    try:
+                        # Excel'in 1900-01-01'i 1 olarak kabul ettiği varsayımıyla
+                        # Python'da 1900-01-01'den itibaren gün sayısını hesaplayalım.
+                        # Excel'de 1900-01-01 = 1, Python'da datetime(1900,1,1).toordinal() = 730120
+                        # Excel'den gelen sayıya 730119 ekleyerek Python ordinal değerini buluruz.
+                        # Ancak Excel'in 1900-02-29 hatası nedeniyle, 60'tan büyük sayılar için 1 gün daha çıkarırız.
+                        excel_date = float(value)
+                        
+                        # Sadece tam sayı kısmını al (saat/dakika bilgisini at)
+                        excel_date = int(excel_date)
+                        
+                        if excel_date > 60: # 1900-03-01'den sonraki tarihler için
+                            excel_date -= 1 # Excel'in 1900-02-29 hatasını düzelt
+                        
+                        # Excel'in başlangıç tarihi 1899-12-30'dur (0. gün)
+                        parsed_date = datetime(1899, 12, 30) + timedelta(days=excel_date)
+                        _logger.debug(f"safe_date: Index {index} için '{value}' (Excel float) değeri başarıyla parse edildi: {parsed_date.date()}")
+                        return parsed_date.date()
+                    except Exception as e:
+                        _logger.warning(f"safe_date: Index {index} için '{value}' (Excel float) değeri parse edilemedi: {str(e)}")
+                        return default
                 elif isinstance(value, str):
-                    for fmt in ['%Y%m%d', '%d.%m.%Y', '%Y-%m-%d']:
+                    value_str = value.strip()
+                    for fmt in ['%Y%m%d', '%d.%m.%Y', '%Y-%m-%d', '%Y-%m-%d %H:%M:%S', '%Y/%m/%d', '%Y-%m-%dT%H:%M:%S.%f']:
                         try:
-                            return datetime.strptime(value, fmt).date()
+                            parsed_date = datetime.strptime(value_str, fmt).date()
+                            _logger.debug(f"safe_date: Index {index} için '{value}' değeri '{fmt}' formatıyla başarıyla parse edildi: {parsed_date}")
+                            return parsed_date
                         except ValueError:
                             continue
+                    _logger.warning(f"safe_date: Index {index} için '{value_str}' değeri hiçbir formatla parse edilemedi.")
                 return default
-            except:
+                # Eğer buraya kadar gelindiyse, değer işlenememiştir.
+                if value is not None:
+                    _logger.warning(f"safe_date: Index {index} için '{value}' (type: {type(value)}) değeri işlenemedi.")
+                return default
+            except IndexError:
+                _logger.warning(f"IndexError: Kolon indeksi {index} satırda bulunamadı. Varsayılan değer kullanılıyor.")
+                return default
+            except Exception as e:
+                _logger.error(f"safe_date hata: Index {index}, Hata: {str(e)}")
                 return default
         
-        def safe_approval_indicator(field_name, default=''):
+        def safe_approval_indicator(index, default=''):
             """
             approval_indicator için özel fonksiyon
             SAP'den datetime gelebiliyor ama Selection field bekliyor ('X', 'Z', '2')
             """
             try:
-                if field_name not in column_map:
-                    return default
-                index = column_map[field_name]
                 value = row[index] if len(row) > index and row[index] is not None else None
                 if not value:
                     return default
@@ -494,35 +508,46 @@ class SatToPoolImportWizard(models.TransientModel):
                     return value_str
                 
                 return default
-            except:
+            except IndexError:
+                _logger.warning(f"IndexError: Kolon indeksi {index} satırda bulunamadı. Varsayılan değer kullanılıyor.")
+                return default
+            except Exception as e:
+                _logger.error(f"safe_approval_indicator hata: Index {index}, Hata: {str(e)}")
                 return default
 
         return {
-            'erp_pr_id': safe_get('erp_pr_id'),
-            'sequence': safe_get('sequence'),
-            'processing_status': safe_get('processing_status'),
-            'deletion_indicator': safe_get('deletion_indicator'),
-            'item_type': safe_get('item_type'),
-            'account_assignment_type': safe_get('account_assignment_type'),
-            'material_code': safe_get('material_code'),
-            'name': safe_get('name'),
-            'unit_of_measure': safe_get('unit_of_measure'),
-            'delivery_date_type': safe_get('delivery_date_type'),
-            'required_delivery_date': safe_date('required_delivery_date'),
-            'material_group': safe_get('material_group'),
-            'approval_indicator': safe_approval_indicator('approval_indicator'),
-            'plant_code': safe_get('plant_code'),
-            'purchasing_group': safe_get('purchasing_group'),
-            'quantity': safe_float('quantity', 0.0),
-            'company_code': safe_get('company_code'),
-            'request_date': safe_date('request_date'),
-            'requester': safe_get('requester'),
-            'requirement_number': safe_get('requirement_number'),
-            'delivering_production_location': safe_get('delivering_production_location'),
-            'purchasing_organization': safe_get('purchasing_organization'),
-            'framework_agreement': safe_get('framework_agreement'),
-            'purchasing_info_record': safe_get('purchasing_info_record'),
-            'manufacturer_part_number': safe_get('manufacturer_part_number'),
+            'erp_pr_id': safe_get(self.COLUMN_INDICES.get('erp_pr_id')),
+            'sequence': safe_get(self.COLUMN_INDICES.get('sequence')),
+            'processing_status': safe_get(self.COLUMN_INDICES.get('processing_status')),
+            'deletion_indicator': safe_get(self.COLUMN_INDICES.get('deletion_indicator')),
+            'item_type': safe_get(self.COLUMN_INDICES.get('item_type')),
+            'account_assignment_type': safe_get(self.COLUMN_INDICES.get('account_assignment_type')),
+            'material_code': safe_get(self.COLUMN_INDICES.get('material_code')),
+            'name': safe_get(self.COLUMN_INDICES.get('name')),
+            'quantity': safe_float(self.COLUMN_INDICES.get('quantity'), 0.0),
+            'unit_of_measure': safe_get(self.COLUMN_INDICES.get('unit_of_measure')),
+            'delivery_date_type': safe_get(self.COLUMN_INDICES.get('delivery_date_type')),
+            'required_delivery_date': safe_date(self.COLUMN_INDICES.get('required_delivery_date')),
+            'request_date': safe_date(self.COLUMN_INDICES.get('request_date')),
+            'material_group': safe_get(self.COLUMN_INDICES.get('material_group')),
+            'plant_code': safe_get(self.COLUMN_INDICES.get('plant_code')),
+            'storage_location': safe_get(self.COLUMN_INDICES.get('storage_location')),
+            'purchasing_group': safe_get(self.COLUMN_INDICES.get('purchasing_group')),
+            'requester': safe_get(self.COLUMN_INDICES.get('requester')),
+            'requirement_number': safe_get(self.COLUMN_INDICES.get('requirement_number')),
+            'vendor_preferred': safe_get(self.COLUMN_INDICES.get('vendor_preferred')),
+            'vendor_fixed': safe_get(self.COLUMN_INDICES.get('vendor_fixed')),
+            'delivering_production_location': safe_get(self.COLUMN_INDICES.get('delivering_production_location')),
+            'purchasing_organization': safe_get(self.COLUMN_INDICES.get('purchasing_organization')),
+            'framework_agreement': safe_get(self.COLUMN_INDICES.get('framework_agreement')),
+            'purchasing_info_record': safe_get(self.COLUMN_INDICES.get('purchasing_info_record')),
+            'requester_comment': safe_get(self.COLUMN_INDICES.get('requester_comment')),
+            'manufacturer_part_number': safe_get(self.COLUMN_INDICES.get('manufacturer_part_number')),
+            'pr_count': safe_get(self.COLUMN_INDICES.get('pr_count')),
+            'po_number': safe_get(self.COLUMN_INDICES.get('po_number')),
+            'approval_indicator': safe_approval_indicator(self.COLUMN_INDICES.get('approval_indicator')),
+            'approval_date': safe_date(self.COLUMN_INDICES.get('approval_date')),
+            'erp_requester': safe_get(self.COLUMN_INDICES.get('erp_requester')),
         }
 
     def _add_to_pool(self, data, stats):
@@ -591,6 +616,13 @@ class SatToPoolImportWizard(models.TransientModel):
             if found_uom:
                 uom = found_uom
         
+        # Şirket kodunu belirle: company_code varsa onu kullan, yoksa plant_code'dan türet
+        company_code = data.get('company_code')
+        if not company_code and data.get('plant_code'):
+            # SAP'de genellikle şirket kodu plant code'un ilk 4 karakteridir
+            plant_code = str(data.get('plant_code'))
+            company_code = plant_code[:4] if len(plant_code) >= 4 else plant_code
+        
         return {
             'requisition_id': requisition.id,
             'product_id': product.id,
@@ -607,7 +639,7 @@ class SatToPoolImportWizard(models.TransientModel):
             'material_code': data.get('material_code'),
             'material_group': data.get('material_group'),
             'purchasing_group': data.get('purchasing_group'),
-            'erp_company_code': data.get('company_code'),
+            'erp_company_code': company_code,
             'erp_plant_code': data.get('plant_code'),
             'erp_requester': data.get('requester'),
             'request_date': data.get('request_date'),
@@ -620,6 +652,12 @@ class SatToPoolImportWizard(models.TransientModel):
             'delivery_date_type': data.get('delivery_date_type'),
             'delivering_production_location': data.get('delivering_production_location'),
             'purchasing_organization': data.get('purchasing_organization'),
+            'vendor_preferred': data.get('vendor_preferred'),
+            'vendor_fixed': data.get('vendor_fixed'),
+            'requester_comment': data.get('requester_comment'),
+            'pr_count': data.get('pr_count'),
+            'po_number': data.get('po_number'),
+            'approval_date': data.get('approval_date'),
         }
 
     def _find_or_create_product(self, data):

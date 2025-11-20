@@ -289,6 +289,38 @@ class PurchaseRequisitionLine(models.Model):
         help="Satınalma Organizasyonu"
     )
     
+    # Yeni SAP Alanları
+    vendor_preferred = fields.Char(
+        string='Tercih Edilen Tedarikçi',
+        help="SAP'den gelen tercih edilen tedarikçi kodu"
+    )
+    
+    vendor_fixed = fields.Char(
+        string='Sabit Tedarikçi',
+        help="SAP'den gelen sabit tedarikçi kodu"
+    )
+    
+    requester_comment = fields.Text(
+        string='Talep Eden Yorumu',
+        help="SAP'den gelen talep eden yorumu"
+    )
+    
+    pr_count = fields.Char(
+        string='SAT Sayısı',
+        help="SAP'den gelen SAT Sayısı (Genellikle 1)"
+    )
+    
+    po_number = fields.Char(
+        string='SAS No',
+        help="SAP Satınalma Siparişi Numarası"
+    )
+    
+    approval_date = fields.Date(
+        string='Onay Tarihi',
+        help="SAT'ın onaylandığı tarih"
+    )
+    
+    # İhale İlişkisi
     # İhale İlişkisi
     tender_line_id = fields.Many2one(
         'ak.tender.line',

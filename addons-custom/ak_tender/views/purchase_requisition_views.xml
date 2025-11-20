@@ -26,7 +26,13 @@
                 <field name="purchasing_group" string="SA Grubu" optional="hide"/>
                 <field name="erp_company_code" string="Şirket" optional="hide"/>
                 <field name="tender_group_info" string="İhale Grubu" optional="show"/>
+                <field name="approval_date" string="Onay Tarihi" optional="show"/>
+                <field name="request_date" string="Talep Tarihi" optional="show"/>
                 <field name="required_delivery_date" string="Teslim Tarihi" optional="show"/>
+                <field name="vendor_preferred" string="Tercih Edilen Tedarikçi" optional="hide"/>
+                <field name="vendor_fixed" string="Sabit Tedarikçi" optional="hide"/>
+                <field name="po_number" string="SAS No" optional="hide"/>
+                <field name="pr_count" string="SAT Sayısı" optional="hide"/>
                 <field name="line_processing_status" string="Durum"/>
                 <field name="tender_id" string="İhale" optional="hide"/>
                 <field name="deletion_indicator" invisible="1"/>
@@ -104,6 +110,12 @@
                         <field name="manufacturer_part_number"/>
                         <field name="delivering_production_location"/>
                         <field name="purchasing_organization"/>
+                        <field name="vendor_preferred"/>
+                        <field name="vendor_fixed"/>
+                        <field name="po_number"/>
+                        <field name="approval_date"/>
+                        <field name="pr_count"/>
+                        <field name="requester_comment"/>
                     </group>
                 </sheet>
             </form>
@@ -123,8 +135,11 @@
                 <field name="material_group" string="Mal Grubu"/>
                 <field name="purchasing_group" string="SA Grubu"/>
                 <field name="erp_company_code" string="Şirket"/>
+                <field name="vendor_preferred" string="Tercih Edilen Tedarikçi"/>
+                <field name="vendor_fixed" string="Sabit Tedarikçi"/>
+                <field name="po_number" string="SAS No"/>
                 
-                <filter name="can_create_tender" string="İhale Oluşturulabilir" 
+                <filter name="can_create_tender" string="İhale Oluşturulabilir"
                         domain="[('can_create_tender', '=', True)]"/>
                 <filter name="not_processed" string="İşlenmedi" 
                         domain="[('line_processing_status', '=', 'N')]"/>
@@ -209,7 +224,6 @@
         <field name="view_mode">list,form</field>
         <field name="context">{
             'search_default_can_create_tender': 1,
-            'search_default_group_by_tender_group': 1,
         }</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">

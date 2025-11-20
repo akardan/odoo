@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Wizard Form View: Move Tender Lines to New Tender -->
+        <record id="ak_tender_move_lines_wizard_view_form" model="ir.ui.view">
+            <field name="name">ak.tender.move.lines.wizard.form</field>
+            <field name="model">ak.tender.move.lines.wizard</field>
+            <field name="arch" type="xml">
+                <form string="İhale Kalemlerini Yeni İhaleye Taşı">
+                    <group>
+                        <field name="original_tender_id" invisible="1"/>
+                        <field name="name"/>
+                        <field name="tender_type"/>
+                        <field name="buyer_id"/>
+                    </group>
+                    <group string="Tarihler">
+                        <field name="start_date"/>
+                        <field name="end_date"/>
+                        <field name="required_delivery_date"/>
+                    </group>
+                    <group string="Taşınacak İhale Kalemleri">
+                        <field name="tender_line_ids" nolabel="1" widget="many2many_list"/>
+                    </group>
+                    <footer>
+                        <button name="action_move_lines" string="Taşı ve İhale Oluştur" type="object" class="btn-primary"/>
+                        <button string="İptal" class="btn-secondary" special="cancel"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+
+        <!-- Wizard Action: Open Move Tender Lines Wizard -->
+        <record id="action_ak_tender_move_lines_wizard" model="ir.actions.act_window">
+            <field name="name">İhale Kalemlerini Yeni İhaleye Taşı</field>
+            <field name="res_model">ak.tender.move.lines.wizard</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+            <field name="binding_model_id" ref="ak_tender.model_ak_tender"/>
+            <field name="binding_type">action</field>
+        </record>
+
+        <!-- Server Action: Trigger Move Tender Lines Wizard -->
+        <record id="action_server_move_tender_lines" model="ir.actions.server">
+            <field name="name">Yeni İhaleye Taşı</field>
+            <field name="model_id" ref="ak_tender.model_ak_tender"/>
+            <field name="binding_model_id" ref="ak_tender.model_ak_tender"/>
+            <field name="state">code</field>
+            <field name="code">
+action = model.env.ref('ak_tender.action_ak_tender_move_lines_wizard').read()[0]
+action['context'] = {'active_id': records.id}
+            </field>
+        </record>
+    </data>
+</odoo>
