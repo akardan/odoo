@@ -1072,7 +1072,15 @@
 
                                             <!-- İndirim % row -->
                                             <tr t-att-data-tender-line-id="tender_line.id">
-                                                <td class="field-col"><strong>İndirim %:</strong></td>
+                                                <td class="field-col">
+                                                    <strong>İndirim %:</strong>
+                                                    <t t-if="o.target_type == 'discount' and tender_line.target_discount">
+                                                        <br/>
+                                                        <small style="color: #dc3545; font-weight: bold;">
+                                                            %<span t-esc="tender_line.target_discount"/>
+                                                        </small>
+                                                    </t>
+                                                </td>
                                                 <t t-foreach="vendors_to_show" t-as="vendor">
                                                     <t t-set="vendor_line" t-value="False"/>
                                                     <t t-foreach="vendor.order_line" t-as="line">

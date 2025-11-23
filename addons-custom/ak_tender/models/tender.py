@@ -84,10 +84,18 @@ class AkTenderLine(models.Model):
                                   default=lambda self: self.tender_id.currency_id or self.env.company.currency_id,
                                   required=True,
                                   store=True)
+    target_type = fields.Selection([
+        ('price', _('Hedef Fiyat')),
+        ('discount', _('Hedef İndirim'))
+    ], string=_('Hedef Tipi'), related='tender_id.target_type', store=True, readonly=True,
+       help=_('İhale başlığından gelen hedef tipi.'))
     target_price = fields.Monetary(string=_('Hedef Fiyat'),
                                        currency_field='currency_id',
                                        default=0.0,
                                        help=_("Bu kalem için belirlenen hedef fiyat."))
+    target_discount = fields.Float(string=_('Hedef İndirim (%)'),
+                                   default=0.0,
+                                   help=_('Bu kalem için belirlenen hedef indirim yüzdesi.'))
     # Attachment fields for tender line
     attachment1 = fields.Binary(string=_('Ek1'), help=_("Upload image or PDF attachment 1"))
     attachment1_filename = fields.Char(string=_('Ek1 Dosya Adı'))
@@ -173,20 +181,27 @@ class AkTenderLine(models.Model):
             
     @api.model
     def create(self, vals):
-        """Yeni bir satır oluşturulduğunda tender'ın hedef fiyatını güncelle"""
+        """Yeni bir satır oluşturulduğunda tender'ın hedef fiyat ve iskonto değerlerini güncelle"""
         line = super(AkTenderLine, self).create(vals)
         if line.tender_id and line.display_type == 'product':
             line.tender_id.calculate_total_target_price()
+            if line.target_discount:
+                line.tender_id.calculate_weighted_average_target_discount()
         return line
     
     def write(self, vals):
-        """Satır güncellendiğinde tender'ın hedef fiyatını güncelle"""
+        """Satır güncellendiğinde tender'ın hedef fiyat ve iskonto değerlerini güncelle"""
         result = super(AkTenderLine, self).write(vals)
         # Eğer target_price, quantity veya currency_id değişmişse tender'ın hedef fiyatını güncelle
         if 'target_price' in vals or 'quantity' in vals or 'currency_id' in vals:
             for line in self:
                 if line.tender_id and line.display_type == 'product':
                     line.tender_id.calculate_total_target_price()
+        # Eğer target_discount değişmişse tender'ın ağırlıklı ortalama hedef iskontosunu güncelle
+        if 'target_discount' in vals:
+            for line in self:
+                if line.tender_id and line.display_type == 'product':
+                    line.tender_id.calculate_weighted_average_target_discount()
         return result
     
     
@@ -717,10 +732,17 @@ class AkTender(models.Model):
     # İhale Sonuçları (One2many ilişki)
     purchase_order_ids = fields.One2many('purchase.order', 'tender_id', string=_('Teklifler (SAT)'))
         
-    # TEKLİF DOKÜMANINA GÖRE KRİTİK ALAN: HEDEF FİYAT
+    # TEKLİF DOKÜMANINA GÖRE KRİTİK ALAN: HEDEF FİYAT VE İSKONTO
     currency_id = fields.Many2one('res.currency', string=_('Para Birimi'), default=lambda self: self.env.company.currency_id)
+    target_type = fields.Selection([
+        ('price', _('Hedef Fiyat')),
+        ('discount', _('Hedef İskonto'))
+    ], string=_('Hedef Tipi'), default='price', required=True,
+       help=_("İhale için hedef belirleme tipi: fiyat veya iskonto."))
     target_price = fields.Monetary(string=_('Hedef Fiyat'), currency_field='currency_id',
                                 help=_("Satın Alma Direktörü tarafından belirlenen hedef fiyat."))
+    target_discount = fields.Float(string=_('Hedef İskonto (%)'), 
+                                 help=_("Satın Alma Direktörü tarafından belirlenen hedef iskonto oranı."))
     
     def _convert_currency_two_stage(self, amount, from_currency, to_currency, company=None, date=None):
         """
@@ -793,6 +815,29 @@ class AkTender(models.Model):
         
         self.target_price = total
         return total
+    
+    def calculate_weighted_average_target_discount(self):
+        """
+        Tender line'lardaki hedef iskonto değerlerinin ağırlıklı ortalamasını hesapla
+        Ağırlık olarak target_price * quantity kullanılır
+        """
+        self.ensure_one()
+        
+        total_weight = 0.0
+        weighted_discount_sum = 0.0
+        
+        for line in self.tender_lines:
+            if line.display_type == 'product' and line.target_discount and line.target_price and line.quantity:
+                weight = line.target_price * line.quantity
+                weighted_discount_sum += line.target_discount * weight
+                total_weight += weight
+        
+        if total_weight > 0:
+            self.target_discount = weighted_discount_sum / total_weight
+        else:
+            self.target_discount = 0.0
+        
+        return self.target_discount
     
     company_id = fields.Many2one('res.company', string=_('Şirket'), default=lambda self: self.env.company)
     pricelist_id = fields.Many2one('product.pricelist', string=_('Fiyat Listesi'),
@@ -1301,6 +1346,8 @@ class AkTender(models.Model):
                 raise ValidationError(_(
                     "Acil talep için acil teslim tarihi belirtilmelidir."
                 ))
+    
+
     def _create_purchase_order(self):
         """
         This method is called when a tender is approved.
@@ -1535,6 +1582,8 @@ class AkTender(models.Model):
             for line in self.tender_lines:
                 if not line.required_delivery_date:
                     line.required_delivery_date = self.required_delivery_date
+    
+
     
     @api.onchange('currency_id')
     def _onchange_currency_id(self):
@@ -1915,15 +1964,20 @@ class AkTender(models.Model):
                 
             date_planned = tender_line.required_delivery_date or self.required_delivery_date or fields.Date.today()
             
+            # Set price_unit based on target_type
+            price_unit = 0.0
+            if tender_line.tender_id.target_type == 'discount' and tender_line.target_price:
+                price_unit = tender_line.target_price
+            
             line_vals = {
                 'order_id': purchase_order.id,
                 'product_id': tender_line.product_id.id,
                 'name': tender_line.name or tender_line.product_id.name,
                 'product_qty': quantity,
                 'product_uom': product_uom,
-                'price_unit': 0.0,
+                'price_unit': price_unit,
                 'line_currency_id': tender_line.currency_id.id,
-                'line_price_unit': 0.0,  # First round: do not use sales price (target_price)
+                'line_price_unit': price_unit,
                 'date_planned': date_planned,
                 'tender_line_id': tender_line.id,
             }

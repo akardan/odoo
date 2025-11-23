@@ -7,7 +7,7 @@
                 <form string="İhale">
                     <header>
                         <widget name="workflow_button_group"/>
-                        <field name="workflow_current_state_id" widget="statusbar" options="{'clickable': '0'}"/>
+                        <field name="workflow_current_state_id" widget="statusbar" options="{'clickable': false}" readonly="1"/>
                     </header>
                     <sheet>
                         <!-- Colored header based on tender type -->
@@ -98,11 +98,13 @@
                                 </div>
                                 <field name="erp_requester" placeholder="SAT Talep Eden"/>
                                 <!-- <separator/> -->
-                                <label for="target_price"/>
-                                <div class="d-flex align-items-center">
+                                <field name="target_type"/>
+                                <label for="target_price" invisible="target_type != 'price'"/>
+                                <div class="d-flex align-items-center" invisible="target_type != 'price'">
                                     <field name="target_price" widget="monetary" options="{'currency_field': 'currency_id'}" class="me-2" nolabel="1" />
                                     <field name="currency_id" nolabel="1" />
                                 </div>
+                                <field name="target_discount" invisible="target_type != 'discount'"/>
                             </group>
                         </group>
 
@@ -146,6 +148,7 @@
                                                 class="btn-link"/>
                                         <field name="target_price" widget="monetary" options="{'currency_field': 'currency_id'}" />
                                         <field name="currency_id" string=" " />
+                                        <field name="target_discount" string="Hedef İndirim (%)" column_invisible="parent.target_type != 'discount'" />
                                         <field name="attachment1" widget="binary" filename="attachment1_filename" optional="show"/>
                                         <field name="attachment1_filename" column_invisible="1"/>
                                         <button name="action_preview_attachment1" type="object"
@@ -174,11 +177,13 @@
                                                 <field name="quantity"/>
                                                 <field name="uom_id"/>
                                                 <field name="required_delivery_date"/>
+                                                <field name="target_type" readonly="1"/>
                                                 <label for="target_price"/>
                                                 <div class="d-flex align-items-center">
                                                     <field name="target_price" widget="monetary" options="{'currency_field': 'currency_id'}" class="me-2" nolabel="1" />
                                                     <field name="currency_id" nolabel="1" />
                                                 </div>
+                                                <field name="target_discount" invisible="target_type != 'discount'"/>
                                                 <button name="action_view_purchase_history"
                                                         type="object"
                                                         icon="fa-history"

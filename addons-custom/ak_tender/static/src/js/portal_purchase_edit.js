@@ -244,8 +244,8 @@ function initializePortalPurchaseEdit() {
                         return;
                     }
                     
-                    // Get values
-                    var priceUnit = parseFloat(priceInput.value);
+                    // Get values - parse formatted price
+                    var priceUnit = parseFormattedNumber(priceInput.value);
                     var currency = currencyInput && currencyInput.value ? parseInt(currencyInput.value) : false;
                     var deliveryDate = dateInput ? dateInput.value : null;
                     var warrantyPeriod = warrantyInput && warrantyInput.value ? parseInt(warrantyInput.value) : false;
@@ -597,6 +597,46 @@ if (!portalPurchaseEditInitialized) {
     }
 }
 
+// Number formatting functions
+function formatNumber(num) {
+    if (isNaN(num) || num === '') return '';
+    return parseFloat(num).toLocaleString('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
+}
+
+function parseFormattedNumber(str) {
+    if (!str) return 0;
+    return parseFloat(str.replace(/,/g, '')) || 0;
+}
+
+// Initialize price input formatting
+function initializePriceFormatting() {
+    var priceInputs = document.querySelectorAll('.price-input');
+    priceInputs.forEach(function(input) {
+        // Format on blur
+        input.addEventListener('blur', function() {
+            var value = parseFormattedNumber(this.value);
+            this.value = formatNumber(value);
+        });
+        
+        // Allow only numbers, commas, and decimal points on keypress
+        input.addEventListener('keypress', function(e) {
+            var char = String.fromCharCode(e.which);
+            if (!/[0-9.,]/.test(char) && e.which !== 8 && e.which !== 46) {
+                e.preventDefault();
+            }
+        });
+        
+        // Format initial value if it exists
+        if (input.value) {
+            var value = parseFormattedNumber(input.value);
+            input.value = formatNumber(value);
+        }
+    });
+}
+
 // Also run on DOMContentLoaded if not already initialized
 document.addEventListener('DOMContentLoaded', function() {
     if (!portalPurchaseEditInitialized) {
@@ -605,5 +645,12 @@ document.addEventListener('DOMContentLoaded', function() {
         } catch (e) {
             console.error('Error in DOMContentLoaded handler:', e);
         }
+    }
+    
+    // Initialize price formatting
+    try {
+        initializePriceFormatting();
+    } catch (e) {
+        console.error('Error initializing price formatting:', e);
     }
 });

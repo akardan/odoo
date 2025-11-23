@@ -218,14 +218,13 @@
                                             </div>
                                         </td>
                                         <td t-if="display_price_and_taxes" t-attf-class="text-end {{ 'd-none d-sm-table-cell' if report_type == 'html' else '' }}">
-                                            <!-- Editable unit price field (line currency) -->
-                                            <input type="number"
+                                            <!-- Editable unit price field (line currency) - read-only when target_type is discount -->
+                                            <input type="text"
                                                 t-attf-name="price_unit_line_{{line.id}}"
-                                                class="form-control form-control-sm text-end editable-field"
+                                                class="form-control form-control-sm text-end editable-field price-input"
                                                 style="width: 100%; font-size: 0.9em;"
-                                                step="0.01"
-                                                min="0"
-                                                t-att-value="line.line_price_unit or line.price_unit" />
+                                                t-att-readonly="order.tender_id.target_type == 'discount'"
+                                                t-att-value="'{:,.2f}'.format(line.line_price_unit or line.price_unit or 0)" />
                                             
                                             <!-- Converted price (PO currency) - read only -->
                                             <div class="mt-1" style="font-size: 0.8em; color: #666;">
@@ -233,8 +232,8 @@
                                                 <span t-field="line.price_unit" t-options='{"widget": "monetary", "display_currency": order.currency_id}'/>
                                             </div>
                                             
-                                            <!-- Target price (read-only) with currency symbol only -->
-                                            <div class="mt-2" t-if="line.tender_line_id and line.tender_line_id.target_price" style="color: red;">
+                                            <!-- Target price (read-only) with currency symbol only - only show if target_type is price -->
+                                            <div class="mt-2" t-if="line.tender_line_id and line.tender_line_id.target_price and order.tender_id.target_type == 'price'" style="color: red;">
                                                 <strong>Hedef Fiyat:</strong>
                                                 <span t-field="line.tender_line_id.target_price" style="font-weight: bold;"
                                                       t-options='{"widget": "monetary", "display_currency": line.tender_line_id.currency_id}'/>
@@ -261,6 +260,12 @@
                                                 min="0"
                                                 max="100"
                                                 t-att-value="line.discount or '0.00'" />
+                                            
+                                            <!-- Target discount (read-only) - only show if target_type is discount -->
+                                            <div class="mt-2" t-if="line.tender_line_id and line.tender_line_id.target_discount and order.tender_id.target_type == 'discount'" style="color: red;">
+                                                <strong>Hedef İsk:</strong>
+                                                <span t-esc="line.tender_line_id.target_discount" style="font-weight: bold;"/>%
+                                            </div>
                                         </td>
                                         <td t-if="display_price_and_taxes" t-attf-class="text-end {{ 'd-none d-md-table-cell' if report_type == 'html' else '' }}">
                                             <!-- Create a unique list of tax rates -->
