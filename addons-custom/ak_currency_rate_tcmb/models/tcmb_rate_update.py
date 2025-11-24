@@ -43,11 +43,11 @@ class ResCurrencyRate(models.Model):
                         continue
 
                     try:
-                        rate_value = float(forex_buying)
-                        if rate_value == 0:
+                        inverse_rate_value = float(forex_buying)
+                        if inverse_rate_value == 0:
                             _logger.warning(f"ForexBuying rate for {code} is zero. Skipping to avoid ZeroDivisionError.")
                             continue
-                        inverse_rate_value = 1 / rate_value
+                        rate_value = 1 / inverse_rate_value
                     except ValueError:
                         _logger.error(f"Invalid ForexBuying value '{forex_buying}' for currency '{code}'. Skipping.")
                         continue
@@ -65,7 +65,8 @@ class ResCurrencyRate(models.Model):
                     if existing_rate:
                         # Update the existing rate
                         existing_rate.write({
-                            "rate": inverse_rate_value, # Corrected: Odoo rate is 1/ForexBuying
+                            # "rate": rate_value, # Corrected: Odoo rate is 1/ForexBuying
+                            "inverse_rate": inverse_rate_value, # Corrected: Inverse rate is ForexBuying
                         })
                         _logger.info(f"Updated exchange rate for {code} to {rate_value} on {effective_date}.")
                     else:
@@ -73,7 +74,8 @@ class ResCurrencyRate(models.Model):
                         self.create({
                             "currency_id": odoo_currency.id,
                             "name": effective_date,
-                            "rate": inverse_rate_value, # Corrected: Odoo rate is 1/ForexBuying
+                            # "rate": rate_value, # Corrected: Odoo rate is 1/ForexBuying
+                            "inverse_rate": inverse_rate_value, # Corrected: Inverse rate is ForexBuying
                             "company_id": self.env.company.id,
                         })
                         _logger.info(f"Created new exchange rate for {code} to {rate_value} on {effective_date}.")
