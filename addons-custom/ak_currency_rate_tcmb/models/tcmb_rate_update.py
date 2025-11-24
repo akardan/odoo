@@ -66,7 +66,7 @@ class ResCurrencyRate(models.Model):
                         # Update the existing rate
                         existing_rate.write({
                             # "rate": rate_value, # Corrected: Odoo rate is 1/ForexBuying
-                            "inverse_rate": inverse_rate_value, # Corrected: Inverse rate is ForexBuying
+                            "inverse_company_rate": inverse_rate_value, # Corrected: Inverse rate is ForexBuying
                         })
                         _logger.info(f"Updated exchange rate for {code} to {rate_value} on {effective_date}.")
                     else:
@@ -75,7 +75,7 @@ class ResCurrencyRate(models.Model):
                             "currency_id": odoo_currency.id,
                             "name": effective_date,
                             # "rate": rate_value, # Corrected: Odoo rate is 1/ForexBuying
-                            "inverse_rate": inverse_rate_value, # Corrected: Inverse rate is ForexBuying
+                            "inverse_company_rate": inverse_rate_value, # Corrected: Inverse rate is ForexBuying
                             "company_id": self.env.company.id,
                         })
                         _logger.info(f"Created new exchange rate for {code} to {rate_value} on {effective_date}.")
