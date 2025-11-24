@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="res_config_settings_view_form_inherit_ak_currency_rate_tcmb" model="ir.ui.view">
+            <field name="name">res.config.settings.view.form.inherit.ak.currency.rate.tcmb</field>
+            <field name="model">res.config.settings</field>
+            <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//div[hasclass('settings')]" position="inside">
+                    <div class="app_settings_block" data-string="TCMB Exchange Rates" string="TCMB Exchange Rates" data-key="ak_currency_rate_tcmb">
+                        <h2>TCMB Exchange Rate Settings</h2>
+                        <div class="row mt16 o_settings_container">
+                            <div class="col-12 col-lg-6 o_setting_box">
+                                <div class="o_setting_right_pane">
+                                    <label for="tcmb_url"/>
+                                    <div class="text-muted">
+                                        Configure the URL for fetching TCMB exchange rates.
+                                    </div>
+                                    <div class="content-group">
+                                        <div class="mt16">
+                                            <field name="tcmb_url" class="o_website_url"/>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo>
