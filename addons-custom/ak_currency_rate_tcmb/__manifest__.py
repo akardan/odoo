@@ -10,7 +10,6 @@
     'data': [
         'data/cron_jobs.xml',
         'views/view_currency_tree_inherit.xml',
-        'views/res_config_settings_views.xml',
     ],
     'installable': True,
     'application': False,

@@ -1,10 +1,7 @@
-import logging
 import requests
 from xml.etree import ElementTree as ET
 from datetime import datetime
 from odoo import api, models, exceptions, fields
-
-_logger = logging.getLogger(__name__)
 
 class ResCurrencyRate(models.Model):
     _inherit = "res.currency.rate"
@@ -12,15 +9,12 @@ class ResCurrencyRate(models.Model):
     @api.model
     def update_exchange_rates(self):
         try:
-            url = self.env["ir.config_parameter"].sudo().get_param("ak_currency_rate_tcmb.tcmb_url")
-            if not url:
-                _logger.warning("TCMB Exchange Rate URL is not configured. Using default URL.")
-                url = "https://www.tcmb.gov.tr/kurlar/today.xml" # Fallback to default
-
-            _logger.info(f"Fetching exchange rates from TCMB URL: {url}")
+            # TCMB XML URL
+            url = "https://www.tcmb.gov.tr/kurlar/today.xml"
             response = requests.get(url)
 
-            response.raise_for_status() # Raise an HTTPError for bad responses (4xx or 5xx)
+            if response.status_code != 200:
+                raise exceptions.UserError("Failed to fetch exchange rates from TCMB.")
 
             # Parse XML
             root = ET.fromstring(response.content)
@@ -71,7 +65,11 @@ class ResCurrencyRate(models.Model):
                             "rate": inverse_rate_value, # Corrected: Odoo rate is 1/ForexBuying
                             "inverse_company_rate": rate_value, # Corrected: Inverse rate is ForexBuying
                         })
-                        _logger.info(f"Updated exchange rate for {code} to {rate_value} on {effective_date}.")
+                        # Update the existing rate
+                        existing_rate.write({
+                            "rate": inverse_rate_value, # Corrected: Odoo rate is 1/ForexBuying
+                            "inverse_company_rate": rate_value, # Corrected: Inverse rate is ForexBuying
+                        })
                     else:
                         # Create a new rate
                         self.create({
@@ -81,14 +79,6 @@ class ResCurrencyRate(models.Model):
                             "inverse_company_rate": rate_value, # Corrected: Inverse rate is ForexBuying
                             "company_id": self.env.company.id,
                         })
-                        _logger.info(f"Created new exchange rate for {code} to {rate_value} on {effective_date}.")
 
-        except requests.exceptions.RequestException as e:
-            _logger.error(f"HTTP Request failed while fetching exchange rates from TCMB: {e}")
-            raise exceptions.UserError(f"Failed to fetch exchange rates from TCMB: {e}")
-        except ET.ParseError as e:
-            _logger.error(f"XML parsing failed for TCMB exchange rates: {e}")
-            raise exceptions.UserError(f"Failed to parse TCMB exchange rates XML: {e}")
         except Exception as e:
-            _logger.error(f"An unexpected error occurred while updating exchange rates: {e}")
             raise exceptions.UserError(f"An error occurred while updating exchange rates: {str(e)}")
