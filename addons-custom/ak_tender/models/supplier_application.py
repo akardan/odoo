@@ -287,7 +287,6 @@ class SupplierApplication(models.Model):
             'email': self.contact_email,
             'vat': self.vat_number,
             'comment': self.product_service_group,
-            'supplier_application_id': self.id,
         }
         
         # Add bank accounts if any

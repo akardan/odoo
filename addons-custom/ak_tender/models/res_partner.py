@@ -13,17 +13,3 @@ class ResPartner(models.Model):
         ('4', '4'),
         ('5', '5'),
     ], string=_("Yıldız"), help=_("Otelin yıldız sayısı"))
-    
-    # Supplier Application
-    supplier_application_id = fields.Many2one(
-        'supplier.application',
-        string='Supplier Application',
-        readonly=True,
-        help='Original supplier registration application'
-    )
-    supplier_application_date = fields.Date(
-        related='supplier_application_id.application_date',
-        string='Application Date',
-        readonly=True,
-        store=True
-    )
