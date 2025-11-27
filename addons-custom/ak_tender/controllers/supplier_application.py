@@ -36,7 +36,7 @@ class SupplierApplicationController(http.Controller):
         values = self._prepare_form_values(application=application)
         return request.render('ak_tender.supplier_registration_form', values)
     
-    @http.route(['/supplier/application/save'], type='http', auth='public', website=True, methods=['POST'], csrf=False)
+    @http.route(['/supplier/application/save'], type='http', auth='public', website=True, methods=['POST'])
     def supplier_application_save(self, **post):
         """Save or update application (draft state)"""
         try:
@@ -179,7 +179,7 @@ class SupplierApplicationController(http.Controller):
                 except Exception as e:
                     _logger.warning("Error processing file %s: %s", field, str(e))
         
-        # Remove None values
-        vals = {k: v for k, v in vals.items() if v not in [None, '', False]}
+        # Remove only None and False values, keep empty strings for required fields
+        vals = {k: v for k, v in vals.items() if v is not None and v is not False}
         
         return vals

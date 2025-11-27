@@ -1,5 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+    <!-- Action to open supplier partner from application -->
+    <record id="action_open_supplier_partner" model="ir.actions.act_window">
+        <field name="name">Supplier</field>
+        <field name="res_model">res.partner</field>
+        <field name="view_mode">form</field>
+        <field name="domain">[('id', '=', active_id)]</field>
+        <field name="context">{'form_view_ref': 'base.view_partner_form'}</field>
+    </record>
+
     <!-- Supplier Application List View -->
     <record id="view_supplier_application_list" model="ir.ui.view">
         <field name="name">supplier.application.list</field>
@@ -37,7 +46,7 @@
                     <button name="action_review" string="Start Review" type="object" 
                             class="oe_highlight" invisible="state != 'submitted'"
                             groups="ak_tender.group_tender_manager"/>
-                    <button name="action_approve" string="Approve & Create Supplier" type="object" 
+                    <button name="action_approve" string="Approve &amp; Create Supplier" type="object"
                             class="oe_highlight" invisible="state not in ['submitted', 'under_review']"
                             confirm="This will create a new supplier and send portal access. Continue?"
                             groups="ak_tender.group_tender_manager"/>
@@ -108,7 +117,7 @@
                             </group>
                         </page>
                         
-                        <page string="Payment & Banking" name="payment_banking">
+                        <page string="Payment &amp; Banking" name="payment_banking">
                             <group>
                                 <group string="Payment Terms">
                                     <field name="payment_term" readonly="state != 'draft'"/>
@@ -164,11 +173,8 @@
                         </page>
                     </notebook>
                 </sheet>
-                <div class="oe_chatter">
-                    <field name="message_follower_ids"/>
-                    <field name="activity_ids"/>
-                    <field name="message_ids"/>
-                </div>
+                <!-- Chatter -->
+                <chatter/>
             </form>
         </field>
     </record>
@@ -272,15 +278,6 @@
                 Supplier applications will appear here when potential suppliers register through your website.
             </p>
         </field>
-    </record>
-
-    <!-- Action to open supplier partner from application -->
-    <record id="action_open_supplier_partner" model="ir.actions.act_window">
-        <field name="name">Supplier</field>
-        <field name="res_model">res.partner</field>
-        <field name="view_mode">form</field>
-        <field name="domain">[('id', '=', active_id)]</field>
-        <field name="context">{'form_view_ref': 'base.view_partner_form'}</field>
     </record>
 
     <!-- Menu Items -->

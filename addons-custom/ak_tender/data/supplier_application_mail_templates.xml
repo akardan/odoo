@@ -4,8 +4,8 @@
     <record id="email_template_supplier_application_draft_link" model="mail.template">
         <field name="name">Supplier Application: Draft Link</field>
         <field name="model_id" ref="model_supplier_application"/>
-        <field name="subject">{{ object.company_id.name or 'ILKO' }} - Tedarikçi Başvurunuz / Supplier Application</field>
-        <field name="email_from">{{ (object.company_id.email or user.email_formatted) }}</field>
+        <field name="subject">Tedarikçi Başvurunuz / Supplier Application</field>
+        <field name="email_from">{{ user.email_formatted }}</field>
         <field name="email_to">{{ object.contact_email }}</field>
         <field name="lang">{{ object.lang or 'tr_TR' }}</field>
         <field name="body_html" type="html">
@@ -71,8 +71,8 @@
     <record id="email_template_supplier_application_confirmation" model="mail.template">
         <field name="name">Supplier Application: Confirmation to Supplier</field>
         <field name="model_id" ref="model_supplier_application"/>
-        <field name="subject">{{ object.company_id.name or 'ILKO' }} - Başvurunuz Alındı / Application Received</field>
-        <field name="email_from">{{ (object.company_id.email or user.email_formatted) }}</field>
+        <field name="subject">Başvurunuz Alındı / Application Received</field>
+        <field name="email_from">{{ user.email_formatted }}</field>
         <field name="email_to">{{ object.contact_email }}</field>
         <field name="lang">{{ object.lang or 'tr_TR' }}</field>
         <field name="body_html" type="html">
@@ -134,7 +134,7 @@
         <field name="name">Supplier Application: Notification to Procurement</field>
         <field name="model_id" ref="model_supplier_application"/>
         <field name="subject">Yeni Tedarikçi Başvurusu: {{ object.company_name }} ({{ object.name }})</field>
-        <field name="email_from">{{ (object.company_id.email or user.email_formatted) }}</field>
+        <field name="email_from">{{ user.email_formatted }}</field>
         <field name="lang">tr_TR</field>
         <field name="body_html" type="html">
 <div style="margin: 0; padding: 0; font-family: Arial, sans-serif;">
@@ -195,8 +195,8 @@
     <record id="email_template_supplier_application_rejected" model="mail.template">
         <field name="name">Supplier Application: Rejection Notification</field>
         <field name="model_id" ref="model_supplier_application"/>
-        <field name="subject">{{ object.company_id.name or 'ILKO' }} - Başvuru Sonucu / Application Result</field>
-        <field name="email_from">{{ (object.company_id.email or user.email_formatted) }}</field>
+        <field name="subject">Başvuru Sonucu / Application Result</field>
+        <field name="email_from">{{ user.email_formatted }}</field>
         <field name="email_to">{{ object.contact_email }}</field>
         <field name="lang">{{ object.lang or 'tr_TR' }}</field>
         <field name="body_html" type="html">

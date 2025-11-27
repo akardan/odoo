@@ -14,10 +14,16 @@ class SupplierApplication(models.Model):
     _order = 'create_date desc'
 
     # Basic Information & Control
-    name = fields.Char('Application Number', required=True, copy=False, readonly=True, 
+    name = fields.Char('Application Number', required=True, copy=False, readonly=True,
                        default=lambda self: _('New'), tracking=True)
-    access_token = fields.Char('Access Token', default=lambda self: str(uuid.uuid4()), 
+    access_token = fields.Char('Access Token', default=lambda self: str(uuid.uuid4()),
                                copy=False, readonly=True, index=True)
+    lang = fields.Selection(
+        string='Language',
+        selection=lambda self: self.env['res.lang'].get_installed(),
+        default=lambda self: self.env.lang or 'tr_TR',
+        help='Language for email communications'
+    )
     state = fields.Selection([
         ('draft', 'Draft'),
         ('submitted', 'Submitted'),
