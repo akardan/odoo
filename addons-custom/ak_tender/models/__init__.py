@@ -14,3 +14,5 @@ from . import economic_data
 from . import email_import
 from . import purchase_requisition
 from . import tender_type_rule
+from . import supplier_application
+from . import service_category_template

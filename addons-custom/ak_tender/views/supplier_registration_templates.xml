@@ -1,0 +1,363 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Main Supplier Registration Form Template -->
+    <template id="supplier_registration_form" name="Supplier Registration Form">
+        <t t-call="website.layout">
+            <div id="wrap" class="oe_structure oe_empty">
+                <section class="s_cover o_cc o_cc1 pt96 pb96" data-snippet="s_cover" data-name="Cover">
+                    <span class="s_cover_background_image" style="background-image: url('/web/image/website.s_cover_default_image');"/>
+                    <div class="o_we_bg_filter bg-black-50"/>
+                    <div class="container">
+                        <div class="row">
+                            <div class="col-lg-8 offset-lg-2">
+                                <div class="s_text_block shadow p-4 bg-white rounded">
+                                    <h1 class="text-center mb-4">Supplier Registration Form</h1>
+                                    
+                                    <t t-if="application and application.state != 'draft'">
+                                        <div class="alert alert-warning">
+                                            This application has already been submitted. You cannot make changes.
+                                        </div>
+                                    </t>
+                                    
+                                    <form action="/supplier/application/save" method="post" enctype="multipart/form-data" class="s_website_form">
+                                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                        <input type="hidden" name="access_token" t-att-value="application.access_token if application else ''"/>
+                                        
+                                        <!-- Company Information Section -->
+                                        <div class="card mb-3">
+                                            <div class="card-header bg-primary text-white">
+                                                <h5 class="mb-0">Company Information</h5>
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="row">
+                                                    <div class="col-md-6 mb-3">
+                                                        <label for="company_name" class="form-label required">Company Name</label>
+                                                        <input type="text" class="form-control" name="company_name" id="company_name" 
+                                                               required="required" t-att-value="application.company_name if application else ''"/>
+                                                    </div>
+                                                    <div class="col-md-6 mb-3">
+                                                        <label for="vat_number" class="form-label">VAT Number</label>
+                                                        <input type="text" class="form-control" name="vat_number" id="vat_number" 
+                                                               t-att-value="application.vat_number if application else ''"/>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div class="row">
+                                                    <div class="col-md-6 mb-3">
+                                                        <label for="tax_office" class="form-label">Tax Office</label>
+                                                        <input type="text" class="form-control" name="tax_office" id="tax_office" 
+                                                               t-att-value="application.tax_office if application else ''"/>
+                                                    </div>
+                                                    <div class="col-md-6 mb-3">
+                                                        <label for="tc_number" class="form-label">ID Number (Individual Companies)</label>
+                                                        <input type="text" class="form-control" name="tc_number" id="tc_number" 
+                                                               t-att-value="application.tc_number if application else ''"/>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div class="row">
+                                                    <div class="col-md-6 mb-3">
+                                                        <label for="mersis_number" class="form-label">MERSIS Number</label>
+                                                        <input type="text" class="form-control" name="mersis_number" id="mersis_number" 
+                                                               t-att-value="application.mersis_number if application else ''"/>
+                                                    </div>
+                                                    <div class="col-md-6 mb-3">
+                                                        <label for="kep_address" class="form-label">KEP Address</label>
+                                                        <input type="email" class="form-control" name="kep_address" id="kep_address" 
+                                                               t-att-value="application.kep_address if application else ''"/>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div class="mb-3">
+                                                    <label for="company_address" class="form-label required">Company Address</label>
+                                                    <textarea class="form-control" name="company_address" id="company_address" 
+                                                              rows="3" required="required" t-esc="application.company_address if application else ''"/>
+                                                </div>
+                                                
+                                                <div class="row">
+                                                    <div class="col-md-6 mb-3">
+                                                        <label for="company_phone" class="form-label required">Phone</label>
+                                                        <input type="tel" class="form-control" name="company_phone" id="company_phone" 
+                                                               required="required" t-att-value="application.company_phone if application else ''"/>
+                                                    </div>
+                                                    <div class="col-md-6 mb-3">
+                                                        <label for="product_service_group" class="form-label required">Product/Service Group</label>
+                                                        <input type="text" class="form-control" name="product_service_group" 
+                                                               id="product_service_group" required="required" 
+                                                               t-att-value="application.product_service_group if application else ''"/>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Contact Person Section -->
+                                        <div class="card mb-3">
+                                            <div class="card-header bg-primary text-white">
+                                                <h5 class="mb-0">Contact Information</h5>
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="row">
+                                                    <div class="col-md-6 mb-3">
+                                                        <label for="contact_name" class="form-label required">Authorized Person Name</label>
+                                                        <input type="text" class="form-control" name="contact_name" id="contact_name" 
+                                                               required="required" t-att-value="application.contact_name if application else ''"/>
+                                                    </div>
+                                                    <div class="col-md-6 mb-3">
+                                                        <label for="contact_email" class="form-label required">Email</label>
+                                                        <input type="email" class="form-control" name="contact_email" id="contact_email" 
+                                                               required="required" t-att-value="application.contact_email if application else ''"/>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Payment & Bank Information Section -->
+                                        <div class="card mb-3">
+                                            <div class="card-header bg-primary text-white">
+                                                <h5 class="mb-0">Payment &amp; Bank Information</h5>
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="row">
+                                                    <div class="col-md-6 mb-3">
+                                                        <label for="payment_term" class="form-label">Payment Term</label>
+                                                        <input type="text" class="form-control" name="payment_term" id="payment_term" 
+                                                               t-att-value="application.payment_term if application else ''"
+                                                               placeholder="30 days"/>
+                                                    </div>
+                                                    <div class="col-md-6 mb-3">
+                                                        <label for="payment_method" class="form-label">Payment Method</label>
+                                                        <input type="text" class="form-control" name="payment_method" id="payment_method" 
+                                                               t-att-value="application.payment_method if application else ''"
+                                                               placeholder="Bank Transfer"/>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div class="row">
+                                                    <div class="col-md-6 mb-3">
+                                                        <label for="bank_name" class="form-label">Bank Name</label>
+                                                        <input type="text" class="form-control" name="bank_name" id="bank_name" 
+                                                               t-att-value="application.bank_name if application else ''"/>
+                                                    </div>
+                                                    <div class="col-md-6 mb-3">
+                                                        <label for="swift_code" class="form-label">SWIFT Code</label>
+                                                        <input type="text" class="form-control" name="swift_code" id="swift_code" 
+                                                               t-att-value="application.swift_code if application else ''"/>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div class="row">
+                                                    <div class="col-md-4 mb-3">
+                                                        <label for="iban_try" class="form-label">IBAN (TRY)</label>
+                                                        <input type="text" class="form-control" name="iban_try" id="iban_try" 
+                                                               t-att-value="application.iban_try if application else ''"
+                                                               placeholder="TR..."/>
+                                                    </div>
+                                                    <div class="col-md-4 mb-3">
+                                                        <label for="iban_usd" class="form-label">IBAN (USD)</label>
+                                                        <input type="text" class="form-control" name="iban_usd" id="iban_usd" 
+                                                               t-att-value="application.iban_usd if application else ''"/>
+                                                    </div>
+                                                    <div class="col-md-4 mb-3">
+                                                        <label for="iban_eur" class="form-label">IBAN (EUR)</label>
+                                                        <input type="text" class="form-control" name="iban_eur" id="iban_eur" 
+                                                               t-att-value="application.iban_eur if application else ''"/>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Documents Section -->
+                                        <div class="card mb-3">
+                                            <div class="card-header bg-primary text-white">
+                                                <h5 class="mb-0">Required Documents</h5>
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="row">
+                                                    <div class="col-md-6 mb-3">
+                                                        <label for="document_tax_certificate" class="form-label">Tax Certificate</label>
+                                                        <input type="file" class="form-control" name="document_tax_certificate" 
+                                                               id="document_tax_certificate" accept=".pdf,.jpg,.jpeg,.png"/>
+                                                        <small class="text-muted" t-if="application and application.document_tax_certificate_filename">
+                                                            Current: <t t-esc="application.document_tax_certificate_filename"/>
+                                                        </small>
+                                                    </div>
+                                                    <div class="col-md-6 mb-3">
+                                                        <label for="document_signature_circular" class="form-label">Signature Circular</label>
+                                                        <input type="file" class="form-control" name="document_signature_circular" 
+                                                               id="document_signature_circular" accept=".pdf,.jpg,.jpeg,.png"/>
+                                                        <small class="text-muted" t-if="application and application.document_signature_circular_filename">
+                                                            Current: <t t-esc="application.document_signature_circular_filename"/>
+                                                        </small>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div class="row">
+                                                    <div class="col-md-6 mb-3">
+                                                        <label for="document_trade_registry" class="form-label">Trade Registry Gazette</label>
+                                                        <input type="file" class="form-control" name="document_trade_registry" 
+                                                               id="document_trade_registry" accept=".pdf,.jpg,.jpeg,.png"/>
+                                                        <small class="text-muted" t-if="application and application.document_trade_registry_filename">
+                                                            Current: <t t-esc="application.document_trade_registry_filename"/>
+                                                        </small>
+                                                    </div>
+                                                    <div class="col-md-6 mb-3">
+                                                        <label for="document_bank_info" class="form-label">Bank Info (Stamped Letterhead)</label>
+                                                        <input type="file" class="form-control" name="document_bank_info" 
+                                                               id="document_bank_info" accept=".pdf,.jpg,.jpeg,.png"/>
+                                                        <small class="text-muted" t-if="application and application.document_bank_info_filename">
+                                                            Current: <t t-esc="application.document_bank_info_filename"/>
+                                                        </small>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Form Actions -->
+                                        <div class="text-center mt-4">
+                                            <button type="submit" name="action" value="draft" class="btn btn-secondary me-2">
+                                                Save as Draft
+                                            </button>
+                                            <button type="submit" name="action" value="submit" class="btn btn-primary">
+                                                Submit Application
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </t>
+    </template>
+    
+    <!-- Application Saved (Draft) Template -->
+    <template id="supplier_application_saved" name="Application Saved">
+        <t t-call="website.layout">
+            <div id="wrap" class="oe_structure">
+                <div class="container mt-5 mb-5">
+                    <div class="row">
+                        <div class="col-lg-6 offset-lg-3">
+                            <div class="card shadow">
+                                <div class="card-body text-center p-5">
+                                    <i class="fa fa-check-circle text-success" style="font-size: 64px;"/>
+                                    <h2 class="mt-3">Application Saved</h2>
+                                    <p class="lead">
+                                        Your application draft has been saved. You can continue later using the link sent to your email.
+                                    </p>
+                                    <p class="text-muted">
+                                        Application Number: <strong t-esc="application.name"/>
+                                    </p>
+                                    <a t-attf-href="/supplier/application/#{application.access_token}" class="btn btn-primary mt-3">
+                                        Return to Application
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </t>
+    </template>
+    
+    <!-- Application Success Template -->
+    <template id="supplier_application_success" name="Application Success">
+        <t t-call="website.layout">
+            <div id="wrap" class="oe_structure">
+                <div class="container mt-5 mb-5">
+                    <div class="row">
+                        <div class="col-lg-6 offset-lg-3">
+                            <div class="card shadow">
+                                <div class="card-body text-center p-5">
+                                    <i class="fa fa-check-circle text-success" style="font-size: 64px;"/>
+                                    <h2 class="mt-3">Application Received!</h2>
+                                    <p class="lead">
+                                        Your supplier application has been successfully submitted. Our team will review it and get back to you soon.
+                                    </p>
+                                    <p class="text-muted">
+                                        Application Number: <strong t-esc="application.name"/>
+                                    </p>
+                                    <a href="/" class="btn btn-primary mt-3">Return to Home</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </t>
+    </template>
+    
+    <!-- Application Error Template -->
+    <template id="supplier_application_error" name="Application Error">
+        <t t-call="website.layout">
+            <div id="wrap" class="oe_structure">
+                <div class="container mt-5 mb-5">
+                    <div class="row">
+                        <div class="col-lg-6 offset-lg-3">
+                            <div class="card shadow">
+                                <div class="card-body text-center p-5">
+                                    <i class="fa fa-exclamation-triangle text-danger" style="font-size: 64px;"/>
+                                    <h2 class="mt-3">An Error Occurred</h2>
+                                    <p class="text-danger" t-if="error" t-esc="error"/>
+                                    <a href="/supplier/register" class="btn btn-primary mt-3">Try Again</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </t>
+    </template>
+    
+    <!-- Application Not Found Template -->
+    <template id="supplier_application_not_found" name="Application Not Found">
+        <t t-call="website.layout">
+            <div id="wrap" class="oe_structure">
+                <div class="container mt-5 mb-5">
+                    <div class="row">
+                        <div class="col-lg-6 offset-lg-3">
+                            <div class="card shadow">
+                                <div class="card-body text-center p-5">
+                                    <i class="fa fa-exclamation-circle text-warning" style="font-size: 64px;"/>
+                                    <h2 class="mt-3">Application Not Found</h2>
+                                    <p class="lead">This link may be invalid or expired.</p>
+                                    <a href="/supplier/register" class="btn btn-primary mt-3">New Application</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </t>
+    </template>
+    
+    <!-- Application Already Submitted Template -->
+    <template id="supplier_application_already_submitted" name="Application Already Submitted">
+        <t t-call="website.layout">
+            <div id="wrap" class="oe_structure">
+                <div class="container mt-5 mb-5">
+                    <div class="row">
+                        <div class="col-lg-6 offset-lg-3">
+                            <div class="card shadow">
+                                <div class="card-body text-center p-5">
+                                    <i class="fa fa-info-circle text-info" style="font-size: 64px;"/>
+                                    <h2 class="mt-3">Application Already Submitted</h2>
+                                    <p class="lead">
+                                        This application has already been submitted and is under review. We will get back to you soon.
+                                    </p>
+                                    <p class="text-muted">
+                                        Application Number: <strong t-esc="application.name"/>
+                                    </p>
+                                    <p class="text-muted">
+                                        Status: <span class="badge bg-info" t-esc="dict(application._fields['state'].selection).get(application.state)"/>
+                                    </p>
+                                    <a href="/" class="btn btn-primary mt-3">Return to Home</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </t>
+    </template>
+</odoo>

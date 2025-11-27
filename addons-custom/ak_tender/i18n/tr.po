@@ -1,0 +1,389 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+#	* ak_tender (Supplier Registration)
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 18.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-11-27 12:00:00+0000\n"
+"PO-Revision-Date: 2025-11-27 12:00:00+0000\n"
+"Last-Translator: \n"
+"Language-Team: Turkish\n"
+"Language: tr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#. module: ak_tender
+#: model:ir.ui.view,arch_db:ak_tender.supplier_registration_form
+msgid "Supplier Registration Form"
+msgstr "Tedarikçi Başvuru Formu"
+
+#: model:ir.ui.view,arch_db:ak_tender.supplier_registration_form
+msgid "This application has already been submitted. You cannot make changes."
+msgstr "Bu başvuru zaten gönderilmiş. Değişiklik yapamazsınız."
+
+#: model:ir.ui.view,arch_db:ak_tender.supplier_registration_form
+msgid "Company Information"
+msgstr "Firma Bilgileri"
+
+#: model:ir.ui.view,arch_db:ak_tender.supplier_registration_form
+msgid "Company Name"
+msgstr "Firma Ünvanı"
+
+#: model:ir.ui.view,arch_db:ak_tender.supplier_registration_form
+msgid "VAT Number"
+msgstr "Vergi No"
+
+#: model:ir.ui.view,arch_db:ak_tender.supplier_registration_form
+msgid "Tax Office"
+msgstr "Vergi Dairesi"
+
+#: model:ir.ui.view,arch_db:ak_tender.supplier_registration_form
+msgid "ID Number (Individual Companies)"
+msgstr "T.C. Kimlik No (Şahıs Firmaları)"
+
+#: model:ir.ui.view,arch_db:ak_tender.supplier_registration_form
+msgid "MERSIS Number"
+msgstr "MERSIS No"
+
+#: model:ir.ui.view,arch_db:ak_tender.supplier_registration_form
+msgid "KEP Address"
+msgstr "KEP Adresi"
+
+#: model:ir.ui.view,arch_db:ak_tender.supplier_registration_form
+msgid "Company Address"
+msgstr "Firma Adresi"
+
+#: model:ir.ui.view,arch_db:ak_tender.supplier_registration_form
+msgid "Phone"
+msgstr "Telefon"
+
+#: model:ir.ui.view,arch_db:ak_tender.supplier_registration_form
+msgid "Product/Service Group"
+msgstr "Mal/Hizmet Grubu"
+
+#: model:ir.ui.view,arch_db:ak_tender.supplier_registration_form
+msgid "Contact Information"
+msgstr "İletişim Bilgileri"
+
+#: model:ir.ui.view,arch_db:ak_tender.supplier_registration_form
+msgid "Authorized Person Name"
+msgstr "Yetkili Adı Soyadı"
+
+#: model:ir.ui.view,arch_db:ak_tender.supplier_registration_form
+msgid "Email"
+msgstr "E-posta"
+
+#: model:ir.ui.view,arch_db:ak_tender.supplier_registration_form
+msgid "Payment & Bank Information"
+msgstr "Ödeme ve Banka Bilgileri"
+
+#: model:ir.ui.view,arch_db:ak_tender.supplier_registration_form
+msgid "Payment Term"
+msgstr "Vade"
+
+#: model:ir.ui.view,arch_db:ak_tender.supplier_registration_form
+msgid "Payment Method"
+msgstr "Ödeme Şekli"
+
+#: model:ir.ui.view,arch_db:ak_tender.supplier_registration_form
+msgid "Bank Name"
+msgstr "Banka Adı"
+
+#: model:ir.ui.view,arch_db:ak_tender.supplier_registration_form
+msgid "SWIFT Code"
+msgstr "SWIFT Kodu"
+
+#: model:ir.ui.view,arch_db:ak_tender.supplier_registration_form
+msgid "Required Documents"
+msgstr "Gerekli Belgeler"
+
+#: model:ir.ui.view,arch_db:ak_tender.supplier_registration_form
+msgid "Tax Certificate"
+msgstr "Vergi Levhası"
+
+#: model:ir.ui.view,arch_db:ak_tender.supplier_registration_form
+msgid "Signature Circular"
+msgstr "İmza Sirküleri"
+
+#: model:ir.ui.view,arch_db:ak_tender.supplier_registration_form
+msgid "Trade Registry Gazette"
+msgstr "Ticari Sicil Gazetesi"
+
+#: model:ir.ui.view,arch_db:ak_tender.supplier_registration_form
+msgid "Bank Info (Stamped Letterhead)"
+msgstr "IBAN Bilgisi (Antetli Kağıt)"
+
+#: model:ir.ui.view,arch_db:ak_tender.supplier_registration_form
+msgid "Current:"
+msgstr "Mevcut:"
+
+#: model:ir.ui.view,arch_db:ak_tender.supplier_registration_form
+msgid "Save as Draft"
+msgstr "Taslak Olarak Kaydet"
+
+#: model:ir.ui.view,arch_db:ak_tender.supplier_registration_form
+msgid "Submit Application"
+msgstr "Başvuruyu Gönder"
+
+#: model:ir.ui.view,arch_db:ak_tender.supplier_application_saved
+msgid "Application Saved"
+msgstr "Başvurunuz Kaydedildi"
+
+#: model:ir.ui.view,arch_db:ak_tender.supplier_application_saved
+msgid "Your application draft has been saved. You can continue later using the link sent to your email."
+msgstr "Başvuru taslağınız kaydedildi. Daha sonra devam etmek için e-postanıza gönderilen bağlantıyı kullanabilirsiniz."
+
+#: model:ir.ui.view,arch_db:ak_tender.supplier_application_saved
+msgid "Application Number:"
+msgstr "Başvuru No:"
+
+#: model:ir.ui.view,arch_db:ak_tender.supplier_application_saved
+msgid "Return to Application"
+msgstr "Başvuruma Dön"
+
+#: model:ir.ui.view,arch_db:ak_tender.supplier_application_success
+msgid "Application Received!"
+msgstr "Başvurunuz Alındı!"
+
+#: model:ir.ui.view,arch_db:ak_tender.supplier_application_success
+msgid "Your supplier application has been successfully submitted. Our team will review it and get back to you soon."
+msgstr "Tedarikçi başvurunuz başarıyla gönderildi. Ekibimiz en kısa sürede inceleyecek ve size geri dönüş yapacaktır."
+
+#: model:ir.ui.view,arch_db:ak_tender.supplier_application_success
+msgid "Return to Home"
+msgstr "Ana Sayfaya Dön"
+
+#: model:ir.ui.view,arch_db:ak_tender.supplier_application_error
+msgid "An Error Occurred"
+msgstr "Bir Hata Oluştu"
+
+#: model:ir.ui.view,arch_db:ak_tender.supplier_application_error
+msgid "Try Again"
+msgstr "Tekrar Dene"
+
+#: model:ir.ui.view,arch_db:ak_tender.supplier_application_not_found
+msgid "Application Not Found"
+msgstr "Başvuru Bulunamadı"
+
+#: model:ir.ui.view,arch_db:ak_tender.supplier_application_not_found
+msgid "This link may be invalid or expired."
+msgstr "Bu bağlantı geçersiz veya süresi dolmuş olabilir."
+
+#: model:ir.ui.view,arch_db:ak_tender.supplier_application_not_found
+msgid "New Application"
+msgstr "Yeni Başvuru"
+
+#: model:ir.ui.view,arch_db:ak_tender.supplier_application_already_submitted
+msgid "Application Already Submitted"
+msgstr "Başvuru Zaten Gönderilmiş"
+
+#: model:ir.ui.view,arch_db:ak_tender.supplier_application_already_submitted
+msgid "This application has already been submitted and is under review. We will get back to you soon."
+msgstr "Bu başvuru zaten gönderilmiş ve inceleniyor. Size en kısa sürede geri dönüş yapılacaktır."
+
+#: model:ir.ui.view,arch_db:ak_tender.supplier_application_already_submitted
+msgid "Status:"
+msgstr "Durum:"
+
+#. module: ak_tender
+#: model:ir.model.fields,field_description:ak_tender.field_supplier_application__name
+msgid "Application Number"
+msgstr "Başvuru Numarası"
+
+#: model:ir.model.fields,field_description:ak_tender.field_supplier_application__state
+msgid "Status"
+msgstr "Durum"
+
+#: selection:supplier.application,state:0
+msgid "Draft"
+msgstr "Taslak"
+
+#: selection:supplier.application,state:0
+msgid "Submitted"
+msgstr "Gönderildi"
+
+#: selection:supplier.application,state:0
+msgid "Under Review"
+msgstr "İnceleniyor"
+
+#: selection:supplier.application,state:0
+msgid "Approved"
+msgstr "Onaylandı"
+
+#: selection:supplier.application,state:0
+msgid "Rejected"
+msgstr "Reddedildi"
+
+#. Model fields
+#: model:ir.model.fields,field_description:ak_tender.field_supplier_application__company_name
+msgid "Company Name"
+msgstr "Firma Ünvanı"
+
+#: model:ir.model.fields,field_description:ak_tender.field_supplier_application__vat_number
+msgid "VAT Number"
+msgstr "Vergi No"
+
+#: model:ir.model.fields,field_description:ak_tender.field_supplier_application__contact_name
+msgid "Contact Person Name"
+msgstr "Yetkili Adı Soyadı"
+
+#: model:ir.model.fields,field_description:ak_tender.field_supplier_application__contact_email
+msgid "Contact Email"
+msgstr "İletişim E-postası"
+
+#: model:ir.model.fields,field_description:ak_tender.field_supplier_application__application_date
+msgid "Application Date"
+msgstr "Başvuru Tarihi"
+
+#: model:ir.model.fields,field_description:ak_tender.field_supplier_application__product_service_group
+msgid "Goods (Group)/Service (Group)"
+msgstr "Mal (Grubu)/Hizmet (Grubu)"
+
+#: model:ir.actions.act_window,name:ak_tender.action_supplier_application
+#: model:ir.ui.menu,name:ak_tender.menu_supplier_applications
+msgid "Supplier Applications"
+msgstr "Tedarikçi Başvuruları"
+
+#: model:ir.ui.view,arch_db:ak_tender.view_supplier_application_form
+msgid "Submit Application"
+msgstr "Başvuruyu Gönder"
+
+#: model:ir.ui.view,arch_db:ak_tender.view_supplier_application_form
+msgid "Start Review"
+msgstr "İncelemeye Başla"
+
+#: model:ir.ui.view,arch_db:ak_tender.view_supplier_application_form
+msgid "Approve & Create Supplier"
+msgstr "Onayla ve Tedarikçi Oluştur"
+
+#: model:ir.ui.view,arch_db:ak_tender.view_supplier_application_form
+msgid "This will create a new supplier and send portal access. Continue?"
+msgstr "Bu işlem yeni bir tedarikçi oluşturacak ve portal erişimi gönderecek. Devam edilsin mi?"
+
+#: model:ir.ui.view,arch_db:ak_tender.view_supplier_application_form
+msgid "Reject"
+msgstr "Reddet"
+
+#: model:ir.ui.view,arch_db:ak_tender.view_supplier_application_form
+msgid "Reset to Draft"
+msgstr "Taslağa Dön"
+
+#: model:ir.ui.view,arch_db:ak_tender.view_supplier_application_form
+msgid "Send Draft Link"
+msgstr "Taslak Linki Gönder"
+
+#: model:ir.ui.view,arch_db:ak_tender.view_supplier_application_form
+msgid "View Supplier"
+msgstr "Tedarikçiyi Görüntüle"
+
+#: model:ir.ui.view,arch_db:ak_tender.view_supplier_application_form
+msgid "Basic Information"
+msgstr "Temel Bilgiler"
+
+#: model:ir.ui.view,arch_db:ak_tender.view_supplier_application_form
+msgid "Payment Terms"
+msgstr "Ödeme Şartları"
+
+#: model:ir.ui.view,arch_db:ak_tender.view_supplier_application_form
+msgid "Bank Information"
+msgstr "Banka Bilgileri"
+
+#: model:ir.ui.view,arch_db:ak_tender.view_supplier_application_form
+msgid "IBAN Accounts"
+msgstr "IBAN Hesapları"
+
+#: model:ir.ui.view,arch_db:ak_tender.view_supplier_application_form
+msgid "Documents"
+msgstr "Belgeler"
+
+#: model:ir.ui.view,arch_db:ak_tender.view_supplier_application_form
+msgid "Internal Notes"
+msgstr "Dahili Notlar"
+
+#: model:ir.ui.view,arch_db:ak_tender.view_supplier_application_search
+msgid "Pending Review"
+msgstr "İnceleme Bekleyen"
+
+#: model:ir.ui.view,arch_db:ak_tender.view_supplier_application_search
+msgid "Partner Created"
+msgstr "Cari Oluşturuldu"
+
+#: model:ir.ui.view,arch_db:ak_tender.view_supplier_application_search
+msgid "This Month"
+msgstr "Bu Ay"
+
+#: model:ir.ui.view,arch_db:ak_tender.view_supplier_application_search
+msgid "This Year"
+msgstr "Bu Yıl"
+
+#: model:ir.ui.view,arch_db:ak_tender.view_supplier_application_search
+msgid "Group By"
+msgstr "Grupla"
+
+#: model:ir.model,name:ak_tender.model_supplier_application
+msgid "Supplier Registration Application"
+msgstr "Tedarikçi Kayıt Başvurusu"
+
+#: model:ir.model,name:ak_tender.model_supplier_application_reject_wizard
+msgid "Reject Supplier Application"
+msgstr "Tedarikçi Başvurusunu Reddet"
+
+#: model:ir.ui.view,arch_db:ak_tender.view_supplier_application_reject_wizard_form
+msgid "Rejection Reason"
+msgstr "Ret Sebebi"
+
+#: model:ir.ui.view,arch_db:ak_tender.view_supplier_application_reject_wizard_form
+msgid "Send Email to Applicant"
+msgstr "Başvurana E-posta Gönder"
+
+#: model:ir.ui.view,arch_db:ak_tender.view_supplier_application_reject_wizard_form
+msgid "Notify the applicant about the rejection"
+msgstr "Başvurana ret hakkında bilgi ver"
+
+#: model:ir.ui.view,arch_db:ak_tender.view_supplier_application_reject_wizard_form
+msgid "Confirm Rejection"
+msgstr "Reddi Onayla"
+
+#: model:ir.ui.view,arch_db:ak_tender.view_supplier_application_reject_wizard_form
+msgid "Cancel"
+msgstr "İptal"
+
+#: code:addons/ak_tender/models/supplier_application.py
+msgid "Only draft applications can be submitted."
+msgstr "Sadece taslak başvurular gönderilebilir."
+
+#: code:addons/ak_tender/models/supplier_application.py
+msgid "Please fill in all required fields: %s"
+msgstr "Lütfen tüm gerekli alanları doldurun: %s"
+
+#: code:addons/ak_tender/models/supplier_application.py
+msgid "Only submitted or under review applications can be approved."
+msgstr "Sadece gönderilmiş veya incelenmekte olan başvurular onaylanabilir."
+
+#: code:addons/ak_tender/models/supplier_application.py
+msgid "Partner has already been created for this application."
+msgstr "Bu başvuru için cari zaten oluşturulmuş."
+
+#: code:addons/ak_tender/models/supplier_application.py
+msgid "Application approved. Partner %s created and portal access granted."
+msgstr "Başvuru onaylandı. %s carisi oluşturuldu ve portal erişimi verildi."
+
+#: code:addons/ak_tender/models/supplier_application.py
+msgid "Application Approved"
+msgstr "Başvuru Onaylandı"
+
+#: code:addons/ak_tender/models/supplier_application.py
+msgid "Please enter a valid email address."
+msgstr "Lütfen geçerli bir e-posta adresi girin."
+
+#: code:addons/ak_tender/models/supplier_application.py
+msgid "A supplier with this VAT number (%s) is already registered in the system."
+msgstr "Bu vergi numarasına (%s) sahip bir tedarikçi sistemde zaten kayıtlı."
+
+#: code:addons/ak_tender/models/supplier_application.py
+msgid "A supplier with this VAT number (%s) already exists in the system."
+msgstr "Bu vergi numarasına (%s) sahip bir tedarikçi sistemde zaten mevcut."

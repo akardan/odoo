@@ -8,3 +8,4 @@ from . import import_sat_to_pool_wizard
 from . import import_sat_wizard
 
 from . import import_tender_lines_wizard
+from . import supplier_application_reject_wizard

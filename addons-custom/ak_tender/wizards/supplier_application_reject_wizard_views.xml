@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Supplier Application Reject Wizard Form -->
+    <record id="view_supplier_application_reject_wizard_form" model="ir.ui.view">
+        <field name="name">supplier.application.reject.wizard.form</field>
+        <field name="model">supplier.application.reject.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Reject Application">
+                <group>
+                    <field name="application_id" invisible="1"/>
+                    <field name="rejection_reason" widget="text"/>
+                    <field name="send_email"/>
+                </group>
+                <footer>
+                    <button name="action_confirm_reject" string="Confirm Rejection" 
+                            type="object" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>
