@@ -645,7 +645,7 @@ class AkTender(models.Model):
     city = fields.Char(string=_('Şehir'),
                       help=_("İhalenin gerçekleştirileceği şehir."))
 
-    start_date = fields.Datetime(string=_('Başlangıç Tarihi'), default=fields.Datetime.now(), required=True)
+    start_date = fields.Datetime(string=_('Başlangıç Tarihi'), default=lambda self: fields.Datetime.now(), required=True)
     end_date = fields.Datetime(string=_('Bitiş Tarihi'), required=True)
     request_date = fields.Date(string=_('Talep Tarihi'), help=_("SAT'ın talep edildiği tarih."))
     tender_round = fields.Integer(string=_('Teklif Turu'), default=1, help=_("Bu ihalenin hangi turda olduğu (1, 2, 3...)."))
