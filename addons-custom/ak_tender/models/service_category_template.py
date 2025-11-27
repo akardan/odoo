@@ -5,7 +5,7 @@ from odoo.exceptions import ValidationError
 
 
 class ServiceCategoryTemplate(models.Model):
-    _name = 'ak.tender.template'
+    _name = 'ak.tender.service.template'
     _description = _('MICE Hizmet Şablonu')
     _order = 'name'
 
@@ -21,7 +21,7 @@ class ServiceCategoryTemplate(models.Model):
     locked_date = fields.Datetime(string=_('Kilitleme Tarihi'))
     
     # Şablon Satırları
-    line_ids = fields.One2many('ak.tender.service.template.line', 'template_id', 
+    line_ids = fields.One2many('ak.tender.template.line', 'template_id',
                               string=_('Şablon Satırları'))
     line_count = fields.Integer(string=_('Satır Sayısı'), compute='_compute_line_count')
     
@@ -150,7 +150,7 @@ class ServiceTemplateLines(models.Model):
     _description = _('MICE Hizmet Şablonu Satırı')
     _order = 'sequence, id'
 
-    template_id = fields.Many2one('ak.tender.template', string=_('Şablon'),
+    template_id = fields.Many2one('ak.tender.service.template', string=_('Şablon'),
                                  required=True, ondelete='cascade')
     sequence = fields.Integer(string=_('Sıra'), default=10)
     
