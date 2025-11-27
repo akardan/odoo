@@ -13,5 +13,4 @@ from . import economic_data
 from . import email_import
 from . import purchase_requisition
 from . import tender_type_rule
-from . import supplier_application
-from . import res_partner  # Must be after supplier_application
+from . import res_partner

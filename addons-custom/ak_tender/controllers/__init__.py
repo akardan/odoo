@@ -2,4 +2,3 @@
 
 from . import controllers
 from . import portal
-from . import supplier_application
