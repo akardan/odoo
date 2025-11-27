@@ -1,6 +1,6 @@
 # Translation of Odoo Server.
 # This file contains the translation of the following modules:
-#	* ak_tender (Supplier Registration)
+# * ak_tender
 #
 msgid ""
 msgstr ""
