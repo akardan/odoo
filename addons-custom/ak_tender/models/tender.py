@@ -1377,7 +1377,9 @@ class AkTender(models.Model):
         
         self.message_post(
             body=_("Teklif turu %s olarak güncellendi.") % self.tender_round,
-            subtype_xmlid='mail.mt_note'
+            subtype_xmlid='mail.mt_note',
+            email_from=False,
+            notify_by_email=False
         )
         
         return True
@@ -1599,7 +1601,9 @@ class AkTender(models.Model):
         # Post message in chatter
         self.message_post(
             body=notification_message,
-            subtype_xmlid='mail.mt_note'
+            subtype_xmlid='mail.mt_note',
+            email_from=False,
+            notify_by_email=False
         )
 
             
@@ -2971,7 +2975,9 @@ class AkTender(models.Model):
             
             self.message_post(
                 body="<br/>".join(message_parts),
-                subtype_xmlid='mail.mt_note'
+                subtype_xmlid='mail.mt_note',
+                email_from=False,
+                notify_by_email=False
             )
         else:
             pass
