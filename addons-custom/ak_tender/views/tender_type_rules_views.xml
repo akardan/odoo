@@ -106,7 +106,6 @@
                 <field name="name"/>
                 <field name="tender_type"/>
                 <field name="responsible_user_ids" widget="many2many_tags"/>
-                <field name="responsible_names"/>
                 <field name="active" widget="boolean_toggle"/>
             </list>
         </field>
@@ -130,7 +129,6 @@
                         </group>
                         <group>
                             <field name="tender_type"/>
-                            <field name="responsible_names"/>
                         </group>
                     </group>
                     <group>
@@ -152,7 +150,6 @@
             <search string="Purchasing Groups">
                 <field name="code"/>
                 <field name="name"/>
-                <field name="responsible_names"/>
                 <filter string="Active" name="active" domain="[('active', '=', True)]"/>
                 <filter string="Archived" name="inactive" domain="[('active', '=', False)]"/>
                 <separator/>
@@ -199,7 +196,6 @@
                 <field name="purchasing_group_code"/>
                 <field name="tender_type"/>
                 <field name="responsible_user_ids" widget="many2many_tags"/>
-                <field name="responsible_names"/>
                 <field name="active" widget="boolean_toggle"/>
             </list>
         </field>
@@ -250,7 +246,6 @@
                             <group>
                                 <group>
                                     <field name="tender_type"/>
-                                    <field name="responsible_names"/>
                                 </group>
                                 <group string="Responsible Users">
                                     <field name="responsible_user_ids" widget="many2many_tags" nolabel="1"/>
@@ -437,7 +432,6 @@
                                     <field name="name"/>
                                     <field name="tender_type"/>
                                     <field name="responsible_user_ids" widget="many2many_tags"/>
-                                    <field name="responsible_names"/>
                                     <field name="active" widget="boolean_toggle"/>
                                 </list>
                             </field>
