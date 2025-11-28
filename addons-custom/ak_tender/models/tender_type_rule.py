@@ -193,7 +193,6 @@ class TenderTypeMatrix(models.Model):
         """
         result = {
             'tender_type': None,
-            'responsible': None,
             'responsible_user_ids': self.env['res.users'],
             'decision_source': None,
             'notes': []
@@ -219,21 +218,9 @@ class TenderTypeMatrix(models.Model):
             
             # Her iki koşul da sağlanıyorsa kural uygulanır
             if rule.material_group_prefix and rule.purchasing_group_code:
-                # İki koşul da var, ikisi de eşleşmeli
+                # İki koşul da var, ikisi de eşleşmeli (1. öncelik)
                 if mg_match and pg_match:
                     result['tender_type'] = rule.tender_type
-                    result['responsible'] = rule.responsible_names
-                    result['responsible_user_ids'] = rule.responsible_user_ids
-                    result['decision_source'] = f'special_rule_{rule.id}'
-                    result['notes'].append(f'Special Rule: {rule.name}')
-                    if rule.notes:
-                        result['notes'].append(rule.notes)
-                    return result
-            elif rule.material_group_prefix:
-                # Sadece malzeme grubu koşulu var
-                if mg_match:
-                    result['tender_type'] = rule.tender_type
-                    result['responsible'] = rule.responsible_names
                     result['responsible_user_ids'] = rule.responsible_user_ids
                     result['decision_source'] = f'special_rule_{rule.id}'
                     result['notes'].append(f'Special Rule: {rule.name}')
@@ -241,10 +228,19 @@ class TenderTypeMatrix(models.Model):
                         result['notes'].append(rule.notes)
                     return result
             elif rule.purchasing_group_code:
-                # Sadece satınalma grubu koşulu var
+                # Sadece satınalma grubu koşulu var (2. öncelik)
                 if pg_match:
                     result['tender_type'] = rule.tender_type
-                    result['responsible'] = rule.responsible_names
+                    result['responsible_user_ids'] = rule.responsible_user_ids
+                    result['decision_source'] = f'special_rule_{rule.id}'
+                    result['notes'].append(f'Special Rule: {rule.name}')
+                    if rule.notes:
+                        result['notes'].append(rule.notes)
+                    return result
+            elif rule.material_group_prefix:
+                # Sadece malzeme grubu koşulu var (3. öncelik)
+                if mg_match:
+                    result['tender_type'] = rule.tender_type
                     result['responsible_user_ids'] = rule.responsible_user_ids
                     result['decision_source'] = f'special_rule_{rule.id}'
                     result['notes'].append(f'Special Rule: {rule.name}')
@@ -263,7 +259,6 @@ class TenderTypeMatrix(models.Model):
             
             if pg_record:
                 result['tender_type'] = pg_record.tender_type
-                result['responsible'] = pg_record.responsible_names
                 result['responsible_user_ids'] = pg_record.responsible_user_ids
                 result['decision_source'] = 'purchasing_group'
                 result['notes'].append(f'Purchasing Group: {pg_record.name}')

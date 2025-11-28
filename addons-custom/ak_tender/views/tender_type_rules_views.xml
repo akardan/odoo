@@ -425,6 +425,7 @@
                                     <field name="material_group_prefix"/>
                                     <field name="purchasing_group_code"/>
                                     <field name="tender_type"/>
+                                    <field name="responsible_user_ids" widget="many2many_tags"/>
                                     <field name="active" widget="boolean_toggle"/>
                                 </list>
                             </field>
