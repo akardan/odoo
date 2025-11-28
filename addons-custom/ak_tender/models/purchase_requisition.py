@@ -607,14 +607,17 @@ class PurchaseRequisitionLine(models.Model):
             tender_name = self._generate_tender_name(tender_type, group_lines[0])
             _logger.info(f"İhale adı: {tender_name}")
             
-            # Sorumlu kullanıcıyı al
+            # İhale kurallarına göre buyer_id'yi belirle
             responsible_user_ids = group_data.get('responsible_user_ids', self.env['res.users'])
+            decision_source = group_data.get('decision_source', 'unknown')
             responsible_id = False
             
             if responsible_user_ids:
                 # İlk kullanıcıyı buyer_id olarak ata
                 responsible_id = responsible_user_ids[0].id
-                _logger.info(f"Sorumlu: {responsible_user_ids[0].name}")
+                _logger.info(f"✓ Buyer ID atandı ({decision_source}): {responsible_user_ids[0].name}")
+            else:
+                _logger.warning(f"⚠ Buyer ID belirlenemedi - Kural kaynağı: {decision_source}")
             
             try:
                 # İhale oluştur
