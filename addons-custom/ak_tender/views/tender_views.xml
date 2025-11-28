@@ -610,6 +610,7 @@
                         <filter name="groupby_state" string="Durum" context="{'group_by':'workflow_current_state_id'}"/>
                         <filter name="groupby_tender_type" string="İhale Tipi" context="{'group_by':'tender_type'}"/>
                         <filter name="groupby_request_date" string="Talep Tarihi" context="{'group_by':'request_date'}"/>
+                        <filter name="groupby_buyer_id" string="Satınalmacı" context="{'group_by':'buyer_id'}"/>
                     </group>
                 </search>
             </field>
