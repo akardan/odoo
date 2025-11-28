@@ -507,7 +507,7 @@ class AkTender(models.Model):
             domain = ['|', '|',
                       ('name', operator, name),
                       ('code', operator, name),
-                      ('line_ids.product_id.name', operator, name)]
+                      ('tender_lines.product_id.name', operator, name)]
         
         return self._search(domain + args, limit=limit, access_rights_uid=name_get_uid)
 
