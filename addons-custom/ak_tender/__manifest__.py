@@ -45,7 +45,6 @@
         'views/tender_views.xml',
         'views/portal_templates.xml',
         'views/assets.xml',
-        'views/set_target_price_wizard_views.xml',
         'views/res_config_settings_views.xml',
         'views/bulk_purchase_wizard_views.xml',
         'views/add_supplier_wizard_views.xml',

@@ -47,13 +47,12 @@
         </record>
 
         <!-- Wizard Action: Open Move Tender Lines Wizard -->
+        <!-- No binding_model_id to avoid duplication in Actions menu -->
         <record id="action_ak_tender_move_lines_wizard" model="ir.actions.act_window">
             <field name="name">İhale Kalemlerini Yeni İhaleye Taşı</field>
             <field name="res_model">ak.tender.move.lines.wizard</field>
             <field name="view_mode">form</field>
             <field name="target">new</field>
-            <field name="binding_model_id" ref="ak_tender.model_ak_tender"/>
-            <field name="binding_type">action</field>
         </record>
 
     </data>

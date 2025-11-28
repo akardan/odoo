@@ -8,7 +8,6 @@ from . import res_config_settings
 from . import tender
 from . import tender_template
 from . import tier_definition
-from . import set_target_price_wizard
 from . import economic_data
 from . import email_import
 from . import purchase_requisition

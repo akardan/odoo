@@ -49,11 +49,26 @@ if records:
             <field name="sequence" eval="12"/>  <!-- Set sequence to appear after "Tedarikçiler İçin SAT Oluştur" action -->
         </record>
         
+        <!-- Server Action: Calculate Target Prices from Lowest Offers -->
+        <record id="action_server_set_target_price" model="ir.actions.server">
+            <field name="name">Hedef Fiyat Hesapla</field>
+            <field name="model_id" ref="model_ak_tender"/>
+            <field name="binding_model_id" ref="model_ak_tender"/>
+            <field name="binding_view_types">form</field>
+            <field name="state">code</field>
+            <field name="code">
+if records:
+    for record in records:
+        action = record.action_set_target_price()
+</field>
+            <field name="groups_id" eval="[(4, ref('group_tender_user'))]"/>
+            <field name="sequence" eval="14"/>
+        </record>
+        
         <!-- Server Action: Trigger Move Tender Lines Wizard -->
         <record id="action_server_move_tender_lines" model="ir.actions.server">
             <field name="name">Yeni İhaleye Taşı</field>
             <field name="model_id" ref="ak_tender.model_ak_tender"/>
-            <field name="binding_model_id" ref="ak_tender.model_ak_tender"/>
             <field name="state">code</field>
             <field name="code">
 action = model.env.ref('ak_tender.action_ak_tender_move_lines_wizard').read()[0]
