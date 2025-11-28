@@ -29,6 +29,9 @@ class MoveTenderLinesWizard(models.TransientModel):
     start_date = fields.Datetime(string=_('Başlangıç Tarihi'), required=True)
     end_date = fields.Datetime(string=_('Bitiş Tarihi'), required=True)
     
+    request_date = fields.Date(string=_('Talep Tarihi'),
+                               help=_("SAT'ın talep edildiği tarih."))
+    
     required_delivery_date = fields.Date(string=_('Gerekli Teslim Tarihi'),
                                          help=_("İstenen teslimat tarihi."))
     
@@ -69,6 +72,10 @@ class MoveTenderLinesWizard(models.TransientModel):
                 res['start_date'] = original_tender.start_date
             if 'end_date' in fields and original_tender.end_date:
                 res['end_date'] = original_tender.end_date
+            
+            # Copy request date
+            if 'request_date' in fields and original_tender.request_date:
+                res['request_date'] = original_tender.request_date
                 
             # Copy required delivery date
             if 'required_delivery_date' in fields and original_tender.required_delivery_date:
@@ -107,6 +114,7 @@ class MoveTenderLinesWizard(models.TransientModel):
             'tender_type': self.tender_type,
             'start_date': self.start_date,
             'end_date': self.end_date,
+            'request_date': self.request_date,
             'required_delivery_date': self.required_delivery_date,
             'buyer_id': self.buyer_id.id,
             
