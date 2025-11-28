@@ -638,6 +638,22 @@ class PurchaseRequisitionLine(models.Model):
                     tender_vals['erp_plant_code'] = sat_header.erp_plant_code # Transfer from PR header
                     tender_vals['erp_requester'] = sat_header.erp_requester # Transfer from PR header
                 
+                # SAT kalemlerinden tarihleri al (en erken tarihleri kullan)
+                request_dates = group_lines.mapped('request_date')
+                delivery_dates = group_lines.mapped('required_delivery_date')
+                
+                if request_dates and any(request_dates):
+                    # None olmayan tarihleri filtrele ve en erkeni al
+                    valid_request_dates = [d for d in request_dates if d]
+                    if valid_request_dates:
+                        tender_vals['request_date'] = min(valid_request_dates)
+                
+                if delivery_dates and any(delivery_dates):
+                    # None olmayan tarihleri filtrele ve en erkeni al
+                    valid_delivery_dates = [d for d in delivery_dates if d]
+                    if valid_delivery_dates:
+                        tender_vals['required_delivery_date'] = min(valid_delivery_dates)
+                
                 # Sorumlu varsa ekle (buyer_id alanına)
                 if responsible_id:
                     tender_vals['buyer_id'] = responsible_id
