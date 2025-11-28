@@ -589,6 +589,7 @@
                     <field name="name"/>
                     <field name="code"/>
                     <field name="erp_pr_id"/>
+                    <field name="line_ids" string="Ürün Adı" filter_domain="[('line_ids.product_id.name', 'ilike', self)]"/>
                     <field name="tender_type"/>
                     <field name="workflow_current_state_id"/>
                     <field name="request_date"/>
