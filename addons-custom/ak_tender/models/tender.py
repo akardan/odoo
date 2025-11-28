@@ -1290,7 +1290,7 @@ class AkTender(models.Model):
         
         # Log the change
         if updated_lines_count > 0:
-            message = _("%s (Teklif Turu: %d):\n\nGüncellenen kalemler (%d):\n%s") % (
+            message = "%s (Teklif Turu: %d):\n\nGüncellenen kalemler (%d):\n%s" % (
                 summary,
                 self.tender_round,
                 updated_lines_count,
@@ -1298,14 +1298,9 @@ class AkTender(models.Model):
             )
             
             if skipped_lines_count > 0:
-                message += _("\n\nAtlanan kalemler (teklif yok): %d") % skipped_lines_count
+                message += "\n\nAtlanan kalemler (teklif yok): %d" % skipped_lines_count
             
-            self.message_post(
-                body=message,
-                subtype_xmlid='mail.mt_note',
-                email_from=False,
-                notify_by_email=False
-            )
+            _logger.info("Tender %s: %s", self.tender_code or self.id, message)
             
             # Recalculate tender's total target price and discount
             self.calculate_total_target_price()
@@ -1375,12 +1370,7 @@ class AkTender(models.Model):
         # Force write to ensure changes are committed
         self.write({'tender_round': self.tender_round})
         
-        self.message_post(
-            body=_("Teklif turu %s olarak güncellendi.") % self.tender_round,
-            subtype_xmlid='mail.mt_note',
-            email_from=False,
-            notify_by_email=False
-        )
+        _logger.info("Tender %s: Teklif turu %s olarak güncellendi.", self.tender_code or self.id, self.tender_round)
         
         return True
 
