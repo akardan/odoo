@@ -43,6 +43,21 @@
                             </div>
                         </setting>
                         
+                        <setting id="tender_target_margin_settings" string="Hedef Fiyat Hesaplama" help="En düşük teklifin altında hedef fiyat belirleme parametresi">
+                            <div class="content-group">
+                                <div class="row mt16">
+                                    <label for="ak_tender_target_margin_below_lowest_offer" string="Hedef Marjı" class="col-lg-4 o_light_label"/>
+                                    <field name="ak_tender_target_margin_below_lowest_offer"/>
+                                    <span>%</span>
+                                </div>
+                                <div class="text-muted mt8">
+                                    En düşük teklifin ne kadar altında hedef fiyat/iskonto belirleneceğini ifade eder.
+                                    Örneğin 15 değeri, en düşük teklifin %15 altı anlamına gelir.
+                                    Bu değer calculate_targets_from_lowest_offers() metodunda kullanılır.
+                                </div>
+                            </div>
+                        </setting>
+                        
                         <setting id="tender_bulk_purchase_settings" string="Toplu Satın Alma Optimizasyonu" help="Endirekt ve Promosyon ihale tiplerinde toplu satın alma optimizasyonu için parametreler">
                             <field name="ak_tender_enable_bulk_purchase"/>
                             <div class="content-group" invisible="ak_tender_enable_bulk_purchase == False">

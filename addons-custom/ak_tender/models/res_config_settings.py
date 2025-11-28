@@ -36,6 +36,14 @@ class ResConfigSettings(models.TransientModel):
         help=_("Net Bugünkü Değer (NPV) hesaplaması için varsayılan yıllık faiz oranı.")
     )
     
+    # İhale (Tender) Settings - Hedef Fiyat Hesaplama Parametresi
+    ak_tender_target_margin_below_lowest_offer = fields.Float(
+        string=_('Hedef Marjı (%)'),
+        config_parameter='ak_tender.target_margin_below_lowest_offer',
+        default=15.0,
+        help=_("En düşük teklifin ne kadar altında hedef fiyat/iskonto belirleneceğini ifade eder. Örneğin 15 değeri, en düşük teklifin %15 altı anlamına gelir.")
+    )
+    
     # Bulk Purchase Optimization Settings
     ak_tender_enable_bulk_purchase = fields.Boolean(
         string=_('Toplu Satın Alma Optimizasyonu'),

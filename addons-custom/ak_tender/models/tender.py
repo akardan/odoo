@@ -1143,6 +1143,196 @@ class AkTender(models.Model):
                             })
         return matrix
         
+    def calculate_targets_from_lowest_offers(self):
+        """
+        Her ihale kalemi için hedef fiyat/iskonto hesaplar (en düşük teklifin altında).
+        Bu metod workflow transition aksiyonlarından çağrılabilir.
+        
+        Metod:
+        1. Sistem parametresinden hedef marjı okur (varsayılan %15)
+        2. Her ihale kalemi için tüm tekliflerdeki en düşük fiyatı bulur
+        3. target_type'a göre:
+           - 'price' ise: En düşük fiyatın altını hesaplar (en_düşük * (100 - marj) / 100)
+           - 'discount' ise: Hedef iskonto marj değeri olarak ayarlanır
+        4. Her satırın target_price veya target_discount değerini günceller
+        
+        Returns:
+            dict: Bildirim mesajı içeren aksiyon sonucu
+        """
+        self.ensure_one()
+        
+        # Get target margin from system parameter (default 15%)
+        target_margin_percent = float(
+            self.env['ir.config_parameter'].sudo().get_param(
+                'ak_tender.target_margin_below_lowest_offer',
+                default='15.0'
+            )
+        )
+        
+        # Calculate the multiplier for price calculation
+        # e.g., if margin is 15%, multiplier is 0.85 (100 - 15 = 85, 85/100 = 0.85)
+        price_multiplier = (100.0 - target_margin_percent) / 100.0
+        
+        # Get all purchase orders for this tender's current round (excluding cancelled ones)
+        purchase_orders = self.purchase_order_ids.filtered(
+            lambda po: po.state != 'cancel' and po.tender_round == self.tender_round
+        )
+        
+        if not purchase_orders:
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'title': _('Uyarı'),
+                    'message': _('Teklif Turu %d için hedef hesaplamak üzere en az bir geçerli teklif bulunmalıdır.') % self.tender_round,
+                    'sticky': True,
+                    'type': 'warning',
+                }
+            }
+        
+        updated_lines_count = 0
+        skipped_lines_count = 0
+        details = []
+        
+        # Process each tender line
+        for tender_line in self.tender_lines.filtered(lambda l: l.display_type == 'product'):
+            # Find all PO lines for this tender line in the current tender round
+            po_lines = self.env['purchase.order.line'].search([
+                ('order_id', 'in', purchase_orders.ids),
+                ('tender_line_id', '=', tender_line.id),
+                ('price_subtotal', '>', 0),
+                ('order_id.tender_round', '=', self.tender_round)
+            ])
+            
+            if not po_lines:
+                skipped_lines_count += 1
+                continue
+            
+            # Find the lowest price for this line (with currency conversion)
+            # Convert all PO line prices to tender line currency for comparison
+            tender_line_currency = tender_line.currency_id
+            
+            lowest_po_line = None
+            lowest_price_converted = float('inf')
+            
+            for po_line in po_lines:
+                # Get the price in PO line's currency
+                price_in_po_currency = po_line.price_subtotal
+                
+                # Convert to tender line currency if different
+                if po_line.currency_id != tender_line_currency:
+                    price_converted = self._convert_currency_two_stage(
+                        price_in_po_currency,
+                        po_line.currency_id,
+                        tender_line_currency
+                    )
+                else:
+                    price_converted = price_in_po_currency
+                
+                # Track the lowest
+                if price_converted < lowest_price_converted:
+                    lowest_price_converted = price_converted
+                    lowest_po_line = po_line
+            
+            # Use the converted price for calculation
+            lowest_price = lowest_price_converted
+            
+            # Calculate based on target type
+            if self.target_type == 'price':
+                # Calculate target price below the lowest offer
+                # Formula: lowest_price * price_multiplier
+                new_target = lowest_price * price_multiplier
+                old_target = tender_line.target_price
+                
+                # Set the new target price
+                tender_line.target_price = new_target
+                
+                details.append(
+                    _("• %s: %.2f %s → %.2f %s (%%%.0f altı, tedarikçi: %s)") % (
+                        tender_line.product_id.name if tender_line.product_id else tender_line.name,
+                        lowest_price,
+                        tender_line.currency_id.name,
+                        new_target,
+                        tender_line.currency_id.name,
+                        target_margin_percent,
+                        lowest_po_line.order_id.partner_id.name
+                    )
+                )
+                
+            else:  # target_type == 'discount'
+                # Set target discount to margin value
+                new_target = target_margin_percent
+                old_target = tender_line.target_discount
+                
+                # Set the new target discount
+                tender_line.target_discount = new_target
+                
+                details.append(
+                    _("• %s: İskonto %%%.2f (En düşük fiyat: %.2f %s, tedarikçi: %s)") % (
+                        tender_line.product_id.name if tender_line.product_id else tender_line.name,
+                        new_target,
+                        lowest_price,
+                        tender_line.currency_id.name,
+                        lowest_po_line.order_id.partner_id.name
+                    )
+                )
+            
+            updated_lines_count += 1
+        
+        # Prepare summary message
+        if self.target_type == 'price':
+            summary = _("Hedef fiyatlar otomatik olarak hesaplandı (en düşük tekliflerin %%%.0f altı)") % target_margin_percent
+        else:
+            summary = _("Hedef iskontolar %%%.0f olarak ayarlandı") % target_margin_percent
+        
+        # Log the change
+        if updated_lines_count > 0:
+            message = _("%s (Teklif Turu: %d):\n\nGüncellenen kalemler (%d):\n%s") % (
+                summary,
+                self.tender_round,
+                updated_lines_count,
+                "\n".join(details)
+            )
+            
+            if skipped_lines_count > 0:
+                message += _("\n\nAtlanan kalemler (teklif yok): %d") % skipped_lines_count
+            
+            self.message_post(
+                body=message,
+                subtype_xmlid='mail.mt_note'
+            )
+            
+            # Recalculate tender's total target price and discount
+            self.calculate_total_target_price()
+            if self.target_type == 'discount':
+                self.calculate_weighted_average_target_discount()
+            
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'title': _('Hedefler Güncellendi'),
+                    'message': _('Teklif Turu %d: %d kalem güncellendi, %d kalem atlandı (teklif yok)') % (
+                        self.tender_round,
+                        updated_lines_count,
+                        skipped_lines_count
+                    ),
+                    'sticky': False,
+                    'type': 'success',
+                }
+            }
+        else:
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'title': _('Uyarı'),
+                    'message': _('Teklif Turu %d: Hiçbir kalem için hedef hesaplanamadı. Teklif bulunamadı.') % self.tender_round,
+                    'sticky': True,
+                    'type': 'warning',
+                }
+            }
+    
     def increment_tender_round(self):
         """
         Increment the tender round counter.
@@ -1706,21 +1896,12 @@ class AkTender(models.Model):
         
     def action_set_target_price(self):
         """
-        Open the Set Target Price wizard.
-        This method is called from the server action.
+        Calculate target prices automatically from lowest offers.
+        This method is called from the workflow transition.
+        It replaces the manual wizard approach with automatic calculation.
         """
         self.ensure_one()
-        
-        return {
-            'name': _('Hedef Fiyat Belirleme'),
-            'type': 'ir.actions.act_window',
-            'res_model': 'ak.tender.set.target.price.wizard',
-            'view_mode': 'form',
-            'target': 'new',
-            'context': {
-                'default_tender_id': self.id,
-            }
-        }
+        return self.calculate_targets_from_lowest_offers()
         
     def create_purchase_orders_for_suppliers(self):
         """
