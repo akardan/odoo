@@ -71,7 +71,10 @@ class AkTenderLine(models.Model):
                                            default=lambda self: self.tender_id.required_delivery_date)
     lead_time_days = fields.Integer(string=_('Tedarik Süresi (Gün)'),
                                    help=_("Sipariş verilmesinden teslimata kadar geçen süre."))
-    
+  
+    erp_requester = fields.Char(string=_('SAT Talep Eden'), help=_("SAP'ta SAT'ı açan kullanıcı bilgisi."))
+    requester_comment = fields.Text(string=_('Talep Eden Yorumu'), help=_("SAP'den gelen talep eden yorumu"))
+
     # Ek Özellikler
     required = fields.Boolean(string=_('Zorunlu'), default=False,
                              help=_("Bu satır ihale için zorunludur."))
@@ -490,6 +493,24 @@ class AkTender(models.Model):
                 record.state = record.workflow_current_state_id.code
             else:
                 record.state = 'draft'
+    @api.model
+    def _name_search(self, name='', args=None, operator='ilike', limit=100, name_get_uid=None):
+        """
+        Override name search to enable searching by product names in tender lines.
+        This allows users to find tenders by searching for product names.
+        """
+        args = args or []
+        domain = []
+        
+        if name:
+            # Search in tender name and code as default
+            domain = ['|', '|',
+                      ('name', operator, name),
+                      ('code', operator, name),
+                      ('line_ids.product_id.name', operator, name)]
+        
+        return self._search(domain + args, limit=limit, access_rights_uid=name_get_uid)
+
 
     name = fields.Char(string=_('İhale Adı'), required=True, copy=False,
                        help=_("İhale sürecinin başlığı veya kısa adı."))

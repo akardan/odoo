@@ -81,6 +81,7 @@ class SatToPoolImportWizard(models.TransientModel):
         'approval_indicator': 29,
         'approval_date': 30,
         'erp_requester': 31,
+        'header_note': 32,
     }
     
     def action_import_to_pool(self):
@@ -548,6 +549,7 @@ class SatToPoolImportWizard(models.TransientModel):
             'approval_indicator': safe_approval_indicator(self.COLUMN_INDICES.get('approval_indicator')),
             'approval_date': safe_date(self.COLUMN_INDICES.get('approval_date')),
             'erp_requester': safe_get(self.COLUMN_INDICES.get('erp_requester')),
+            'header_note': safe_get(self.COLUMN_INDICES.get('header_note')),
         }
 
     def _add_to_pool(self, data, stats):
@@ -565,6 +567,10 @@ class SatToPoolImportWizard(models.TransientModel):
             requisition = self.env['purchase.requisition'].sudo().create({
                 'erp_pr_id': erp_pr_id,
                 'processing_status': 'N',
+                'header_note': data.get('header_note'),
+                'erp_requester': data.get('erp_requester'),
+                'erp_company_code': data.get('plant_code'),  # Excel column 14
+                'erp_plant_code': data.get('storage_location'),  # Excel column 15
             })
             stats['requisitions']['created'] += 1
         

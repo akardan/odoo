@@ -161,11 +161,13 @@
                                                 icon="fa-eye"
                                                 attrs="{'invisible': [('attachment2', '=', False)]}"
                                                 class="btn-link"/>
-                                        <control>
-                                            <create string="Ürün Ekle" context="{'default_display_type': 'product'}"/>
-                                            <create string="Bölüm Ekle" context="{'default_display_type': 'line_section'}"/>
-                                            <create string="Not Ekle" context="{'default_display_type': 'line_note'}"/>
-                                        </control>
+                                       <field name="erp_requester" optional="hide"/>
+                                       <field name="requester_comment" optional="hide"/>
+                                       <control>
+                                           <create string="Ürün Ekle" context="{'default_display_type': 'product'}"/>
+                                           <create string="Bölüm Ekle" context="{'default_display_type': 'line_section'}"/>
+                                           <create string="Not Ekle" context="{'default_display_type': 'line_note'}"/>
+                                       </control>
                                     </list>
                                     <form>
                                         <field name="sequence" invisible="1"/>
@@ -219,6 +221,12 @@
                                         <!-- İhale Bilgileri grubu -->
                                         <group string="İhale Bilgileri" name="tender_info">
                                             <field name="is_hotel_accommodation"/>
+                                            <field name="erp_requester"/>
+                                        </group>
+                                        
+                                        <!-- SAT Bilgileri grubu -->
+                                        <group string="SAT Bilgileri" name="sat_info" invisible="display_type">
+                                            <field name="requester_comment" widget="text" nolabel="1" colspan="2"/>
                                         </group>
                                         
                                         <!-- Otel seçimi için grup -->

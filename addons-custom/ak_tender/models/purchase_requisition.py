@@ -23,6 +23,20 @@ class PurchaseRequisition(models.Model):
         index=True,
         help="SAP Satınalma Talebi Numarası"
     )
+    header_note = fields.Text(string="Başlık Notu", help="SAT başlık açıklaması veya notu.")
+    erp_company_code = fields.Char(
+        string='Şirket Kodu',
+        help="SAP Şirket Kodu (2100: İlko, 2000: Merkez, 1100: İlkopol)",
+        index=True
+    )
+    erp_plant_code = fields.Char(
+        string='Tesis Kodu',
+        help="SAP Tesis/Depo Kodu"
+    )
+    erp_requester = fields.Char(
+        string='SAT Talep Eden',
+        help="SAP'ta SAT'ı açan kullanıcı"
+    )
     
     # İşleme Durumu (Header seviyesi)
     processing_status = fields.Selection([
@@ -140,7 +154,7 @@ class PurchaseRequisition(models.Model):
                 'type': 'ir.actions.act_window',
                 'name': _('Oluşturulan İhaleler'),
                 'res_model': 'ak.tender',
-                'view_mode': 'tree,form',
+                'view_mode': 'list,form',
                 'domain': [('id', 'in', created_tenders.ids)],
                 'target': 'current',
             }
@@ -613,6 +627,17 @@ class PurchaseRequisitionLine(models.Model):
                     'end_date': datetime.now() + timedelta(days=7),  # 7 gün sonra
                 }
                 
+                # SAT başlık notunu al
+                # Tüm kalemler aynı SAT başlığına ait olmalı
+                sat_header = group_lines[0].requisition_id if group_lines and group_lines[0].requisition_id else False
+                if sat_header:
+                    if sat_header.header_note:
+                        tender_vals['description'] = sat_header.header_note # ak.tender modelinde description alanı var
+                    tender_vals['erp_pr_id'] = sat_header.erp_pr_id
+                    tender_vals['erp_company_code'] = sat_header.erp_company_code # Transfer from PR header
+                    tender_vals['erp_plant_code'] = sat_header.erp_plant_code # Transfer from PR header
+                    tender_vals['erp_requester'] = sat_header.erp_requester # Transfer from PR header
+                
                 # Sorumlu varsa ekle (buyer_id alanına)
                 if responsible_id:
                     tender_vals['buyer_id'] = responsible_id
@@ -653,6 +678,8 @@ class PurchaseRequisitionLine(models.Model):
                     'uom_id': req_line.product_uom_id.id,
                     'required_delivery_date': req_line.required_delivery_date,
                     'display_type': 'product',
+                    'erp_requester': req_line.erp_requester,
+                    'requester_comment': req_line.requester_comment,
                 }
                 
                 tender_line = self.env['ak.tender.line'].create(tender_line_vals)
