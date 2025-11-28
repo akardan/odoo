@@ -15,6 +15,7 @@
                 <field name="name"/>
                 <field name="code_prefix"/>
                 <field name="default_tender_type"/>
+                <field name="responsible_user_ids" widget="many2many_tags"/>
                 <field name="active" widget="boolean_toggle"/>
             </list>
         </field>
@@ -40,6 +41,9 @@
                         <group>
                             <field name="default_tender_type"/>
                         </group>
+                    </group>
+                    <group string="Responsible Users">
+                        <field name="responsible_user_ids" widget="many2many_tags" nolabel="1"/>
                     </group>
                     <group>
                         <field name="description" placeholder="Açıklama..."/>
@@ -194,6 +198,7 @@
                 <field name="material_group_prefix"/>
                 <field name="purchasing_group_code"/>
                 <field name="tender_type"/>
+                <field name="responsible_user_ids" widget="many2many_tags"/>
                 <field name="responsible_names"/>
                 <field name="active" widget="boolean_toggle"/>
             </list>
@@ -246,6 +251,9 @@
                                 <group>
                                     <field name="tender_type"/>
                                     <field name="responsible_names"/>
+                                </group>
+                                <group string="Responsible Users">
+                                    <field name="responsible_user_ids" widget="many2many_tags" nolabel="1"/>
                                 </group>
                             </group>
                             <group>
@@ -309,6 +317,7 @@
                 <field name="code"/>
                 <field name="name"/>
                 <field name="default_tender_type"/>
+                <field name="responsible_user_ids" widget="many2many_tags"/>
                 <field name="active" widget="boolean_toggle"/>
             </list>
         </field>
@@ -333,6 +342,9 @@
                         <group>
                             <field name="default_tender_type"/>
                         </group>
+                    </group>
+                    <group string="Responsible Users">
+                        <field name="responsible_user_ids" widget="many2many_tags" nolabel="1"/>
                     </group>
                     <group>
                         <field name="description" placeholder="Açıklama..."/>
@@ -435,6 +447,7 @@
                                     <field name="code"/>
                                     <field name="name"/>
                                     <field name="default_tender_type"/>
+                                    <field name="responsible_user_ids" widget="many2many_tags"/>
                                     <field name="active" widget="boolean_toggle"/>
                                 </list>
                             </field>
@@ -445,6 +458,7 @@
                                     <field name="code"/>
                                     <field name="name"/>
                                     <field name="default_tender_type"/>
+                                    <field name="responsible_user_ids" widget="many2many_tags"/>
                                     <field name="active" widget="boolean_toggle"/>
                                 </list>
                             </field>

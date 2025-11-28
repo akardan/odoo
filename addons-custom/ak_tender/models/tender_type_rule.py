@@ -20,6 +20,8 @@ class TenderTypeMaterialGroup(models.Model):
         ('promotion', 'Promotion'),
         ('mice', 'MICE'),
     ], string='Default Tender Type', required=True)
+    responsible_user_ids = fields.Many2many('res.users', string='Responsible Users',
+                                           help='Users responsible for this material group')
     active = fields.Boolean(string='Active', default=True)
     
     _sql_constraints = [
@@ -96,6 +98,8 @@ class TenderTypeSpecialRule(models.Model):
         ('promotion', 'Promotion'),
         ('mice', 'MICE'),
     ], string='Tender Type', required=True)
+    responsible_user_ids = fields.Many2many('res.users', string='Responsible Users',
+                                           help='Users responsible for this special rule')
     responsible_names = fields.Char(string='Responsible Names')
     notes = fields.Text(string='Notes', translate=True)
     
@@ -121,6 +125,8 @@ class TenderTypeProductionLocation(models.Model):
         ('promotion', 'Promotion'),
         ('mice', 'MICE'),
     ], string='Default Tender Type', required=True)
+    responsible_user_ids = fields.Many2many('res.users', string='Responsible Users',
+                                           help='Users responsible for this production location')
     active = fields.Boolean(string='Active', default=True)
     
     _sql_constraints = [
@@ -217,7 +223,7 @@ class TenderTypeMatrix(models.Model):
                 if mg_match and pg_match:
                     result['tender_type'] = rule.tender_type
                     result['responsible'] = rule.responsible_names
-                    result['responsible_user_ids'] = self.env['res.users']
+                    result['responsible_user_ids'] = rule.responsible_user_ids
                     result['decision_source'] = f'special_rule_{rule.id}'
                     result['notes'].append(f'Special Rule: {rule.name}')
                     if rule.notes:
@@ -228,7 +234,7 @@ class TenderTypeMatrix(models.Model):
                 if mg_match:
                     result['tender_type'] = rule.tender_type
                     result['responsible'] = rule.responsible_names
-                    result['responsible_user_ids'] = self.env['res.users']
+                    result['responsible_user_ids'] = rule.responsible_user_ids
                     result['decision_source'] = f'special_rule_{rule.id}'
                     result['notes'].append(f'Special Rule: {rule.name}')
                     if rule.notes:
@@ -239,7 +245,7 @@ class TenderTypeMatrix(models.Model):
                 if pg_match:
                     result['tender_type'] = rule.tender_type
                     result['responsible'] = rule.responsible_names
-                    result['responsible_user_ids'] = self.env['res.users']
+                    result['responsible_user_ids'] = rule.responsible_user_ids
                     result['decision_source'] = f'special_rule_{rule.id}'
                     result['notes'].append(f'Special Rule: {rule.name}')
                     if rule.notes:
@@ -282,6 +288,7 @@ class TenderTypeMatrix(models.Model):
             
             if mg_record:
                 result['tender_type'] = mg_record.default_tender_type
+                result['responsible_user_ids'] = mg_record.responsible_user_ids
                 result['decision_source'] = 'material_group'
                 result['notes'].append(f'Material Group: {mg_record.name}')
                 return result
@@ -297,6 +304,7 @@ class TenderTypeMatrix(models.Model):
             
             if pl_record:
                 result['tender_type'] = pl_record.default_tender_type
+                result['responsible_user_ids'] = pl_record.responsible_user_ids
                 result['decision_source'] = 'production_location'
                 result['notes'].append(f'Production Location: {pl_record.name}')
                 return result
