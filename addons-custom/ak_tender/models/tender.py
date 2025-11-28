@@ -1300,7 +1300,7 @@ class AkTender(models.Model):
             if skipped_lines_count > 0:
                 message += "\n\nAtlanan kalemler (teklif yok): %d" % skipped_lines_count
             
-            _logger.info("Tender %s: %s", self.tender_code or self.id, message)
+            _logger.info("Tender %s: %s", self.name or self.id, message)
             
             # Recalculate tender's total target price and discount
             self.calculate_total_target_price()
@@ -1370,7 +1370,7 @@ class AkTender(models.Model):
         # Force write to ensure changes are committed
         self.write({'tender_round': self.tender_round})
         
-        _logger.info("Tender %s: Teklif turu %s olarak güncellendi.", self.tender_code or self.id, self.tender_round)
+        _logger.info("Tender %s: Teklif turu %s olarak güncellendi.", self.name or self.id, self.tender_round)
         
         return True
 
