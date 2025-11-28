@@ -18,8 +18,6 @@
                             <field name="currency_id" options="{'no_create': True}"/>
                             <field name="exchange_rate_display" readonly="1"/>
                             <field name="npv_rate"/>
-                            <field name="inflation_rate"/>
-                            <field name="interest_rate"/>
                         </group>
                         <group>
                             <field name="data_source"/>
@@ -48,8 +46,6 @@
                 <field name="currency_id"/>
                 <field name="exchange_rate_display"/>
                 <field name="npv_rate"/>
-                <field name="inflation_rate"/>
-                <field name="interest_rate"/>
                 <field name="data_source"/>
                 <field name="date_from"/>
                 <field name="date_to"/>

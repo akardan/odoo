@@ -1,6 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <data>
+        <!-- Tree view for tender lines in wizard -->
+        <record id="ak_tender_line_wizard_tree_view" model="ir.ui.view">
+            <field name="name">ak.tender.line.wizard.tree</field>
+            <field name="model">ak.tender.line</field>
+            <field name="arch" type="xml">
+                <list>
+                    <field name="product_id" string="Ürün"/>
+                    <field name="quantity" string="Miktar"/>
+                    <field name="uom_id" string="Birim"/>
+                    <field name="required_delivery_date" string="Gerekli Teslim Tarihi"/>
+                </list>
+            </field>
+        </record>
+
         <!-- Wizard Form View: Move Tender Lines to New Tender -->
         <record id="ak_tender_move_lines_wizard_view_form" model="ir.ui.view">
             <field name="name">ak.tender.move.lines.wizard.form</field>
@@ -16,10 +30,13 @@
                     <group string="Tarihler">
                         <field name="start_date"/>
                         <field name="end_date"/>
+                        <field name="request_date"/>
                         <field name="required_delivery_date"/>
                     </group>
                     <group string="Taşınacak İhale Kalemleri">
-                        <field name="tender_line_ids" nolabel="1" widget="many2many_list"/>
+                        <field name="tender_line_ids" nolabel="1"
+                               widget="many2many"
+                               context="{'tree_view_ref': 'ak_tender.ak_tender_line_wizard_tree_view'}"/>
                     </group>
                     <footer>
                         <button name="action_move_lines" string="Taşı ve İhale Oluştur" type="object" class="btn-primary"/>
