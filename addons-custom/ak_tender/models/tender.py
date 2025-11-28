@@ -1302,7 +1302,9 @@ class AkTender(models.Model):
             
             self.message_post(
                 body=message,
-                subtype_xmlid='mail.mt_note'
+                subtype_xmlid='mail.mt_note',
+                email_from=False,
+                notify_by_email=False
             )
             
             # Recalculate tender's total target price and discount
