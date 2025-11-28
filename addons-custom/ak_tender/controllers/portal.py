@@ -310,6 +310,10 @@ class TenderPortal(CustomerPortal): # Inherit from CustomerPortal for standard l
                 # Send email notification to the purchaser
                 order_sudo._send_supplier_tender_update_email()
                 
+                # Check if all suppliers have submitted offers
+                if order_sudo.tender_id:
+                    order_sudo.tender_id._check_all_suppliers_submitted_offers()
+                
                 # Prepare the response
                 response = {
                     'result': {

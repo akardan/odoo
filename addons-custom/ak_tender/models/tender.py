@@ -670,6 +670,9 @@ class AkTender(models.Model):
     end_date = fields.Datetime(string=_('Bitiş Tarihi'), required=True)
     request_date = fields.Date(string=_('Talep Tarihi'), help=_("SAT'ın talep edildiği tarih."))
     tender_round = fields.Integer(string=_('Teklif Turu'), default=1, help=_("Bu ihalenin hangi turda olduğu (1, 2, 3...)."))
+    all_offers_notification_sent = fields.Boolean(string=_('Tüm Teklifler Bildirim Gönderildi'),
+                                                   default=False, copy=False,
+                                                   help=_("Tüm tedarikçiler teklif verdiğinde bildirim gönderildi mi?"))
     required_delivery_date = fields.Date(string=_('Gerekli Teslim Tarihi'),
                                help=_("Satın alma siparişlerinde kullanılacak gerekli teslim tarihi."))
     description = fields.Html(string=_('İhale Açıklaması'),
@@ -3103,3 +3106,51 @@ class AkTender(models.Model):
                 'target': 'new',
             }
         }
+
+    def _check_all_suppliers_submitted_offers(self):
+        """
+        Check if all invited suppliers have submitted their offers.
+        If yes, send notification email to the buyer.
+        """
+        self.ensure_one()
+        
+        # Get all purchase orders for this tender in the current round
+        all_pos = self.env['purchase.order'].search([
+            ('tender_id', '=', self.id),
+            ('tender_round', '=', self.tender_round),
+            ('state', '!=', 'cancel')
+        ])
+        
+        if not all_pos:
+            return False
+        
+        # Get suppliers with offers
+        suppliers_with_offers = all_pos.filtered(lambda po: po.amount_total > 0).mapped('partner_id')
+        
+        # Get invited suppliers
+        invited_suppliers = self.invited_partners
+        
+        # Check if all invited suppliers have submitted offers
+        if invited_suppliers and suppliers_with_offers and len(suppliers_with_offers) >= len(invited_suppliers):
+            # Check if notification was already sent
+            if not self.all_offers_notification_sent:
+                self._send_all_offers_submitted_email()
+                self.all_offers_notification_sent = True
+                return True
+        
+        return False
+    
+    def _send_all_offers_submitted_email(self):
+        """
+        Send email notification to buyer when all suppliers have submitted their offers.
+        """
+        self.ensure_one()
+        if self.buyer_id and self.buyer_id.email_formatted:
+            template = self.env.ref('ak_tender.email_template_all_offers_submitted', raise_if_not_found=False)
+            if template:
+                template.send_mail(self.id, force_send=True, email_values={'email_to': self.buyer_id.email_formatted})
+                _logger.info(f"All offers submitted email notification sent to buyer {self.buyer_id.email_formatted} for tender {self.code}")
+            else:
+                _logger.warning("Mail template 'email_template_all_offers_submitted' not found.")
+        else:
+            _logger.warning(f"Buyer or their email not found for tender {self.code}. Email notification skipped.")

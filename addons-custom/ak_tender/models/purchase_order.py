@@ -236,10 +236,6 @@ class PurchaseOrder(models.Model):
         """Override to recalculate NPV when payment term changes"""
         result = super(PurchaseOrder, self).write(vals)
         
-    def write(self, vals):
-        """Override to recalculate NPV when payment term changes"""
-        result = super(PurchaseOrder, self).write(vals)
-        
         if 'payment_term_id' in vals:
             self.calculate_total_npv()
             
