@@ -816,6 +816,7 @@ class AkTender(models.Model):
         """
         Tüm ihale kalemlerinin toplam hedef fiyatını hesapla ve tender'ın hedef fiyatını güncelle
         Para birimi dönüşümü ile birlikte
+        NOT: Birim fiyat üzerinden para birimi dönüşümü yapılır, sonra miktar ile çarpılır
         """
         self.ensure_one()
         
@@ -824,18 +825,21 @@ class AkTender(models.Model):
         
         for line in self.tender_lines:
             if line.display_type == 'product' and line.target_price and line.quantity:
-                line_total = line.target_price * line.quantity
+                # Önce birim fiyatı dönüştür, sonra miktar ile çarp
+                unit_price = line.target_price
                 
-                # Para birimi dönüşümü yap - iki aşamalı
+                # Para birimi dönüşümü yap - iki aşamalı, birim fiyat üzerinden
                 if line.currency_id and line.currency_id != tender_currency:
-                    converted_amount = self._convert_currency_two_stage(
-                        line_total,
+                    converted_unit_price = self._convert_currency_two_stage(
+                        unit_price,
                         line.currency_id,
                         tender_currency
                     )
-                    total += converted_amount
+                    line_total = converted_unit_price * line.quantity
                 else:
-                    total += line_total
+                    line_total = unit_price * line.quantity
+                
+                total += line_total
         
         self.target_price = total
         return total
@@ -1211,34 +1215,34 @@ class AkTender(models.Model):
                 skipped_lines_count += 1
                 continue
             
-            # Find the lowest price for this line (with currency conversion)
-            # Convert all PO line prices to tender line currency for comparison
+            # Find the lowest unit price for this line (with currency conversion)
+            # Convert all PO line unit prices to tender line currency for comparison
             tender_line_currency = tender_line.currency_id
             
             lowest_po_line = None
-            lowest_price_converted = float('inf')
+            lowest_unit_price_converted = float('inf')
             
             for po_line in po_lines:
-                # Get the price in PO line's currency
-                price_in_po_currency = po_line.price_subtotal
+                # Get the UNIT price in PO line's currency (not subtotal)
+                unit_price_in_po_currency = po_line.price_unit
                 
                 # Convert to tender line currency if different
                 if po_line.currency_id != tender_line_currency:
-                    price_converted = self._convert_currency_two_stage(
-                        price_in_po_currency,
+                    unit_price_converted = self._convert_currency_two_stage(
+                        unit_price_in_po_currency,
                         po_line.currency_id,
                         tender_line_currency
                     )
                 else:
-                    price_converted = price_in_po_currency
+                    unit_price_converted = unit_price_in_po_currency
                 
-                # Track the lowest
-                if price_converted < lowest_price_converted:
-                    lowest_price_converted = price_converted
+                # Track the lowest unit price
+                if unit_price_converted < lowest_unit_price_converted:
+                    lowest_unit_price_converted = unit_price_converted
                     lowest_po_line = po_line
             
-            # Use the converted price for calculation
-            lowest_price = lowest_price_converted
+            # Use the converted unit price for calculation
+            lowest_price = lowest_unit_price_converted
             
             # Calculate based on target type
             if self.target_type == 'price':
