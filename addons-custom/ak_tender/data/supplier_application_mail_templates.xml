@@ -9,61 +9,61 @@
         <field name="email_to">{{ object.contact_email }}</field>
         <field name="lang">{{ object.lang or 'tr_TR' }}</field>
         <field name="body_html" type="html">
-<div style="margin: 0; padding: 0; font-family: Arial, sans-serif;">
-    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f4f4f4;">
-        <tr>
-            <td align="center" style="padding: 40px 0;">
-                <table border="0" cellpadding="0" cellspacing="0" width="600" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+            <div style="margin: 0; padding: 0; font-family: Arial, sans-serif;">
+                <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f4f4f4;">
                     <tr>
-                        <td style="padding: 40px 30px;">
-                            <h2 style="color: #333333; margin: 0 0 20px 0;">Tedarikçi Başvurunuz Başlatıldı</h2>
-                            <h3 style="color: #666666; margin: 0 0 30px 0; font-weight: normal;">Supplier Application Started</h3>
-                            
-                            <p style="color: #666666; margin: 0 0 20px 0; line-height: 1.6;">
-                                <strong>TR:</strong> Sayın <strong>${object.contact_name or 'Değerli Tedarikçimiz'}</strong>,
-                            </p>
-                            <p style="color: #666666; margin: 0 0 20px 0; line-height: 1.6;">
-                                Tedarikçi başvurunuz taslak olarak kaydedilmiştir. Başvurunuza daha sonra devam etmek için aşağıdaki bağlantıyı kullanabilirsiniz:
-                            </p>
-                            
-                            <p style="color: #666666; margin: 0 0 20px 0; line-height: 1.6;">
-                                <strong>EN:</strong> Dear <strong>${object.contact_name or 'Valued Supplier'}</strong>,
-                            </p>
-                            <p style="color: #666666; margin: 0 0 20px 0; line-height: 1.6;">
-                                Your supplier application has been saved as a draft. You can continue your application later using the link below:
-                            </p>
-                            
-                            <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin: 30px 0;">
+                        <td align="center" style="padding: 40px 0;">
+                            <table border="0" cellpadding="0" cellspacing="0" width="600" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
                                 <tr>
-                                    <td align="center">
-                                        <a href="${object.website_url}" style="background-color: #007bff; color: #ffffff; padding: 12px 30px; text-decoration: none; border-radius: 4px; display: inline-block;">
-                                            Başvuruma Devam Et / Continue Application
-                                        </a>
+                                    <td style="padding: 40px 30px;">
+                                        <h2 style="color: #333333; margin: 0 0 20px 0;">Tedarikçi Başvurunuz Başlatıldı</h2>
+                                        <h3 style="color: #666666; margin: 0 0 30px 0; font-weight: normal;">Supplier Application Started</h3>
+                                        
+                                        <p style="color: #666666; margin: 0 0 20px 0; line-height: 1.6;">
+                                            <strong>TR:</strong> Sayın <strong><t t-out="object.contact_name or 'Değerli Tedarikçimiz'"/></strong>,
+                                        </p>
+                                        <p style="color: #666666; margin: 0 0 20px 0; line-height: 1.6;">
+                                            Tedarikçi başvurunuz taslak olarak kaydedilmiştir. Başvurunuza daha sonra devam etmek için aşağıdaki bağlantıyı kullanabilirsiniz:
+                                        </p>
+                                        
+                                        <p style="color: #666666; margin: 0 0 20px 0; line-height: 1.6;">
+                                            <strong>EN:</strong> Dear <strong><t t-out="object.contact_name or 'Valued Supplier'"/></strong>,
+                                        </p>
+                                        <p style="color: #666666; margin: 0 0 20px 0; line-height: 1.6;">
+                                            Your supplier application has been saved as a draft. You can continue your application later using the link below:
+                                        </p>
+                                        
+                                        <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin: 30px 0;">
+                                            <tr>
+                                                <td align="center">
+                                                    <a t-att-href="object.website_url" style="background-color: #007bff; color: #ffffff; padding: 12px 30px; text-decoration: none; border-radius: 4px; display: inline-block;">
+                                                        Başvuruma Devam Et / Continue Application
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                        
+                                        <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f8f9fa; padding: 20px; border-radius: 4px; margin: 20px 0;">
+                                            <tr>
+                                                <td>
+                                                    <p style="margin: 0 0 10px 0; color: #666666;"><strong>Başvuru No / Application Number:</strong> <t t-out="object.name or ''"/></p>
+                                                    <p style="margin: 0 0 10px 0; color: #666666;"><strong>Firma / Company:</strong> <t t-out="object.company_name or '-'"/></p>
+                                                    <p style="margin: 0; color: #666666;"><strong>Tarih / Date:</strong> <t t-out="object.application_date and object.application_date.strftime('%d/%m/%Y') or ''"/></p>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                        
+                                        <p style="color: #999999; font-size: 12px; margin: 30px 0 0 0; line-height: 1.6;">
+                                            <strong>TR:</strong> Bu bağlantıyı kimseyle paylaşmayın. Başvurunuzu tamamladığınızda size onay maili gönderilecektir.<br/>
+                                            <strong>EN:</strong> Do not share this link with anyone. You will receive a confirmation email once you complete your application.
+                                        </p>
                                     </td>
                                 </tr>
                             </table>
-                            
-                            <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f8f9fa; padding: 20px; border-radius: 4px; margin: 20px 0;">
-                                <tr>
-                                    <td>
-                                        <p style="margin: 0 0 10px 0; color: #666666;"><strong>Başvuru No / Application Number:</strong> ${object.name}</p>
-                                        <p style="margin: 0 0 10px 0; color: #666666;"><strong>Firma / Company:</strong> ${object.company_name or '-'}</p>
-                                        <p style="margin: 0; color: #666666;"><strong>Tarih / Date:</strong> ${format_date(object.application_date)}</p>
-                                    </td>
-                                </tr>
-                            </table>
-                            
-                            <p style="color: #999999; font-size: 12px; margin: 30px 0 0 0; line-height: 1.6;">
-                                <strong>TR:</strong> Bu bağlantıyı kimseyle paylaşmayın. Başvurunuzu tamamladığınızda size onay maili gönderilecektir.<br/>
-                                <strong>EN:</strong> Do not share this link with anyone. You will receive a confirmation email once you complete your application.
-                            </p>
                         </td>
                     </tr>
                 </table>
-            </td>
-        </tr>
-    </table>
-</div>
+            </div>
         </field>
     </record>
 
@@ -76,56 +76,56 @@
         <field name="email_to">{{ object.contact_email }}</field>
         <field name="lang">{{ object.lang or 'tr_TR' }}</field>
         <field name="body_html" type="html">
-<div style="margin: 0; padding: 0; font-family: Arial, sans-serif;">
-    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f4f4f4;">
-        <tr>
-            <td align="center" style="padding: 40px 0;">
-                <table border="0" cellpadding="0" cellspacing="0" width="600" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+            <div style="margin: 0; padding: 0; font-family: Arial, sans-serif;">
+                <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f4f4f4;">
                     <tr>
-                        <td style="padding: 40px 30px;">
-                            <div style="text-align: center; margin-bottom: 30px;">
-                                <div style="display: inline-block; background-color: #28a745; color: #ffffff; width: 60px; height: 60px; border-radius: 50%; line-height: 60px; font-size: 30px;">✓</div>
-                            </div>
-                            
-                            <h2 style="color: #333333; margin: 0 0 20px 0; text-align: center;">Başvurunuz Alındı!</h2>
-                            <h3 style="color: #666666; margin: 0 0 30px 0; font-weight: normal; text-align: center;">Application Received!</h3>
-                            
-                            <p style="color: #666666; margin: 0 0 20px 0; line-height: 1.6;">
-                                <strong>TR:</strong> Sayın <strong>${object.contact_name}</strong>,
-                            </p>
-                            <p style="color: #666666; margin: 0 0 20px 0; line-height: 1.6;">
-                                <strong>${object.company_name}</strong> adına yapmış olduğunuz tedarikçi başvurusu başarıyla alınmıştır. Satın alma ekibimiz başvurunuzu en kısa sürede değerlendirecek ve size geri dönüş yapacaktır.
-                            </p>
-                            
-                            <p style="color: #666666; margin: 0 0 20px 0; line-height: 1.6;">
-                                <strong>EN:</strong> Dear <strong>${object.contact_name}</strong>,
-                            </p>
-                            <p style="color: #666666; margin: 0 0 20px 0; line-height: 1.6;">
-                                Your supplier application on behalf of <strong>${object.company_name}</strong> has been successfully received. Our procurement team will review your application shortly and get back to you.
-                            </p>
-                            
-                            <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f8f9fa; padding: 20px; border-radius: 4px; margin: 20px 0;">
+                        <td align="center" style="padding: 40px 0;">
+                            <table border="0" cellpadding="0" cellspacing="0" width="600" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
                                 <tr>
-                                    <td>
-                                        <p style="margin: 0 0 10px 0; color: #666666;"><strong>Başvuru No / Application Number:</strong> ${object.name}</p>
-                                        <p style="margin: 0 0 10px 0; color: #666666;"><strong>Firma / Company:</strong> ${object.company_name}</p>
-                                        <p style="margin: 0 0 10px 0; color: #666666;"><strong>Vergi No / VAT:</strong> ${object.vat_number or '-'}</p>
-                                        <p style="margin: 0; color: #666666;"><strong>Başvuru Tarihi / Application Date:</strong> ${format_date(object.application_date)}</p>
+                                    <td style="padding: 40px 30px;">
+                                        <div style="text-align: center; margin-bottom: 30px;">
+                                            <div style="display: inline-block; background-color: #28a745; color: #ffffff; width: 60px; height: 60px; border-radius: 50%; line-height: 60px; font-size: 30px;">✓</div>
+                                        </div>
+                                        
+                                        <h2 style="color: #333333; margin: 0 0 20px 0; text-align: center;">Başvurunuz Alındı!</h2>
+                                        <h3 style="color: #666666; margin: 0 0 30px 0; font-weight: normal; text-align: center;">Application Received!</h3>
+                                        
+                                        <p style="color: #666666; margin: 0 0 20px 0; line-height: 1.6;">
+                                            <strong>TR:</strong> Sayın <strong><t t-out="object.contact_name or ''"/></strong>,
+                                        </p>
+                                        <p style="color: #666666; margin: 0 0 20px 0; line-height: 1.6;">
+                                            <strong><t t-out="object.company_name or ''"/></strong> adına yapmış olduğunuz tedarikçi başvurusu başarıyla alınmıştır. Satın alma ekibimiz başvurunuzu en kısa sürede değerlendirecek ve size geri dönüş yapacaktır.
+                                        </p>
+                                        
+                                        <p style="color: #666666; margin: 0 0 20px 0; line-height: 1.6;">
+                                            <strong>EN:</strong> Dear <strong><t t-out="object.contact_name or ''"/></strong>,
+                                        </p>
+                                        <p style="color: #666666; margin: 0 0 20px 0; line-height: 1.6;">
+                                            Your supplier application on behalf of <strong><t t-out="object.company_name or ''"/></strong> has been successfully received. Our procurement team will review your application shortly and get back to you.
+                                        </p>
+                                        
+                                        <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f8f9fa; padding: 20px; border-radius: 4px; margin: 20px 0;">
+                                            <tr>
+                                                <td>
+                                                    <p style="margin: 0 0 10px 0; color: #666666;"><strong>Başvuru No / Application Number:</strong> <t t-out="object.name or ''"/></p>
+                                                    <p style="margin: 0 0 10px 0; color: #666666;"><strong>Firma / Company:</strong> <t t-out="object.company_name or ''"/></p>
+                                                    <p style="margin: 0 0 10px 0; color: #666666;"><strong>Vergi No / VAT:</strong> <t t-out="object.vat_number or '-'"/></p>
+                                                    <p style="margin: 0; color: #666666;"><strong>Başvuru Tarihi / Application Date:</strong> <t t-out="object.application_date and object.application_date.strftime('%d/%m/%Y') or ''"/></p>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                        
+                                        <p style="color: #999999; font-size: 12px; margin: 30px 0 0 0; line-height: 1.6;">
+                                            <strong>TR:</strong> Başvuru süreciniz hakkında bilgi almak için bizimle iletişime geçebilirsiniz.<br/>
+                                            <strong>EN:</strong> You can contact us for information about your application process.
+                                        </p>
                                     </td>
                                 </tr>
                             </table>
-                            
-                            <p style="color: #999999; font-size: 12px; margin: 30px 0 0 0; line-height: 1.6;">
-                                <strong>TR:</strong> Başvuru süreciniz hakkında bilgi almak için bizimle iletişime geçebilirsiniz.<br/>
-                                <strong>EN:</strong> You can contact us for information about your application process.
-                            </p>
                         </td>
                     </tr>
                 </table>
-            </td>
-        </tr>
-    </table>
-</div>
+            </div>
         </field>
     </record>
 
@@ -137,57 +137,57 @@
         <field name="email_from">{{ user.email_formatted }}</field>
         <field name="lang">tr_TR</field>
         <field name="body_html" type="html">
-<div style="margin: 0; padding: 0; font-family: Arial, sans-serif;">
-    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f4f4f4;">
-        <tr>
-            <td align="center" style="padding: 40px 0;">
-                <table border="0" cellpadding="0" cellspacing="0" width="600" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+            <div style="margin: 0; padding: 0; font-family: Arial, sans-serif;">
+                <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f4f4f4;">
                     <tr>
-                        <td style="padding: 40px 30px;">
-                            <h2 style="color: #333333; margin: 0 0 20px 0;">Yeni Tedarikçi Başvurusu</h2>
-                            
-                            <p style="color: #666666; margin: 0 0 20px 0; line-height: 1.6;">
-                                Yeni bir tedarikçi başvurusu alındı ve incelemeniz bekleniyor.
-                            </p>
-                            
-                            <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f8f9fa; padding: 20px; border-radius: 4px; margin: 20px 0;">
+                        <td align="center" style="padding: 40px 0;">
+                            <table border="0" cellpadding="0" cellspacing="0" width="600" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
                                 <tr>
-                                    <td>
-                                        <h3 style="margin: 0 0 15px 0; color: #333333;">Başvuru Bilgileri</h3>
-                                        <p style="margin: 0 0 10px 0; color: #666666;"><strong>Başvuru No:</strong> ${object.name}</p>
-                                        <p style="margin: 0 0 10px 0; color: #666666;"><strong>Firma Ünvanı:</strong> ${object.company_name}</p>
-                                        <p style="margin: 0 0 10px 0; color: #666666;"><strong>Vergi No:</strong> ${object.vat_number or '-'}</p>
-                                        <p style="margin: 0 0 10px 0; color: #666666;"><strong>Vergi Dairesi:</strong> ${object.tax_office or '-'}</p>
-                                        <p style="margin: 0 0 10px 0; color: #666666;"><strong>MERSIS:</strong> ${object.mersis_number or '-'}</p>
-                                        <p style="margin: 0 0 10px 0; color: #666666;"><strong>Yetkili Kişi:</strong> ${object.contact_name}</p>
-                                        <p style="margin: 0 0 10px 0; color: #666666;"><strong>E-posta:</strong> ${object.contact_email}</p>
-                                        <p style="margin: 0 0 10px 0; color: #666666;"><strong>Telefon:</strong> ${object.company_phone}</p>
-                                        <p style="margin: 0 0 10px 0; color: #666666;"><strong>Mal/Hizmet Grubu:</strong> ${object.product_service_group or '-'}</p>
-                                        <p style="margin: 0; color: #666666;"><strong>Başvuru Tarihi:</strong> ${format_date(object.application_date)}</p>
+                                    <td style="padding: 40px 30px;">
+                                        <h2 style="color: #333333; margin: 0 0 20px 0;">Yeni Tedarikçi Başvurusu</h2>
+                                        
+                                        <p style="color: #666666; margin: 0 0 20px 0; line-height: 1.6;">
+                                            Yeni bir tedarikçi başvurusu alındı ve incelemeniz bekleniyor.
+                                        </p>
+                                        
+                                        <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f8f9fa; padding: 20px; border-radius: 4px; margin: 20px 0;">
+                                            <tr>
+                                                <td>
+                                                    <h3 style="margin: 0 0 15px 0; color: #333333;">Başvuru Bilgileri</h3>
+                                                    <p style="margin: 0 0 10px 0; color: #666666;"><strong>Başvuru No:</strong> <t t-out="object.name or ''"/></p>
+                                                    <p style="margin: 0 0 10px 0; color: #666666;"><strong>Firma Ünvanı:</strong> <t t-out="object.company_name or ''"/></p>
+                                                    <p style="margin: 0 0 10px 0; color: #666666;"><strong>Vergi No:</strong> <t t-out="object.vat_number or '-'"/></p>
+                                                    <p style="margin: 0 0 10px 0; color: #666666;"><strong>Vergi Dairesi:</strong> <t t-out="object.tax_office or '-'"/></p>
+                                                    <p style="margin: 0 0 10px 0; color: #666666;"><strong>MERSIS:</strong> <t t-out="object.mersis_number or '-'"/></p>
+                                                    <p style="margin: 0 0 10px 0; color: #666666;"><strong>Yetkili Kişi:</strong> <t t-out="object.contact_name or ''"/></p>
+                                                    <p style="margin: 0 0 10px 0; color: #666666;"><strong>E-posta:</strong> <t t-out="object.contact_email or ''"/></p>
+                                                    <p style="margin: 0 0 10px 0; color: #666666;"><strong>Telefon:</strong> <t t-out="object.company_phone or ''"/></p>
+                                                    <p style="margin: 0 0 10px 0; color: #666666;"><strong>Mal/Hizmet Grubu:</strong> <t t-out="object.product_service_group or '-'"/></p>
+                                                    <p style="margin: 0; color: #666666;"><strong>Başvuru Tarihi:</strong> <t t-out="object.application_date and object.application_date.strftime('%d/%m/%Y') or ''"/></p>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                        
+                                        <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin: 30px 0;">
+                                            <tr>
+                                                <td align="center">
+                                                    <a t-attf-href="/web#id={{object.id}}&amp;model=supplier.application&amp;view_type=form" style="background-color: #007bff; color: #ffffff; padding: 12px 30px; text-decoration: none; border-radius: 4px; display: inline-block;">
+                                                        Başvuruyu İncele
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                        
+                                        <p style="color: #999999; font-size: 12px; margin: 30px 0 0 0; line-height: 1.6;">
+                                            Bu otomatik bir bilgilendirme mesajıdır. Başvuruyu değerlendirdikten sonra uygun aksiyonu alınız.
+                                        </p>
                                     </td>
                                 </tr>
                             </table>
-                            
-                            <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin: 30px 0;">
-                                <tr>
-                                    <td align="center">
-                                        <a href="/web#id=${object.id}&amp;model=supplier.application&amp;view_type=form" style="background-color: #007bff; color: #ffffff; padding: 12px 30px; text-decoration: none; border-radius: 4px; display: inline-block;">
-                                            Başvuruyu İncele
-                                        </a>
-                                    </td>
-                                </tr>
-                            </table>
-                            
-                            <p style="color: #999999; font-size: 12px; margin: 30px 0 0 0; line-height: 1.6;">
-                                Bu otomatik bir bilgilendirme mesajıdır. Başvuruyu değerlendirdikten sonra uygun aksiyonu alınız.
-                            </p>
                         </td>
                     </tr>
                 </table>
-            </td>
-        </tr>
-    </table>
-</div>
+            </div>
         </field>
     </record>
 
@@ -200,61 +200,61 @@
         <field name="email_to">{{ object.contact_email }}</field>
         <field name="lang">{{ object.lang or 'tr_TR' }}</field>
         <field name="body_html" type="html">
-<div style="margin: 0; padding: 0; font-family: Arial, sans-serif;">
-    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f4f4f4;">
-        <tr>
-            <td align="center" style="padding: 40px 0;">
-                <table border="0" cellpadding="0" cellspacing="0" width="600" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+            <div style="margin: 0; padding: 0; font-family: Arial, sans-serif;">
+                <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f4f4f4;">
                     <tr>
-                        <td style="padding: 40px 30px;">
-                            <h2 style="color: #333333; margin: 0 0 20px 0;">Başvuru Sonucu</h2>
-                            <h3 style="color: #666666; margin: 0 0 30px 0; font-weight: normal;">Application Result</h3>
-                            
-                            <p style="color: #666666; margin: 0 0 20px 0; line-height: 1.6;">
-                                <strong>TR:</strong> Sayın <strong>${object.contact_name}</strong>,
-                            </p>
-                            <p style="color: #666666; margin: 0 0 20px 0; line-height: 1.6;">
-                                Tedarikçi başvurunuz değerlendirilmiş olup, maalesef şu an için başvurunuz kabul edilememiştir.
-                            </p>
-                            
-                            % if object.rejection_reason:
-                            <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #fff3cd; padding: 20px; border-radius: 4px; margin: 20px 0; border-left: 4px solid #ffc107;">
+                        <td align="center" style="padding: 40px 0;">
+                            <table border="0" cellpadding="0" cellspacing="0" width="600" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
                                 <tr>
-                                    <td>
-                                        <p style="margin: 0 0 10px 0; color: #856404;"><strong>Ret Sebebi / Rejection Reason:</strong></p>
-                                        <p style="margin: 0; color: #856404;">${object.rejection_reason}</p>
+                                    <td style="padding: 40px 30px;">
+                                        <h2 style="color: #333333; margin: 0 0 20px 0;">Başvuru Sonucu</h2>
+                                        <h3 style="color: #666666; margin: 0 0 30px 0; font-weight: normal;">Application Result</h3>
+                                        
+                                        <p style="color: #666666; margin: 0 0 20px 0; line-height: 1.6;">
+                                            <strong>TR:</strong> Sayın <strong><t t-out="object.contact_name or ''"/></strong>,
+                                        </p>
+                                        <p style="color: #666666; margin: 0 0 20px 0; line-height: 1.6;">
+                                            Tedarikçi başvurunuz değerlendirilmiş olup, maalesef şu an için başvurunuz kabul edilememiştir.
+                                        </p>
+                                        
+                                        % if object.rejection_reason:
+                                        <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #fff3cd; padding: 20px; border-radius: 4px; margin: 20px 0; border-left: 4px solid #ffc107;">
+                                            <tr>
+                                                <td>
+                                                    <p style="margin: 0 0 10px 0; color: #856404;"><strong>Ret Sebebi / Rejection Reason:</strong></p>
+                                                    <p style="margin: 0; color: #856404;"><t t-out="object.rejection_reason or ''"/></p>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                        % endif
+                                        
+                                        <p style="color: #666666; margin: 0 0 20px 0; line-height: 1.6;">
+                                            <strong>EN:</strong> Dear <strong><t t-out="object.contact_name or ''"/></strong>,
+                                        </p>
+                                        <p style="color: #666666; margin: 0 0 20px 0; line-height: 1.6;">
+                                            Your supplier application has been reviewed and unfortunately, we are unable to accept your application at this time.
+                                        </p>
+                                        
+                                        <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f8f9fa; padding: 20px; border-radius: 4px; margin: 20px 0;">
+                                            <tr>
+                                                <td>
+                                                    <p style="margin: 0 0 10px 0; color: #666666;"><strong>Başvuru No / Application Number:</strong> <t t-out="object.name or ''"/></p>
+                                                    <p style="margin: 0; color: #666666;"><strong>Firma / Company:</strong> <t t-out="object.company_name or ''"/></p>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                        
+                                        <p style="color: #999999; font-size: 12px; margin: 30px 0 0 0; line-height: 1.6;">
+                                            <strong>TR:</strong> İlginiz için teşekkür ederiz. Gelecekteki fırsatlar için tekrar başvurabilirsiniz.<br/>
+                                            <strong>EN:</strong> Thank you for your interest. You may apply again for future opportunities.
+                                        </p>
                                     </td>
                                 </tr>
                             </table>
-                            % endif
-                            
-                            <p style="color: #666666; margin: 0 0 20px 0; line-height: 1.6;">
-                                <strong>EN:</strong> Dear <strong>${object.contact_name}</strong>,
-                            </p>
-                            <p style="color: #666666; margin: 0 0 20px 0; line-height: 1.6;">
-                                Your supplier application has been reviewed and unfortunately, we are unable to accept your application at this time.
-                            </p>
-                            
-                            <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f8f9fa; padding: 20px; border-radius: 4px; margin: 20px 0;">
-                                <tr>
-                                    <td>
-                                        <p style="margin: 0 0 10px 0; color: #666666;"><strong>Başvuru No / Application Number:</strong> ${object.name}</p>
-                                        <p style="margin: 0; color: #666666;"><strong>Firma / Company:</strong> ${object.company_name}</p>
-                                    </td>
-                                </tr>
-                            </table>
-                            
-                            <p style="color: #999999; font-size: 12px; margin: 30px 0 0 0; line-height: 1.6;">
-                                <strong>TR:</strong> İlginiz için teşekkür ederiz. Gelecekteki fırsatlar için tekrar başvurabilirsiniz.<br/>
-                                <strong>EN:</strong> Thank you for your interest. You may apply again for future opportunities.
-                            </p>
                         </td>
                     </tr>
                 </table>
-            </td>
-        </tr>
-    </table>
-</div>
+            </div>
         </field>
     </record>
 </odoo>
