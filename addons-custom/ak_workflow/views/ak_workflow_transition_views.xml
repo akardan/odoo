@@ -18,6 +18,7 @@
                                 <field name="sequence"/>
                                 <field name="button_label"/>
                                 <field name="button_class"/>
+                                <field name="auto_transition"/>
                             </group>
                         </group>
                         <notebook>
@@ -149,6 +150,23 @@
                         </notebook>
                     </sheet>
                 </form>
+            </field>
+        </record>
+
+        <record id="ak_workflow_transition_list_view" model="ir.ui.view">
+            <field name="name">ak.workflow.transition.list</field>
+            <field name="model">ak.workflow.transition</field>
+            <field name="arch" type="xml">
+                <list>
+                    <field name="sequence" widget="handle"/>
+                    <field name="name"/>
+                    <field name="workflow_id"/>
+                    <field name="from_state_id"/>
+                    <field name="to_state_id"/>
+                    <field name="auto_transition" optional="show"/>
+                    <field name="button_label" optional="show"/>
+                    <field name="active"/>
+                </list>
             </field>
         </record>
 

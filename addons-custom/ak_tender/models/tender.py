@@ -3156,3 +3156,97 @@ class AkTender(models.Model):
                 _logger.warning("Mail template 'email_template_all_offers_submitted' not found.")
         else:
             _logger.warning(f"Buyer or their email not found for tender {self.code}. Email notification skipped.")
+    
+    @api.model
+    def _cron_auto_transition_on_deadline(self):
+        """
+        Cron job to automatically transition tenders to next state when deadline expires.
+        This is called periodically to check all active tenders and progress them
+        when their workflow_step_deadline has passed.
+        """
+        _logger.info("=== Starting automatic tender transition check ===")
+        
+        # Find all tenders with active workflows that have a deadline
+        tenders = self.search([
+            ('workflow_current_state_id', '!=', False),
+            ('workflow_current_state_id.is_final', '=', False),
+            ('workflow_step_deadline', '!=', False),
+            ('workflow_step_deadline', '<', fields.Datetime.now())
+        ])
+        
+        _logger.info(f"Found {len(tenders)} tenders with expired deadlines")
+        
+        transitioned_count = 0
+        failed_count = 0
+        
+        for tender in tenders:
+            try:
+                # Get available transitions
+                tender._compute_available_transitions()
+                available_transitions = tender.workflow_available_transition_ids
+                
+                if not available_transitions:
+                    _logger.warning(
+                        f"Tender {tender.code} (ID: {tender.id}) has expired deadline but no available transitions. "
+                        f"Current state: {tender.workflow_current_state_id.name}"
+                    )
+                    continue
+                
+                # Find the default transition (could be the first one or one marked as auto-transition)
+                # Priority: transition with auto_transition flag > first available transition
+                auto_transition = available_transitions.filtered(lambda t: t.auto_transition if hasattr(t, 'auto_transition') else False)
+                
+                if not auto_transition:
+                    # If no auto_transition flag, continue with the next tender.
+                    _logger.info(
+                        f"No Auto-transitioning tender {tender.code} (ID: {tender.id}) "
+                        f"from state '{tender.workflow_current_state_id.name}' "
+                    )
+                    continue
+                                    
+                
+                # Execute the transition with a system comment
+                comment = _("Otomatik geçiş: Deadline süresi doldu (%s)") % tender.workflow_step_deadline
+                tender.execute_transition(auto_transition.id, comment=comment)
+                
+                transitioned_count += 1
+                
+                # Post a message in chatter
+                tender.message_post(
+                    body=_(
+                        "İhale otomatik olarak bir sonraki aşamaya geçirildi.<br/>"
+                        "Deadline: %s<br/>"
+                        "Önceki durum: %s<br/>"
+                        "Yeni durum: %s"
+                    ) % (
+                        tender.workflow_step_deadline,
+                        tender.workflow_current_state_id.name,
+                        auto_transition.to_state_id.name
+                    ),
+                    subtype_xmlid='mail.mt_note'
+                )
+                
+            except Exception as e:
+                failed_count += 1
+                _logger.error(
+                    f"Failed to auto-transition tender {tender.code} (ID: {tender.id}): {str(e)}",
+                    exc_info=True
+                )
+                # Post error message in chatter
+                try:
+                    tender.message_post(
+                        body=_(
+                            "Otomatik geçiş başarısız oldu.<br/>"
+                            "Hata: %s"
+                        ) % str(e),
+                        subtype_xmlid='mail.mt_note'
+                    )
+                except:
+                    pass
+        
+        _logger.info(
+            f"=== Automatic tender transition completed: "
+            f"{transitioned_count} succeeded, {failed_count} failed ==="
+        )
+        
+        return True

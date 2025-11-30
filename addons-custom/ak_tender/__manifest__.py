@@ -31,6 +31,7 @@
         'data/tender_type_rules_data.xml',
         'data/mail_templates.xml',
         'data/automation_rules.xml',
+        'data/tender_cron.xml',
         'data/mail_notification_templates.xml',
         'data/email_import_cron.xml',
         'data/payment_terms_data.xml',

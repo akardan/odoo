@@ -36,7 +36,6 @@
         'views/ak_workflow_transition_views.xml',
         'views/ak_workflow_transition_stage_views.xml',
         'views/ak_workflow_action_views.xml',
-        'views/ak_workflow_views.xml',
         'views/workflow_designer_views.xml',
         'views/workflow_dashboard_views.xml',
         'wizards/workflow_designer_wizard.xml',

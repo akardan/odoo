@@ -35,9 +35,10 @@
                                         <field name="name" string="Transition"/>
                                         <field name="from_state_id"/>
                                         <field name="to_state_id"/>
-                                        <field name="button_label"/>
-                                        <field name="condition_type"/>
-                                        <field name="group_ids" widget="many2many_tags"/>
+                                        <field name="auto_transition" optional="show"/>
+                                        <field name="button_label" optional="show"/>
+                                        <field name="condition_type" optional="show"/>
+                                        <field name="group_ids" widget="many2many_tags" optional="show"/>
                                     </list>
                                 </field>
                             </page>
