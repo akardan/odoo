@@ -23,6 +23,7 @@
         'views/superset_dashboard_views.xml',
         'views/menu_items.xml',
     ],
+    'images': ['static/description/icon.png'],
     # Removed iframe-related assets as they are no longer needed
     'installable': True,
     'auto_install': False,
