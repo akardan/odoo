@@ -11,6 +11,9 @@ class AkWorkflowTransition(models.Model):
     _order = 'workflow_id, from_state_id, sequence'
     _rec_name = 'display_name'
 
+    # Constants
+    AUTO_TRANSITION_INDICATOR = '⚡'
+
     # Basic Info
     name = fields.Char('Transition Name', required=True, translate=True)
     code = fields.Char('Transition Code', help="Technical identifier")
@@ -113,6 +116,13 @@ class AkWorkflowTransition(models.Model):
         domain="[('model_id', '=', workflow_model_id)]"
     )
     
+    
+    # Auto-transition on deadline
+    auto_transition = fields.Boolean(
+        'Auto-transition on Deadline',
+        default=False,
+        help="If enabled, this transition will be automatically executed when the workflow step deadline expires."
+    )
     active = fields.Boolean('Active', default=True)
     
     @api.depends('stage_ids')
@@ -147,10 +157,19 @@ class AkWorkflowTransition(models.Model):
             else:
                 transition.button_label_computed = transition.button_label or transition.name
     
-    @api.depends('name', 'from_state_id.name', 'to_state_id.name')
+    @api.depends('name', 'from_state_id.name', 'to_state_id.name', 'auto_transition')
     def _compute_display_name(self):
+        """Compute display name with optional auto-transition indicator."""
         for transition in self:
-            transition.display_name = transition.name or 'New Transition'
+            if transition.from_state_id and transition.to_state_id:
+                base_name = transition.name or _('New')
+                transition.display_name = (
+                    f"{base_name} {self.AUTO_TRANSITION_INDICATOR}"
+                    if transition.auto_transition
+                    else base_name
+                )
+            else:
+                transition.display_name = transition.name or _('New Transition')
     
     @api.constrains('from_state_id', 'to_state_id')
     def _check_states_same_workflow(self):
