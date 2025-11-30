@@ -3250,3 +3250,93 @@ class AkTender(models.Model):
         )
         
         return True
+    
+    @api.model
+    def _cron_send_supplier_bid_reminders(self):
+        """
+        Cron job to send reminder emails to suppliers who haven't updated their bids
+        when the tender deadline is approaching (last 6 hours).
+        
+        Conditions:
+        - Tender is in tender round state (first_tender_round or new_tender_round)
+        - Deadline is within the next 6 hours
+        - Supplier hasn't updated their bid since the current workflow state started
+        """
+        _logger.info("=== Starting supplier bid reminder check ===")
+        
+        # Calculate time boundaries
+        now = fields.Datetime.now()
+        six_hours_later = now + timedelta(hours=6)
+        
+        # Find tenders in tender round with deadline in next 6 hours
+        tenders = self.search([
+            ('workflow_current_state_id.code', 'in', ['first_tender_round', 'new_tender_round']),
+            ('workflow_step_deadline', '!=', False),
+            ('workflow_step_deadline', '>', now),
+            ('workflow_step_deadline', '<=', six_hours_later),
+            ('workflow_state_start', '!=', False)
+        ])
+        
+        _logger.info(f"Found {len(tenders)} tenders with deadline approaching in next 6 hours")
+        
+        reminder_count = 0
+        skipped_count = 0
+        
+        for tender in tenders:
+            _logger.info(f"Processing tender {tender.code} - Deadline: {tender.workflow_step_deadline}")
+            
+            # Get all purchase orders for this tender in current round
+            purchase_orders = self.env['purchase.order'].search([
+                ('tender_id', '=', tender.id),
+                ('tender_round', '=', tender.tender_round),
+                ('state', '!=', 'cancel')
+            ])
+            
+            # Add 1 minute margin to workflow_state_start to account for POs created during transition
+            state_start_with_margin = tender.workflow_state_start + timedelta(minutes=1)
+            
+            for po in purchase_orders:
+                # Check if supplier has updated their bid since workflow state started (with margin)
+                if po.write_date and po.write_date > state_start_with_margin:
+                    _logger.debug(
+                        f"Skipping PO {po.name} for {po.partner_id.name} - "
+                        f"Updated at {po.write_date} (after state start + margin: {state_start_with_margin})"
+                    )
+                    skipped_count += 1
+                    continue
+                
+                # Send reminder email
+                try:
+                    template = self.env.ref('ak_tender.email_template_supplier_bid_reminder', raise_if_not_found=False)
+                    if template:
+                        template.send_mail(po.id, force_send=True)
+                        reminder_count += 1
+                        
+                        _logger.info(
+                            f"Sent reminder to {po.partner_id.name} for tender {tender.code} "
+                            f"(PO: {po.name})"
+                        )
+                        
+                        # Post message in purchase order chatter
+                        po.message_post(
+                            body=_(
+                                "Tedarikçiye hatırlatma e-postası gönderildi.<br/>"
+                                "Deadline: %s"
+                            ) % tender.workflow_step_deadline,
+                            subtype_xmlid='mail.mt_note'
+                        )
+                    else:
+                        _logger.warning("Mail template 'email_template_supplier_bid_reminder' not found")
+                        
+                except Exception as e:
+                    _logger.error(
+                        f"Failed to send reminder to {po.partner_id.name} for PO {po.name}: {str(e)}",
+                        exc_info=True
+                    )
+        
+        _logger.info(
+            f"=== Supplier bid reminder completed: "
+            f"{reminder_count} reminders sent, {skipped_count} skipped (recently updated) ==="
+        )
+        
+        return True

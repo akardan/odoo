@@ -200,6 +200,88 @@
             </field>
             <field name="lang">{{ object.buyer_id.lang }}</field>
             <field name="auto_delete" eval="True"/>
+
+        <!-- Email template for supplier bid reminder -->
+        <record id="email_template_supplier_bid_reminder" model="mail.template">
+            <field name="name">Tender: Supplier Bid Reminder</field>
+            <field name="model_id" ref="purchase.model_purchase_order"/>
+            <field name="subject">Hatırlatma: {{ object.tender_id.name }} - Teklif Bekleniyor</field>
+            <field name="email_from">{{ user.email_formatted }}</field>
+            <field name="partner_to">{{ object.partner_id.id }}</field>
+            <field name="body_html" type="html">
+                <div style="margin: 0px; padding: 0px; font-family: Arial, sans-serif;">
+                    <p style="margin: 0px; padding: 0px; font-size: 14px;">
+                        Sayın <strong><t t-out="object.partner_id.name or ''">Tedarikçi</t></strong>,
+                    </p>
+                    
+                    <p style="margin: 15px 0; padding: 0px; font-size: 14px;">
+                        Size gönderilen ihale teklifi için henüz güncel bir teklif almadık.
+                    </p>
+                    
+                    <!-- Reminder Banner -->
+                    <div style="margin: 20px 0; padding: 12px 20px; background-color: #fff3cd; border-left: 5px solid #ffc107; border-radius: 3px;">
+                        <strong style="color: #856404; font-size: 15px;">⏰ TEKLİF BEKLENİYOR</strong>
+                    </div>
+                    
+                    <!-- Tender Info Box -->
+                    <div style="margin: 20px 0; padding: 15px; background-color: #f8f9fa; border-left: 4px solid #875A7B; border-radius: 3px;">
+                        <t t-if="object.tender_id.code">
+                            <strong>İhale No:</strong> <t t-out="object.tender_id.code or ''">İHALE001</t><br/>
+                        </t>
+                        <strong>İhale Adı:</strong> <t t-out="object.tender_id.name or ''">İhale Adı</t><br/>
+                        <t t-if="object.tender_round">
+                            <strong>Teklif Turu:</strong> <t t-out="object.tender_round or ''">1</t><br/>
+                        </t>
+                        <t t-if="object.tender_id and object.tender_id.workflow_step_deadline">
+                            <strong style="color: #d9534f;">Son Teklif Tarihi:</strong>
+                            <span style="background-color: #f8d7da; padding: 3px 8px; border-radius: 3px; font-weight: bold; color: #721c24;">
+                                <t t-out="object.tender_id.workflow_step_deadline.strftime('%d/%m/%Y %H:%M') or ''">31/12/2024 17:00</t>
+                            </span><br/>
+                        </t>
+                        <t t-if="object.date_order">
+                            <strong>İlk Teklif Tarihiniz:</strong> <t t-out="object.date_order.strftime('%d/%m/%Y %H:%M') or ''">01/01/2024 10:00</t>
+                        </t>
+                    </div>
+                    
+                    <!-- Urgency Message -->
+                    <div style="margin: 20px 0; padding: 15px; background-color: #fff; border: 2px solid #dc3545; border-radius: 5px;">
+                        <p style="margin: 0; color: #dc3545; font-size: 15px;">
+                            <strong>⚠️ DİKKAT:</strong> Son teklif tarihine yaklaşıldı! Lütfen teklifinizi en kısa sürede güncelleyin ve Kaydetmeyi unutmayın.
+                        </p>
+                    </div>
+                    
+                    <!-- Action Button -->
+                    <div style="margin: 25px 0; text-align: center;">
+                        <a t-attf-href="/my/purchase/{{object.id}}"
+                           style="background-color: #875A7B; padding: 15px 30px; text-decoration: none; color: #fff; border-radius: 4px; font-size: 16px; font-weight: bold; display: inline-block;">
+                            Teklif Ver / Güncelle
+                        </a>
+                    </div>
+                    
+                    <p style="margin: 20px 0; font-size: 13px; color: #666;">
+                        Teklifinizi portal üzerinden güncelleyebilirsiniz. 
+                        Son teklif tarihinden sonra gönderilen teklifler değerlendirmeye alınmayacaktır.
+                    </p>
+                    
+                    <!-- Horizontal Line -->
+                    <div style="border-bottom: 1px solid #e1e1e1; margin: 20px 0;"/>
+                    
+                    <p style="margin: 15px 0; font-size: 14px;">
+                        Saygılarımızla,<br/>
+                        <t t-out="object.company_id.name or ''">Şirket Adı</t>
+                    </p>
+                    
+                    <!-- Footer -->
+                    <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #e1e1e1; color: #888888; font-size: 12px;">
+                        <p style="margin: 0;">
+                            Bu otomatik bir hatırlatmadır. Sorularınız için satın alma departmanı ile iletişime geçebilirsiniz.
+                        </p>
+                    </div>
+                </div>
+            </field>
+            <field name="lang">{{ object.partner_id.lang }}</field>
+            <field name="auto_delete" eval="True"/>
+        </record>
         </record>
 
         <!-- Email template for tender approval notification -->

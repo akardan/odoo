@@ -48,6 +48,8 @@ class AkWorkflowMixin(models.AbstractModel):
 
     # Workflow Dates
     workflow_start_date = fields.Datetime('Workflow Start Date', readonly=True, copy=False)
+    workflow_state_start = fields.Datetime('Current State Start Date', readonly=True, copy=False,
+                                          help="The datetime when the current workflow state was entered")
     workflow_end_date = fields.Datetime('Workflow End Date', readonly=True, copy=False)
 
     transition_history_ids = fields.One2many(
@@ -109,8 +111,10 @@ class AkWorkflowMixin(models.AbstractModel):
             if record.workflow_definition_id and not record.workflow_current_state_id:
                 initial_state = record.workflow_definition_id.initial_state_id
                 if initial_state:
+                    now = fields.Datetime.now()
                     record.workflow_current_state_id = initial_state
-                    record.workflow_start_date = fields.Datetime.now()
+                    record.workflow_start_date = now
+                    record.workflow_state_start = now
                     record._execute_state_actions('entry')
         return records
 
@@ -122,6 +126,9 @@ class AkWorkflowMixin(models.AbstractModel):
                 if old_states[record.id]:
                     record._execute_state_actions('exit', state=old_states[record.id])
                 record._execute_state_actions('entry')
+                
+                # Update workflow_state_start when state changes
+                record.workflow_state_start = fields.Datetime.now()
 
                 if record.workflow_current_state_id.is_final and not record.workflow_end_date:
                     record.workflow_end_date = fields.Datetime.now()
