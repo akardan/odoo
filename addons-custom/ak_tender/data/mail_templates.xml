@@ -200,6 +200,7 @@
             </field>
             <field name="lang">{{ object.buyer_id.lang }}</field>
             <field name="auto_delete" eval="True"/>
+        </record>
 
         <!-- Email template for supplier bid reminder -->
         <record id="email_template_supplier_bid_reminder" model="mail.template">
