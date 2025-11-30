@@ -9,33 +9,33 @@
             <field name="email_from">{{ (user.email_formatted) }}</field>
             <field name="partner_to">{{ '' }}</field>
             <field name="body_html" type="html">
-<div style="margin: 0px; padding: 0px; font-size: 13px;">
-    <p style="margin: 0px; padding: 0px; font-size: 13px;">
-        Sayın {{ object.create_uid.name }},
-    </p>
-    <p style="margin: 0px; padding: 0px; font-size: 13px;">
-        <br/>
-        <t t-if="object.code">
-            <strong>İhale No:</strong> <t t-out="object.code or ''">İHALE001</t><br/>
-        </t>
-        <b>{{ object.name }}</b> ihalesine yeni bir teklif alındı.
-        <br/><br/>
-        <b>Tedarikçi:</b> {{ ctx['supplier_name'] }}<br/>
-        <b>Teklif Tutarı:</b> {{ ctx['bid_amount'] }}<br/>
-        <b>Teklif Tarihi:</b> {{ format_datetime(datetime.datetime.now(), tz=user.tz) }}
-        <br/><br/>
-        Detayları görmek için aşağıdaki bağlantıya tıklayın:
-        <br/>
-        <a href="/web#id={{ ctx['purchase_order'].id }}&amp;model=purchase.order&amp;view_type=form">
-            Teklifi Görüntüle
-        </a>
-    </p>
-    <br/>
-    <p style="margin: 0px; padding: 0px; font-size: 13px;">
-        Saygılarımızla,<br/>
-        {{ user.company_id.name }}
-    </p>
-</div>
+                <div style="margin: 0px; padding: 0px; font-size: 13px;">
+                    <p style="margin: 0px; padding: 0px; font-size: 13px;">
+                        Sayın {{ object.create_uid.name }},
+                    </p>
+                    <p style="margin: 0px; padding: 0px; font-size: 13px;">
+                        <br/>
+                        <t t-if="object.code">
+                            <strong>İhale No:</strong> <t t-out="object.code or ''">İHALE001</t><br/>
+                        </t>
+                        <b>{{ object.name }}</b> ihalesine yeni bir teklif alındı.
+                        <br/><br/>
+                        <b>Tedarikçi:</b> {{ ctx['supplier_name'] }}<br/>
+                        <b>Teklif Tutarı:</b> {{ ctx['bid_amount'] }}<br/>
+                        <b>Teklif Tarihi:</b> {{ format_datetime(datetime.datetime.now(), tz=user.tz) }}
+                        <br/><br/>
+                        Detayları görmek için aşağıdaki bağlantıya tıklayın:
+                        <br/>
+                        <a href="/web#id={{ ctx['purchase_order'].id }}&amp;model=purchase.order&amp;view_type=form">
+                            Teklifi Görüntüle
+                        </a>
+                    </p>
+                    <br/>
+                    <p style="margin: 0px; padding: 0px; font-size: 13px;">
+                        Saygılarımızla,<br/>
+                        {{ user.company_id.name }}
+                    </p>
+                </div>
             </field>
             <field name="lang">{{ object.create_uid.lang }}</field>
             <field name="auto_delete" eval="True"/>
@@ -49,79 +49,79 @@
             <field name="partner_to">{{ object.partner_id.id }}</field>
             <field name="description">Sent to suppliers for tender quotation requests with tender number</field>
             <field name="body_html" type="html">
-<div style="margin: 0px; padding: 0px; font-family: Arial, sans-serif;">
-    <p style="margin: 0px; padding: 0px; font-size: 14px;">
-        Sayın <t t-out="object.partner_id.name or ''">Brandon Freeman</t>
-        <t t-if="object.partner_id.parent_id">
-            (<t t-out="object.partner_id.parent_id.name or ''">Azure Interior</t>)
-        </t>
-    </p>
-    
-    <!-- Tender Info -->
-    <t t-if="object.tender_id">
-        <div style="margin: 15px 0; padding: 10px; background-color: #f8f9fa; border-left: 4px solid #875A7B;">
-            <strong>İhale No:</strong> <t t-out="object.tender_id.code or ''">İHALE001</t><br/>
-            <strong>SAT Kodu:</strong> <t t-out="object.tender_id.name or ''">SAT Kodu</t><br/>
-            <strong>Teklif Turu:</strong> <t t-out="object.tender_round or '1'">1</t><br/>
-            <t t-if="object.tender_id.workflow_step_deadline">
-                <strong style="color: #d9534f;">Teklif Verme Son Tarihi:</strong>
-                <span style="background-color: #fcf8e3; padding: 3px 8px; border-radius: 3px; font-weight: bold; color: #8a6d3b;">
-                    <t t-out="object.tender_id.workflow_step_deadline.strftime('%d/%m/%Y %H:%M') or ''">31/12/2024 17:00</t>
-                </span>
-            </t>
-        </div>
-    </t>
-    
-    <!-- Button and Order Info Row -->
-    <div style="display: flex; margin-top: 20px; margin-bottom: 20px;">
-        <!-- View Quotation Button -->
-        <div style="display: inline-block;">
-            <a t-att-href="object.get_portal_url()" target="_blank" style="background-color: #875A7B; padding: 10px 20px; text-decoration: none; color: #fff; border-radius: 3px; font-size: 14px; font-weight: bold; display: inline-block;">
-                Satınalma Teklif Talebini Görüntüle
-            </a>
-        </div>
-        
-        <!-- Order Number and Due Date -->
-        <div style="display: inline-block; margin-left: 15px; padding-top: 5px;">
-            <span t-out="object.name or ''" style="font-weight: bold; font-size: 14px;">P00050</span><br/>
-            <span style="background-color: #f2d675; padding: 2px 5px; font-size: 13px;">Sipariş vadesi <t t-out="object.date_planned and object.date_planned.strftime('%d/%m/%Y') or ''">13/06/2025</t></span>
-        </div>
-    </div>
-    
-    <!-- Horizontal Line -->
-    <div style="border-bottom: 1px solid #e1e1e1; margin-bottom: 15px;"/>
-    
-    <p style="margin: 0px; padding: 0px; font-size: 14px;">
-        Ekte <t t-out="object.company_id.name or ''">YourCompany</t> şirketinden <span style="font-weight:bold;" t-out="object.name or ''">P00050</span> numaralı teklif talebi bulunmaktadır.
-    </p>
-    
-    <p style="margin: 15px 0; font-size: 14px;">
-        Teklif detaylarınızı girmek için linke tıklayın. Düzenlemelerinizi tamamladıktan sonra "Tüm Değişiklikleri Kaydet" butonuna tıklayarak kaydetme işlemini tamamlamayı unutmayın.
-    </p>
-    
-    <p style="margin: 15px 0; font-size: 14px;">
-        Herhangi bir sorunuz varsa, bizimle iletişime geçmekten çekinmeyin.
-    </p>
-    
-    <p style="margin: 15px 0; font-size: 14px;">
-        Saygılarımızla,
-    </p>
-    
-    <p style="margin: 0; font-size: 14px;">
-        <br/>
-        <t t-if="not is_html_empty(object.user_id.signature)" data-o-mail-quote-container="1">
-            <t t-out="object.user_id.signature or ''" data-o-mail-quote="1">ILKOis Admin</t>
-        </t>
-        <t t-else="">
-            ILKOis Admin
-        </t>
-    </p>
-    
-    <!-- Company Info Footer -->
-    <div style="border-top: 1px solid #e1e1e1; margin-top: 15px; padding-top: 10px; color: #888888; font-size: 12px;">
-        <t t-out="object.company_id.name or ''">Kardan.Digital</t>
-    </div>
-</div></field>
+                <div style="margin: 0px; padding: 0px; font-family: Arial, sans-serif;">
+                    <p style="margin: 0px; padding: 0px; font-size: 14px;">
+                        Sayın <t t-out="object.partner_id.name or ''">Brandon Freeman</t>
+                        <t t-if="object.partner_id.parent_id">
+                            (<t t-out="object.partner_id.parent_id.name or ''">Azure Interior</t>)
+                        </t>
+                    </p>
+                    
+                    <!-- Tender Info -->
+                    <t t-if="object.tender_id">
+                        <div style="margin: 15px 0; padding: 10px; background-color: #f8f9fa; border-left: 4px solid #875A7B;">
+                            <strong>İhale No:</strong> <t t-out="object.tender_id.code or ''">İHALE001</t><br/>
+                            <strong>SAT Kodu:</strong> <t t-out="object.tender_id.name or ''">SAT Kodu</t><br/>
+                            <strong>Teklif Turu:</strong> <t t-out="object.tender_round or '1'">1</t><br/>
+                            <t t-if="object.tender_id.workflow_step_deadline">
+                                <strong style="color: #d9534f;">Teklif Verme Son Tarihi:</strong>
+                                <span style="background-color: #fcf8e3; padding: 3px 8px; border-radius: 3px; font-weight: bold; color: #8a6d3b;">
+                                    <t t-out="object.tender_id.workflow_step_deadline.strftime('%d/%m/%Y %H:%M') or ''">31/12/2024 17:00</t>
+                                </span>
+                            </t>
+                        </div>
+                    </t>
+                    
+                    <!-- Button and Order Info Row -->
+                    <div style="display: flex; margin-top: 20px; margin-bottom: 20px;">
+                        <!-- View Quotation Button -->
+                        <div style="display: inline-block;">
+                            <a t-att-href="object.get_portal_url()" target="_blank" style="background-color: #875A7B; padding: 10px 20px; text-decoration: none; color: #fff; border-radius: 3px; font-size: 14px; font-weight: bold; display: inline-block;">
+                                Satınalma Teklif Talebini Görüntüle
+                            </a>
+                        </div>
+                        
+                        <!-- Order Number and Due Date -->
+                        <div style="display: inline-block; margin-left: 15px; padding-top: 5px;">
+                            <span t-out="object.name or ''" style="font-weight: bold; font-size: 14px;">P00050</span><br/>
+                            <span style="background-color: #f2d675; padding: 2px 5px; font-size: 13px;">Sipariş vadesi <t t-out="object.date_planned and object.date_planned.strftime('%d/%m/%Y') or ''">13/06/2025</t></span>
+                        </div>
+                    </div>
+                    
+                    <!-- Horizontal Line -->
+                    <div style="border-bottom: 1px solid #e1e1e1; margin-bottom: 15px;"/>
+                    
+                    <p style="margin: 0px; padding: 0px; font-size: 14px;">
+                        Ekte <t t-out="object.company_id.name or ''">YourCompany</t> şirketinden <span style="font-weight:bold;" t-out="object.name or ''">P00050</span> numaralı teklif talebi bulunmaktadır.
+                    </p>
+                    
+                    <p style="margin: 15px 0; font-size: 14px;">
+                        Teklif detaylarınızı girmek için linke tıklayın. Düzenlemelerinizi tamamladıktan sonra "Tüm Değişiklikleri Kaydet" butonuna tıklayarak kaydetme işlemini tamamlamayı unutmayın.
+                    </p>
+                    
+                    <p style="margin: 15px 0; font-size: 14px;">
+                        Herhangi bir sorunuz varsa, bizimle iletişime geçmekten çekinmeyin.
+                    </p>
+                    
+                    <p style="margin: 15px 0; font-size: 14px;">
+                        Saygılarımızla,
+                    </p>
+                    
+                    <p style="margin: 0; font-size: 14px;">
+                        <br/>
+                        <t t-if="not is_html_empty(object.user_id.signature)" data-o-mail-quote-container="1">
+                            <t t-out="object.user_id.signature or ''" data-o-mail-quote="1">ILKOis Admin</t>
+                        </t>
+                        <t t-else="">
+                            ILKOis Admin
+                        </t>
+                    </p>
+                    
+                    <!-- Company Info Footer -->
+                    <div style="border-top: 1px solid #e1e1e1; margin-top: 15px; padding-top: 10px; color: #888888; font-size: 12px;">
+                        <t t-out="object.company_id.name or ''">Kardan.Digital</t>
+                    </div>
+                </div></field>
             <field name="report_template_ids" eval="[(4, ref('purchase.report_purchase_quotation'))]"/>
             <field name="lang">{{ object.partner_id.lang }}</field>
             <field name="auto_delete" eval="True"/>
