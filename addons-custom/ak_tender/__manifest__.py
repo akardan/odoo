@@ -5,14 +5,18 @@
         ERP entegrasyonlu ve çok aşamalı ihale yönetimi modülü prototipi.
     """,
     'description': """
-        Bu modül,  çok aşamalı satın alma ihale süreçlerini Odoo üzerinde yönetmek için tasarlanmıştır.
-        - ERP Entegrasyon (simülasyon)
-        - Çok Aşamalı İhale Süreci (1. Teklif Toplama, Hedef Fiyat, 2. Teklif Toplama)
-        - Tedarikçi Portal Entegrasyonu (veri girişi temsili)
-        - Onay Mekanizması entegrasyonu (Approvals modülü ile)
-        - Raporlama ve Analiz altyapısı
-        - İhale Kalemleri yönetimi
-        - Odoo'nun temel satın alma (purchase.order) modülü ile entegrasyon simülasyonu.
+        Çok aşamalı satın alma ihale süreçlerini Odoo üzerinde yönetmek için tasarlanmış gelişmiş ihale yönetim modülü.
+        
+        Özellikler:
+        - İş Akışı (Workflow) Yönetimi: Esnek, çok aşamalı ihale süreç yönetimi
+        - ERP Entegrasyonu: Satın alma modülü ile tam entegrasyon
+        - Çok Aşamalı İhale Süreci: 1. Teklif Toplama, Hedef Fiyat Belirleme, 2. Teklif Toplama
+        - Tedarikçi Portal: Tedarikçilerin teklif girişi ve takibi
+        - Otomatik Durum Geçişleri: Deadline bazlı otomatik süreç yönetimi
+        - Onay Mekanizması: Çoklu onay süreçleri ve yetkilendirme
+        - Gelişmiş Raporlama: Tedarikçi karşılaştırma ve analiz araçları
+        - İhale Kalemleri: Detaylı ürün ve satır bazlı teklif yönetimi
+        - E-posta Entegrasyonu: Otomatik bildirimler ve takip sistemi
     """,
     'author': "Kardan.Digital",
     'website': "https://www.kardan.digital",
