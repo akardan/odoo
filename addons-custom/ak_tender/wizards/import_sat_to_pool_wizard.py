@@ -18,6 +18,13 @@ try:
 except ImportError:
     pd = None
 
+try:
+    import msal
+    import requests
+except ImportError:
+    msal = None
+    requests = None
+
 def _install_pandas():
     global pd
     if pd:
@@ -30,6 +37,21 @@ def _install_pandas():
         return True
     except Exception as e:
         _logger.error(f"pandas kurulum hatası: {str(e)}")
+        return False
+
+def _install_msal_and_requests():
+    global msal, requests
+    if msal and requests:
+        return True
+    import subprocess
+    import sys
+    try:
+        subprocess.check_call([sys.executable, '-m', 'pip', 'install', 'msal', 'requests'])
+        import msal
+        import requests
+        return True
+    except Exception as e:
+        _logger.error(f"msal ve requests kurulum hatası: {str(e)}")
         return False
 
 
@@ -756,3 +778,280 @@ class SatToPoolImportWizard(models.TransientModel):
                 'type': 'success' if stats['lines']['errors'] == 0 else 'warning',
             }
         }
+
+    def _get_microsoft_access_token(self):
+        """
+        Microsoft Graph API için OAuth2 access token al
+        
+        Microsoft Entra (Azure AD) üzerinden OAuth2 authentication kullanarak
+        access token alır. Basic authentication yerine modern OAuth2 kullanır.
+        """
+        if not msal and not _install_msal_and_requests():
+            raise UserError(_('msal kütüphanesi yüklenemedi. Lütfen manuel olarak "pip install msal requests" komutunu çalıştırın.'))
+        
+        # Azure AD credentials - System parameters'dan al
+        client_id = self.env['ir.config_parameter'].sudo().get_param('ak_tender.azure_client_id', '')
+        client_secret = self.env['ir.config_parameter'].sudo().get_param('ak_tender.azure_client_secret', '')
+        tenant_id = self.env['ir.config_parameter'].sudo().get_param('ak_tender.azure_tenant_id', '')
+        
+        if not all([client_id, client_secret, tenant_id]):
+            raise UserError(_(
+                'Azure AD credentials eksik. Lütfen aşağıdaki system parameters\'ı ayarlayın:\n'
+                '- ak_tender.azure_client_id\n'
+                '- ak_tender.azure_client_secret\n'
+                '- ak_tender.azure_tenant_id'
+            ))
+        
+        _logger.info(f"Microsoft OAuth2 token alınıyor - Tenant: {tenant_id}")
+        
+        # MSAL authority URL
+        authority = f"https://login.microsoftonline.com/{tenant_id}"
+        
+        # Scopes - Microsoft Graph API için
+        scopes = ["https://graph.microsoft.com/.default"]
+        
+        try:
+            # Confidential client application oluştur
+            app = msal.ConfidentialClientApplication(
+                client_id=client_id,
+                client_credential=client_secret,
+                authority=authority
+            )
+            
+            # Access token al (client credentials flow)
+            result = app.acquire_token_for_client(scopes=scopes)
+            
+            if "access_token" in result:
+                _logger.info("Microsoft OAuth2 token başarıyla alındı")
+                return result["access_token"]
+            else:
+                error_msg = result.get("error_description", result.get("error", "Bilinmeyen hata"))
+                _logger.error(f"Token alınamadı: {error_msg}")
+                raise UserError(_(f"Microsoft OAuth2 token alınamadı: {error_msg}"))
+                
+        except Exception as e:
+            _logger.error(f"OAuth2 token alma hatası: {str(e)}", exc_info=True)
+            raise UserError(_(f"OAuth2 authentication hatası: {str(e)}"))
+
+    @api.model
+    def import_sat_to_pool_from_email(self):
+        """
+        Email kutusundan SAT to Pool dosyalarını oku ve import et
+        
+        Microsoft Graph API ve OAuth2 kullanarak ilkoisdata@ilko.com.tr
+        email kutusunu kontrol eder ve "ME5A Günlük Rapor Sonuçları" konulu
+        yeni gelen mailleri bulur. Ekindeki "ME5A Günlük Rapor Sonuçları.ZIP"
+        isimli dosyayı alır ve havuza import işlemini gerçekleştirir.
+        
+        NOT: Microsoft'un "Improving Security" kapsamında Basic Authentication
+        devre dışı bırakılmıştır. Bu nedenle OAuth2 kullanılması zorunludur.
+        """
+        if not (msal and requests) and not _install_msal_and_requests():
+            raise UserError(_('msal ve requests kütüphaneleri yüklenemedi. Lütfen manuel olarak "pip install msal requests" komutunu çalıştırın.'))
+        
+        stats = {
+            'requisitions': {'created': 0, 'updated': 0},
+            'lines': {'processed': 0, 'created': 0, 'updated': 0, 'skipped': 0, 'errors': 0}
+        }
+        processed_emails = 0
+        
+        try:
+            # OAuth2 access token al
+            access_token = self._get_microsoft_access_token()
+            
+            # Email kullanıcısı
+            email_user = self.env['ir.config_parameter'].sudo().get_param(
+                'ak_tender.email_user',
+                'ilkoisdata@ilko.com.tr'
+            )
+            
+            _logger.info(f"Microsoft Graph API ile email okunuyor (SAT to Pool): {email_user}")
+            
+            # Microsoft Graph API endpoint
+            graph_url = f"https://graph.microsoft.com/v1.0/users/{email_user}/messages"
+            
+            # Headers
+            headers = {
+                'Authorization': f'Bearer {access_token}',
+                'Content-Type': 'application/json'
+            }
+            
+            # Okunmamış emailleri ara
+            params = {
+                '$filter': "isRead eq false",
+                '$select': 'id,subject,from,receivedDateTime,hasAttachments',
+                '$orderby': 'receivedDateTime desc',
+                '$top': 100  # Son 100 okunmamış email
+            }
+            
+            _logger.info("Okunmamış emailler aranıyor (SAT to Pool)...")
+            response = requests.get(graph_url, headers=headers, params=params)
+            
+            if response.status_code != 200:
+                _logger.error(f"Email listesi alınamadı: {response.status_code} - {response.text}")
+                raise UserError(_(f"Email listesi alınamadı: {response.status_code}"))
+            
+            all_messages = response.json().get('value', [])
+            _logger.info(f"{len(all_messages)} adet okunmamış email bulundu")
+            
+            # Konu filtrelemesi - Python tarafında yap
+            messages = [msg for msg in all_messages if 'ME5A Günlük Rapor Sonuçları' in msg.get('subject', '')]
+            _logger.info(f"{len(messages)} adet 'ME5A Günlük Rapor Sonuçları' konulu email bulundu")
+            
+            if not messages:
+                _logger.info("İşlenecek yeni email bulunamadı (SAT to Pool)")
+                return stats
+            
+            # Her bir emaili işle
+            for message in messages:
+                try:
+                    message_id = message.get('id')
+                    subject = message.get('subject', '')
+                    from_addr = message.get('from', {}).get('emailAddress', {}).get('address', '')
+                    received_date = message.get('receivedDateTime', '')
+                    has_attachments = message.get('hasAttachments', False)
+                    
+                    _logger.info(f"Email işleniyor (SAT to Pool): ID={message_id}")
+                    _logger.info(f"Konu: {subject}")
+                    _logger.info(f"Gönderen: {from_addr}")
+                    _logger.info(f"Tarih: {received_date}")
+                    
+                    if not has_attachments:
+                        _logger.warning(f"Email'de ek yok: ID={message_id}")
+                        # Okundu olarak işaretle
+                        self._mark_email_as_read(email_user, message_id, access_token)
+                        continue
+                    
+                    # Ekleri al
+                    attachments_url = f"https://graph.microsoft.com/v1.0/users/{email_user}/messages/{message_id}/attachments"
+                    attachments_response = requests.get(attachments_url, headers=headers)
+                    
+                    if attachments_response.status_code != 200:
+                        _logger.error(f"Ekler alınamadı: {attachments_response.status_code}")
+                        continue
+                    
+                    attachments = attachments_response.json().get('value', [])
+                    _logger.info(f"{len(attachments)} adet ek bulundu")
+                    
+                    # Ekleri kontrol et
+                    attachment_found = False
+                    for attachment in attachments:
+                        filename = attachment.get('name', '')
+                        _logger.info(f"Ek dosya: {filename}")
+                        
+                        # "ME5A Günlük Rapor Sonuçları.ZIP" dosyasını ara
+                        # Büyük/küçük harf duyarsız karşılaştırma
+                        if filename.lower() == 'me5a günlük rapor sonuçları.zip':
+                            _logger.info(f"Hedef ZIP dosyası bulundu (SAT to Pool): {filename}")
+                            attachment_found = True
+                            
+                            # Dosya içeriğini al (base64 encoded)
+                            content_bytes = attachment.get('contentBytes', '')
+                            
+                            if not content_bytes:
+                                _logger.error(f"Dosya içeriği alınamadı: {filename}")
+                                continue
+                            
+                            # Base64 decode
+                            file_data = base64.b64decode(content_bytes)
+                            _logger.info(f"Dosya boyutu: {len(file_data)} bytes")
+                            
+                            # Havuza import et
+                            _logger.info(f"SAT to Pool import işlemi başlatılıyor: {filename}")
+                            file_stats = self.import_sat_to_pool_from_file(
+                                file_data=file_data,
+                                file_name=filename,
+                                sheet_name='ILP(300)',
+                                update_existing=True
+                            )
+                            
+                            # İstatistikleri birleştir
+                            for category in ['requisitions', 'lines']:
+                                for key in stats[category]:
+                                    stats[category][key] += file_stats[category][key]
+                            
+                            _logger.info(f"Dosya havuza import edildi: {filename}, İstatistikler: {file_stats}")
+                            
+                            # Emaili okundu olarak işaretle
+                            self._mark_email_as_read(email_user, message_id, access_token)
+                            
+                            processed_emails += 1
+                            break  # Bu emaildeki diğer ekleri kontrol etmeye gerek yok
+                    
+                    if not attachment_found:
+                        _logger.warning(f"Email'de 'ME5A Günlük Rapor Sonuçları.ZIP' dosyası bulunamadı: ID={message_id}")
+                        # Yine de okundu olarak işaretle ki bir daha işlenmesin
+                        self._mark_email_as_read(email_user, message_id, access_token)
+                            
+                except Exception as e:
+                    _logger.error(f"Email işleme hatası (SAT to Pool): ID={message.get('id', 'unknown')}, Hata: {str(e)}", exc_info=True)
+                    stats['lines']['errors'] += 1
+            
+            _logger.info(f"SAT to Pool email import tamamlandı. İşlenen email sayısı: {processed_emails}, İstatistikler: {stats}")
+            return stats
+            
+        except Exception as e:
+            _logger.error(f"SAT to Pool email import hatası: {str(e)}", exc_info=True)
+            raise UserError(_(f"SAT to Pool email import hatası: {str(e)}"))
+    
+    def _mark_email_as_read(self, email_user, message_id, access_token):
+        """Email'i okundu olarak işaretle"""
+        try:
+            update_url = f"https://graph.microsoft.com/v1.0/users/{email_user}/messages/{message_id}"
+            headers = {
+                'Authorization': f'Bearer {access_token}',
+                'Content-Type': 'application/json'
+            }
+            data = {
+                'isRead': True
+            }
+            
+            response = requests.patch(update_url, headers=headers, json=data)
+            
+            if response.status_code == 200:
+                _logger.info(f"Email okundu olarak işaretlendi: ID={message_id}")
+            else:
+                _logger.warning(f"Email okundu olarak işaretlenemedi: {response.status_code} - {response.text}")
+                
+        except Exception as e:
+            _logger.error(f"Email işaretleme hatası: {str(e)}", exc_info=True)
+
+    @api.model
+    def import_sat_to_pool_from_file(self, file_data, file_name, sheet_name='ILP(300)', update_existing=True):
+        """
+        Automated import function for SAT to Pool data from Excel file
+        
+        Args:
+            file_data (bytes): The binary content of the Excel file
+            file_name (str): The name of the file
+            sheet_name (str): The name of the sheet to import from
+            update_existing (bool): Whether to update existing records
+            
+        Returns:
+            dict: Statistics about the import process
+        """
+        stats = self._init_stats()
+        
+        try:
+            # Create a temporary wizard record
+            wizard = self.create({
+                'excel_file': base64.b64encode(file_data),
+                'file_name': file_name,
+                'sheet_name': sheet_name,
+                'update_existing': update_existing,
+            })
+            
+            # Read the Excel file
+            workbook = wizard._read_excel_file()
+            
+            # Process the SAT data
+            wizard._process_sat_data(workbook, stats)
+            
+            # Log the results
+            _logger.info(f"Automated SAT to Pool import statistics: {stats}")
+            
+            return stats
+        except Exception as e:
+            _logger.error(f"Automated SAT to Pool import error: {str(e)}", exc_info=True)
+            stats['lines']['errors'] += 1
+            return stats
