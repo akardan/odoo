@@ -9,10 +9,7 @@
             <field name="code">model._cron_auto_transition_on_deadline()</field>
             <field name="interval_number">30</field>
             <field name="interval_type">minutes</field>
-            <field name="number_calls">-1</field>
             <field name="active" eval="True"/>
-            <field name="doall" eval="False"/>
-            <field name="user_id" ref="base.user_admin"/>
         </record>
     </data>
 </odoo>
