@@ -138,29 +138,60 @@
                         </page>
                         
                         <page string="Documents" name="documents">
-                            <group>
-                                <group string="Tax Certificate">
-                                    <field name="document_tax_certificate" filename="document_tax_certificate_filename" 
-                                           readonly="state != 'draft'"/>
-                                    <field name="document_tax_certificate_filename" invisible="1"/>
-                                </group>
-                                <group string="Signature Circular">
-                                    <field name="document_signature_circular" filename="document_signature_circular_filename" 
-                                           readonly="state != 'draft'"/>
-                                    <field name="document_signature_circular_filename" invisible="1"/>
-                                </group>
+                            <!-- Tax Certificate Section -->
+                            <group string="Tax Certificate">
+                                <field name="document_tax_certificate_filename" invisible="1"/>
+                                <div class="row">
+                                    <div class="col-12">
+                                        <field name="document_tax_certificate"
+                                               filename="document_tax_certificate_filename"
+                                               widget="pdf_viewer"
+                                               options="{'preview_image': true}"
+                                               readonly="state != 'draft'"/>
+                                    </div>
+                                </div>
                             </group>
-                            <group>
-                                <group string="Trade Registry Gazette">
-                                    <field name="document_trade_registry" filename="document_trade_registry_filename" 
-                                           readonly="state != 'draft'"/>
-                                    <field name="document_trade_registry_filename" invisible="1"/>
-                                </group>
-                                <group string="Bank Information (Stamped)">
-                                    <field name="document_bank_info" filename="document_bank_info_filename" 
-                                           readonly="state != 'draft'"/>
-                                    <field name="document_bank_info_filename" invisible="1"/>
-                                </group>
+                            
+                            <!-- Signature Circular Section -->
+                            <group string="Signature Circular">
+                                <field name="document_signature_circular_filename" invisible="1"/>
+                                <div class="row">
+                                    <div class="col-12">
+                                        <field name="document_signature_circular"
+                                               filename="document_signature_circular_filename"
+                                               widget="pdf_viewer"
+                                               options="{'preview_image': true}"
+                                               readonly="state != 'draft'"/>
+                                    </div>
+                                </div>
+                            </group>
+                            
+                            <!-- Trade Registry Gazette Section -->
+                            <group string="Trade Registry Gazette">
+                                <field name="document_trade_registry_filename" invisible="1"/>
+                                <div class="row">
+                                    <div class="col-12">
+                                        <field name="document_trade_registry"
+                                               filename="document_trade_registry_filename"
+                                               widget="pdf_viewer"
+                                               options="{'preview_image': true}"
+                                               readonly="state != 'draft'"/>
+                                    </div>
+                                </div>
+                            </group>
+                            
+                            <!-- Bank Information Section -->
+                            <group string="Bank Information (Stamped)">
+                                <field name="document_bank_info_filename" invisible="1"/>
+                                <div class="row">
+                                    <div class="col-12">
+                                        <field name="document_bank_info"
+                                               filename="document_bank_info_filename"
+                                               widget="pdf_viewer"
+                                               options="{'preview_image': true}"
+                                               readonly="state != 'draft'"/>
+                                    </div>
+                                </div>
                             </group>
                         </page>
                         
