@@ -516,8 +516,9 @@ class PurchaseRequisitionLine(models.Model):
             tender_type = tender_info.get('tender_type', 'indirect')
             
             # Gruplama anahtarı oluştur
-            # Aynı ihale tipinde, mal grubunda, satınalma grubunda ve şirkette olanlar birleşir
-            group_key = f"{tender_type}_{line.material_group or 'none'}_{line.purchasing_group or 'none'}_{line.erp_company_code or 'none'}"
+            # Her SAT numarası için ayrı ihale oluşturulacak
+            # Aynı SAT numarasında, aynı ihale tipinde, mal grubunda, satınalma grubunda ve şirkette olanlar birleşir
+            group_key = f"{tender_type}_{line.erp_pr_id or 'none'}_{line.material_group or 'none'}_{line.purchasing_group or 'none'}_{line.erp_company_code or 'none'}"
             
             if group_key not in groups:
                 groups[group_key] = {
