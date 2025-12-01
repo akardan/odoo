@@ -1,0 +1,733 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+# 	* ak_tender
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 18.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-12-01 22:40+0000\n"
+"PO-Revision-Date: 2025-12-01 22:40+0000\n"
+"Last-Translator: \n"
+"Language-Team: Turkish\n"
+"Language: tr_TR\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#. module: ak_tender
+#: model:ir.model,name:ak_tender.model_supplier_application
+msgid "Supplier Registration Application"
+msgstr "Tedarikçi Kayıt Başvurusu"
+
+#. module: ak_tender
+#: model:ir.model.fields,field_description:ak_tender.field_supplier_application__name
+msgid "Application Number"
+msgstr "Başvuru Numarası"
+
+#. module: ak_tender
+#: model:ir.model.fields,field_description:ak_tender.field_supplier_application__access_token
+msgid "Access Token"
+msgstr "Erişim Anahtarı"
+
+#. module: ak_tender
+#: model:ir.model.fields,field_description:ak_tender.field_supplier_application__lang
+msgid "Language"
+msgstr "Dil"
+
+#. module: ak_tender
+#: model:ir.model.fields,help:ak_tender.field_supplier_application__lang
+msgid "Language for email communications"
+msgstr "E-posta iletişimi için dil"
+
+#. module: ak_tender
+#: model:ir.model.fields,field_description:ak_tender.field_supplier_application__state
+msgid "Status"
+msgstr "Durum"
+
+#. module: ak_tender
+#: model:ir.model.fields.selection,name:ak_tender.selection__supplier_application__state__draft
+msgid "Draft"
+msgstr "Taslak"
+
+#. module: ak_tender
+#: model:ir.model.fields.selection,name:ak_tender.selection__supplier_application__state__submitted
+msgid "Submitted"
+msgstr "Gönderildi"
+
+#. module: ak_tender
+#: model:ir.model.fields.selection,name:ak_tender.selection__supplier_application__state__under_review
+msgid "Under Review"
+msgstr "İnceleniyor"
+
+#. module: ak_tender
+#: model:ir.model.fields.selection,name:ak_tender.selection__supplier_application__state__approved
+msgid "Approved"
+msgstr "Onaylandı"
+
+#. module: ak_tender
+#: model:ir.model.fields.selection,name:ak_tender.selection__supplier_application__state__rejected
+msgid "Rejected"
+msgstr "Reddedildi"
+
+#. module: ak_tender
+#: model:ir.model.fields,field_description:ak_tender.field_supplier_application__partner_id
+msgid "Partner"
+msgstr "İş Ortağı"
+
+#. module: ak_tender
+#: model:ir.model.fields,help:ak_tender.field_supplier_application__partner_id
+msgid "Created partner after approval"
+msgstr "Onay sonrası oluşturulan iş ortağı"
+
+#. module: ak_tender
+#: model:ir.model.fields,field_description:ak_tender.field_supplier_application__partner_created
+msgid "Partner Created"
+msgstr "İş Ortağı Oluşturuldu"
+
+#. module: ak_tender
+#: model:ir.model.fields,field_description:ak_tender.field_supplier_application__application_date
+msgid "Application Date"
+msgstr "Başvuru Tarihi"
+
+#. module: ak_tender
+#: model:ir.model.fields,field_description:ak_tender.field_supplier_application__company_name
+msgid "Company Name"
+msgstr "Firma Adı"
+
+#. module: ak_tender
+#: model:ir.model.fields,field_description:ak_tender.field_supplier_application__vat_number
+msgid "VAT Number"
+msgstr "Vergi Numarası"
+
+#. module: ak_tender
+#: model:ir.model.fields,field_description:ak_tender.field_supplier_application__tax_office
+msgid "Tax Office"
+msgstr "Vergi Dairesi"
+
+#. module: ak_tender
+#: model:ir.model.fields,field_description:ak_tender.field_supplier_application__tc_number
+msgid "T.C. ID Number (For Individual Companies)"
+msgstr "T.C. Kimlik Numarası (Şahıs Şirketleri İçin)"
+
+#. module: ak_tender
+#: model:ir.model.fields,help:ak_tender.field_supplier_application__tc_number
+msgid "For individual/sole proprietor companies only"
+msgstr "Sadece şahıs/tek kişi şirketleri için"
+
+#. module: ak_tender
+#: model:ir.model.fields,field_description:ak_tender.field_supplier_application__company_address
+msgid "Company Address"
+msgstr "Firma Adresi"
+
+#. module: ak_tender
+#: model:ir.model.fields,field_description:ak_tender.field_supplier_application__company_phone
+msgid "Company Phone"
+msgstr "Firma Telefonu"
+
+#. module: ak_tender
+#: model:ir.model.fields,field_description:ak_tender.field_supplier_application__kep_address
+msgid "KEP Address"
+msgstr "KEP Adresi"
+
+#. module: ak_tender
+#: model:ir.model.fields,help:ak_tender.field_supplier_application__kep_address
+msgid "Registered Electronic Mail address"
+msgstr "Kayıtlı Elektronik Posta adresi"
+
+#. module: ak_tender
+#: model:ir.model.fields,field_description:ak_tender.field_supplier_application__mersis_number
+msgid "MERSIS Number"
+msgstr "MERSİS Numarası"
+
+#. module: ak_tender
+#: model:ir.model.fields,help:ak_tender.field_supplier_application__mersis_number
+msgid "Central Registry System Number"
+msgstr "Merkezi Sicil Kayıt Sistemi Numarası"
+
+#. module: ak_tender
+#: model:ir.model.fields,field_description:ak_tender.field_supplier_application__product_service_group
+msgid "Goods (Group)/Service (Group)"
+msgstr "Mal (Grubu)/Hizmet (Grubu)"
+
+#. module: ak_tender
+#: model:ir.model.fields,help:ak_tender.field_supplier_application__product_service_group
+msgid "Description of goods or services provided"
+msgstr "Sağlanan mal veya hizmetlerin açıklaması"
+
+#. module: ak_tender
+#: model:ir.model.fields,field_description:ak_tender.field_supplier_application__contact_name
+msgid "Contact Person Name"
+msgstr "İletişim Kişisi Adı"
+
+#. module: ak_tender
+#: model:ir.model.fields,help:ak_tender.field_supplier_application__contact_name
+msgid "Accounting / Finance / Authorized Signature Person"
+msgstr "Muhasebe / Finans / Yetkili İmza Kişisi"
+
+#. module: ak_tender
+#: model:ir.model.fields,field_description:ak_tender.field_supplier_application__contact_email
+msgid "Contact Email"
+msgstr "İletişim E-postası"
+
+#. module: ak_tender
+#: model:ir.model.fields,help:ak_tender.field_supplier_application__contact_email
+msgid "Email for accounting/finance contact"
+msgstr "Muhasebe/finans iletişim e-postası"
+
+#. module: ak_tender
+#: model:ir.model.fields,field_description:ak_tender.field_supplier_application__payment_term
+msgid "Payment Term"
+msgstr "Ödeme Vadesi"
+
+#. module: ak_tender
+#: model:ir.model.fields,help:ak_tender.field_supplier_application__payment_term
+msgid "e.g., 30 days, 60 days, etc."
+msgstr "örn., 30 gün, 60 gün, vb."
+
+#. module: ak_tender
+#: model:ir.model.fields,field_description:ak_tender.field_supplier_application__payment_method
+msgid "Payment Method"
+msgstr "Ödeme Yöntemi"
+
+#. module: ak_tender
+#: model:ir.model.fields,help:ak_tender.field_supplier_application__payment_method
+msgid "e.g., Bank Transfer, Check, etc."
+msgstr "örn., Havale/EFT, Çek, vb."
+
+#. module: ak_tender
+#: model:ir.model.fields,field_description:ak_tender.field_supplier_application__bank_name
+msgid "Bank Name"
+msgstr "Banka Adı"
+
+#. module: ak_tender
+#: model:ir.model.fields,field_description:ak_tender.field_supplier_application__iban_try
+msgid "IBAN (TRY)"
+msgstr "IBAN (TL)"
+
+#. module: ak_tender
+#: model:ir.model.fields,field_description:ak_tender.field_supplier_application__iban_usd
+msgid "IBAN (USD)"
+msgstr "IBAN (USD)"
+
+#. module: ak_tender
+#: model:ir.model.fields,field_description:ak_tender.field_supplier_application__iban_eur
+msgid "IBAN (EUR)"
+msgstr "IBAN (EUR)"
+
+#. module: ak_tender
+#: model:ir.model.fields,field_description:ak_tender.field_supplier_application__swift_code
+msgid "SWIFT Code"
+msgstr "SWIFT Kodu"
+
+#. module: ak_tender
+#: model:ir.model.fields,help:ak_tender.field_supplier_application__swift_code
+msgid "For international transfers"
+msgstr "Uluslararası transferler için"
+
+#. module: ak_tender
+#: model:ir.model.fields,field_description:ak_tender.field_supplier_application__document_tax_certificate
+msgid "Tax Certificate"
+msgstr "Vergi Levhası"
+
+#. module: ak_tender
+#: model:ir.model.fields,field_description:ak_tender.field_supplier_application__document_signature_circular
+msgid "Signature Circular"
+msgstr "İmza Sirküleri"
+
+#. module: ak_tender
+#: model:ir.model.fields,field_description:ak_tender.field_supplier_application__document_trade_registry
+msgid "Trade Registry Gazette"
+msgstr "Ticaret Sicil Gazetesi"
+
+#. module: ak_tender
+#: model:ir.model.fields,field_description:ak_tender.field_supplier_application__document_bank_info
+msgid "Bank Information (Stamped)"
+msgstr "Banka Bilgileri (Kaşeli)"
+
+#. module: ak_tender
+#: model:ir.model.fields,help:ak_tender.field_supplier_application__document_bank_info
+msgid "Bank information on stamped letterhead"
+msgstr "Kaşeli antetli kağıt üzerinde banka bilgileri"
+
+#. module: ak_tender
+#: model:ir.model.fields,field_description:ak_tender.field_supplier_application__notes
+msgid "Internal Notes"
+msgstr "Dahili Notlar"
+
+#. module: ak_tender
+#: model:ir.model.fields,help:ak_tender.field_supplier_application__notes
+msgid "Internal notes for review team"
+msgstr "İnceleme ekibi için dahili notlar"
+
+#. module: ak_tender
+#: model:ir.model.fields,field_description:ak_tender.field_supplier_application__rejection_reason
+msgid "Rejection Reason"
+msgstr "Red Nedeni"
+
+#. module: ak_tender
+#: model:ir.model.fields,field_description:ak_tender.field_supplier_application__website_url
+msgid "Application URL"
+msgstr "Başvuru URL'si"
+
+#. module: ak_tender
+#: code:addons/ak_tender/models/supplier_application.py:0
+#, python-format
+msgid "New"
+msgstr "Yeni"
+
+#. module: ak_tender
+#: code:addons/ak_tender/models/supplier_application.py:0
+#, python-format
+msgid "Please enter a valid email address."
+msgstr "Lütfen geçerli bir e-posta adresi girin."
+
+#. module: ak_tender
+#: code:addons/ak_tender/models/supplier_application.py:0
+#, python-format
+msgid "A supplier with this VAT number (%s) is already registered in the system."
+msgstr "Bu vergi numarasına (%s) sahip bir tedarikçi sistemde zaten kayıtlı."
+
+#. module: ak_tender
+#: code:addons/ak_tender/models/supplier_application.py:0
+#, python-format
+msgid "A supplier with this VAT number (%s) already exists in the system."
+msgstr "Bu vergi numarasına (%s) sahip bir tedarikçi sistemde zaten mevcut."
+
+#. module: ak_tender
+#: code:addons/ak_tender/models/supplier_application.py:0
+#, python-format
+msgid "Only draft applications can be submitted."
+msgstr "Sadece taslak başvurular gönderilebilir."
+
+#. module: ak_tender
+#: code:addons/ak_tender/models/supplier_application.py:0
+#, python-format
+msgid "Please fill in all required fields: %s"
+msgstr "Lütfen tüm zorunlu alanları doldurun: %s"
+
+#. module: ak_tender
+#: code:addons/ak_tender/models/supplier_application.py:0
+#, python-format
+msgid "Please upload all required documents:\n\n%s"
+msgstr "Lütfen tüm gerekli belgeleri yükleyin:\n\n%s"
+
+#. module: ak_tender
+#: code:addons/ak_tender/models/supplier_application.py:0
+#, python-format
+msgid "Only submitted applications can be reviewed."
+msgstr "Sadece gönderilmiş başvurular incelenebilir."
+
+#. module: ak_tender
+#: code:addons/ak_tender/models/supplier_application.py:0
+#, python-format
+msgid "Only submitted or under review applications can be approved."
+msgstr "Sadece gönderilmiş veya inceleme aşamasındaki başvurular onaylanabilir."
+
+#. module: ak_tender
+#: code:addons/ak_tender/models/supplier_application.py:0
+#, python-format
+msgid "Partner has already been created for this application."
+msgstr "Bu başvuru için iş ortağı zaten oluşturulmuş."
+
+#. module: ak_tender
+#: code:addons/ak_tender/models/supplier_application.py:0
+#, python-format
+msgid "updated"
+msgstr "güncellendi"
+
+#. module: ak_tender
+#: code:addons/ak_tender/models/supplier_application.py:0
+#, python-format
+msgid "created"
+msgstr "oluşturuldu"
+
+#. module: ak_tender
+#: code:addons/ak_tender/models/supplier_application.py:0
+#, python-format
+msgid "Application approved. Partner %s %s and portal access granted."
+msgstr "Başvuru onaylandı. İş ortağı %s %s ve portal erişimi verildi."
+
+#. module: ak_tender
+#: code:addons/ak_tender/models/supplier_application.py:0
+#, python-format
+msgid "Application Approved"
+msgstr "Başvuru Onaylandı"
+
+#. module: ak_tender
+#: code:addons/ak_tender/models/supplier_application.py:0
+#, python-format
+msgid "Supplier"
+msgstr "Tedarikçi"
+
+#. module: ak_tender
+#: code:addons/ak_tender/models/supplier_application.py:0
+#, python-format
+msgid "Only submitted or under review applications can be rejected."
+msgstr "Sadece gönderilmiş veya inceleme aşamasındaki başvurular reddedilebilir."
+
+#. module: ak_tender
+#: code:addons/ak_tender/models/supplier_application.py:0
+#, python-format
+msgid "Reject Application"
+msgstr "Başvuruyu Reddet"
+
+#. module: ak_tender
+#: code:addons/ak_tender/models/supplier_application.py:0
+#, python-format
+msgid "Cannot reset to draft after partner creation."
+msgstr "İş ortağı oluşturulduktan sonra taslağa döndürülemez."
+
+#. module: ak_tender
+#: code:addons/ak_tender/models/supplier_application.py:0
+#, python-format
+msgid "Sales / Marketing Contact"
+msgstr "Satış / Pazarlama İletişim Kişisi"
+
+#. module: ak_tender
+#: code:addons/ak_tender/models/supplier_application.py:0
+#, python-format
+msgid "Draft Link Sent"
+msgstr "Taslak Bağlantısı Gönderildi"
+
+#. module: ak_tender
+#: code:addons/ak_tender/models/supplier_application.py:0
+#, python-format
+msgid "Application link has been sent to %s"
+msgstr "Başvuru bağlantısı %s adresine gönderildi"
+
+#. module: ak_tender
+#: view:website:ak_tender.supplier_registration_form
+msgid "Supplier Registration"
+msgstr "Tedarikçi Kaydı"
+
+#. module: ak_tender
+#: view:website:ak_tender.supplier_registration_form
+msgid "Join our network of trusted suppliers"
+msgstr "Güvenilir tedarikçi ağımıza katılın"
+
+#. module: ak_tender
+#: view:website:ak_tender.supplier_registration_form
+msgid "Application Already Submitted"
+msgstr "Başvuru Zaten Gönderildi"
+
+#. module: ak_tender
+#: view:website:ak_tender.supplier_registration_form
+msgid "This application has already been submitted and cannot be modified."
+msgstr "Bu başvuru zaten gönderildi ve değiştirilemez."
+
+#. module: ak_tender
+#: view:website:ak_tender.supplier_registration_form
+msgid "Important:"
+msgstr "Önemli:"
+
+#. module: ak_tender
+#: view:website:ak_tender.supplier_registration_form
+msgid "Please fill in all required fields marked with"
+msgstr "Lütfen işaretli tüm zorunlu alanları doldurun"
+
+#. module: ak_tender
+#: view:website:ak_tender.supplier_registration_form
+msgid "You can save your progress as a draft and continue later."
+msgstr "İlerlemenizi taslak olarak kaydedip daha sonra devam edebilirsiniz."
+
+#. module: ak_tender
+#: view:website:ak_tender.supplier_registration_form
+msgid "Company Information"
+msgstr "Firma Bilgileri"
+
+#. module: ak_tender
+#: view:website:ak_tender.supplier_registration_form
+msgid "Enter company name"
+msgstr "Firma adını girin"
+
+#. module: ak_tender
+#: view:website:ak_tender.supplier_registration_form
+msgid "e.g., 1234567890"
+msgstr "örn., 1234567890"
+
+#. module: ak_tender
+#: view:website:ak_tender.supplier_registration_form
+msgid "Tax office name"
+msgstr "Vergi dairesi adı"
+
+#. module: ak_tender
+#: view:website:ak_tender.supplier_registration_form
+msgid "For individual companies"
+msgstr "Şahıs şirketleri için"
+
+#. module: ak_tender
+#: view:website:ak_tender.supplier_registration_form
+msgid "Only for individual/sole proprietor companies"
+msgstr "Sadece şahıs/tek kişi şirketleri için"
+
+#. module: ak_tender
+#: view:website:ak_tender.supplier_registration_form
+msgid "Central Registry System Number"
+msgstr "Merkezi Sicil Kayıt Sistemi Numarası"
+
+#. module: ak_tender
+#: view:website:ak_tender.supplier_registration_form
+msgid "Registered Electronic Mail"
+msgstr "Kayıtlı Elektronik Posta"
+
+#. module: ak_tender
+#: view:website:ak_tender.supplier_registration_form
+msgid "Enter complete company address"
+msgstr "Tam firma adresini girin"
+
+#. module: ak_tender
+#: view:website:ak_tender.supplier_registration_form
+msgid "Product/Service Group"
+msgstr "Ürün/Hizmet Grubu"
+
+#. module: ak_tender
+#: view:website:ak_tender.supplier_registration_form
+msgid "What products/services do you provide?"
+msgstr "Hangi ürün/hizmetleri sağlıyorsunuz?"
+
+#. module: ak_tender
+#: view:website:ak_tender.supplier_registration_form
+msgid "Contact Person"
+msgstr "İletişim Kişisi"
+
+#. module: ak_tender
+#: view:website:ak_tender.supplier_registration_form
+msgid "Authorized Person Name"
+msgstr "Yetkili Kişi Adı"
+
+#. module: ak_tender
+#: view:website:ak_tender.supplier_registration_form
+msgid "Full name"
+msgstr "Tam adı"
+
+#. module: ak_tender
+#: view:website:ak_tender.supplier_registration_form
+msgid "Accounting / Finance / Authorized person"
+msgstr "Muhasebe / Finans / Yetkili kişi"
+
+#. module: ak_tender
+#: view:website:ak_tender.supplier_registration_form
+msgid "Email Address"
+msgstr "E-posta Adresi"
+
+#. module: ak_tender
+#: view:website:ak_tender.supplier_registration_form
+msgid "We'll send updates to this email"
+msgstr "Güncellemeleri bu e-postaya göndereceğiz"
+
+#. module: ak_tender
+#: view:website:ak_tender.supplier_registration_form
+msgid "Payment &amp; Banking Information"
+msgstr "Ödeme ve Bankacılık Bilgileri"
+
+#. module: ak_tender
+#: view:website:ak_tender.supplier_registration_form
+msgid "e.g., 30 days, 60 days"
+msgstr "örn., 30 gün, 60 gün"
+
+#. module: ak_tender
+#: view:website:ak_tender.supplier_registration_form
+msgid "e.g., Bank Transfer, Check"
+msgstr "örn., Havale/EFT, Çek"
+
+#. module: ak_tender
+#: view:website:ak_tender.supplier_registration_form
+msgid "Bank name"
+msgstr "Banka adı"
+
+#. module: ak_tender
+#: view:website:ak_tender.supplier_registration_form
+msgid "For international transfers"
+msgstr "Uluslararası transferler için"
+
+#. module: ak_tender
+#: view:website:ak_tender.supplier_registration_form
+msgid "TR..."
+msgstr "TR..."
+
+#. module: ak_tender
+#: view:website:ak_tender.supplier_registration_form
+msgid "USD account"
+msgstr "USD hesabı"
+
+#. module: ak_tender
+#: view:website:ak_tender.supplier_registration_form
+msgid "EUR account"
+msgstr "EUR hesabı"
+
+#. module: ak_tender
+#: view:website:ak_tender.supplier_registration_form
+msgid "Required Documents"
+msgstr "Gerekli Belgeler"
+
+#. module: ak_tender
+#: view:website:ak_tender.supplier_registration_form
+msgid "Upload Tax Certificate"
+msgstr "Vergi Levhası Yükle"
+
+#. module: ak_tender
+#: view:website:ak_tender.supplier_registration_form
+msgid "PDF, JPG, PNG (Max 10MB)"
+msgstr "PDF, JPG, PNG (Maks 10MB)"
+
+#. module: ak_tender
+#: view:website:ak_tender.supplier_registration_form
+msgid "Current:"
+msgstr "Mevcut:"
+
+#. module: ak_tender
+#: view:website:ak_tender.supplier_registration_form
+msgid "Upload Signature Circular"
+msgstr "İmza Sirküleri Yükle"
+
+#. module: ak_tender
+#: view:website:ak_tender.supplier_registration_form
+msgid "Upload Trade Registry"
+msgstr "Ticaret Sicil Gazetesi Yükle"
+
+#. module: ak_tender
+#: view:website:ak_tender.supplier_registration_form
+msgid "Upload Bank Info"
+msgstr "Banka Bilgisi Yükle"
+
+#. module: ak_tender
+#: view:website:ak_tender.supplier_registration_form
+msgid "Save as Draft"
+msgstr "Taslak Olarak Kaydet"
+
+#. module: ak_tender
+#: view:website:ak_tender.supplier_registration_form
+msgid "Submit Application"
+msgstr "Başvuruyu Gönder"
+
+#. module: ak_tender
+#: view:website:ak_tender.supplier_registration_form
+msgid "Save as draft to continue later, or submit to complete your application"
+msgstr "Daha sonra devam etmek için taslak olarak kaydedin veya başvurunuzu tamamlamak için gönderin"
+
+#. module: ak_tender
+#: view:website:ak_tender.supplier_application_saved
+msgid "Application Saved Successfully!"
+msgstr "Başvuru Başarıyla Kaydedildi!"
+
+#. module: ak_tender
+#: view:website:ak_tender.supplier_application_saved
+msgid "Your application has been saved as a draft. We've sent a continuation link to your email."
+msgstr "Başvurunuz taslak olarak kaydedildi. E-postanıza devam bağlantısı gönderdik."
+
+#. module: ak_tender
+#: view:website:ak_tender.supplier_application_saved
+msgid "Application Number:"
+msgstr "Başvuru Numarası:"
+
+#. module: ak_tender
+#: view:website:ak_tender.supplier_application_saved
+msgid "Continue Application"
+msgstr "Başvuruya Devam Et"
+
+#. module: ak_tender
+#: view:website:ak_tender.supplier_application_success
+msgid "Application Submitted!"
+msgstr "Başvuru Gönderildi!"
+
+#. module: ak_tender
+#: view:website:ak_tender.supplier_application_success
+msgid "Thank you for your application. Our procurement team will review it and contact you soon."
+msgstr "Başvurunuz için teşekkür ederiz. Satın alma ekibimiz başvurunuzu inceleyip en kısa sürede sizinle iletişime geçecektir."
+
+#. module: ak_tender
+#: view:website:ak_tender.supplier_application_success
+msgid "Return to Home"
+msgstr "Ana Sayfaya Dön"
+
+#. module: ak_tender
+#: view:website:ak_tender.supplier_application_error
+msgid "An Error Occurred"
+msgstr "Bir Hata Oluştu"
+
+#. module: ak_tender
+#: view:website:ak_tender.supplier_application_error
+msgid "Try Again"
+msgstr "Tekrar Dene"
+
+#. module: ak_tender
+#: view:website:ak_tender.supplier_application_not_found
+msgid "Application Not Found"
+msgstr "Başvuru Bulunamadı"
+
+#. module: ak_tender
+#: view:website:ak_tender.supplier_application_not_found
+msgid "This link may be invalid or expired."
+msgstr "Bu bağlantı geçersiz veya süresi dolmuş olabilir."
+
+#. module: ak_tender
+#: view:website:ak_tender.supplier_application_not_found
+msgid "New Application"
+msgstr "Yeni Başvuru"
+
+#. module: ak_tender
+#: view:website:ak_tender.supplier_application_already_submitted
+msgid "This application has been submitted and is currently under review."
+msgstr "Bu başvuru gönderildi ve şu anda inceleniyor."
+
+#. module: ak_tender
+#: view:website:ak_tender.supplier_application_already_submitted
+msgid "Status:"
+msgstr "Durum:"
+
+#. module: ak_tender
+#: view:ak_tender.supplier_application:ak_tender.view_supplier_application_form
+msgid "Company Information"
+msgstr "Firma Bilgileri"
+
+#. module: ak_tender
+#: view:ak_tender.supplier_application:ak_tender.view_supplier_application_form
+msgid "Payment &amp; Banking"
+msgstr "Ödeme ve Bankacılık"
+
+#. module: ak_tender
+#: view:ak_tender.supplier_application:ak_tender.view_supplier_application_form
+msgid "Documents"
+msgstr "Belgeler"
+
+#. module: ak_tender
+#: view:ak_tender.supplier_application:ak_tender.view_supplier_application_form
+msgid "Internal Notes"
+msgstr "Dahili Notlar"
+
+#. module: ak_tender
+#: view:ak_tender.supplier_application:ak_tender.view_supplier_application_form
+msgid "Basic Information"
+msgstr "Temel Bilgiler"
+
+#. module: ak_tender
+#: view:ak_tender.supplier_application:ak_tender.view_supplier_application_form
+msgid "Contact Information"
+msgstr "İletişim Bilgileri"
+
+#. module: ak_tender
+#: view:ak_tender.supplier_application:ak_tender.view_supplier_application_form
+msgid "Payment Terms"
+msgstr "Ödeme Koşulları"
+
+#. module: ak_tender
+#: view:ak_tender.supplier_application:ak_tender.view_supplier_application_form
+msgid "Bank Information"
+msgstr "Banka Bilgileri"
+
+#. module: ak_tender
+#: view:ak_tender.supplier_application:ak_tender.view_supplier_application_form
+msgid "IBAN Accounts"
+msgstr "IBAN Hesapları"
+
+#. module: ak_tender
+#: view:ak_tender.supplier_application:ak_tender.view_supplier_application_form
+msgid "View"
+msgstr "Görüntüle"
+
+#. module: ak_tender
+#: view:ak_tender.supplier_application:ak_tender.view_supplier_application_form
+msgid "Supplier"
+msgstr "Tedarikçi"

@@ -180,8 +180,8 @@
                             <div class="registration-card">
                                 <!-- Header -->
                                 <div class="registration-header">
-                                    <h1><i class="fa fa-building-o me-3"/>Supplier Registration</h1>
-                                    <p>Join our network of trusted suppliers</p>
+                                    <h1><i class="fa fa-building-o me-3"/>Tedarikçi Kaydı</h1>
+                                    <p>Güvenilir tedarikçi ağımıza katılın</p>
                                 </div>
                                 
                                 <!-- Form Content -->
@@ -190,8 +190,8 @@
                                         <div class="alert alert-warning d-flex align-items-center">
                                             <i class="fa fa-exclamation-triangle fa-2x me-3"/>
                                             <div>
-                                                <strong>Application Already Submitted</strong><br/>
-                                                This application has already been submitted and cannot be modified.
+                                                <strong>Başvuru Zaten Gönderildi</strong><br/>
+                                                Bu başvuru zaten gönderildi ve değiştirilemez.
                                             </div>
                                         </div>
                                     </t>
@@ -200,8 +200,8 @@
                                         <!-- Info Box -->
                                         <div class="info-box">
                                             <i class="fa fa-info-circle fa-lg"/>
-                                            <strong>Important:</strong> Please fill in all required fields marked with <span class="text-danger">*</span>. 
-                                            You can save your progress as a draft and continue later.
+                                            <strong>Önemli:</strong> <span class="text-danger">*</span> işaretli tüm zorunlu alanları doldurun.
+                                            İlerlemenizi taslak olarak kaydedip daha sonra devam edebilirsiniz.
                                         </div>
 
                                         <form action="/supplier/application/save" method="post" enctype="multipart/form-data" 
@@ -213,97 +213,97 @@
                                             <div class="mb-5">
                                                 <div class="section-header">
                                                     <i class="fa fa-building"/>
-                                                    <h3>Company Information</h3>
+                                                    <h3>Firma Bilgileri</h3>
                                                 </div>
                                                 
                                                 <div class="row g-3">
                                                     <div class="col-md-6">
-                                                        <label for="company_name" class="form-label required">Company Name</label>
+                                                        <label for="company_name" class="form-label required">Firma Adı</label>
                                                         <div class="input-group">
                                                             <span class="input-group-text"><i class="fa fa-building-o"/></span>
-                                                            <input type="text" class="form-control" name="company_name" id="company_name" 
+                                                            <input type="text" class="form-control" name="company_name" id="company_name"
                                                                    required="required" t-att-value="application.company_name if application else ''"
-                                                                   placeholder="Enter company name"/>
+                                                                   placeholder="Firma adını girin"/>
                                                         </div>
                                                     </div>
                                                     
                                                     <div class="col-md-6">
-                                                        <label for="vat_number" class="form-label">VAT Number</label>
+                                                        <label for="vat_number" class="form-label">Vergi Numarası</label>
                                                         <div class="input-group">
                                                             <span class="input-group-text"><i class="fa fa-hashtag"/></span>
-                                                            <input type="text" class="form-control" name="vat_number" id="vat_number" 
+                                                            <input type="text" class="form-control" name="vat_number" id="vat_number"
                                                                    t-att-value="application.vat_number if application else ''"
-                                                                   placeholder="e.g., 1234567890"/>
+                                                                   placeholder="örn., 1234567890"/>
                                                         </div>
                                                     </div>
                                                     
                                                     <div class="col-md-6">
-                                                        <label for="tax_office" class="form-label">Tax Office</label>
+                                                        <label for="tax_office" class="form-label">Vergi Dairesi</label>
                                                         <div class="input-group">
                                                             <span class="input-group-text"><i class="fa fa-university"/></span>
-                                                            <input type="text" class="form-control" name="tax_office" id="tax_office" 
+                                                            <input type="text" class="form-control" name="tax_office" id="tax_office"
                                                                    t-att-value="application.tax_office if application else ''"
-                                                                   placeholder="Tax office name"/>
+                                                                   placeholder="Vergi dairesi adı"/>
                                                         </div>
                                                     </div>
                                                     
                                                     <div class="col-md-6">
-                                                        <label for="tc_number" class="form-label">T.C. ID Number</label>
+                                                        <label for="tc_number" class="form-label">T.C. Kimlik Numarası</label>
                                                         <div class="input-group">
                                                             <span class="input-group-text"><i class="fa fa-id-card-o"/></span>
-                                                            <input type="text" class="form-control" name="tc_number" id="tc_number" 
+                                                            <input type="text" class="form-control" name="tc_number" id="tc_number"
                                                                    t-att-value="application.tc_number if application else ''"
-                                                                   placeholder="For individual companies"/>
+                                                                   placeholder="Şahıs şirketleri için"/>
                                                         </div>
-                                                        <div class="help-text">Only for individual/sole proprietor companies</div>
+                                                        <div class="help-text">Sadece şahıs/tek kişi şirketleri için</div>
                                                     </div>
                                                     
                                                     <div class="col-md-6">
-                                                        <label for="mersis_number" class="form-label">MERSIS Number</label>
+                                                        <label for="mersis_number" class="form-label">MERSİS Numarası</label>
                                                         <div class="input-group">
                                                             <span class="input-group-text"><i class="fa fa-barcode"/></span>
-                                                            <input type="text" class="form-control" name="mersis_number" id="mersis_number" 
+                                                            <input type="text" class="form-control" name="mersis_number" id="mersis_number"
                                                                    t-att-value="application.mersis_number if application else ''"
-                                                                   placeholder="Central Registry System Number"/>
+                                                                   placeholder="Merkezi Sicil Kayıt Sistemi Numarası"/>
                                                         </div>
                                                     </div>
                                                     
                                                     <div class="col-md-6">
-                                                        <label for="kep_address" class="form-label">KEP Address</label>
+                                                        <label for="kep_address" class="form-label">KEP Adresi</label>
                                                         <div class="input-group">
                                                             <span class="input-group-text"><i class="fa fa-envelope-o"/></span>
-                                                            <input type="email" class="form-control" name="kep_address" id="kep_address" 
+                                                            <input type="email" class="form-control" name="kep_address" id="kep_address"
                                                                    t-att-value="application.kep_address if application else ''"
-                                                                   placeholder="Registered Electronic Mail"/>
+                                                                   placeholder="Kayıtlı Elektronik Posta"/>
                                                         </div>
                                                     </div>
                                                     
                                                     <div class="col-12">
-                                                        <label for="company_address" class="form-label required">Company Address</label>
-                                                        <textarea class="form-control" name="company_address" id="company_address" 
-                                                                  rows="3" required="required" 
-                                                                  placeholder="Enter complete company address"
+                                                        <label for="company_address" class="form-label required">Firma Adresi</label>
+                                                        <textarea class="form-control" name="company_address" id="company_address"
+                                                                  rows="3" required="required"
+                                                                  placeholder="Tam firma adresini girin"
                                                                   t-esc="application.company_address if application else ''"/>
                                                     </div>
                                                     
                                                     <div class="col-md-6">
-                                                        <label for="company_phone" class="form-label required">Company Phone</label>
+                                                        <label for="company_phone" class="form-label required">Firma Telefonu</label>
                                                         <div class="input-group">
                                                             <span class="input-group-text"><i class="fa fa-phone"/></span>
-                                                            <input type="tel" class="form-control" name="company_phone" id="company_phone" 
+                                                            <input type="tel" class="form-control" name="company_phone" id="company_phone"
                                                                    required="required" t-att-value="application.company_phone if application else ''"
                                                                    placeholder="+90 XXX XXX XX XX"/>
                                                         </div>
                                                     </div>
                                                     
                                                     <div class="col-md-6">
-                                                        <label for="product_service_group" class="form-label required">Product/Service Group</label>
+                                                        <label for="product_service_group" class="form-label required">Ürün/Hizmet Grubu</label>
                                                         <div class="input-group">
                                                             <span class="input-group-text"><i class="fa fa-tags"/></span>
-                                                            <input type="text" class="form-control" name="product_service_group" 
-                                                                   id="product_service_group" required="required" 
+                                                            <input type="text" class="form-control" name="product_service_group"
+                                                                   id="product_service_group" required="required"
                                                                    t-att-value="application.product_service_group if application else ''"
-                                                                   placeholder="What products/services do you provide?"/>
+                                                                   placeholder="Hangi ürün/hizmetleri sağlıyorsunuz?"/>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -313,30 +313,30 @@
                                             <div class="mb-5">
                                                 <div class="section-header">
                                                     <i class="fa fa-user"/>
-                                                    <h3>Contact Person</h3>
+                                                    <h3>İletişim Kişisi</h3>
                                                 </div>
                                                 
                                                 <div class="row g-3">
                                                     <div class="col-md-6">
-                                                        <label for="contact_name" class="form-label required">Authorized Person Name</label>
+                                                        <label for="contact_name" class="form-label required">Yetkili Kişi Adı</label>
                                                         <div class="input-group">
                                                             <span class="input-group-text"><i class="fa fa-user-o"/></span>
-                                                            <input type="text" class="form-control" name="contact_name" id="contact_name" 
+                                                            <input type="text" class="form-control" name="contact_name" id="contact_name"
                                                                    required="required" t-att-value="application.contact_name if application else ''"
-                                                                   placeholder="Full name"/>
+                                                                   placeholder="Tam adı"/>
                                                         </div>
-                                                        <div class="help-text">Accounting / Finance / Authorized person</div>
+                                                        <div class="help-text">Muhasebe / Finans / Yetkili kişi</div>
                                                     </div>
                                                     
                                                     <div class="col-md-6">
-                                                        <label for="contact_email" class="form-label required">Email Address</label>
+                                                        <label for="contact_email" class="form-label required">E-posta Adresi</label>
                                                         <div class="input-group">
                                                             <span class="input-group-text"><i class="fa fa-envelope"/></span>
-                                                            <input type="email" class="form-control" name="contact_email" id="contact_email" 
+                                                            <input type="email" class="form-control" name="contact_email" id="contact_email"
                                                                    required="required" t-att-value="application.contact_email if application else ''"
-                                                                   placeholder="email@company.com"/>
+                                                                   placeholder="email@firma.com"/>
                                                         </div>
-                                                        <div class="help-text">We'll send updates to this email</div>
+                                                        <div class="help-text">Güncellemeleri bu e-postaya göndereceğiz</div>
                                                     </div>
                                                 </div>
                                             </div>
@@ -345,69 +345,69 @@
                                             <div class="mb-5">
                                                 <div class="section-header">
                                                     <i class="fa fa-credit-card"/>
-                                                    <h3>Payment &amp; Banking Information</h3>
+                                                    <h3>Ödeme ve Bankacılık Bilgileri</h3>
                                                 </div>
                                                 
                                                 <div class="row g-3">
                                                     <div class="col-md-6">
-                                                        <label for="payment_term" class="form-label">Payment Term</label>
+                                                        <label for="payment_term" class="form-label">Ödeme Vadesi</label>
                                                         <div class="input-group">
                                                             <span class="input-group-text"><i class="fa fa-calendar"/></span>
-                                                            <input type="text" class="form-control" name="payment_term" id="payment_term" 
+                                                            <input type="text" class="form-control" name="payment_term" id="payment_term"
                                                                    t-att-value="application.payment_term if application else ''"
-                                                                   placeholder="e.g., 30 days, 60 days"/>
+                                                                   placeholder="örn., 30 gün, 60 gün"/>
                                                         </div>
                                                     </div>
                                                     
                                                     <div class="col-md-6">
-                                                        <label for="payment_method" class="form-label">Payment Method</label>
+                                                        <label for="payment_method" class="form-label">Ödeme Yöntemi</label>
                                                         <div class="input-group">
                                                             <span class="input-group-text"><i class="fa fa-money"/></span>
-                                                            <input type="text" class="form-control" name="payment_method" id="payment_method" 
+                                                            <input type="text" class="form-control" name="payment_method" id="payment_method"
                                                                    t-att-value="application.payment_method if application else ''"
-                                                                   placeholder="e.g., Bank Transfer, Check"/>
+                                                                   placeholder="örn., Havale/EFT, Çek"/>
                                                         </div>
                                                     </div>
                                                     
                                                     <div class="col-md-6">
-                                                        <label for="bank_name" class="form-label">Bank Name</label>
+                                                        <label for="bank_name" class="form-label">Banka Adı</label>
                                                         <div class="input-group">
                                                             <span class="input-group-text"><i class="fa fa-bank"/></span>
-                                                            <input type="text" class="form-control" name="bank_name" id="bank_name" 
+                                                            <input type="text" class="form-control" name="bank_name" id="bank_name"
                                                                    t-att-value="application.bank_name if application else ''"
-                                                                   placeholder="Bank name"/>
+                                                                   placeholder="Banka adı"/>
                                                         </div>
                                                     </div>
                                                     
                                                     <div class="col-md-6">
-                                                        <label for="swift_code" class="form-label">SWIFT Code</label>
+                                                        <label for="swift_code" class="form-label">SWIFT Kodu</label>
                                                         <div class="input-group">
                                                             <span class="input-group-text"><i class="fa fa-globe"/></span>
-                                                            <input type="text" class="form-control" name="swift_code" id="swift_code" 
+                                                            <input type="text" class="form-control" name="swift_code" id="swift_code"
                                                                    t-att-value="application.swift_code if application else ''"
-                                                                   placeholder="For international transfers"/>
+                                                                   placeholder="Uluslararası transferler için"/>
                                                         </div>
                                                     </div>
                                                     
                                                     <div class="col-md-4">
-                                                        <label for="iban_try" class="form-label">IBAN (TRY)</label>
-                                                        <input type="text" class="form-control" name="iban_try" id="iban_try" 
+                                                        <label for="iban_try" class="form-label">IBAN (TL)</label>
+                                                        <input type="text" class="form-control" name="iban_try" id="iban_try"
                                                                t-att-value="application.iban_try if application else ''"
                                                                placeholder="TR..."/>
                                                     </div>
                                                     
                                                     <div class="col-md-4">
                                                         <label for="iban_usd" class="form-label">IBAN (USD)</label>
-                                                        <input type="text" class="form-control" name="iban_usd" id="iban_usd" 
+                                                        <input type="text" class="form-control" name="iban_usd" id="iban_usd"
                                                                t-att-value="application.iban_usd if application else ''"
-                                                               placeholder="USD account"/>
+                                                               placeholder="USD hesabı"/>
                                                     </div>
                                                     
                                                     <div class="col-md-4">
                                                         <label for="iban_eur" class="form-label">IBAN (EUR)</label>
-                                                        <input type="text" class="form-control" name="iban_eur" id="iban_eur" 
+                                                        <input type="text" class="form-control" name="iban_eur" id="iban_eur"
                                                                t-att-value="application.iban_eur if application else ''"
-                                                               placeholder="EUR account"/>
+                                                               placeholder="EUR hesabı"/>
                                                     </div>
                                                 </div>
                                             </div>
@@ -416,62 +416,62 @@
                                             <div class="mb-5">
                                                 <div class="section-header">
                                                     <i class="fa fa-file-text"/>
-                                                    <h3>Required Documents</h3>
+                                                    <h3>Gerekli Belgeler</h3>
                                                 </div>
                                                 
                                                 <div class="row g-3">
                                                     <div class="col-md-6">
-                                                        <label class="form-label">Tax Certificate</label>
+                                                        <label class="form-label">Vergi Levhası</label>
                                                         <div class="document-upload">
                                                             <i class="fa fa-cloud-upload"/>
-                                                            <p class="mb-2"><strong>Upload Tax Certificate</strong></p>
-                                                            <input type="file" class="form-control" name="document_tax_certificate" 
+                                                            <p class="mb-2"><strong>Vergi Levhası Yükle</strong></p>
+                                                            <input type="file" class="form-control" name="document_tax_certificate"
                                                                    id="document_tax_certificate" accept=".pdf,.jpg,.jpeg,.png"/>
-                                                            <small class="text-muted d-block mt-2">PDF, JPG, PNG (Max 10MB)</small>
+                                                            <small class="text-muted d-block mt-2">PDF, JPG, PNG (Maks 10MB)</small>
                                                             <small class="text-success d-block mt-1" t-if="application and application.document_tax_certificate_filename">
-                                                                <i class="fa fa-check-circle"/> Current: <t t-esc="application.document_tax_certificate_filename"/>
+                                                                <i class="fa fa-check-circle"/> Mevcut: <t t-esc="application.document_tax_certificate_filename"/>
                                                             </small>
                                                         </div>
                                                     </div>
                                                     
                                                     <div class="col-md-6">
-                                                        <label class="form-label">Signature Circular</label>
+                                                        <label class="form-label">İmza Sirküleri</label>
                                                         <div class="document-upload">
                                                             <i class="fa fa-cloud-upload"/>
-                                                            <p class="mb-2"><strong>Upload Signature Circular</strong></p>
-                                                            <input type="file" class="form-control" name="document_signature_circular" 
+                                                            <p class="mb-2"><strong>İmza Sirküleri Yükle</strong></p>
+                                                            <input type="file" class="form-control" name="document_signature_circular"
                                                                    id="document_signature_circular" accept=".pdf,.jpg,.jpeg,.png"/>
-                                                            <small class="text-muted d-block mt-2">PDF, JPG, PNG (Max 10MB)</small>
+                                                            <small class="text-muted d-block mt-2">PDF, JPG, PNG (Maks 10MB)</small>
                                                             <small class="text-success d-block mt-1" t-if="application and application.document_signature_circular_filename">
-                                                                <i class="fa fa-check-circle"/> Current: <t t-esc="application.document_signature_circular_filename"/>
+                                                                <i class="fa fa-check-circle"/> Mevcut: <t t-esc="application.document_signature_circular_filename"/>
                                                             </small>
                                                         </div>
                                                     </div>
                                                     
                                                     <div class="col-md-6">
-                                                        <label class="form-label">Trade Registry Gazette</label>
+                                                        <label class="form-label">Ticaret Sicil Gazetesi</label>
                                                         <div class="document-upload">
                                                             <i class="fa fa-cloud-upload"/>
-                                                            <p class="mb-2"><strong>Upload Trade Registry</strong></p>
-                                                            <input type="file" class="form-control" name="document_trade_registry" 
+                                                            <p class="mb-2"><strong>Ticaret Sicil Gazetesi Yükle</strong></p>
+                                                            <input type="file" class="form-control" name="document_trade_registry"
                                                                    id="document_trade_registry" accept=".pdf,.jpg,.jpeg,.png"/>
-                                                            <small class="text-muted d-block mt-2">PDF, JPG, PNG (Max 10MB)</small>
+                                                            <small class="text-muted d-block mt-2">PDF, JPG, PNG (Maks 10MB)</small>
                                                             <small class="text-success d-block mt-1" t-if="application and application.document_trade_registry_filename">
-                                                                <i class="fa fa-check-circle"/> Current: <t t-esc="application.document_trade_registry_filename"/>
+                                                                <i class="fa fa-check-circle"/> Mevcut: <t t-esc="application.document_trade_registry_filename"/>
                                                             </small>
                                                         </div>
                                                     </div>
                                                     
                                                     <div class="col-md-6">
-                                                        <label class="form-label">Bank Information (Stamped)</label>
+                                                        <label class="form-label">Banka Bilgileri (Kaşeli)</label>
                                                         <div class="document-upload">
                                                             <i class="fa fa-cloud-upload"/>
-                                                            <p class="mb-2"><strong>Upload Bank Info</strong></p>
-                                                            <input type="file" class="form-control" name="document_bank_info" 
+                                                            <p class="mb-2"><strong>Banka Bilgisi Yükle</strong></p>
+                                                            <input type="file" class="form-control" name="document_bank_info"
                                                                    id="document_bank_info" accept=".pdf,.jpg,.jpeg,.png"/>
-                                                            <small class="text-muted d-block mt-2">PDF, JPG, PNG (Max 10MB)</small>
+                                                            <small class="text-muted d-block mt-2">PDF, JPG, PNG (Maks 10MB)</small>
                                                             <small class="text-success d-block mt-1" t-if="application and application.document_bank_info_filename">
-                                                                <i class="fa fa-check-circle"/> Current: <t t-esc="application.document_bank_info_filename"/>
+                                                                <i class="fa fa-check-circle"/> Mevcut: <t t-esc="application.document_bank_info_filename"/>
                                                             </small>
                                                         </div>
                                                     </div>
@@ -481,13 +481,13 @@
                                             <!-- Form Actions -->
                                             <div class="text-center mt-5 pt-4 border-top">
                                                 <button type="submit" name="action" value="draft" class="btn btn-draft btn-lg me-3">
-                                                    <i class="fa fa-save me-2"/>Save as Draft
+                                                    <i class="fa fa-save me-2"/>Taslak Olarak Kaydet
                                                 </button>
                                                 <button type="submit" name="action" value="submit" class="btn btn-submit btn-lg">
-                                                    <i class="fa fa-paper-plane me-2"/>Submit Application
+                                                    <i class="fa fa-paper-plane me-2"/>Başvuruyu Gönder
                                                 </button>
                                                 <div class="help-text mt-3">
-                                                    <i class="fa fa-info-circle"/> Save as draft to continue later, or submit to complete your application
+                                                    <i class="fa fa-info-circle"/> Daha sonra devam etmek için taslak olarak kaydedin veya başvuruyu tamamlamak için gönderin
                                                 </div>
                                             </div>
                                         </form>
@@ -513,17 +513,17 @@
                                     <div class="mb-4">
                                         <i class="fa fa-check-circle" style="font-size: 80px; color: #28a745;"/>
                                     </div>
-                                    <h2 class="mb-3" style="color: #333; font-weight: 700;">Application Saved Successfully!</h2>
+                                    <h2 class="mb-3" style="color: #333; font-weight: 700;">Başvuru Başarıyla Kaydedildi!</h2>
                                     <p class="lead mb-4" style="color: #666;">
-                                        Your application has been saved as a draft. We've sent a continuation link to your email.
+                                        Başvurunuz taslak olarak kaydedildi. E-postanıza devam bağlantısı gönderdik.
                                     </p>
                                     <div class="alert alert-info mb-4">
-                                        <strong>Application Number:</strong> <span t-esc="application.name"/>
+                                        <strong>Başvuru Numarası:</strong> <span t-esc="application.name"/>
                                     </div>
-                                    <a t-attf-href="/supplier/application/#{application.access_token}" 
-                                       class="btn btn-lg" 
+                                    <a t-attf-href="/supplier/application/#{application.access_token}"
+                                       class="btn btn-lg"
                                        style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 15px 40px; border-radius: 50px; font-weight: 600;">
-                                        <i class="fa fa-arrow-right me-2"/>Continue Application
+                                        <i class="fa fa-arrow-right me-2"/>Başvuruya Devam Et
                                     </a>
                                 </div>
                             </div>
@@ -545,15 +545,15 @@
                                     <div class="mb-4">
                                         <i class="fa fa-check-circle" style="font-size: 80px; color: #28a745;"/>
                                     </div>
-                                    <h2 class="mb-3" style="color: #333; font-weight: 700;">Application Submitted!</h2>
+                                    <h2 class="mb-3" style="color: #333; font-weight: 700;">Başvuru Gönderildi!</h2>
                                     <p class="lead mb-4" style="color: #666;">
-                                        Thank you for your application. Our procurement team will review it and contact you soon.
+                                        Başvurunuz için teşekkür ederiz. Satın alma ekibimiz başvurunuzu inceleyip en kısa sürede sizinle iletişime geçecektir.
                                     </p>
                                     <div class="alert alert-success mb-4">
-                                        <strong>Application Number:</strong> <span t-esc="application.name"/>
+                                        <strong>Başvuru Numarası:</strong> <span t-esc="application.name"/>
                                     </div>
                                     <a href="/" class="btn btn-lg" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 15px 40px; border-radius: 50px; font-weight: 600;">
-                                        <i class="fa fa-home me-2"/>Return to Home
+                                        <i class="fa fa-home me-2"/>Ana Sayfaya Dön
                                     </a>
                                 </div>
                             </div>
@@ -573,10 +573,15 @@
                             <div class="card shadow-lg border-0" style="border-radius: 15px;">
                                 <div class="card-body text-center p-5">
                                     <i class="fa fa-exclamation-triangle text-danger mb-4" style="font-size: 80px;"/>
-                                    <h2 class="mb-3">An Error Occurred</h2>
+                                    <h2 class="mb-3">Bir Hata Oluştu</h2>
                                     <p class="text-danger mb-4" t-if="error" t-esc="error"/>
-                                    <a href="/supplier/register" class="btn btn-primary btn-lg">
-                                        <i class="fa fa-refresh me-2"/>Try Again
+                                    <a t-if="application and application.access_token"
+                                       t-attf-href="/supplier/application/#{application.access_token}"
+                                       class="btn btn-primary btn-lg">
+                                        <i class="fa fa-arrow-left me-2"/>Geri Git
+                                    </a>
+                                    <a t-else="" href="/supplier/register" class="btn btn-primary btn-lg">
+                                        <i class="fa fa-arrow-left me-2"/>Geri Git
                                     </a>
                                 </div>
                             </div>
@@ -596,10 +601,10 @@
                             <div class="card shadow-lg border-0" style="border-radius: 15px;">
                                 <div class="card-body text-center p-5">
                                     <i class="fa fa-search text-warning mb-4" style="font-size: 80px;"/>
-                                    <h2 class="mb-3">Application Not Found</h2>
-                                    <p class="lead mb-4">This link may be invalid or expired.</p>
+                                    <h2 class="mb-3">Başvuru Bulunamadı</h2>
+                                    <p class="lead mb-4">Bu bağlantı geçersiz veya süresi dolmuş olabilir.</p>
                                     <a href="/supplier/register" class="btn btn-primary btn-lg">
-                                        <i class="fa fa-plus me-2"/>New Application
+                                        <i class="fa fa-plus me-2"/>Yeni Başvuru
                                     </a>
                                 </div>
                             </div>
@@ -619,19 +624,19 @@
                             <div class="card shadow-lg border-0" style="border-radius: 15px;">
                                 <div class="card-body text-center p-5">
                                     <i class="fa fa-info-circle text-info mb-4" style="font-size: 80px;"/>
-                                    <h2 class="mb-3">Application Already Submitted</h2>
+                                    <h2 class="mb-3">Başvuru Zaten Gönderildi</h2>
                                     <p class="lead mb-4">
-                                        This application has been submitted and is currently under review.
+                                        Bu başvuru gönderildi ve şu anda inceleniyor.
                                     </p>
                                     <div class="alert alert-info mb-3">
-                                        <strong>Application Number:</strong> <span t-esc="application.name"/>
+                                        <strong>Başvuru Numarası:</strong> <span t-esc="application.name"/>
                                     </div>
                                     <div class="alert alert-secondary">
-                                        <strong>Status:</strong> 
+                                        <strong>Durum:</strong>
                                         <span class="badge bg-info ms-2" t-esc="dict(application._fields['state'].selection).get(application.state)"/>
                                     </div>
                                     <a href="/" class="btn btn-primary btn-lg mt-3">
-                                        <i class="fa fa-home me-2"/>Return to Home
+                                        <i class="fa fa-home me-2"/>Ana Sayfaya Dön
                                     </a>
                                 </div>
                             </div>

@@ -15,7 +15,7 @@ class SupplierApplication(models.Model):
 
     # Basic Information & Control
     name = fields.Char('Application Number', required=True, copy=False, readonly=True,
-                       default=lambda self: _('New'), tracking=True)
+                       default='New', tracking=True)
     access_token = fields.Char('Access Token', default=lambda self: str(uuid.uuid4()),
                                copy=False, readonly=True, index=True)
     lang = fields.Selection(
@@ -79,20 +79,20 @@ class SupplierApplication(models.Model):
                               help='For international transfers')
     
     # Required Documents
-    document_tax_certificate = fields.Binary('Tax Certificate', 
-                                              attachment=True, tracking=True)
+    document_tax_certificate = fields.Binary('Tax Certificate',
+                                              attachment=True)
     document_tax_certificate_filename = fields.Char('Tax Certificate Filename')
     
-    document_signature_circular = fields.Binary('Signature Circular', 
-                                                 attachment=True, tracking=True)
+    document_signature_circular = fields.Binary('Signature Circular',
+                                                 attachment=True)
     document_signature_circular_filename = fields.Char('Signature Circular Filename')
     
-    document_trade_registry = fields.Binary('Trade Registry Gazette', 
-                                             attachment=True, tracking=True)
+    document_trade_registry = fields.Binary('Trade Registry Gazette',
+                                             attachment=True)
     document_trade_registry_filename = fields.Char('Trade Registry Filename')
     
-    document_bank_info = fields.Binary('Bank Information (Stamped)', 
-                                        attachment=True, tracking=True,
+    document_bank_info = fields.Binary('Bank Information (Stamped)',
+                                        attachment=True,
                                         help='Bank information on stamped letterhead')
     document_bank_info_filename = fields.Char('Bank Info Filename')
     
@@ -106,8 +106,8 @@ class SupplierApplication(models.Model):
     
     @api.model
     def create(self, vals):
-        if vals.get('name', _('New')) == _('New'):
-            vals['name'] = self.env['ir.sequence'].next_by_code('supplier.application') or _('New')
+        if vals.get('name', 'New') == 'New':
+            vals['name'] = self.env['ir.sequence'].next_by_code('supplier.application') or 'New'
         return super(SupplierApplication, self).create(vals)
     
     @api.depends('access_token')
@@ -161,7 +161,7 @@ class SupplierApplication(models.Model):
             raise UserError(_('Only draft applications can be submitted.'))
         
         # Validate required fields
-        required_fields = ['company_name', 'company_address', 'company_phone', 
+        required_fields = ['company_name', 'company_address', 'company_phone',
                           'contact_email', 'product_service_group']
         missing_fields = []
         for field in required_fields:
@@ -173,6 +173,23 @@ class SupplierApplication(models.Model):
             raise ValidationError(_(
                 'Please fill in all required fields: %s'
             ) % ', '.join(missing_fields))
+        
+        # Validate required documents
+        required_documents = {
+            'document_tax_certificate': 'Vergi Levhası',
+            'document_signature_circular': 'İmza Sirküleri',
+            'document_trade_registry': 'Ticaret Sicil Gazetesi',
+            'document_bank_info': 'Banka Bilgileri (Kaşeli)',
+        }
+        missing_docs = []
+        for doc_field, doc_name in required_documents.items():
+            if not self[doc_field]:
+                missing_docs.append(doc_name)
+        
+        if missing_docs:
+            raise ValidationError(
+                'Lütfen tüm gerekli belgeleri yükleyin:\n\n%s' % '\n'.join(['• ' + doc for doc in missing_docs])
+            )
         
         self.write({'state': 'submitted'})
         
