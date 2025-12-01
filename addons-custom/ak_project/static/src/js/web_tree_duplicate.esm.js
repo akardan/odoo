@@ -3,18 +3,19 @@
 import { Domain } from "@web/core/domain";
 import { ListController } from "@web/views/list/list_controller";
 import { patch } from "@web/core/utils/patch";
+import { _t } from "@web/core/l10n/translation";
 
 // "add duplicate action" adını kaldırıp doğrudan yamayı tanımlayan bir nesne oluşturuyoruz
 patch(ListController.prototype, {
     getActionMenuItems() {
-        const result = this._super();
+        const result = super.getActionMenuItems();
         if (
             this.archInfo.activeActions.create &&
             this.archInfo.activeActions.duplicate
         ) {
             result.other.push({
                 key: "duplicate",
-                description: this.env._t("Duplicate"),
+                description: _t("Duplicate"),
                 callback: () => this.duplicateRecords(),
             });
         }
@@ -30,7 +31,7 @@ patch(ListController.prototype, {
         );
         this.env.searchModel.createNewFilters([
             {
-                description: this.env._t("Duplicated Records"),
+                description: _t("Duplicated Records"),
                 domain: new Domain([["id", "in", ids]]).toString(),
                 type: "filter",
             },
