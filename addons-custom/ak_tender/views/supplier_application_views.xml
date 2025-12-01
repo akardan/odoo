@@ -41,32 +41,32 @@
         <field name="arch" type="xml">
             <form string="Supplier Application">
                 <header>
-                    <button name="action_submit" string="Submit Application" type="object" 
+                    <button name="action_submit" string="Submit Application" type="object"
                             class="oe_highlight" invisible="state != 'draft'"/>
-                    <button name="action_review" string="Start Review" type="object" 
+                    <button name="action_review" string="Start Review" type="object"
                             class="oe_highlight" invisible="state != 'submitted'"
-                            groups="ak_tender.group_tender_manager"/>
+                            groups="ak_tender.group_tender_user,ak_tender.group_tender_manager"/>
                     <button name="action_approve" string="Approve &amp; Create Supplier" type="object"
                             class="oe_highlight" invisible="state not in ['submitted', 'under_review']"
                             confirm="This will create a new supplier and send portal access. Continue?"
-                            groups="ak_tender.group_tender_manager"/>
-                    <button name="action_reject" string="Reject" type="object" 
+                            groups="ak_tender.group_tender_user,ak_tender.group_tender_manager"/>
+                    <button name="action_reject" string="Reject" type="object"
                             invisible="state not in ['submitted', 'under_review']"
-                            groups="ak_tender.group_tender_manager"/>
-                    <button name="action_set_to_draft" string="Reset to Draft" type="object" 
+                            groups="ak_tender.group_tender_user,ak_tender.group_tender_manager"/>
+                    <button name="action_set_to_draft" string="Reset to Draft" type="object"
                             invisible="state == 'draft' or partner_created == True"
-                            groups="ak_tender.group_tender_manager"/>
-                    <button name="action_send_draft_link" string="Send Draft Link" type="object" 
+                            groups="ak_tender.group_tender_user,ak_tender.group_tender_manager"/>
+                    <button name="action_send_draft_link" string="Send Draft Link" type="object"
                             invisible="state != 'draft'"
-                            groups="ak_tender.group_tender_manager"/>
+                            groups="ak_tender.group_tender_user,ak_tender.group_tender_manager"/>
                     <field name="state" widget="statusbar" statusbar_visible="draft,submitted,under_review,approved"/>
                 </header>
                 <sheet>
                     <div class="oe_button_box" name="button_box">
-                        <button name="%(action_open_supplier_partner)d" type="action" 
-                                class="oe_stat_button" icon="fa-building" 
+                        <button name="%(action_open_supplier_partner)d" type="action"
+                                class="oe_stat_button" icon="fa-building"
                                 invisible="not partner_id"
-                                groups="ak_tender.group_tender_manager">
+                                groups="ak_tender.group_tender_user,ak_tender.group_tender_manager">
                             <div class="o_field_widget o_stat_info">
                                 <span class="o_stat_text">View</span>
                                 <span class="o_stat_text">Supplier</span>
@@ -84,9 +84,9 @@
                         <group>
                             <field name="application_date"/>
                             <field name="access_token" readonly="1" groups="base.group_no_one"/>
-                            <field name="website_url" readonly="1" widget="url" 
+                            <field name="website_url" readonly="1" widget="url"
                                    invisible="state != 'draft'"
-                                   groups="ak_tender.group_tender_manager"/>
+                                   groups="ak_tender.group_tender_user,ak_tender.group_tender_manager"/>
                         </group>
                         <group>
                             <field name="partner_created" invisible="1"/>
@@ -195,7 +195,7 @@
                             </group>
                         </page>
                         
-                        <page string="Internal Notes" name="notes" groups="ak_tender.group_tender_manager">
+                        <page string="Internal Notes" name="notes" groups="ak_tender.group_tender_user,ak_tender.group_tender_manager">
                             <group>
                                 <field name="notes" placeholder="Internal review notes..." nolabel="1"/>
                                 <field name="rejection_reason" readonly="state != 'rejected'" 

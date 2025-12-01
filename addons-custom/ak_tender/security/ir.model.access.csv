@@ -35,5 +35,5 @@ access_import_sat_to_pool_wizard,access.import.sat.to.pool.wizard,model_import_s
 access_ak_tender_move_lines_wizard,ak.tender.move.lines.wizard,model_ak_tender_move_lines_wizard,ak_tender.group_tender_user,1,1,1,1
 access_supplier_application_public,supplier.application.public,model_supplier_application,,1,1,1,0
 access_supplier_application_manager,supplier.application.manager,model_supplier_application,ak_tender.group_tender_manager,1,1,1,1
-access_supplier_application_user,supplier.application.user,model_supplier_application,ak_tender.group_tender_user,1,1,0,0
+access_supplier_application_user,supplier.application.user,model_supplier_application,ak_tender.group_tender_user,1,1,1,0
 access_supplier_application_reject_wizard,supplier.application.reject.wizard,model_supplier_application_reject_wizard,ak_tender.group_tender_manager,1,1,1,1

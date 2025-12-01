@@ -194,7 +194,7 @@ class SupplierApplication(models.Model):
         return True
     
     def action_approve(self):
-        """Approve application and create partner"""
+        """Approve application and create/update partner"""
         self.ensure_one()
         
         if self.state not in ['submitted', 'under_review']:
@@ -203,12 +203,46 @@ class SupplierApplication(models.Model):
         if self.partner_created:
             raise UserError(_('Partner has already been created for this application.'))
         
-        # Create partner
-        partner_vals = self._prepare_partner_values()
-        partner = self.env['res.partner'].create(partner_vals)
+        # Check if partner exists with same VAT number
+        partner = False
+        partner_action = 'created'
+        if self.vat_number:
+            partner = self.env['res.partner'].search([
+                ('vat', '=', self.vat_number),
+                ('is_company', '=', True)
+            ], limit=1)
         
-        # Create portal user
-        user = self._create_portal_user(partner)
+        # Prepare partner values
+        partner_vals = self._prepare_partner_values()
+        
+        if partner:
+            # Update existing partner
+            partner.write(partner_vals)
+            partner_action = 'updated'
+        else:
+            # Create new partner
+            partner = self.env['res.partner'].create(partner_vals)
+            partner_action = 'created'
+        
+        # Ensure supplier rank is set
+        if partner.supplier_rank == 0:
+            partner.supplier_rank = 1
+        
+        # Find or create contact person partner
+        contact_partner = self.env['res.partner'].search([
+            ('parent_id', '=', partner.id),
+            ('email', '=', self.contact_email),
+        ], limit=1)
+        
+        if not contact_partner:
+            # Find by name if email search failed
+            contact_partner = self.env['res.partner'].search([
+                ('parent_id', '=', partner.id),
+                ('name', '=', self.contact_name),
+            ], limit=1)
+        
+        # Create portal user for contact person
+        user = self._create_portal_user(contact_partner) if contact_partner else None
         
         # Update application
         self.write({
@@ -218,11 +252,13 @@ class SupplierApplication(models.Model):
         })
         
         # Send welcome email to supplier
-        self._send_approval_email(partner, user)
+        if user:
+            self._send_approval_email(partner, user)
         
         # Log message
+        action_text = _('updated') if partner_action == 'updated' else _('created')
         self.message_post(
-            body=_('Application approved. Partner %s created and portal access granted.') % partner.name,
+            body=_('Application approved. Partner %s %s and portal access granted.') % (partner.name, action_text),
             subject=_('Application Approved'),
         )
         
@@ -283,6 +319,16 @@ class SupplierApplication(models.Model):
                 'currency_id': self.env.ref('base.EUR').id,
             }))
         
+        # Prepare contact person as child contact
+        child_vals = []
+        if self.contact_name and self.contact_email:
+            child_vals.append((0, 0, {
+                'name': self.contact_name,
+                'email': self.contact_email,
+                'type': 'contact',
+                'function': _('Sales / Marketing Contact'),
+            }))
+        
         vals = {
             'name': self.company_name,
             'is_company': True,
@@ -290,7 +336,6 @@ class SupplierApplication(models.Model):
             'customer_rank': 0,
             'street': self.company_address,
             'phone': self.company_phone,
-            'email': self.contact_email,
             'vat': self.vat_number,
             'comment': self.product_service_group,
         }
@@ -299,26 +344,45 @@ class SupplierApplication(models.Model):
         if bank_vals:
             vals['bank_ids'] = bank_vals
         
+        # Add contact person as child
+        if child_vals:
+            vals['child_ids'] = child_vals
+        
         return vals
     
-    def _create_portal_user(self, partner):
-        """Create portal user for the supplier"""
-        # Check if user already exists
+    def _create_portal_user(self, contact_partner):
+        """Create portal user for the contact person"""
+        if not contact_partner:
+            return None
+            
+        # Check if user already exists for this contact
         user = self.env['res.users'].search([
-            ('partner_id', '=', partner.id)
+            ('partner_id', '=', contact_partner.id)
         ], limit=1)
         
         if user:
             return user
         
+        # Check if email is already taken by another user
+        existing_user = self.env['res.users'].search([
+            ('login', '=', self.contact_email)
+        ], limit=1)
+        
+        if existing_user:
+            # Email already used, don't create new user
+            _logger.warning(
+                'Cannot create portal user: email %s already in use by user %s',
+                self.contact_email, existing_user.name
+            )
+            return None
+        
         # Create portal user
         portal_group = self.env.ref('base.group_portal')
         
         user_vals = {
-            'name': self.contact_name,
             'login': self.contact_email,
             'email': self.contact_email,
-            'partner_id': partner.id,
+            'partner_id': contact_partner.id,
             'groups_id': [(6, 0, [portal_group.id])],
             'company_id': self.env.company.id,
         }
