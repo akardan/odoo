@@ -45,8 +45,7 @@ class AkTenderLine(models.Model):
     display_type = fields.Selection([
         ('line_section', _('Bölüm')),
         ('line_note', _('Not')),
-        ('product', _('Ürün/Hizmet')),
-    ], default='product', string=_('Satır Tipi'))
+    ], default=False, string=_('Satır Tipi'), help=_("Technical field for UX purpose."))
     
     product_id = fields.Many2one('product.product', string=_('Ürün/Malzeme'),
                                  required=False,

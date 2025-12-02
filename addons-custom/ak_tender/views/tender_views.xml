@@ -110,7 +110,7 @@
 
                         <notebook>
                             <page string="İhale Kalemleri" name="tender_lines">
-                                <field name="tender_lines" nolabel="1" widget="section_and_note_one2many">
+                                <field name="tender_lines" nolabel="1" widget="product_label_section_and_note_field_o2m">
                                     <list editable="bottom">
                                         <field name="sequence" widget="handle"/>
                                         <field name="display_type" column_invisible="True"/>
@@ -164,7 +164,7 @@
                                        <field name="erp_requester" optional="hide"/>
                                        <field name="requester_comment" optional="hide"/>
                                        <control>
-                                           <create string="Ürün Ekle" context="{'default_display_type': 'product'}"/>
+                                           <create string="Ürün Ekle"/>
                                            <create string="Bölüm Ekle" context="{'default_display_type': 'line_section'}"/>
                                            <create string="Not Ekle" context="{'default_display_type': 'line_note'}"/>
                                        </control>
@@ -172,9 +172,9 @@
                                     <form>
                                         <field name="sequence" invisible="1"/>
                                         <field name="display_type" invisible="1"/>
-                                        <group invisible="display_type">
+                                        <group invisible="display_type in ['line_section', 'line_note']">
                                             <group>
-                                                <field name="product_id" required="not display_type"/>
+                                                <field name="product_id" required="display_type == 'product' or not display_type"/>
                                                 <field name="days" invisible="parent.tender_type != 'mice'"/>
                                                 <field name="quantity"/>
                                                 <field name="uom_id"/>
@@ -219,30 +219,31 @@
                                         </group>
                                         
                                         <!-- İhale Bilgileri grubu -->
-                                        <group string="İhale Bilgileri" name="tender_info">
+                                        <group string="İhale Bilgileri" name="tender_info" invisible="display_type in ['line_section', 'line_note']">
                                             <field name="is_hotel_accommodation"/>
                                             <field name="erp_requester"/>
                                         </group>
                                         
                                         <!-- SAT Bilgileri grubu -->
-                                        <group string="SAT Bilgileri" name="sat_info" invisible="display_type">
+                                        <group string="SAT Bilgileri" name="sat_info" invisible="display_type in ['line_section', 'line_note']">
                                             <field name="requester_comment" widget="text" nolabel="1" colspan="2"/>
                                         </group>
                                         
                                         <!-- Otel seçimi için grup -->
-                                        <group invisible="is_hotel_accommodation != True">
+                                        <group invisible="is_hotel_accommodation != True or display_type in ['line_section', 'line_note']">
                                             <field name="hotel_partner_id"
                                                    options="{'no_create': True, 'no_open': True}"
                                                    required="is_hotel_accommodation == True"/>
                                         </group>
-                                        <notebook colspan="4" name="description">
-                                            <page string="Description" name="order_description" invisible="display_type">
-                                                <field name="name" />
-                                            </page>
-                                            <page string="Section" name="order_section" invisible="display_type != 'line_section'">
-                                                <field name="name" />
-                                            </page>
-                                            <page string="Note" name="order_note" invisible="display_type != 'line_note'">
+                                        
+                                        <!-- Section and Note fields - simplified like purchase order -->
+                                        <label for="name" string="Bölüm Başlığı (ör. Ürünler, Hizmetler)" invisible="display_type != 'line_section'"/>
+                                        <label for="name" string="Not" invisible="display_type != 'line_note'"/>
+                                        <field name="name" nolabel="1" invisible="display_type not in ['line_section', 'line_note']"/>
+                                        
+                                        <!-- Product description in notebook -->
+                                        <notebook colspan="4" name="description" invisible="display_type in ['line_section', 'line_note']">
+                                            <page string="Description" name="order_description">
                                                 <field name="name" />
                                             </page>
                                         </notebook>
