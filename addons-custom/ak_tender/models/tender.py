@@ -764,8 +764,17 @@ class AkTender(models.Model):
        help=_("İhale için hedef belirleme tipi: fiyat veya iskonto."))
     target_price = fields.Monetary(string=_('Hedef Fiyat'), currency_field='currency_id',
                                 help=_("Satın Alma Direktörü tarafından belirlenen hedef fiyat."))
-    target_discount = fields.Float(string=_('Hedef İskonto (%)'), 
+    target_discount = fields.Float(string=_('Hedef İskonto (%)'),
                                  help=_("Satın Alma Direktörü tarafından belirlenen hedef iskonto oranı."))
+    
+    @api.onchange('currency_id')
+    def _onchange_currency_id(self):
+        """İhale para birimi değiştiğinde tüm ihale kalemlerinin para birimini güncelle"""
+        if self.currency_id and self.tender_lines:
+            for line in self.tender_lines:
+                if line.display_type == False:  # Sadece ürün satırlarını güncelle (bölüm ve not hariç)
+                    line.currency_id = self.currency_id
+            _logger.info(f"İhale '{self.name}' para birimi '{self.currency_id.name}' olarak güncellendi. {len(self.tender_lines)} ihale kalemi güncellendi.")
     
     def _convert_currency_two_stage(self, amount, from_currency, to_currency, company=None, date=None):
         """
@@ -3071,7 +3080,20 @@ class AkTender(models.Model):
                 created_orders += new_po
                     
             except Exception as e:
-                continue
+                # Log the error with full details
+                _logger.error(
+                    f"Sipariş oluşturma hatası: İhale: {self.name}, "
+                    f"Tedarikçi: {source_po.partner_id.name}, "
+                    f"Hata: {str(e)}",
+                    exc_info=True
+                )
+                # Re-raise the error so user can see it
+                raise UserError(
+                    _("Sipariş oluşturulurken hata oluştu:\n"
+                      "İhale: %s\n"
+                      "Tedarikçi: %s\n"
+                      "Hata: %s") % (self.name, source_po.partner_id.name, str(e))
+                )
             
         
         # Log the results
@@ -3081,25 +3103,32 @@ class AkTender(models.Model):
             created_names = created_orders.mapped('name') if created_orders else []
             updated_names = updated_orders.mapped('name') if updated_orders else []
             
-            
             message_parts = []
             if created_orders:
                 message_parts.append(_("%s yeni sipariş oluşturuldu: %s") % (len(created_orders), ", ".join(created_names)))
             if updated_orders:
                 message_parts.append(_("%s sipariş güncellendi: %s") % (len(updated_orders), ", ".join(updated_names)))
             
+            success_message = "<br/>".join(message_parts)
+            
             self.message_post(
-                body="<br/>".join(message_parts),
+                body=success_message,
                 subtype_xmlid='mail.mt_note',
                 email_from=False,
                 notify_by_email=False
             )
+            
+            _logger.info(f"Sipariş oluşturma başarılı: {success_message}")
+            
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'reload',
+            }
         else:
-            pass
-        return {
-            'type': 'ir.actions.client',
-            'tag': 'reload',
-        }
+            # No orders were created
+            error_msg = _("Hiçbir sipariş oluşturulamadı. Lütfen seçimlerinizi kontrol edin.")
+            _logger.warning(f"Sipariş oluşturma başarısız: {error_msg}")
+            raise UserError(error_msg)
 
     @api.model
     def export_comparison_report_to_excel(self, tender_id, table_html):

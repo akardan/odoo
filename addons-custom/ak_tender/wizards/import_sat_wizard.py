@@ -586,7 +586,7 @@ class SatImportWizard(models.TransientModel):
             'required_delivery_date': data.get('required_delivery_date'),
         }
         
-        # Birim bilgisi varsa ekle
+        # Birim bilgisi varsa ekle - Ürün UoM'u ile uyumlu olduğundan emin ol
         if data.get('unit_of_measure'):
             uom_name = data.get('unit_of_measure')
             
@@ -607,18 +607,27 @@ class SatImportWizard(models.TransientModel):
             if not uom and search_name != uom_name:
                 uom = self.env['uom.uom'].search([('name', '=', uom_name)], limit=1)
             
-            # Hala bulunamadıysa, varsayılan birim olarak 'Adet' birimini kullan
+            # UoM bulunamadıysa hata ver
             if not uom:
-                _logger.warning(f"Birim bulunamadı: {uom_name}, varsayılan birim kullanılıyor")
-                uom = self.env.ref('uom.product_uom_unit', raise_if_not_found=False)
-                if not uom:
-                    uom = self.env['uom.uom'].search([('name', '=', 'Adet')], limit=1)
+                error_msg = f"Ölçü birimi bulunamadı: '{uom_name}'. Lütfen sistemde bu ölçü birimini tanımlayın."
+                _logger.error(error_msg)
+                raise UserError(_(error_msg))
             
-            if uom:
-                line_vals['uom_id'] = uom.id
-                _logger.info(f"Birim bulundu: {uom.name} (ID: {uom.id})")
-            else:
-                _logger.warning(f"Birim bulunamadı: {uom_name}")
+            # Ürün UoM kategorisi ile uyumluluğu kontrol et
+            if product.uom_id:
+                if uom.category_id != product.uom_id.category_id:
+                    error_msg = (
+                        f"UoM kategori uyumsuzluğu! "
+                        f"Excel'den gelen ölçü birimi '{uom.name}' (Kategori: {uom.category_id.name}), "
+                        f"ürün '{product.name}' üzerinde tanımlı ölçü birimi '{product.uom_id.name}' "
+                        f"(Kategori: {product.uom_id.category_id.name}) ile aynı kategoride değil. "
+                        f"Lütfen ürünün ölçü birimini veya Excel'deki ölçü birimini düzeltin."
+                    )
+                    _logger.error(error_msg)
+                    raise UserError(_(error_msg))
+            
+            line_vals['uom_id'] = uom.id
+            _logger.info(f"Birim ayarlandı: {uom.name} (ID: {uom.id}, Kategori: {uom.category_id.name})")
         
         # İhale kalemi oluştur
         _logger.info(f"İhale kalemi oluşturuluyor: {line_vals}")
@@ -721,19 +730,15 @@ class SatImportWizard(models.TransientModel):
                     if not uom and search_name != uom_name:
                         uom = self.env['uom.uom'].search([('name', '=', uom_name)], limit=1)
                     
-                    # Hala bulunamadıysa, varsayılan birim olarak 'Adet' birimini kullan
+                    # UoM bulunamadıysa hata ver
                     if not uom:
-                        _logger.warning(f"Birim bulunamadı: {uom_name}, varsayılan birim kullanılıyor")
-                        uom = self.env.ref('uom.product_uom_unit', raise_if_not_found=False)
-                        if not uom:
-                            uom = self.env['uom.uom'].search([('name', '=', 'Adet')], limit=1)
+                        error_msg = f"Ölçü birimi bulunamadı: '{uom_name}'. Ürün '{material_name}' (Kod: {material_code}) için sistemde bu ölçü birimini tanımlayın."
+                        _logger.error(error_msg)
+                        raise UserError(_(error_msg))
                     
-                    if uom:
-                        product_vals['uom_id'] = uom.id
-                        product_vals['uom_po_id'] = uom.id
-                        _logger.info(f"Ürün birimi ayarlandı: {uom.name} (ID: {uom.id})")
-                    else:
-                        _logger.warning(f"Birim bulunamadı: {uom_name}")
+                    product_vals['uom_id'] = uom.id
+                    product_vals['uom_po_id'] = uom.id
+                    _logger.info(f"Ürün birimi ayarlandı: {uom.name} (ID: {uom.id}, Kategori: {uom.category_id.name})")
                 
                 # Mal grubu varsa kategori bul veya oluştur
                 material_group = data.get('material_group')

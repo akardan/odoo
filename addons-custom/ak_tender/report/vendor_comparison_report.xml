@@ -449,11 +449,23 @@
                                         })
                                     }).then(function(response) {
                                         return response.json();
-                                    }).then(function(result) {
-                                        alert("Siparişler oluşturuldu!");
-                                        location.reload();
+                                    }).then(function(response) {
+                                        console.log('Backend response:', response);
+                                        if (response.error) {
+                                            console.error("Backend error:", response.error);
+                                            const errorMessage = response.error.data && response.error.data.message
+                                                ? response.error.data.message
+                                                : response.error.message || "Bilinmeyen hata";
+                                            alert("Sipariş oluşturulurken hata oluştu:\n" + errorMessage);
+                                        } else if (response.result) {
+                                            alert("Siparişler oluşturuldu!");
+                                            location.reload();
+                                        } else {
+                                            alert("Beklenmeyen yanıt alındı!");
+                                        }
                                     }).catch(function(error) {
-                                        alert("Sipariş oluşturulurken hata oluştu!");
+                                        console.error("Request error:", error);
+                                        alert("Sipariş oluşturulurken bağlantı hatası oluştu: " + error);
                                     });
                                 } else {
                                     alert("Lütfen en az bir ürün seçin!");
