@@ -1616,9 +1616,7 @@ class AkTender(models.Model):
         # Post message in chatter
         self.message_post(
             body=notification_message,
-            subtype_xmlid='mail.mt_note',
-            email_from=False,
-            notify_by_email=False
+            subtype_xmlid='mail.mt_note'
         )
 
             
@@ -3113,9 +3111,7 @@ class AkTender(models.Model):
             
             self.message_post(
                 body=success_message,
-                subtype_xmlid='mail.mt_note',
-                email_from=False,
-                notify_by_email=False
+                subtype_xmlid='mail.mt_note'
             )
             
             _logger.info(f"Sipariş oluşturma başarılı: {success_message}")
