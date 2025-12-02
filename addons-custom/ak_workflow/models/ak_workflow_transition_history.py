@@ -23,6 +23,35 @@ class AkWorkflowTransitionHistory(models.Model):
     ], string='Status', default='completed', required=True, index=True,
        help="Status of the transition execution")
     comment = fields.Text(string='Comment')
+    
+    # Stored time fields for reporting performance
+    end_time = fields.Datetime(
+        string='End Time',
+        help="The time when this state/stage ended (next transition time or current time if still active)",
+        store=True,
+        compute='_compute_end_time',
+        readonly=True
+    )
+    expected_duration = fields.Float(
+        string='Expected Duration (Hours)',
+        help="Expected duration for this state/stage in hours (from state/stage definition)",
+        compute='_compute_expected_duration',
+        store=True,
+        readonly=True
+    )
+    
+    @api.depends('to_state_id', 'to_state_id.default_duration_days')
+    def _compute_expected_duration(self):
+        """
+        Compute expected duration from state definition.
+        Converts days to hours for consistency.
+        """
+        for history in self:
+            if history.to_state_id and history.to_state_id.default_duration_days:
+                # Convert days to hours
+                history.expected_duration = history.to_state_id.default_duration_days * 24.0
+            else:
+                history.expected_duration = 0.0
     elapsed_time = fields.Float(
         string='Elapsed Time (Hours)',
         compute='_compute_elapsed_time',
@@ -38,14 +67,15 @@ class AkWorkflowTransitionHistory(models.Model):
     display_name = fields.Char(compute='_compute_display_name', store=True)
     
     @api.depends('create_date', 'res_model', 'res_id')
-    def _compute_elapsed_time(self):
+    def _compute_end_time(self):
         """
-        Calculate elapsed time for each history record.
-        If there's a next transition, use that time. Otherwise, use current time.
+        Calculate end time for each history record.
+        End time is only set when there's a next transition.
+        If still in the same state, end_time remains empty.
         """
         for history in self:
             if not history.create_date:
-                history.elapsed_time = 0.0
+                history.end_time = False
                 continue
             
             # Find the next transition for the same record
@@ -56,15 +86,30 @@ class AkWorkflowTransitionHistory(models.Model):
             ], order='create_date asc', limit=1)
             
             if next_history:
-                # Calculate time until next transition
-                end_time = next_history.create_date
+                # Use next transition time as end time
+                history.end_time = next_history.create_date
             else:
-                # No next transition, use current time
-                end_time = fields.Datetime.now()
+                # No next transition yet, end_time stays empty
+                history.end_time = False
+    
+    @api.depends('create_date', 'end_time')
+    def _compute_elapsed_time(self):
+        """
+        Calculate elapsed time for each history record.
+        Uses stored end_time if available, otherwise uses current time for active states.
+        """
+        for history in self:
+            if not history.create_date:
+                history.elapsed_time = 0.0
+                continue
             
-            # Calculate elapsed time in hours
+            # Use end_time if set, otherwise use current time for active states
+            end_time = history.end_time or fields.Datetime.now()
+            
+            # Calculate elapsed time in hours, ensure it's not negative
             time_diff = end_time - history.create_date
-            history.elapsed_time = time_diff.total_seconds() / 3600.0
+            elapsed_seconds = time_diff.total_seconds()
+            history.elapsed_time = max(0.0, elapsed_seconds / 3600.0)
     
     @api.depends('elapsed_time')
     def _compute_elapsed_time_display(self):
@@ -72,11 +117,12 @@ class AkWorkflowTransitionHistory(models.Model):
         Format elapsed time as dd:hh:mm
         """
         for history in self:
-            if not history.elapsed_time:
+            if not history.elapsed_time or history.elapsed_time < 0:
                 history.elapsed_time_display = "00:00:00"
                 continue
             
-            total_hours = history.elapsed_time
+            # Use absolute value to prevent negative display
+            total_hours = abs(history.elapsed_time)
             days = int(total_hours // 24)
             hours = int(total_hours % 24)
             minutes = int((total_hours * 60) % 60)
