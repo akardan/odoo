@@ -2203,6 +2203,8 @@ class AkTender(models.Model):
             
             return self.env['purchase.order.line'].create(line_vals)
         
+        return None
+        
     def _create_line_from_tender_with_previous(self, purchase_order, tender_line, prev_po):
         """
         Hybrid method: Create a purchase order line from tender line with previous supplier data.
@@ -2289,7 +2291,6 @@ class AkTender(models.Model):
             
             return self.env['purchase.order.line'].create(line_vals)
         
-        return None
         return None
     
     def _create_section_or_note_line(self, purchase_order, name, display_type, sequence):
