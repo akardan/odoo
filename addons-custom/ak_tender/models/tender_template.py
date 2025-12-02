@@ -183,7 +183,7 @@ class TenderTemplateLine(models.Model):
     
     _sql_constraints = [
         ('accountable_product_id_required',
-            "CHECK(display_type != 'product' OR (product_id IS NOT NULL AND product_uom_id IS NOT NULL))",
+            "CHECK(display_type IS NOT NULL OR (product_id IS NOT NULL AND product_uom_id IS NOT NULL))",
             "Ürün satırında ürün ve ölçü birimi gereklidir."),
 
         ('non_accountable_fields_null',

@@ -375,7 +375,7 @@ class PurchaseRequisitionLine(models.Model):
                 not rec.deletion_indicator
             )
     
-    @api.depends('material_group', 'purchasing_group', 'erp_company_code', 'erp_plant_code', 'line_processing_status', 'deletion_indicator')
+    @api.depends('erp_pr_id', 'material_group', 'purchasing_group', 'erp_company_code', 'erp_plant_code', 'line_processing_status', 'deletion_indicator')
     def _compute_tender_group_info(self):
         """İhale grup bilgisini hesapla"""
         for rec in self:
@@ -394,7 +394,7 @@ class PurchaseRequisitionLine(models.Model):
             tender_type = tender_info.get('tender_type', 'indirect')
             responsible_users = tender_info.get('responsible_user_ids', self.env['res.users'])
             
-            # Grup bilgisini oluştur
+            # Grup bilgisini oluştur - SAT No ile başla
             parts = []
             if tender_type:
                 type_labels = {
@@ -404,6 +404,8 @@ class PurchaseRequisitionLine(models.Model):
                     'mice': 'MICE'
                 }
                 parts.append(f"Tip: {type_labels.get(tender_type, tender_type)}")
+            if rec.erp_pr_id:
+                parts.append(f"SAT: {rec.erp_pr_id}")
             if rec.material_group:
                 parts.append(f"MG: {rec.material_group}")
             if rec.purchasing_group:
@@ -448,7 +450,7 @@ class PurchaseRequisitionLine(models.Model):
                 'type': 'ir.actions.act_window',
                 'name': _('Oluşturulan İhaleler'),
                 'res_model': 'ak.tender',
-                'view_mode': 'tree,form',
+                'view_mode': 'list,form',
                 'domain': [('id', 'in', created_tenders.ids)],
                 'target': 'current',
             }
@@ -697,7 +699,7 @@ class PurchaseRequisitionLine(models.Model):
                     'quantity': req_line.product_qty,
                     'uom_id': req_line.product_uom_id.id,
                     'required_delivery_date': req_line.required_delivery_date,
-                    'display_type': 'product',
+                    'display_type': False,  # Normal product line (not section or note)
                     'erp_requester': req_line.erp_requester,
                     'requester_comment': req_line.requester_comment,
                 }

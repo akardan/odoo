@@ -185,7 +185,7 @@ class AkTenderLine(models.Model):
     def create(self, vals):
         """Yeni bir satır oluşturulduğunda tender'ın hedef fiyat ve iskonto değerlerini güncelle"""
         line = super(AkTenderLine, self).create(vals)
-        if line.tender_id and line.display_type == 'product':
+        if line.tender_id and line.display_type == False:
             line.tender_id.calculate_total_target_price()
             if line.target_discount:
                 line.tender_id.calculate_weighted_average_target_discount()
@@ -197,12 +197,12 @@ class AkTenderLine(models.Model):
         # Eğer target_price, quantity veya currency_id değişmişse tender'ın hedef fiyatını güncelle
         if 'target_price' in vals or 'quantity' in vals or 'currency_id' in vals:
             for line in self:
-                if line.tender_id and line.display_type == 'product':
+                if line.tender_id and line.display_type == False:
                     line.tender_id.calculate_total_target_price()
         # Eğer target_discount değişmişse tender'ın ağırlıklı ortalama hedef iskontosunu güncelle
         if 'target_discount' in vals:
             for line in self:
-                if line.tender_id and line.display_type == 'product':
+                if line.tender_id and line.display_type == False:
                     line.tender_id.calculate_weighted_average_target_discount()
         return result
     
@@ -237,7 +237,7 @@ class AkTenderLine(models.Model):
     @api.onchange('currency_id')
     def _onchange_currency_id(self):
         """Para birimi değiştiğinde tender'ın hedef fiyatını güncelle"""
-        if self.display_type == 'product' and self.tender_id:
+        if self.display_type == False and self.tender_id:
             self.tender_id.calculate_total_target_price()
     
     @api.onchange('product_id')
@@ -284,7 +284,7 @@ class AkTenderLine(models.Model):
     @api.onchange('target_price', 'quantity')
     def _onchange_target_price(self):
         """Hedef fiyat veya miktar değiştiğinde tender'ın hedef fiyatını güncelle"""
-        if self.display_type == 'product' and self.tender_id:
+        if self.display_type == False and self.tender_id:
             self.tender_id.calculate_total_target_price()
     
     def _get_lang(self):
@@ -704,7 +704,7 @@ class AkTender(models.Model):
             allowed_suppliers = self.env['res.partner']
             
             # Sadece ürün satırlarını al (section ve note hariç)
-            product_lines = record.tender_lines.filtered(lambda l: l.display_type == 'product' and l.product_id)
+            product_lines = record.tender_lines.filtered(lambda l: l.display_type == False and l.product_id)
             
             # Tek ürünlü ihale kontrolü
             if len(product_lines) == 1:
@@ -823,7 +823,7 @@ class AkTender(models.Model):
         tender_currency = self.currency_id
         
         for line in self.tender_lines:
-            if line.display_type == 'product' and line.target_price and line.quantity:
+            if line.display_type == False and line.target_price and line.quantity:
                 # Önce birim fiyatı dönüştür, sonra miktar ile çarp
                 unit_price = line.target_price
                 
@@ -854,7 +854,7 @@ class AkTender(models.Model):
         weighted_discount_sum = 0.0
         
         for line in self.tender_lines:
-            if line.display_type == 'product' and line.target_discount and line.target_price and line.quantity:
+            if line.display_type == False and line.target_discount and line.target_price and line.quantity:
                 weight = line.target_price * line.quantity
                 weighted_discount_sum += line.target_discount * weight
                 total_weight += weight
@@ -1201,7 +1201,7 @@ class AkTender(models.Model):
         details = []
         
         # Process each tender line
-        for tender_line in self.tender_lines.filtered(lambda l: l.display_type == 'product'):
+        for tender_line in self.tender_lines.filtered(lambda l: l.display_type == False):
             # Find all PO lines for this tender line in the current tender round
             po_lines = self.env['purchase.order.line'].search([
                 ('order_id', 'in', purchase_orders.ids),
@@ -1266,20 +1266,33 @@ class AkTender(models.Model):
                 )
                 
             else:  # target_type == 'discount'
-                # Set target discount to margin value
-                new_target = target_margin_percent
+                # Find the highest discount offered for this product
+                highest_discount = 0.0
+                highest_discount_po_line = None
+                
+                for po_line in po_lines:
+                    if po_line.discount > highest_discount:
+                        highest_discount = po_line.discount
+                        highest_discount_po_line = po_line
+                
+                # Calculate target discount: add margin percentage to the highest discount
+                # Formula: highest_discount * (100 + margin) / 100
+                # Example: if highest is 20% and margin is 15%, result is 20 * 1.15 = 23%
+                discount_multiplier = (100.0 + target_margin_percent) / 100.0
+                new_target = highest_discount * discount_multiplier
                 old_target = tender_line.target_discount
                 
                 # Set the new target discount
                 tender_line.target_discount = new_target
                 
                 details.append(
-                    _("• %s: İskonto %%%.2f (En düşük fiyat: %.2f %s, tedarikçi: %s)") % (
+                    _("• %s: İskonto %%%.2f → %%%.2f (En yüksek iskonto %%%.2f + %%%.0f, tedarikçi: %s)") % (
                         tender_line.product_id.name if tender_line.product_id else tender_line.name,
+                        highest_discount,
                         new_target,
-                        lowest_price,
-                        tender_line.currency_id.name,
-                        lowest_po_line.order_id.partner_id.name
+                        highest_discount,
+                        target_margin_percent,
+                        highest_discount_po_line.order_id.partner_id.name if highest_discount_po_line else lowest_po_line.order_id.partner_id.name
                     )
                 )
             
@@ -1289,7 +1302,7 @@ class AkTender(models.Model):
         if self.target_type == 'price':
             summary = _("Hedef fiyatlar otomatik olarak hesaplandı (en düşük tekliflerin %%%.0f altı)") % target_margin_percent
         else:
-            summary = _("Hedef iskontolar %%%.0f olarak ayarlandı") % target_margin_percent
+            summary = _("Hedef iskontolar en yüksek iskontoların %%%.0f üstü olarak hesaplandı") % target_margin_percent
         
         # Log the change
         if updated_lines_count > 0:
@@ -1405,7 +1418,7 @@ class AkTender(models.Model):
         for record in self:
             if record.tender_type == 'direct':
                 for line in record.tender_lines:
-                    if line.display_type == 'product' and not line.product_id.default_code:
+                    if line.display_type == False and not line.product_id.default_code:
                         raise ValidationError(_(
                             "Direkt ihale tipinde tüm ürünlerin ERP kodu olmalıdır. "
                             "Ürün '%s' için ERP kodu bulunamadı."
@@ -1844,7 +1857,7 @@ class AkTender(models.Model):
             elif template_line.product_id:
                 # Ürün satırı
                 vals = {
-                    'display_type': 'product',
+                    'display_type': False,
                     'product_id': template_line.product_id.id,
                     'name': template_line.name or template_line.product_id.name,
                     'days': template_line.days,
@@ -1947,7 +1960,7 @@ class AkTender(models.Model):
                 }
             }
             
-        if not self.tender_lines.filtered(lambda l: l.display_type == 'product'):
+        if not self.tender_lines.filtered(lambda l: l.display_type == False):
             return {
                 'type': 'ir.actions.client',
                 'tag': 'display_notification',
@@ -2167,7 +2180,7 @@ class AkTender(models.Model):
                 tender_line.display_type,
                 tender_line.sequence
             )
-        elif tender_line.display_type == 'product' and tender_line.product_id:
+        elif tender_line.display_type == False and tender_line.product_id:
             # Product line
             product_uom = tender_line.uom_id.id
             if not product_uom and tender_line.product_id:
@@ -2225,7 +2238,7 @@ class AkTender(models.Model):
                 tender_line.display_type,
                 tender_line.sequence
             )
-        elif tender_line.display_type == 'product' and tender_line.product_id:
+        elif tender_line.display_type == False and tender_line.product_id:
             # Find the corresponding line from previous PO based on tender_line_id
             prev_line = prev_po.order_line.filtered(
                 lambda l: l.tender_line_id and l.tender_line_id.id == tender_line.id
@@ -2314,8 +2327,9 @@ class AkTender(models.Model):
     def _get_success_notification(self, created_count):
         """
         Get the success notification for purchase order creation.
-        Returns a notification dictionary.
+        Returns a notification dictionary with reload action.
         """
+        # Reload the current form view after showing notification
         return {
             'type': 'ir.actions.client',
             'tag': 'display_notification',
@@ -2324,6 +2338,13 @@ class AkTender(models.Model):
                 'message': _('%s tedarikçi için satın alma talebi oluşturuldu.') % created_count,
                 'sticky': False,
                 'type': 'success',
+                'next': {
+                    'type': 'ir.actions.act_window',
+                    'res_model': 'ak.tender',
+                    'res_id': self.id,
+                    'views': [(False, 'form')],
+                    'target': 'current',
+                }
             }
         }
     
@@ -2685,7 +2706,7 @@ class AkTender(models.Model):
             current_pos = self.purchase_order_ids.filtered(lambda p: p.tender_round == self.tender_round)
             
             # Calculate product-level system selections
-            for tender_line in self.tender_lines.filtered(lambda l: l.display_type == 'product'):
+            for tender_line in self.tender_lines.filtered(lambda l: l.display_type == False):
                 # Get all vendor lines for this product
                 vendor_lines = []
                 for po in current_pos:
@@ -2723,7 +2744,7 @@ class AkTender(models.Model):
                 has_incomplete_offer = False
                 
                 # Check if PO has lines for all tender products
-                tender_product_count = len(self.tender_lines.filtered(lambda l: l.display_type == 'product'))
+                tender_product_count = len(self.tender_lines.filtered(lambda l: l.display_type == False))
                 po_product_count = len(po.order_line.filtered(lambda l: l.tender_line_id and not l.display_type))
                 
                 if po_product_count < tender_product_count:

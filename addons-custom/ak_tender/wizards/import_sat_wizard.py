@@ -579,7 +579,7 @@ class SatImportWizard(models.TransientModel):
         line_vals = {
             'tender_id': tender.id,
             'sequence': sequence,
-            'display_type': 'product',
+            'display_type': False,
             'product_id': product.id,
             'name': data.get('name') or product.name,
             'quantity': data.get('quantity') or 1.0,

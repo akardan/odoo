@@ -127,7 +127,7 @@ class PurchaseOrder(models.Model):
         lines_to_create = []
         for tender_line in self.tender_id.tender_lines:
             # Skip lines without product for product type lines
-            if tender_line.display_type == 'product' and not tender_line.product_id:
+            if tender_line.display_type == False and not tender_line.product_id:
                 continue
                 
             # Create line based on type
