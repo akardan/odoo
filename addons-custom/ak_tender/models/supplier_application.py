@@ -128,6 +128,16 @@ class SupplierApplication(models.Model):
                 if '@' not in record.contact_email or '.' not in record.contact_email:
                     raise ValidationError(_('Please enter a valid email address.'))
     
+    @api.constrains('iban_try', 'iban_usd', 'iban_eur', 'state')
+    def _check_iban_required(self):
+        """Check that at least one IBAN is provided when submitting"""
+        for record in self:
+            if record.state in ['submitted', 'under_review', 'approved']:
+                if not record.iban_try and not record.iban_usd and not record.iban_eur:
+                    raise ValidationError(_(
+                        'En az bir IBAN bilgisi (TRY, USD veya EUR) girilmelidir.'
+                    ))
+    
     @api.constrains('vat_number')
     def _check_vat_unique(self):
         """Check if VAT number is already registered"""
