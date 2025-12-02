@@ -2285,7 +2285,6 @@ class AkTender(models.Model):
                 'taxes_id': [(6, 0, taxes_ids)],  # From previous supplier offer or empty
                 'tender_line_id': tender_line.id,  # Always link to current tender line
                 'sequence': tender_line.sequence,  # Always from tender line
-                'display_type': tender_line.display_type,  # Always from tender line
                 'alt_materials': alt_materials,  # From previous supplier offer or False
             }
             
