@@ -116,6 +116,9 @@ class AkWorkflowMixin(models.AbstractModel):
                     record.workflow_start_date = now
                     record.workflow_state_start = now
                     record._execute_state_actions('entry')
+                    
+                    # Create initial state history record
+                    record._log_initial_state(initial_state)
         return records
 
     def write(self, vals):
@@ -219,6 +222,53 @@ class AkWorkflowMixin(models.AbstractModel):
             self.message_post(body=message, subtype_xmlid='mail.mt_note')
             
         return history
+    
+    def _log_initial_state(self, initial_state):
+        """
+        Create a history record for entering the initial workflow state.
+        This creates a record like "Draft → Draft" to track when the record was created.
+        """
+        self.ensure_one()
+        
+        # Find a suitable transition to use for the history record
+        # First, try to find a self-referencing transition (from initial_state to initial_state)
+        self_transition = self.env['ak.workflow.transition'].search([
+            ('from_state_id', '=', initial_state.id),
+            ('to_state_id', '=', initial_state.id),
+        ], limit=1)
+        
+        # If no self-transition exists, find any transition that leads to the initial state
+        if not self_transition:
+            self_transition = self.env['ak.workflow.transition'].search([
+                ('to_state_id', '=', initial_state.id),
+            ], limit=1)
+        
+        # If still no transition found, create a virtual one (this shouldn't happen in practice)
+        if not self_transition:
+            _logger.warning(
+                f"No transition found leading to initial state '{initial_state.name}' "
+                f"for workflow '{initial_state.workflow_id.name}'. Creating initial history without transition."
+            )
+            return
+        
+        # Create the history record with from_state = to_state = initial state
+        try:
+            self.env['ak.workflow.transition.history'].sudo().create({
+                'res_model': self._name,
+                'res_id': self.id,
+                'from_state_id': initial_state.id,  # Same as to_state for initial state
+                'to_state_id': initial_state.id,
+                'transition_id': self_transition.id,
+                'status': 'completed',
+                'comment': _('İlk durum: %s') % initial_state.name,
+            })
+            
+            # Post message in chatter
+            message = _("Workflow başlatıldı: %s") % initial_state.name
+            self.message_post(body=message, subtype_xmlid='mail.mt_note')
+            
+        except Exception as e:
+            _logger.error(f"Failed to create initial state history for {self._name} (ID: {self.id}): {str(e)}")
 
     def get_available_transitions(self):
         if not self:

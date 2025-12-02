@@ -2082,15 +2082,29 @@ class AkTender(models.Model):
     def _create_purchase_order_lines(self, purchase_order, supplier_info):
         """
         Create purchase order lines for the specified purchase order.
+        
+        HYBRID APPROACH (NEW):
+        - First round: Creates lines directly from tender lines
+        - Subsequent rounds: Uses tender lines as base BUT merges supplier's previous offer data
+          
+        This hybrid method ensures:
+        1. Any changes made to tender definition (items, quantities, etc.) are reflected in new rounds
+        2. Supplier's previous pricing, currency, discount, delivery dates are preserved
+        3. Better flexibility for tender management and price negotiations
+        
+        Args:
+            purchase_order: The purchase order being created
+            supplier_info: Dict containing 'prev_po' (previous PO if exists) and other supplier info
         """
         prev_po = supplier_info['prev_po']
         
         if prev_po:
-            # Copy lines from previous purchase order (subsequent rounds)
-            for prev_line in prev_po.order_line:
-                self._create_line_from_previous(purchase_order, prev_line)
+            # Subsequent rounds: Use hybrid approach
+            # Create lines from tender lines but merge previous supplier data
+            for tender_line in self.tender_lines:
+                self._create_line_from_tender_with_previous(purchase_order, tender_line, prev_po)
         else:
-            # Create new lines from tender lines (first round)
+            # First round: Create new lines from tender lines
             for tender_line in self.tender_lines:
                 self._create_line_from_tender(purchase_order, tender_line)
     
@@ -2189,6 +2203,93 @@ class AkTender(models.Model):
             
             return self.env['purchase.order.line'].create(line_vals)
         
+    def _create_line_from_tender_with_previous(self, purchase_order, tender_line, prev_po):
+        """
+        Hybrid method: Create a purchase order line from tender line with previous supplier data.
+        This method always uses tender lines as the base (to reflect any changes in tender definition)
+        but merges in the supplier's previous offer data (price, currency, discount, delivery date, etc.).
+        
+        Args:
+            purchase_order: The purchase order to create the line for
+            tender_line: The tender line (always from current tender definition)
+            prev_po: The previous purchase order to get supplier's offer data from
+            
+        Returns:
+            The created purchase order line.
+        """
+        if tender_line.display_type in ('line_section', 'line_note'):
+            return self._create_section_or_note_line(
+                purchase_order,
+                tender_line.name or 'Section/Note',
+                tender_line.display_type,
+                tender_line.sequence
+            )
+        elif tender_line.display_type == 'product' and tender_line.product_id:
+            # Find the corresponding line from previous PO based on tender_line_id
+            prev_line = prev_po.order_line.filtered(
+                lambda l: l.tender_line_id and l.tender_line_id.id == tender_line.id
+            )
+            prev_line = prev_line[0] if prev_line else None
+            
+            # Get base values from tender line (always use current tender definition)
+            product_uom = tender_line.uom_id.id
+            if not product_uom and tender_line.product_id:
+                product_uom = tender_line.product_id.uom_po_id.id or tender_line.product_id.uom_id.id
+            
+            if not product_uom:
+                product_uom = self.env['uom.uom'].search([], limit=1).id
+                
+            quantity = tender_line.quantity
+            if not quantity or quantity <= 0:
+                quantity = 1.0
+            
+            # Default values from tender line
+            price_unit = 0.0
+            line_price_unit = 0.0
+            line_currency_id = tender_line.currency_id.id
+            discount = 0.0
+            date_planned = tender_line.required_delivery_date or self.required_delivery_date or fields.Date.today()
+            taxes_ids = []
+            alt_materials = False
+            
+            # If previous line exists, get supplier's offer data
+            if prev_line:
+                # Use supplier's previous price, currency, discount, and delivery date
+                price_unit = prev_line.price_unit or 0.0
+                line_price_unit = prev_line.line_price_unit or price_unit
+                line_currency_id = prev_line.line_currency_id.id if prev_line.line_currency_id else line_currency_id
+                discount = prev_line.discount if hasattr(prev_line, 'discount') else 0.0
+                date_planned = prev_line.date_planned or date_planned
+                taxes_ids = prev_line.taxes_id.ids if prev_line.taxes_id else []
+                alt_materials = prev_line.alt_materials if hasattr(prev_line, 'alt_materials') else False
+            else:
+                # No previous offer, use default based on target_type
+                if tender_line.tender_id.target_type == 'discount' and tender_line.target_price:
+                    price_unit = tender_line.target_price
+                    line_price_unit = tender_line.target_price
+            
+            # Create the line with merged data
+            line_vals = {
+                'order_id': purchase_order.id,
+                'product_id': tender_line.product_id.id,
+                'name': tender_line.name or tender_line.product_id.name,
+                'product_qty': quantity,  # Always from tender line
+                'product_uom': product_uom,  # Always from tender line
+                'price_unit': price_unit,  # From previous supplier offer or default
+                'line_currency_id': line_currency_id,  # From previous supplier offer or tender
+                'line_price_unit': line_price_unit,  # From previous supplier offer or default
+                'discount': discount,  # From previous supplier offer or 0
+                'date_planned': date_planned,  # From previous supplier offer or tender
+                'taxes_id': [(6, 0, taxes_ids)],  # From previous supplier offer or empty
+                'tender_line_id': tender_line.id,  # Always link to current tender line
+                'sequence': tender_line.sequence,  # Always from tender line
+                'display_type': tender_line.display_type,  # Always from tender line
+                'alt_materials': alt_materials,  # From previous supplier offer or False
+            }
+            
+            return self.env['purchase.order.line'].create(line_vals)
+        
+        return None
         return None
     
     def _create_section_or_note_line(self, purchase_order, name, display_type, sequence):
