@@ -5,25 +5,25 @@
             <field name="name">ak.workflow.transition.wizard.form</field>
             <field name="model">ak.workflow.transition.wizard</field>
             <field name="arch" type="xml">
-                <form string="Execute Workflow Transition">
+                <form string="İş Akışı Geçişi Uygula">
                     <group>
                         <field name="res_model" invisible="1"/>
                         <field name="res_id" invisible="1"/>
                         <field name="transition_id" invisible="1"/>
                         <div>
-                            <span>You are about to execute the transition:</span>
-                            <strong class="ms-1"><field name="transition_id" readonly="1"/></strong>
-                            <small class="ms-1 text-muted"><field name="transition_display_info" readonly="1"/></small>
+                            <span>Bu geçişi uygulamak üzeresiniz: </span>
+                            <strong><field name="transition_id" readonly="1"/></strong>
+                            <span> ( <field name="transition_display_info" readonly="1"/> )</span>
                         </div>
-                        <field name="comment" placeholder="Add an optional comment..."/>
+                        <field name="comment" placeholder="İsteğe bağlı yorum ekleyin..."/>
                     </group>
                     
-                    <group string="Actions to be Executed">
+                    <group string="Çalıştırılacak Aksiyonlar">
                         <field name="actions_info" nolabel="1"/>
                     </group>
                     <footer>
-                        <button name="execute_transition" type="object" string="Execute" class="btn-primary"/>
-                        <button string="Cancel" class="btn-secondary" special="cancel"/>
+                        <button name="execute_transition" type="object" string="Uygula" class="btn-primary"/>
+                        <button string="İptal" class="btn-secondary" special="cancel"/>
                     </footer>
                 </form>
             </field>

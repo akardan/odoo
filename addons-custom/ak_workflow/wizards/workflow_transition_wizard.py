@@ -3,17 +3,17 @@ from odoo import models, fields, api, _
 
 class WorkflowTransitionWizard(models.TransientModel):
     _name = 'ak.workflow.transition.wizard'
-    _description = 'Workflow Transition Execution Wizard'
+    _description = _('İş Akışı Geçiş Uygulama Sihirbazı')
 
     # Bu sihirbazın hangi kaydı etkileyeceğini bilmesi gerekiyor.
-    res_model = fields.Char('Model', readonly=True, required=True)
-    res_id = fields.Integer('Record ID', readonly=True, required=True)
+    res_model = fields.Char(_('Model'), readonly=True, required=True)
+    res_id = fields.Integer(_('Kayıt ID'), readonly=True, required=True)
     
     # Hangi geçişin çalıştırılacağını tutar.
-    transition_id = fields.Many2one('ak.workflow.transition', string='Transition', readonly=True, required=True)
-    comment = fields.Text(string='Comment')
-    transition_display_info = fields.Char(string="Transition Info", compute='_compute_transition_display_info')
-    actions_info = fields.Html(string="Actions to Execute", compute='_compute_actions_info')
+    transition_id = fields.Many2one('ak.workflow.transition', string=_('Geçiş'), readonly=True, required=True)
+    comment = fields.Text(string=_('Yorum'))
+    transition_display_info = fields.Char(string=_("Geçiş Bilgisi"), compute='_compute_transition_display_info')
+    actions_info = fields.Html(string=_("Çalıştırılacak Aksiyonlar"), compute='_compute_actions_info')
 
     @api.depends('transition_id')
     def _compute_transition_display_info(self):
@@ -46,38 +46,38 @@ class WorkflowTransitionWizard(models.TransientModel):
                         next_stage_info = ""
                         if current_stage_index < len(all_stages):
                             next_stage_obj = all_stages[current_stage_index]  # Index 0-based, current_stage_index 1-based
-                            next_stage_info = f"<br/>Next Stage: <strong>{next_stage_obj.name}</strong>"
+                            next_stage_info = f"<br/>{_('Sonraki Aşama')}: <strong>{next_stage_obj.name}</strong>"
                         
                         html_parts.append(f'''
                             <div class="alert alert-info">
-                                <strong>📋 Multi-Stage Approval</strong><br/>
-                                Stage: <strong>{current_stage_index}/{len(all_stages)}</strong><br/>
-                                Current Stage: <strong>{next_stage.name}</strong>
+                                <strong>📋 {_("Çok Aşamalı Onay")}</strong><br/>
+                                {_("Aşama")}: <strong>{current_stage_index}/{len(all_stages)}</strong><br/>
+                                {_("Mevcut Aşama")}: <strong>{next_stage.name}</strong>
                                 {next_stage_info}
                             </div>
                         ''')
                         
                         # Stage aksiyonları
                         if next_stage.action_ids:
-                            html_parts.append('<p><strong>Stage Actions:</strong></p>')
+                            html_parts.append(f'<p><strong>{_("Aşama Aksiyonları")}:</strong></p>')
                             html_parts.append('<ol class="list-group list-group-numbered">')
                             for action in next_stage.action_ids.sorted(key=lambda r: (r.sequence, r.name)):
                                 html_parts.append(f'<li class="list-group-item">{action.name}</li>')
                             html_parts.append('</ol>')
                     else:
-                        html_parts.append('<div class="alert alert-warning">All stages completed. State will change.</div>')
+                        html_parts.append(f'<div class="alert alert-warning">{_("Tüm aşamalar tamamlandı. Durum değişecek.")}</div>')
             
             # Ana transition aksiyonları
             if wizard.transition_id and wizard.transition_id.action_ids:
                 if html_parts:  # Eğer stage bilgisi varsa
-                    html_parts.append('<p><strong>Final Transition Actions:</strong></p>')
+                    html_parts.append(f'<p><strong>{_("Son Geçiş Aksiyonları")}:</strong></p>')
                 html_parts.append('<ol class="list-group list-group-numbered">')
                 for action in wizard.transition_id.action_ids.sorted(key=lambda r: (r.sequence, r.name)):
                     html_parts.append(f'<li class="list-group-item">{action.name}</li>')
                 html_parts.append('</ol>')
             
             if not html_parts:
-                wizard.actions_info = '<p>No actions will be executed.</p>'
+                wizard.actions_info = f'<p>{_("Hiçbir aksiyon çalıştırılmayacak.")}</p>'
             else:
                 wizard.actions_info = ''.join(html_parts)
 
