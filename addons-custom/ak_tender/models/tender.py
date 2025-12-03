@@ -1393,9 +1393,14 @@ class AkTender(models.Model):
         self.tender_round += 1
         
         # Force write to ensure changes are committed
-        self.write({'tender_round': self.tender_round})
+        # Reset notification flag for new round
+        self.write({
+            'tender_round': self.tender_round,
+            'all_offers_notification_sent': False
+        })
         
-        _logger.info("Tender %s: Teklif turu %s olarak güncellendi.", self.name or self.id, self.tender_round)
+        _logger.info("Tender %s: Teklif turu %s → %s (bildirim flag'i resetlendi).",
+                     self.name or self.id, old_round, self.tender_round)
         
         return True
 
