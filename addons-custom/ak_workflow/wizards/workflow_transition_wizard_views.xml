@@ -5,15 +5,15 @@
             <field name="name">ak.workflow.transition.wizard.form</field>
             <field name="model">ak.workflow.transition.wizard</field>
             <field name="arch" type="xml">
-                <form string="İş Akışı Geçişi Uygula">
+                <form string="Geçişi Uygula">
                     <group>
                         <field name="res_model" invisible="1"/>
                         <field name="res_id" invisible="1"/>
                         <field name="transition_id" invisible="1"/>
-                        <div>
+                        <div colspan="2">
                             <span>Bu geçişi uygulamak üzeresiniz: </span>
-                            <strong><field name="transition_id" readonly="1"/></strong>
-                            <span> ( <field name="transition_display_info" readonly="1"/> )</span>
+                            <strong><field name="transition_id" readonly="1" nolabel="1" class="oe_inline"/></strong>
+                            <span> ( </span><field name="transition_display_info" readonly="1" nolabel="1" class="oe_inline"/><span> )</span>
                         </div>
                         <field name="comment" placeholder="İsteğe bağlı yorum ekleyin..."/>
                     </group>
