@@ -234,7 +234,7 @@ class SupplierApplication(models.Model):
         partner = False
         partner_action = 'created'
         if self.vat_number:
-            partner = self.env['res.partner'].search([
+            partner = self.env['res.partner'].sudo().search([
                 ('vat', '=', self.vat_number),
                 ('is_company', '=', True)
             ], limit=1)
@@ -244,26 +244,26 @@ class SupplierApplication(models.Model):
         
         if partner:
             # Update existing partner
-            partner.write(partner_vals)
+            partner.sudo().write(partner_vals)
             partner_action = 'updated'
         else:
             # Create new partner
-            partner = self.env['res.partner'].create(partner_vals)
+            partner = self.env['res.partner'].sudo().create(partner_vals)
             partner_action = 'created'
         
         # Ensure supplier rank is set
         if partner.supplier_rank == 0:
-            partner.supplier_rank = 1
+            partner.sudo().write({'supplier_rank': 1})
         
         # Find or create contact person partner
-        contact_partner = self.env['res.partner'].search([
+        contact_partner = self.env['res.partner'].sudo().search([
             ('parent_id', '=', partner.id),
             ('email', '=', self.contact_email),
         ], limit=1)
         
         if not contact_partner:
             # Find by name if email search failed
-            contact_partner = self.env['res.partner'].search([
+            contact_partner = self.env['res.partner'].sudo().search([
                 ('parent_id', '=', partner.id),
                 ('name', '=', self.contact_name),
             ], limit=1)
@@ -383,7 +383,7 @@ class SupplierApplication(models.Model):
             return None
             
         # Check if user already exists for this contact
-        user = self.env['res.users'].search([
+        user = self.env['res.users'].sudo().search([
             ('partner_id', '=', contact_partner.id)
         ], limit=1)
         
@@ -391,7 +391,7 @@ class SupplierApplication(models.Model):
             return user
         
         # Check if email is already taken by another user
-        existing_user = self.env['res.users'].search([
+        existing_user = self.env['res.users'].sudo().search([
             ('login', '=', self.contact_email)
         ], limit=1)
         
@@ -414,7 +414,7 @@ class SupplierApplication(models.Model):
             'company_id': self.env.company.id,
         }
         
-        user = self.env['res.users'].with_context(no_reset_password=True).create(user_vals)
+        user = self.env['res.users'].sudo().with_context(no_reset_password=True).create(user_vals)
         
         return user
     
