@@ -26,8 +26,7 @@ if records:
             <field name="state">code</field>
             <field name="code">
 if records:
-    for record in records:
-        record.create_purchase_orders_for_suppliers()
+    action = records.create_purchase_orders_for_suppliers()
 </field>
             <field name="groups_id" eval="[(4, ref('group_tender_user'))]"/>
             <field name="sequence" eval="11"/>  <!-- Set sequence to appear right after "Tedarikçi Ekle" action -->

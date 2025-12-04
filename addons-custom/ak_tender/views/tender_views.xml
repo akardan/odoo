@@ -279,23 +279,22 @@
                                 <div style="background-color: #ffeeee; padding: 10px; margin-bottom: 15px; border-left: 5px solid red;">
                                     <h3 style="color: red; font-weight: bold; margin: 0;">Teklifler</h3>
                                 </div>
-                                
                                 <field name="purchase_order_ids" nolabel="1" context="{'default_tender_id': id, 'default_state': 'draft', 'group_by': 'tender_round'}">
-                                    <list default_group_by="tender_round">
+                                    <list default_group_by="tender_round" decoration-bf="tender_round == parent.tender_round" decoration-info="tender_round == parent.tender_round">
                                         <field name="currency_id" column_invisible="True"/>
-                                        <field name="name"/>
+                                        <field name="name" string="Sipariş Ref." />
                                         <field name="partner_id" domain="[('id', 'in', parent.invited_partners)]"/>
                                         <field name="date_order"/>
-                                        <field name="tender_round"/>
-                                        <field name="amount_untaxed" widget="monetary" options="{'currency_field': 'currency_id'}" optional="show"/>
-                                        <field name="payment_term_id" optional="show"/>
-                                        <field name="total_npv" widget="monetary" options="{'currency_field': 'currency_id'}"/>
+                                        <field name="tender_round" string="Tur"/>
+                                        <field name="amount_untaxed" string="Vergi Hariç" widget="monetary" options="{'currency_field': 'currency_id'}" optional="show"/>
+                                        <field name="payment_term_id" string="Ödeme"  optional="show"/>
+                                        <field name="total_npv" string="Toplam NPV"  widget="monetary" options="{'currency_field': 'currency_id'}"/>
                                         <field name="amount_total" widget="monetary" options="{'currency_field': 'currency_id'}" optional="hide"/>
-                                        <field name="state"/>
+                                        <field name="state" string="Durum" widget="badge" decoration-success="state != 'cancel' and offer_status == 'submitted'" decoration-muted="state != 'cancel' and offer_status == 'not_submitted'" decoration-danger="state == 'cancel'" optional="show"/>
+                                        <field name="offer_status" widget="badge" decoration-success="state != 'cancel' and offer_status == 'submitted'" decoration-muted="state != 'cancel' and offer_status == 'not_submitted'" decoration-danger="state == 'cancel'" optional="show"/>
                                         <field name="system_selection" string="S.S." optional="show"/>
                                         <field name="user_selection" string="K.S." optional="show"/>
                                         <field name="new_message_count" string="Mesajlar" widget="badge" optional="show"/>
-                                        
                                     </list>
                                 </field>
                                 <group class="oe_subtotal_footer oe_right">
@@ -303,6 +302,15 @@
                                            readonly="[('workflow_current_state_id.code', 'not in', ['first_tender_round', 'target_price_set'])]"/>
                                     <field name="winning_order_ids" widget="many2many_tags" readonly="1" />
                                 </group>
+                                
+                                
+                                <!-- Current round information banner -->
+                                <div class="alert alert-info" style="margin-bottom: 15px;">
+                                    <strong>Mevcut Teklif Turu: <field name="tender_round" readonly="1" class="oe_inline"/></strong>
+                                    <p style="margin: 5px 0 0 0;">
+                                        <i class="fa fa-info-circle"/> Mevcut turdaki teklifler <strong style="color: #0275d8;">mavi ve kalın</strong> olarak gösterilir.
+                                    </p>
+                                </div>
                                 
                                 <!-- NPV Hesaplama Alanları -->
                                 <div>
@@ -549,11 +557,13 @@
             <field name="model">ak.tender</field>
             <field name="arch" type="xml">
                 <list string="İhaleler"
-                      decoration-success="workflow_current_state_id.code in ('approved', 'done')"
+                      decoration-success="workflow_current_state_id.code in ('approved', 'completed')"
                       decoration-info="workflow_current_state_id.code in ('first_tender_round', 'new_tender_round', 'evaluation') or tender_type == 'mice'"
-                      decoration-danger="workflow_current_state_id.code == 'cancel'"
+                      decoration-muted="workflow_current_state_id.code in ('cancel', 'cancelled', 'rejected')"
                       decoration-primary="tender_type == 'direct'"
                       decoration-warning="tender_type == 'promotion'">
+                    <field name="offer_submission_status" column_invisible="1"/>
+                    <field name="is_in_offer_collection" column_invisible="1"/>
                     <field name="code"/>
                     <field name="name"/>
                     <field name="erp_pr_id" optional="show"/>
@@ -568,10 +578,18 @@
                     <field name="request_date" optional="show"/>
                     <field name="tender_round" string="Teklif Turu" widget="badge" optional="show"/>
                     <field name="invited_partners" widget="many2many_tags" optional="hide"/>
-                    <field name="offer_count" string="Teklif Sayısı" widget="badge" optional="show"/>
+                    <field name="offer_status_display" string="Teklifler" widget="badge" optional="show"
+                           decoration-success="offer_submission_status == 'all' and is_in_offer_collection == True"
+                           decoration-warning="offer_submission_status == 'partial' and is_in_offer_collection == True"
+                           decoration-danger="offer_submission_status == 'none' and is_in_offer_collection == True"
+                           decoration-muted="is_in_offer_collection == False"/>
                     <field name="target_price" widget="monetary" options="{'currency_field': 'currency_id'}" optional="show"/>
                     <field name="currency_id" column_invisible="1"/>
-                    <field name="workflow_current_state_id" widget="badge" optional="show"/>
+                    <field name="workflow_current_state_id" string="Mevcut Durum" widget="badge" optional="show"
+                           decoration-success="workflow_current_state_id.code in ('approved', 'completed')"
+                           decoration-info="workflow_current_state_id.code in ('first_tender_round', 'new_tender_round', 'evaluation', 'target_price_set')"
+                           decoration-warning="workflow_current_state_id.code in ('draft', 'pending')"
+                           decoration-danger="workflow_current_state_id.code in ('cancel', 'cancelled', 'rejected')"/>
                     <field name="delay_days" string="Gecikme Günü" optional="show"/>
                     <field name="is_urgent" string="Acil" widget="boolean_toggle" optional="show"/>
                     <field name="winning_supplier_ids" widget="many2many_tags" optional="show"/>
@@ -597,10 +615,20 @@
                     <filter name="filter_draft" string="Taslak İhaleler" domain="[('workflow_current_state_id.code', '=', 'draft')]"/>
                     <filter name="filter_first_round" string="1. Tur Teklif Toplama" domain="[('workflow_current_state_id.code', '=', 'first_tender_round')]"/>
                     <filter name="filter_target_price_set" string="Hedef Fiyat Belirlendi" domain="[('workflow_current_state_id.code', '=', 'target_price_set')]"/>
-                    <filter name="filter_second_round" string="Yeni Tur Teklif Toplama" domain="[('workflow_current_state_id.code', '=', 'new_tender_round')]"/>
+                    <filter name="filter_new_round" string="Yeni Tur Teklif Toplama" domain="[('workflow_current_state_id.code', '=', 'new_tender_round')]"/>
                     <filter name="filter_evaluation" string="Değerlendirmede" domain="[('workflow_current_state_id.code', '=', 'evaluation')]"/>
-                    <filter name="filter_approved" string="Onaylanmış İhaleler" domain="[('workflow_current_state_id.code', '=', 'approved')]"/>
-                    <filter name="filter_done" string="Tamamlanmış İhaleler" domain="[('workflow_current_state_id.code', '=', 'done')]"/>
+                    <filter name="filter_approal" string="Onaylanmış İhaleler" domain="[('workflow_current_state_id.code', '=', 'approval')]"/>
+                    <filter name="filter_completed" string="Tamamlanmış İhaleler" domain="[('workflow_current_state_id.code', '=', 'completed')]"/>
+                    <separator/>
+                    <filter name="filter_direct" string="Direkt Satınalma" domain="[('tender_type', '=', 'direct')]"/>
+                    <filter name="filter_indirect" string="Endirekt Satınalma" domain="[('tender_type', '=', 'indirect')]"/>
+                    <filter name="filter_mice" string="MICE İhaleler" domain="[('tender_type', '=', 'mice')]"/>
+                    <filter name="filter_promotion" string="Promosyon ve Kırtasiye" domain="[('tender_type', '=', 'promotion')]"/>
+                    <separator/>
+                    <filter name="filter_in_offer_collection" string="Teklif Toplama Aşamasında" domain="[('is_in_offer_collection', '=', True)]"/>
+                    <filter name="filter_all_offers_submitted" string="Tüm Teklifler Düzenlendi" domain="[('offer_submission_status', '=', 'all'), ('is_in_offer_collection', '=', True)]"/>
+                    <filter name="filter_partial_offers" string="Kısmi Teklifler Düzenlendi" domain="[('offer_submission_status', '=', 'partial'), ('is_in_offer_collection', '=', True)]"/>
+                    <filter name="filter_no_offers" string="Hiç Teklif Düzenlenmedi" domain="[('offer_submission_status', '=', 'none'), ('is_in_offer_collection', '=', True)]"/>
                     <separator/>
                     <filter name="filter_urgent" string="Acil Talepler" domain="[('is_urgent', '=', True)]"/>
                     <!-- <filter name="filter_economic_data" string="Ekonomik Veri Kullanan" domain="[('use_economic_data', '=', True)]"/> -->
@@ -850,7 +878,6 @@
                 </p>
             </field>
         </record>
-
 
     </data>
 

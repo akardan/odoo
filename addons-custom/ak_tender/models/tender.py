@@ -754,6 +754,78 @@ class AkTender(models.Model):
 
     # İhale Sonuçları (One2many ilişki)
     purchase_order_ids = fields.One2many('purchase.order', 'tender_id', string=_('Teklifler (SAT)'))
+    
+    # Offer status tracking for current tender round
+    offer_submission_status = fields.Selection([
+        ('none', 'Hiçbiri Düzenlenmedi'),
+        ('partial', 'Kısmen Düzenlendi'),
+        ('all', 'Tamamı Düzenlendi')
+    ], string='Teklif Durumu', compute='_compute_offer_submission_status', store=True,
+       help="Mevcut teklif turunda tedarikçilerin teklif gönderme durumu")
+    
+    submitted_offer_count = fields.Integer(
+        string='Düzenlenen Teklif Sayısı',
+        compute='_compute_offer_submission_status',
+        store=True,
+        help="Mevcut turda düzenlenen teklif sayısı"
+    )
+    
+    total_offer_count = fields.Integer(
+        string='Toplam Teklif Sayısı',
+        compute='_compute_offer_submission_status',
+        store=True,
+        help="Mevcut turda toplam teklif sayısı"
+    )
+    
+    offer_status_display = fields.Char(
+        string='Teklif Durumu',
+        compute='_compute_offer_submission_status',
+        store=True,
+        help="Düzenlenen / Toplam teklif sayısı formatında gösterim"
+    )
+    
+    is_in_offer_collection = fields.Boolean(
+        string='Teklif Toplama Aşamasında',
+        compute='_compute_offer_submission_status',
+        store=True,
+        help="İhale teklif toplama aşamasında mı (first_tender_round veya new_tender_round)"
+    )
+    
+    @api.depends('purchase_order_ids.offer_status', 'purchase_order_ids.tender_round', 'tender_round', 'workflow_current_state_id.code')
+    def _compute_offer_submission_status(self):
+        """
+        Compute the overall offer submission status for the current tender round.
+        - 'none': No offers submitted
+        - 'partial': Some offers submitted but not all
+        - 'all': All offers submitted
+        """
+        for record in self:
+            # Check if in offer collection state
+            state_code = record.workflow_current_state_id.code if record.workflow_current_state_id else False
+            record.is_in_offer_collection = state_code in ('first_tender_round', 'new_tender_round')
+            
+            # Get offers for the current tender round
+            current_round_offers = record.purchase_order_ids.filtered(
+                lambda po: po.tender_round == record.tender_round
+            )
+            
+            total_count = len(current_round_offers)
+            submitted_count = len(current_round_offers.filtered(
+                lambda po: po.offer_status == 'submitted'
+            ))
+            
+            record.total_offer_count = total_count
+            record.submitted_offer_count = submitted_count
+            record.offer_status_display = f"{submitted_count} / {total_count}"
+            
+            if total_count == 0:
+                record.offer_submission_status = 'none'
+            elif submitted_count == 0:
+                record.offer_submission_status = 'none'
+            elif submitted_count == total_count:
+                record.offer_submission_status = 'all'
+            else:
+                record.offer_submission_status = 'partial'
         
     # TEKLİF DOKÜMANINA GÖRE KRİTİK ALAN: HEDEF FİYAT VE İSKONTO
     currency_id = fields.Many2one('res.currency', string=_('Para Birimi'), default=lambda self: self.env.company.currency_id)
@@ -1941,16 +2013,37 @@ class AkTender(models.Model):
         """
         self.ensure_one()
         
+        _logger.info(f"Starting create_purchase_orders_for_suppliers for tender {self.name} (ID: {self.id})")
+        _logger.info(f"Invited partners: {self.invited_partners.mapped('name')}")
+        _logger.info(f"Tender lines count: {len(self.tender_lines)}")
+        _logger.info(f"Tender round: {self.tender_round}")
+        
         # Validate preconditions
         validation_result = self._validate_purchase_order_creation()
         if validation_result:
+            _logger.warning(f"Validation failed: {validation_result}")
             return validation_result
         
         # Get suppliers to process
         suppliers_to_process = self._get_suppliers_to_process()
+        _logger.info(f"Suppliers to process: {len(suppliers_to_process)}")
+        
+        if not suppliers_to_process:
+            _logger.warning("No suppliers to process!")
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'title': _('Bilgi'),
+                    'message': _('Oluşturulacak yeni SAT bulunamadı. Tüm tedarikçiler için zaten SAT oluşturulmuş olabilir.'),
+                    'sticky': False,
+                    'type': 'info',
+                }
+            }
         
         # Create purchase orders for each supplier
         created_count = self._create_purchase_orders(suppliers_to_process)
+        _logger.info(f"Created {created_count} purchase orders")
         
         # Return success notification
         return self._get_success_notification(created_count)
@@ -1972,7 +2065,7 @@ class AkTender(models.Model):
                 }
             }
             
-        if not self.tender_lines.filtered(lambda l: l.display_type == False):
+        if not self.tender_lines.filtered(lambda l: l.display_type not in ('line_section', 'line_note')):
             return {
                 'type': 'ir.actions.client',
                 'tag': 'display_notification',
