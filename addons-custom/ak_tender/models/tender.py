@@ -2215,14 +2215,19 @@ class AkTender(models.Model):
         """
         prev_po = supplier_info['prev_po']
         
+        _logger.info(f"[_create_purchase_order_lines] Processing tender {self.name} (ID: {self.id}) for PO {purchase_order.name} (ID: {purchase_order.id})")
+        _logger.info(f"[_create_purchase_order_lines] Previous PO exists: {bool(prev_po)}")
+
         if prev_po:
             # Subsequent rounds: Use hybrid approach
             # Create lines from tender lines but merge previous supplier data
             for tender_line in self.tender_lines:
+                _logger.info(f"[_create_purchase_order_lines] Calling _create_line_from_tender_with_previous for tender line {tender_line.name} (ID: {tender_line.id})")
                 self._create_line_from_tender_with_previous(purchase_order, tender_line, prev_po)
         else:
             # First round: Create new lines from tender lines
             for tender_line in self.tender_lines:
+                _logger.info(f"[_create_purchase_order_lines] Calling _create_line_from_tender for tender line {tender_line.name} (ID: {tender_line.id})")
                 self._create_line_from_tender(purchase_order, tender_line)
     
     def _create_line_from_previous(self, purchase_order, prev_line):
@@ -2230,7 +2235,9 @@ class AkTender(models.Model):
         Create a purchase order line from a previous purchase order line.
         Returns the created purchase order line.
         """
+        _logger.info(f"[_create_line_from_previous] Processing previous line {prev_line.name} (ID: {prev_line.id}) with display_type: {prev_line.display_type}")
         if prev_line.display_type in ('line_section', 'line_note'):
+            _logger.info(f"[_create_line_from_previous] Creating section/note line: {prev_line.name}")
             return self._create_section_or_note_line(
                 purchase_order,
                 prev_line.name,
@@ -2242,13 +2249,16 @@ class AkTender(models.Model):
             product_qty = prev_line.product_qty
             if not product_qty or product_qty <= 0:
                 product_qty = 1.0
+                _logger.warning(f"[_create_line_from_previous] Product quantity for line {prev_line.name} was {prev_line.product_qty}, defaulting to 1.0")
                 
             product_uom = prev_line.product_uom.id
             if not product_uom and prev_line.product_id:
                 product_uom = prev_line.product_id.uom_po_id.id or prev_line.product_id.uom_id.id
+                _logger.info(f"[_create_line_from_previous] Product UOM for line {prev_line.name} derived from product: {product_uom}")
             
             if not product_uom:
                 product_uom = self.env['uom.uom'].search([], limit=1).id
+                _logger.warning(f"[_create_line_from_previous] No product UOM found for line {prev_line.name}, defaulting to first available UOM: {product_uom}")
                 
             date_planned = prev_line.date_planned or fields.Date.today()
             
@@ -2270,7 +2280,7 @@ class AkTender(models.Model):
                 'alt_materials': prev_line.alt_materials if hasattr(prev_line, 'alt_materials') else False,
                 
             }
-            
+            _logger.info(f"[_create_line_from_previous] Creating purchase order line with values: {line_vals}")
             return self.env['purchase.order.line'].create(line_vals)
     
     def _create_line_from_tender(self, purchase_order, tender_line):
@@ -2278,49 +2288,50 @@ class AkTender(models.Model):
         Create a purchase order line from a tender line.
         Returns the created purchase order line.
         """
+        _logger.info(f"[_create_line_from_tender] Processing tender line {tender_line.name} (ID: {tender_line.id}) with display_type: {tender_line.display_type}, product_id: {tender_line.product_id.id if tender_line.product_id else 'None'}")
         if tender_line.display_type in ('line_section', 'line_note'):
+            _logger.info(f"[_create_line_from_tender] Creating section/note line: {tender_line.name}")
             return self._create_section_or_note_line(
                 purchase_order,
                 tender_line.name or 'Section/Note',
                 tender_line.display_type,
                 tender_line.sequence
             )
-        elif tender_line.display_type == False and tender_line.product_id:
+        elif tender_line.display_type not in ('line_section', 'line_note') and tender_line.product_id:
             # Product line
             product_uom = tender_line.uom_id.id
             if not product_uom and tender_line.product_id:
                 product_uom = tender_line.product_id.uom_po_id.id or tender_line.product_id.uom_id.id
+                _logger.info(f"[_create_line_from_tender] Product UOM for line {tender_line.name} derived from product: {product_uom}")
             
             if not product_uom:
                 product_uom = self.env['uom.uom'].search([], limit=1).id
-                
-            quantity = tender_line.quantity
-            if not quantity or quantity <= 0:
-                quantity = 1.0
-                
-            date_planned = tender_line.required_delivery_date or self.required_delivery_date or fields.Date.today()
+                _logger.warning(f"[_create_line_from_tender] No product UOM found for line {tender_line.name}, defaulting to first available UOM: {product_uom}")
             
-            # Set price_unit based on target_type
-            price_unit = 0.0
-            if tender_line.tender_id.target_type == 'discount' and tender_line.target_price:
-                price_unit = tender_line.target_price
+            date_planned = tender_line.required_delivery_date or fields.Date.today()
             
             line_vals = {
                 'order_id': purchase_order.id,
                 'product_id': tender_line.product_id.id,
                 'name': tender_line.name or tender_line.product_id.name,
-                'product_qty': quantity,
+                'product_qty': tender_line.quantity,
                 'product_uom': product_uom,
-                'price_unit': price_unit,
+                'price_unit': tender_line.target_price / tender_line.quantity if tender_line.quantity else 0.0,
                 'line_currency_id': tender_line.currency_id.id,
-                'line_price_unit': price_unit,
+                'line_price_unit': tender_line.target_price / tender_line.quantity if tender_line.quantity else 0.0,
+                'discount': tender_line.target_discount,
                 'date_planned': date_planned,
+                'taxes_id': [(6, 0, tender_line.product_id.supplier_taxes_id.ids)],
                 'tender_line_id': tender_line.id,
+                'sequence': tender_line.sequence,
+                'display_type': tender_line.display_type,
+                'alt_materials': tender_line.allow_alternative,
             }
-            
+            _logger.info(f"[_create_line_from_tender] Creating purchase order line with values: {line_vals}")
             return self.env['purchase.order.line'].create(line_vals)
-        
-        return None
+        else:
+            _logger.warning(f"[_create_line_from_tender] Skipping tender line {tender_line.name} (ID: {tender_line.id}) due to invalid display_type or missing product_id.")
+            return False
         
     def _create_line_from_tender_with_previous(self, purchase_order, tender_line, prev_po):
         """
@@ -2336,14 +2347,18 @@ class AkTender(models.Model):
         Returns:
             The created purchase order line.
         """
+        _logger.info(f"[_create_line_from_tender_with_previous] START - tender_line: {tender_line.name} (ID: {tender_line.id}), display_type: {tender_line.display_type}, product_id: {tender_line.product_id.id if tender_line.product_id else 'None'}")
+        
         if tender_line.display_type in ('line_section', 'line_note'):
+            _logger.info(f"[_create_line_from_tender_with_previous] Creating section/note for: {tender_line.name}")
             return self._create_section_or_note_line(
                 purchase_order,
                 tender_line.name or 'Section/Note',
                 tender_line.display_type,
                 tender_line.sequence
             )
-        elif tender_line.display_type == False and tender_line.product_id:
+        elif tender_line.display_type not in ('line_section', 'line_note') and tender_line.product_id:
+            _logger.info(f"[_create_line_from_tender_with_previous] Processing product line: {tender_line.name}")
             # Find the corresponding line from previous PO based on tender_line_id
             prev_line = prev_po.order_line.filtered(
                 lambda l: l.tender_line_id and l.tender_line_id.id == tender_line.id
