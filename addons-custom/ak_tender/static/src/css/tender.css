@@ -124,3 +124,62 @@ li.nav-item a.nav-link[data-name="tender_results_evaluation"] {
     font-weight: bold !important;
     color: red !important;
 }
+
+/* Offer Status Indicators - Circular badges using decoration classes */
+
+/* Make badge circular for offer_status field */
+.o_list_table td[name="offer_status"] .badge {
+    width: 18px;
+    height: 18px;
+    border-radius: 50% !important;
+    padding: 0 !important;
+    font-size: 0 !important;
+    min-width: 18px !important;
+    display: inline-block !important;
+    line-height: 18px !important;
+}
+
+/* Gray circle for not_submitted (decoration-secondary) */
+.o_list_table td[name="offer_status"] .badge.text-bg-secondary {
+    background-color: #6c757d !important;
+}
+
+/* Green circle for submitted (decoration-success) */
+.o_list_table td[name="offer_status"] .badge.text-bg-success {
+    background-color: #28a745 !important;
+}
+
+/* Make badge circular for offer_submission_status field */
+.o_list_table td[name="offer_submission_status"] .badge {
+    width: 18px;
+    height: 18px;
+    border-radius: 50% !important;
+    padding: 0 !important;
+    font-size: 0 !important;
+    min-width: 18px !important;
+    display: inline-block !important;
+    line-height: 18px !important;
+}
+
+/* Gray circle for none (decoration-secondary) */
+.o_list_table td[name="offer_submission_status"] .badge.text-bg-secondary {
+    background-color: #6c757d !important;
+}
+
+/* Yellow circle for partial (decoration-warning) */
+.o_list_table td[name="offer_submission_status"] .badge.text-bg-warning {
+    background-color: #ffc107 !important;
+}
+
+/* Green circle for all (decoration-success) */
+.o_list_table td[name="offer_submission_status"] .badge.text-bg-success {
+    background-color: #28a745 !important;
+}
+
+/* Hover effect for all status badges */
+.o_list_table td[name="offer_status"] .badge:hover,
+.o_list_table td[name="offer_submission_status"] .badge:hover {
+    transform: scale(1.3);
+    transition: transform 0.2s ease;
+    cursor: help;
+}
