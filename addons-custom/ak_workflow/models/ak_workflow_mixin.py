@@ -123,9 +123,48 @@ class AkWorkflowMixin(models.AbstractModel):
 
     def write(self, vals):
         old_states = {rec.id: rec.workflow_current_state_id for rec in self}
+        old_workflows = {rec.id: rec.workflow_definition_id for rec in self}
+        
+        # Check if workflow_definition_id is being changed
+        if 'workflow_definition_id' in vals:
+            for record in self:
+                # Only allow changing workflow if in initial state
+                if record.workflow_current_state_id and record.workflow_definition_id:
+                    initial_state = record.workflow_definition_id.initial_state_id
+                    if record.workflow_current_state_id != initial_state:
+                        raise UserError(_(
+                            "İş akışı yalnızca kayıt başlangıç durumundayken değiştirilebilir.\n"
+                            "Mevcut durum: %s\n"
+                            "Başlangıç durumu: %s"
+                        ) % (record.workflow_current_state_id.name, initial_state.name if initial_state else _('Tanımlı değil')))
+        
         res = super().write(vals)
+        
         for record in self:
-            if 'workflow_current_state_id' in vals and record.workflow_current_state_id != old_states[record.id]:
+            # Handle workflow definition change
+            if 'workflow_definition_id' in vals and record.workflow_definition_id != old_workflows[record.id]:
+                new_workflow = record.workflow_definition_id
+                if new_workflow and new_workflow.initial_state_id:
+                    # Set to new workflow's initial state
+                    now = fields.Datetime.now()
+                    record.workflow_current_state_id = new_workflow.initial_state_id
+                    record.workflow_state_start = now
+                    record._execute_state_actions('entry')
+                    
+                    # Log workflow change
+                    record.message_post(
+                        body=_("İş akışı '%s' olarak değiştirildi ve '%s' başlangıç durumuna ayarlandı") % (
+                            new_workflow.name,
+                            new_workflow.initial_state_id.name
+                        ),
+                        subtype_xmlid='mail.mt_note'
+                    )
+                    
+                    # Create initial state history record for new workflow
+                    record._log_initial_state(new_workflow.initial_state_id)
+            
+            # Handle state change
+            elif 'workflow_current_state_id' in vals and record.workflow_current_state_id != old_states[record.id]:
                 if old_states[record.id]:
                     record._execute_state_actions('exit', state=old_states[record.id])
                 record._execute_state_actions('entry')
