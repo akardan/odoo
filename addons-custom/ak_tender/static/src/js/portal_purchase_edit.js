@@ -13,23 +13,21 @@ var saveInProgress = false;
 var successMessageShown = false;
 
 // Global function for attachment preview
-window.previewAttachment = function(model, id, field, filename) {
+window.previewAttachment = function(model, id, field, filename, accessToken) {
     try {
         // Determine file type based on extension
         var isImage = /\.(jpg|jpeg|png|gif|bmp)$/i.test(filename);
         var isPdf = /\.pdf$/i.test(filename);
         
-        // Get the content URL - check if access_token exists in URL
-        var urlParams = new URLSearchParams(window.location.search);
-        var accessToken = urlParams.get('access_token');
+        // Get the content URL
         var contentUrl;
         
         if (accessToken) {
             // For portal users with access token, use our custom route
-            contentUrl = '/tender/attachment/' + id + '/' + field + '?access_token=' + accessToken;
+            contentUrl = '/tender/attachment/' + id + '/' + field + '?access_token=' + encodeURIComponent(accessToken);
         } else {
             // For logged in users without access token, use standard web/content route
-            contentUrl = '/web/content?model=' + model + '&id=' + id + '&field=' + field + '&filename=' + filename;
+            contentUrl = '/web/content?model=' + model + '&id=' + id + '&field=' + field + '&filename=' + encodeURIComponent(filename);
         }
         
         // Create modal for preview

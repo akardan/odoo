@@ -156,7 +156,7 @@
                                                         <label class="form-label">Ek1:</label>
                                                         <div t-if="line.tender_line_id and line.tender_line_id.attachment1">
                                                             <!-- Preview button with eye icon -->
-                                                            <button t-attf-onclick="previewAttachment('ak.tender.line', {{line.tender_line_id.id}}, 'attachment1', '{{line.tender_line_id.attachment1_filename}}')"
+                                                            <button t-attf-onclick="previewAttachment('ak.tender.line', {{line.tender_line_id.id}}, 'attachment1', '{{line.tender_line_id.attachment1_filename}}', '{{order.access_token}}')"
                                                                     class="btn btn-sm btn-primary">
                                                                 <i class="fa fa-eye"></i>
                                                             </button>
@@ -170,7 +170,7 @@
                                                         <label class="form-label">Ek2:</label>
                                                         <div t-if="line.tender_line_id and line.tender_line_id.attachment2">
                                                             <!-- Preview button with eye icon -->
-                                                            <button t-attf-onclick="previewAttachment('ak.tender.line', {{line.tender_line_id.id}}, 'attachment2', '{{line.tender_line_id.attachment2_filename}}')"
+                                                            <button t-attf-onclick="previewAttachment('ak.tender.line', {{line.tender_line_id.id}}, 'attachment2', '{{line.tender_line_id.attachment2_filename}}', '{{order.access_token}}')"
                                                                     class="btn btn-sm btn-primary">
                                                                 <i class="fa fa-eye"></i>
                                                             </button>
