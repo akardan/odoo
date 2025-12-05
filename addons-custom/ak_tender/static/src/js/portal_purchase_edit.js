@@ -39,8 +39,9 @@ window.previewAttachment = function(model, id, field, filename, accessToken) {
         modal.setAttribute('aria-hidden', 'true');
         
         var modalDialog = document.createElement('div');
-        modalDialog.className = 'modal-dialog modal-lg';
+        modalDialog.className = 'modal-dialog modal-xl';
         modalDialog.setAttribute('role', 'document');
+        modalDialog.style.maxWidth = '95%';
         
         var modalContent = document.createElement('div');
         modalContent.className = 'modal-content';
@@ -91,8 +92,8 @@ window.previewAttachment = function(model, id, field, filename, accessToken) {
             var iframe = document.createElement('iframe');
             iframe.src = contentUrl;
             iframe.width = '100%';
-            iframe.height = '85vh';
-            iframe.style.minHeight = '600px';
+            iframe.height = '90vh';
+            iframe.style.minHeight = '800px';
             modalBody.appendChild(iframe);
         } else {
             // For other file types, show download link
