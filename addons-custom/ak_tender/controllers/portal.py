@@ -542,7 +542,7 @@ class TenderPortal(CustomerPortal): # Inherit from CustomerPortal for standard l
                 decoded_data,
                 headers=[
                     ('Content-Type', content_type),
-                    ('Content-Disposition', content_disposition(filename, disposition='inline'))
+                    ('Content-Disposition', content_disposition(filename, disposition_type='inline'))
                 ]
             )
             
