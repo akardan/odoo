@@ -45,6 +45,9 @@
                                 <field name="location_dest_id"/>
                                 <field name="guarantee_period" invisible="tender_id.tender_type in ['direct', 'indirect']"/>
                             </group>
+                            <group>
+                                <field name="offer_status" widget="badge"/>
+                            </group>
                         </group>
                     </page>
                 </xpath>
