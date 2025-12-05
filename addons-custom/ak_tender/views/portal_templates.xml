@@ -176,7 +176,7 @@
                                                             </button>
                                                         </div>
                                                         <div t-else="">
-                                                            <span class="text-muted">Dosya yok</span>
+                                                            <span class="text-muted"> - </span>
                                                         </div>
                                                     </div>
                                                     <div class="col-6 text-center">
@@ -203,7 +203,7 @@
                                                             </button>
                                                         </div>
                                                         <div t-else="">
-                                                            <span class="text-muted">Dosya yok</span>
+                                                            <span class="text-muted"> - </span>
                                                         </div>
                                                     </div>
                                                 </div>
