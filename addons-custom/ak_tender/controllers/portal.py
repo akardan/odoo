@@ -538,11 +538,24 @@ class TenderPortal(CustomerPortal): # Inherit from CustomerPortal for standard l
                 _logger.error(f"Error decoding attachment data: {str(e)}")
                 return request.not_found()
             
+            # For inline display (PDF preview), use inline disposition
+            # For Türkçe character support, use RFC 5987 encoding
+            import urllib.parse
+            
+            # Try to use ASCII filename first
+            try:
+                filename.encode('ascii')
+                disposition = f'inline; filename="{filename}"'
+            except UnicodeEncodeError:
+                # If filename contains non-ASCII characters, use RFC 5987
+                encoded_filename = urllib.parse.quote(filename)
+                disposition = f"inline; filename*=UTF-8''{encoded_filename}"
+            
             return request.make_response(
                 decoded_data,
                 headers=[
                     ('Content-Type', content_type),
-                    ('Content-Disposition', content_disposition(filename, disposition_type='inline'))
+                    ('Content-Disposition', disposition)
                 ]
             )
             
