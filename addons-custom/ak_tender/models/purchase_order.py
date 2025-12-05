@@ -52,7 +52,7 @@ class PurchaseOrder(models.Model):
     offer_status = fields.Selection([
         ('not_submitted', 'Düzenlenmedi'),
         ('submitted', 'Düzenlendi')
-    ], string='Durum', compute='_compute_offer_status', store=True,
+    ], string='Durum', default='not_submitted', store=True, copy=False,
        help="Tedarikçinin teklifini düzenleyip düzenlemediğini gösterir")
 
     @api.depends('message_ids')
@@ -62,33 +62,6 @@ class PurchaseOrder(models.Model):
                 lambda msg: msg.message_type in ['comment', 'email'] and
                         msg.author_id == record.partner_id
             ))
-    
-    @api.depends('order_line', 'order_line.price_unit', 'state')
-    def _compute_offer_status(self):
-        """
-        Compute offer status based on whether supplier has filled prices.
-        An offer is considered 'submitted' if it has at least one line with price > 0
-        or if the state is not 'draft' or 'sent'
-        """
-        for record in self:
-            if not record.tender_id:
-                record.offer_status = 'submitted'
-                continue
-                
-            # Check if any product line has a price filled
-            has_prices = any(
-                line.price_unit > 0
-                for line in record.order_line
-                if line.display_type == False  # Only product lines, not sections/notes
-            )
-            
-            # If order is confirmed/approved, it's definitely submitted
-            if record.state not in ('draft', 'sent'):
-                record.offer_status = 'submitted'
-            elif has_prices:
-                record.offer_status = 'submitted'
-            else:
-                record.offer_status = 'not_submitted'
     
     # def _compute_new_message_count(self):
     #     for record in self:

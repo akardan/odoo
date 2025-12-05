@@ -306,9 +306,12 @@ class TenderPortal(CustomerPortal): # Inherit from CustomerPortal for standard l
                 
                 # Recompute the order totals
                 order_sudo._amount_all()
+                
+                # Mark offer as submitted when supplier saves changes
+                order_sudo.write({'offer_status': 'submitted'})
 
                 # Send email notification to the purchaser
-                order_sudo._send_supplier_tender_update_email()
+                #order_sudo._send_supplier_tender_update_email()
                 
                 # Check if all suppliers have submitted offers
                 if order_sudo.tender_id:
@@ -441,9 +444,12 @@ class TenderPortal(CustomerPortal): # Inherit from CustomerPortal for standard l
                                 _logger.warning(f"Invalid payment_term_id value: {payment_term_id}, error: {str(e)}")
                     except Exception as e:
                         _logger.exception(f"Error updating payment term: {str(e)}")
+                
+                # Mark offer as submitted when supplier saves changes
+                order_sudo.write({'offer_status': 'submitted'})
 
                 # Send email notification to the purchaser
-                order_sudo._send_supplier_tender_update_email()
+                #order_sudo._send_supplier_tender_update_email()
                 
                 # Return updated values in the format expected by the JavaScript
                 result = {

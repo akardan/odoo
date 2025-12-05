@@ -2186,6 +2186,7 @@ class AkTender(models.Model):
             'company_id': self.env.company.id,
             'currency_id': self.currency_id.id,
             'location_dest_id': self.location_dest_id.id if self.location_dest_id else False, # Transfer delivery location
+            'offer_status': 'not_submitted',  # Yeni tur teklifleri başlangıçta düzenlenmedi olarak işaretlenir
         }
         
         # If this is a subsequent round, copy payment terms from the previous purchase order
