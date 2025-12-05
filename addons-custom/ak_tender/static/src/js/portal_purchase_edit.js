@@ -48,6 +48,9 @@ window.previewAttachment = function(model, id, field, filename, accessToken) {
         
         var modalHeader = document.createElement('div');
         modalHeader.className = 'modal-header';
+        modalHeader.style.display = 'flex';
+        modalHeader.style.justifyContent = 'space-between';
+        modalHeader.style.alignItems = 'center';
         
         var modalTitle = document.createElement('h5');
         modalTitle.className = 'modal-title';
@@ -57,49 +60,15 @@ window.previewAttachment = function(model, id, field, filename, accessToken) {
         var buttonContainer = document.createElement('div');
         buttonContainer.style.display = 'flex';
         buttonContainer.style.gap = '10px';
+        buttonContainer.style.alignItems = 'center';
         
-        // Fullscreen button
+        // Fullscreen button (functionality will be set based on content type)
         var fullscreenButton = document.createElement('button');
         fullscreenButton.type = 'button';
         fullscreenButton.className = 'btn btn-sm btn-outline-secondary';
         fullscreenButton.innerHTML = '<i class="fa fa-expand"></i>';
         fullscreenButton.title = 'Tam Ekran';
         fullscreenButton.style.border = 'none';
-        
-        // Add fullscreen functionality
-        fullscreenButton.onclick = function() {
-            if (!document.fullscreenElement) {
-                // Enter fullscreen
-                if (modal.requestFullscreen) {
-                    modal.requestFullscreen();
-                } else if (modal.webkitRequestFullscreen) {
-                    modal.webkitRequestFullscreen();
-                } else if (modal.msRequestFullscreen) {
-                    modal.msRequestFullscreen();
-                }
-                fullscreenButton.innerHTML = '<i class="fa fa-compress"></i>';
-                fullscreenButton.title = 'Tam Ekrandan Çık';
-            } else {
-                // Exit fullscreen
-                if (document.exitFullscreen) {
-                    document.exitFullscreen();
-                } else if (document.webkitExitFullscreen) {
-                    document.webkitExitFullscreen();
-                } else if (document.msExitFullscreen) {
-                    document.msExitFullscreen();
-                }
-                fullscreenButton.innerHTML = '<i class="fa fa-expand"></i>';
-                fullscreenButton.title = 'Tam Ekran';
-            }
-        };
-        
-        // Listen for fullscreen changes to update button icon
-        document.addEventListener('fullscreenchange', function() {
-            if (!document.fullscreenElement) {
-                fullscreenButton.innerHTML = '<i class="fa fa-expand"></i>';
-                fullscreenButton.title = 'Tam Ekran';
-            }
-        });
         
         var closeButton = document.createElement('button');
         closeButton.type = 'button';
@@ -142,6 +111,7 @@ window.previewAttachment = function(model, id, field, filename, accessToken) {
         
         var modalBody = document.createElement('div');
         modalBody.className = 'modal-body text-center';
+        modalBody.style.padding = '0';
         
         // Add content based on file type
         if (isImage) {
@@ -155,8 +125,45 @@ window.previewAttachment = function(model, id, field, filename, accessToken) {
             iframe.src = contentUrl;
             iframe.width = '100%';
             iframe.height = '90vh';
-            iframe.style.minHeight = '700px';
+            iframe.style.minHeight = '800px';
+            iframe.style.border = 'none';
+            iframe.id = 'preview-iframe-' + Date.now();
+            iframe.setAttribute('allowfullscreen', 'true');
+            iframe.setAttribute('webkitallowfullscreen', 'true');
+            iframe.setAttribute('mozallowfullscreen', 'true');
             modalBody.appendChild(iframe);
+            
+            // Update fullscreen button to work with iframe instead of modal
+            fullscreenButton.onclick = function() {
+                var elem = iframe;
+                if (!document.fullscreenElement && !document.webkitFullscreenElement && !document.mozFullScreenElement) {
+                    // Enter fullscreen
+                    if (elem.requestFullscreen) {
+                        elem.requestFullscreen();
+                    } else if (elem.webkitRequestFullscreen) {
+                        elem.webkitRequestFullscreen();
+                    } else if (elem.msRequestFullscreen) {
+                        elem.msRequestFullscreen();
+                    } else if (elem.mozRequestFullScreen) {
+                        elem.mozRequestFullScreen();
+                    }
+                    fullscreenButton.innerHTML = '<i class="fa fa-compress"></i>';
+                    fullscreenButton.title = 'Tam Ekrandan Çık';
+                } else {
+                    // Exit fullscreen
+                    if (document.exitFullscreen) {
+                        document.exitFullscreen();
+                    } else if (document.webkitExitFullscreen) {
+                        document.webkitExitFullscreen();
+                    } else if (document.msExitFullscreen) {
+                        document.msExitFullscreen();
+                    } else if (document.mozCancelFullScreen) {
+                        document.mozCancelFullScreen();
+                    }
+                    fullscreenButton.innerHTML = '<i class="fa fa-expand"></i>';
+                    fullscreenButton.title = 'Tam Ekran';
+                }
+            };
         } else {
             // For other file types, show download link
             var downloadLink = document.createElement('a');
