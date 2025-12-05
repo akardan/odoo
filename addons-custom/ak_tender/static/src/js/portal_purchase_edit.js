@@ -65,10 +65,11 @@ window.previewAttachment = function(model, id, field, filename, accessToken) {
         // Fullscreen button (functionality will be set based on content type)
         var fullscreenButton = document.createElement('button');
         fullscreenButton.type = 'button';
-        fullscreenButton.className = 'btn btn-sm btn-outline-secondary';
-        fullscreenButton.innerHTML = '<i class="fa fa-expand"></i>';
+        fullscreenButton.className = 'btn btn-outline-secondary';
+        fullscreenButton.innerHTML = '<i class="fa fa-expand" style="font-size: 1.3em;"></i>';
         fullscreenButton.title = 'Tam Ekran';
         fullscreenButton.style.border = 'none';
+        fullscreenButton.style.padding = '8px 12px';
         
         var closeButton = document.createElement('button');
         closeButton.type = 'button';
