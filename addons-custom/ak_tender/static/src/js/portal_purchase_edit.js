@@ -53,6 +53,54 @@ window.previewAttachment = function(model, id, field, filename, accessToken) {
         modalTitle.className = 'modal-title';
         modalTitle.textContent = filename;
         
+        // Create button container for fullscreen and close buttons
+        var buttonContainer = document.createElement('div');
+        buttonContainer.style.display = 'flex';
+        buttonContainer.style.gap = '10px';
+        
+        // Fullscreen button
+        var fullscreenButton = document.createElement('button');
+        fullscreenButton.type = 'button';
+        fullscreenButton.className = 'btn btn-sm btn-outline-secondary';
+        fullscreenButton.innerHTML = '<i class="fa fa-expand"></i>';
+        fullscreenButton.title = 'Tam Ekran';
+        fullscreenButton.style.border = 'none';
+        
+        // Add fullscreen functionality
+        fullscreenButton.onclick = function() {
+            if (!document.fullscreenElement) {
+                // Enter fullscreen
+                if (modal.requestFullscreen) {
+                    modal.requestFullscreen();
+                } else if (modal.webkitRequestFullscreen) {
+                    modal.webkitRequestFullscreen();
+                } else if (modal.msRequestFullscreen) {
+                    modal.msRequestFullscreen();
+                }
+                fullscreenButton.innerHTML = '<i class="fa fa-compress"></i>';
+                fullscreenButton.title = 'Tam Ekrandan Çık';
+            } else {
+                // Exit fullscreen
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                } else if (document.msExitFullscreen) {
+                    document.msExitFullscreen();
+                }
+                fullscreenButton.innerHTML = '<i class="fa fa-expand"></i>';
+                fullscreenButton.title = 'Tam Ekran';
+            }
+        };
+        
+        // Listen for fullscreen changes to update button icon
+        document.addEventListener('fullscreenchange', function() {
+            if (!document.fullscreenElement) {
+                fullscreenButton.innerHTML = '<i class="fa fa-expand"></i>';
+                fullscreenButton.title = 'Tam Ekran';
+            }
+        });
+        
         var closeButton = document.createElement('button');
         closeButton.type = 'button';
         closeButton.className = 'btn-close';
@@ -62,6 +110,17 @@ window.previewAttachment = function(model, id, field, filename, accessToken) {
         
         // Add click handler for manual close
         closeButton.onclick = function() {
+            // Exit fullscreen if active
+            if (document.fullscreenElement) {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                } else if (document.msExitFullscreen) {
+                    document.msExitFullscreen();
+                }
+            }
+            
             if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
                 var bsModal = bootstrap.Modal.getInstance(modal);
                 if (bsModal) {
@@ -75,8 +134,11 @@ window.previewAttachment = function(model, id, field, filename, accessToken) {
             }
         };
         
+        buttonContainer.appendChild(fullscreenButton);
+        buttonContainer.appendChild(closeButton);
+        
         modalHeader.appendChild(modalTitle);
-        modalHeader.appendChild(closeButton);
+        modalHeader.appendChild(buttonContainer);
         
         var modalBody = document.createElement('div');
         modalBody.className = 'modal-body text-center';
@@ -93,7 +155,7 @@ window.previewAttachment = function(model, id, field, filename, accessToken) {
             iframe.src = contentUrl;
             iframe.width = '100%';
             iframe.height = '90vh';
-            iframe.style.minHeight = '800px';
+            iframe.style.minHeight = '700px';
             modalBody.appendChild(iframe);
         } else {
             // For other file types, show download link
