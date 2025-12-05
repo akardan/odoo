@@ -155,12 +155,26 @@
                                                     <div class="col-6">
                                                         <label class="form-label">Ek1:</label>
                                                         <div t-if="line.tender_line_id and line.tender_line_id.attachment1">
-                                                            <!-- Preview button with eye icon -->
-                                                            <button t-attf-onclick="previewAttachment('ak.tender.line', {{line.tender_line_id.id}}, 'attachment1', '{{line.tender_line_id.attachment1_filename}}', '{{order.access_token}}')"
-                                                                    class="btn btn-sm btn-primary">
-                                                                <i class="fa fa-eye"></i>
+                                                            <!-- File type icon based on extension -->
+                                                            <t t-set="filename1" t-value="line.tender_line_id.attachment1_filename or ''"/>
+                                                            <t t-set="ext1" t-value="filename1.lower().split('.')[-1] if '.' in filename1 else ''"/>
+                                                            <button t-attf-onclick="previewAttachment('ak.tender.line', {{line.tender_line_id.id}}, 'attachment1', '{{filename1}}', '{{order.access_token}}')"
+                                                                    class="btn btn-sm btn-light border"
+                                                                    style="padding: 8px 12px;">
+                                                                <!-- PDF icon -->
+                                                                <i t-if="ext1 == 'pdf'" class="fa fa-file-pdf-o" style="color: #dc3545; font-size: 1.5em;"></i>
+                                                                <!-- Word icons -->
+                                                                <i t-elif="ext1 in ['doc', 'docx']" class="fa fa-file-word-o" style="color: #2b579a; font-size: 1.5em;"></i>
+                                                                <!-- Excel icons -->
+                                                                <i t-elif="ext1 in ['xls', 'xlsx']" class="fa fa-file-excel-o" style="color: #217346; font-size: 1.5em;"></i>
+                                                                <!-- PowerPoint icons -->
+                                                                <i t-elif="ext1 in ['ppt', 'pptx']" class="fa fa-file-powerpoint-o" style="color: #d24726; font-size: 1.5em;"></i>
+                                                                <!-- Image icons -->
+                                                                <i t-elif="ext1 in ['jpg', 'jpeg', 'png', 'gif', 'bmp']" class="fa fa-file-image-o" style="color: #7b2cbf; font-size: 1.5em;"></i>
+                                                                <!-- Text/other icons -->
+                                                                <i t-else="" class="fa fa-file-text-o" style="color: #795548; font-size: 1.5em;"></i>
                                                             </button>
-                                                            <span class="ml-2" t-esc="line.tender_line_id.attachment1_filename or 'Ek1'"/>
+                                                            <span class="ml-2" t-esc="filename1 or 'Ek1'"/>
                                                         </div>
                                                         <div t-else="">
                                                             <span class="text-muted">Dosya yok</span>
@@ -169,12 +183,26 @@
                                                     <div class="col-6">
                                                         <label class="form-label">Ek2:</label>
                                                         <div t-if="line.tender_line_id and line.tender_line_id.attachment2">
-                                                            <!-- Preview button with eye icon -->
-                                                            <button t-attf-onclick="previewAttachment('ak.tender.line', {{line.tender_line_id.id}}, 'attachment2', '{{line.tender_line_id.attachment2_filename}}', '{{order.access_token}}')"
-                                                                    class="btn btn-sm btn-primary">
-                                                                <i class="fa fa-eye"></i>
+                                                            <!-- File type icon based on extension -->
+                                                            <t t-set="filename2" t-value="line.tender_line_id.attachment2_filename or ''"/>
+                                                            <t t-set="ext2" t-value="filename2.lower().split('.')[-1] if '.' in filename2 else ''"/>
+                                                            <button t-attf-onclick="previewAttachment('ak.tender.line', {{line.tender_line_id.id}}, 'attachment2', '{{filename2}}', '{{order.access_token}}')"
+                                                                    class="btn btn-sm btn-light border"
+                                                                    style="padding: 8px 12px;">
+                                                                <!-- PDF icon -->
+                                                                <i t-if="ext2 == 'pdf'" class="fa fa-file-pdf-o" style="color: #dc3545; font-size: 1.5em;"></i>
+                                                                <!-- Word icons -->
+                                                                <i t-elif="ext2 in ['doc', 'docx']" class="fa fa-file-word-o" style="color: #2b579a; font-size: 1.5em;"></i>
+                                                                <!-- Excel icons -->
+                                                                <i t-elif="ext2 in ['xls', 'xlsx']" class="fa fa-file-excel-o" style="color: #217346; font-size: 1.5em;"></i>
+                                                                <!-- PowerPoint icons -->
+                                                                <i t-elif="ext2 in ['ppt', 'pptx']" class="fa fa-file-powerpoint-o" style="color: #d24726; font-size: 1.5em;"></i>
+                                                                <!-- Image icons -->
+                                                                <i t-elif="ext2 in ['jpg', 'jpeg', 'png', 'gif', 'bmp']" class="fa fa-file-image-o" style="color: #7b2cbf; font-size: 1.5em;"></i>
+                                                                <!-- Text/other icons -->
+                                                                <i t-else="" class="fa fa-file-text-o" style="color: #795548; font-size: 1.5em;"></i>
                                                             </button>
-                                                            <span class="ml-2" t-esc="line.tender_line_id.attachment2_filename or 'Ek2'"/>
+                                                            <span class="ml-2" t-esc="filename2 or 'Ek2'"/>
                                                         </div>
                                                         <div t-else="">
                                                             <span class="text-muted">Dosya yok</span>
