@@ -897,7 +897,13 @@
                                             <th t-att-class="'vendor-col ' + (vendor.system_selection and 'system-selection ' or '') + (vendor.user_selection and 'user-selection' or '') + ((vendor.state == 'purchase' or vendor.state == 'to approve') and 'confirmed-order' or '')" t-att-data-vendor-id="vendor.partner_id.id" t-att-data-po-id="vendor.id">
                                                 <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                                                     <div style="flex: 1;">
-                                                        <span t-esc="vendor.partner_id.name"/> - <small>(<span t-esc="vendor.name"/>)</small>
+                                                        <!-- Show parent company name if partner is a contact -->
+                                                        <t t-if="not vendor.partner_id.is_company and vendor.partner_id.parent_id">
+                                                            <span t-esc="vendor.partner_id.parent_id.name"/> - <small>(<span t-esc="vendor.name"/>)</small>
+                                                        </t>
+                                                        <t t-else="">
+                                                            <span t-esc="vendor.partner_id.name"/> - <small>(<span t-esc="vendor.name"/>)</small>
+                                                        </t>
                                                     </div>
                                                     <button t-if="vendor.state in ['purchase', 'done'] and o.workflow_current_state_id.code == 'evaluation'" 
                                                             type="button" 
