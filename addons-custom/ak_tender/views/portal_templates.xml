@@ -160,7 +160,7 @@
                                                             <t t-set="ext1" t-value="filename1.lower().split('.')[-1] if '.' in filename1 else ''"/>
                                                             <button t-attf-onclick="previewAttachment('ak.tender.line', {{line.tender_line_id.id}}, 'attachment1', '{{filename1}}', '{{order.access_token}}')"
                                                                     class="btn btn-light border"
-                                                                    style="padding: 15px 20px;">
+                                                                    style="padding: 15px 20px; border-radius: 8px; min-width: 80px; min-height: 80px;">
                                                                 <!-- PDF icon -->
                                                                 <i t-if="ext1 == 'pdf'" class="fa fa-file-pdf-o" style="color: #dc3545; font-size: 3em;"></i>
                                                                 <!-- Word icons -->
@@ -187,7 +187,7 @@
                                                             <t t-set="ext2" t-value="filename2.lower().split('.')[-1] if '.' in filename2 else ''"/>
                                                             <button t-attf-onclick="previewAttachment('ak.tender.line', {{line.tender_line_id.id}}, 'attachment2', '{{filename2}}', '{{order.access_token}}')"
                                                                     class="btn btn-light border"
-                                                                    style="padding: 15px 20px;">
+                                                                    style="padding: 15px 20px; border-radius: 8px; min-width: 80px; min-height: 80px;">
                                                                 <!-- PDF icon -->
                                                                 <i t-if="ext2 == 'pdf'" class="fa fa-file-pdf-o" style="color: #dc3545; font-size: 3em;"></i>
                                                                 <!-- Word icons -->
