@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import logging
 from odoo import http, fields, _
-from odoo.http import request
+from odoo.http import request, content_disposition
 from odoo.addons.portal.controllers.portal import CustomerPortal, pager as portal_pager
 from odoo.tools import formatLang
 
@@ -542,7 +542,7 @@ class TenderPortal(CustomerPortal): # Inherit from CustomerPortal for standard l
                 decoded_data,
                 headers=[
                     ('Content-Type', content_type),
-                    ('Content-Disposition', f'inline; filename="{filename}"')
+                    ('Content-Disposition', content_disposition(filename, disposition='inline'))
                 ]
             )
             
