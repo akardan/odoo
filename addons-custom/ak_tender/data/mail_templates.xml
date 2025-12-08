@@ -45,7 +45,14 @@
         <record id="email_template_edi_purchase_custom" model="mail.template">
             <field name="name">Tender: Request For Quotation</field>
             <field name="model_id" ref="purchase.model_purchase_order"/>
-            <field name="subject">{{ object.company_id.name }} İhale Teklif Talebi - {{ object.tender_id.name or 'n/a' }}</field>
+            <field name="subject">
+                <t t-if="object.tender_round and object.tender_round > 1">
+                    {{ object.company_id.name }} - REVİZE TEKLİF TALEBİ (Tur {{ object.tender_round }}) - {{ object.tender_id.name or 'n/a' }}
+                </t>
+                <t t-else="">
+                    {{ object.company_id.name }} İhale Teklif Talebi - {{ object.tender_id.name or 'n/a' }}
+                </t>
+            </field>
             <field name="partner_to">{{ object.partner_id.id }}</field>
             <field name="description">Sent to suppliers for tender quotation requests with tender number</field>
             <field name="body_html" type="html">
@@ -57,12 +64,43 @@
                         </t>
                     </p>
                     
+                    <!-- REVISED QUOTE BANNER - Only for Round 2+ -->
+                    <t t-if="object.tender_round and object.tender_round > 1">
+                        <div style="margin: 20px 0; padding: 15px 20px; background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%); border-radius: 5px; border-left: 5px solid #c92a2a;">
+                            <h2 style="margin: 0 0 10px 0; color: #ffffff; font-size: 18px; font-weight: bold;">
+                                🔄 REVİZE TEKLİF TALEBİ - TUR <t t-out="object.tender_round or '2'">2</t>
+                            </h2>
+                            <p style="margin: 0; color: #ffffff; font-size: 14px; line-height: 1.5;">
+                                <strong>ÖNEMLİ:</strong> Bu mail, daha önce gönderdiğiniz teklifinizin DEVAMI değil, YENİ bir teklif talebidir.
+                                Rekabetçi fiyatlarınızı girerek yeni teklifinizi göndermenizi rica ederiz.
+                            </p>
+                        </div>
+                        
+                        <!-- Previous Quote Information -->
+                        <div style="margin: 15px 0; padding: 12px; background-color: #fff3cd; border-left: 4px solid #ffc107; border-radius: 3px;">
+                            <p style="margin: 0; font-size: 13px; color: #856404;">
+                                <strong>📊 İlk Teklifiniz Alınmıştır</strong><br/>
+                                Değerlendirme sonucunda revize fiyat talebinde bulunuyoruz. Lütfen yeni, daha rekabetçi teklifinizi giriniz.
+                                <br/><strong>Not:</strong> İlk teklifiniz kayıtlıdır, yeni teklif girmeniz gerekmektedir.
+                            </p>
+                        </div>
+                    </t>
+                    
                     <!-- Tender Info -->
                     <t t-if="object.tender_id">
                         <div style="margin: 15px 0; padding: 10px; background-color: #f8f9fa; border-left: 4px solid #875A7B;">
                             <strong>İhale No:</strong> <t t-out="object.tender_id.code or ''">İHALE001</t><br/>
                             <strong>SAT Kodu:</strong> <t t-out="object.tender_id.name or ''">SAT Kodu</t><br/>
-                            <strong>Teklif Turu:</strong> <t t-out="object.tender_round or '1'">1</t><br/>
+                            <strong>Teklif Turu:</strong>
+                            <t t-if="object.tender_round and object.tender_round > 1">
+                                <span style="background-color: #ff6b6b; color: white; padding: 2px 8px; border-radius: 3px; font-weight: bold;">
+                                    TUR <t t-out="object.tender_round or '1'">2</t> - REVİZE TEKLİF
+                                </span>
+                            </t>
+                            <t t-else="">
+                                <t t-out="object.tender_round or '1'">1</t>
+                            </t>
+                            <br/>
                             <t t-if="object.tender_id.workflow_step_deadline">
                                 <strong style="color: #d9534f;">Teklif Verme Son Tarihi:</strong>
                                 <span style="background-color: #fcf8e3; padding: 3px 8px; border-radius: 3px; font-weight: bold; color: #8a6d3b;">
@@ -91,13 +129,34 @@
                     <!-- Horizontal Line -->
                     <div style="border-bottom: 1px solid #e1e1e1; margin-bottom: 15px;"/>
                     
-                    <p style="margin: 0px; padding: 0px; font-size: 14px;">
-                        Ekte <t t-out="object.company_id.name or ''">YourCompany</t> şirketinden <span style="font-weight:bold;" t-out="object.name or ''">P00050</span> numaralı teklif talebi bulunmaktadır.
-                    </p>
-                    
-                    <p style="margin: 15px 0; font-size: 14px;">
-                        Teklif detaylarınızı girmek için linke tıklayın. Düzenlemelerinizi tamamladıktan sonra "Tüm Değişiklikleri Kaydet" butonuna tıklayarak kaydetme işlemini tamamlamayı unutmayın.
-                    </p>
+                    <!-- Different message for revised quotes -->
+                    <t t-if="object.tender_round and object.tender_round > 1">
+                        <p style="margin: 15px 0; padding: 0px; font-size: 14px; line-height: 1.6;">
+                            <t t-out="object.company_id.name or ''">YourCompany</t> olarak, <span style="font-weight:bold;" t-out="object.name or ''">P00050</span> numaralı teklif talebimiz için
+                            <strong style="color: #d9534f;">revize edilmiş fiyat teklifinizi</strong> bekliyoruz.
+                        </p>
+                        
+                        <div style="margin: 20px 0; padding: 15px; background-color: #e7f3ff; border-left: 4px solid #2196F3; border-radius: 3px;">
+                            <p style="margin: 0 0 10px 0; font-size: 14px; color: #1565C0;">
+                                <strong>📝 Nasıl Teklif Verilir:</strong>
+                            </p>
+                            <ol style="margin: 5px 0; padding-left: 20px; font-size: 13px; color: #333;">
+                                <li style="margin: 5px 0;">Aşağıdaki "Satınalma Teklif Talebini Görüntüle" butonuna tıklayın</li>
+                                <li style="margin: 5px 0;"><strong>YENİ fiyatlarınızı</strong> ilgili alanlara girin (önceki teklifiniz referans olarak görünebilir)</li>
+                                <li style="margin: 5px 0;">Tüm kalemleri gözden geçirin</li>
+                                <li style="margin: 5px 0;"><strong>"Tüm Değişiklikleri Kaydet"</strong> butonuna tıklayarak kaydetmeyi unutmayın</li>
+                            </ol>
+                        </div>
+                    </t>
+                    <t t-else="">
+                        <p style="margin: 0px; padding: 0px; font-size: 14px;">
+                            Ekte <t t-out="object.company_id.name or ''">YourCompany</t> şirketinden <span style="font-weight:bold;" t-out="object.name or ''">P00050</span> numaralı teklif talebi bulunmaktadır.
+                        </p>
+                        
+                        <p style="margin: 15px 0; font-size: 14px;">
+                            Teklif detaylarınızı girmek için linke tıklayın. Düzenlemelerinizi tamamladıktan sonra "Tüm Değişiklikleri Kaydet" butonuna tıklayarak kaydetme işlemini tamamlamayı unutmayın.
+                        </p>
+                    </t>
                     
                     <p style="margin: 15px 0; font-size: 14px;">
                         Herhangi bir sorunuz varsa, bizimle iletişime geçmekten çekinmeyin.
@@ -121,7 +180,8 @@
                     <div style="border-top: 1px solid #e1e1e1; margin-top: 15px; padding-top: 10px; color: #888888; font-size: 12px;">
                         <t t-out="object.company_id.name or ''">Kardan.Digital</t>
                     </div>
-                </div></field>
+                </div>
+            </field>
             <field name="report_template_ids" eval="[(4, ref('purchase.report_purchase_quotation'))]"/>
             <field name="lang">{{ object.partner_id.lang }}</field>
             <field name="auto_delete" eval="True"/>
