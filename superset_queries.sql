@@ -42,7 +42,9 @@ PERFORMANS İPUCU:
 */
 
 
-CREATE OR REPLACE VIEW view_tender_summary AS
+DROP VIEW IF EXISTS view_tender_summary CASCADE;
+
+CREATE VIEW view_tender_summary AS
     -- ============================================================================
     -- 1. İHALE ÖZET SORGUSU (TENDER SUMMARY QUERY)
     -- ============================================================================
@@ -193,8 +195,9 @@ CREATE OR REPLACE VIEW view_tender_summary AS
 
     ORDER BY t.start_date DESC, t.id DESC;
 
+DROP VIEW IF EXISTS view_tender_lines_detail CASCADE;
 
-CREATE OR REPLACE VIEW view_tender_lines_detail AS
+CREATE VIEW view_tender_lines_detail AS
     -- ============================================================================
     -- 2. İHALE KALEMLERİ DETAY SORGUSU (TENDER LINES DETAIL QUERY)
     -- ============================================================================
@@ -267,10 +270,18 @@ CREATE OR REPLACE VIEW view_tender_lines_detail AS
         tl.days,
         COALESCE((uom.name::jsonb)->>'tr_TR', (uom.name::jsonb)->>'en_US', uom.name::text) as uom,
         
-        -- Fiyat Bilgileri (Line Level)
+        -- Hedef Tipi ve İskonto / Target Type and Discount
+        tl.target_type as line_target_type,
+        CASE
+            WHEN tl.target_type = 'price' THEN 'Fiyat'
+            WHEN tl.target_type = 'discount' THEN 'İndirim'
+            ELSE tl.target_type
+        END as line_target_type_label,
         tl.target_price as line_target_price,
         tl.target_discount as line_target_discount,
-        (tl.quantity * tl.target_price) as line_total_target,
+
+        -- Fiyat Bilgileri (Line Level)
+        (tl.quantity * tl.target_price * (1 - tl.target_discount)) as line_total_target,
         (tl.quantity * tl.days * tl.target_price) as line_total_with_days,
         
         -- Teslimat Bilgileri
@@ -308,8 +319,13 @@ CREATE OR REPLACE VIEW view_tender_lines_detail AS
         TO_CHAR(t.start_date, 'YYYY-MM') as year_month,
         TO_CHAR(t.start_date, 'Day') as day_of_week,
         prl.material_group as product_material_group,
-        prl.purchasing_group as product_purchasing_group
-
+        prl.purchasing_group as product_purchasing_group,
+        
+        -- Line Para Birimi / Line Currency
+        tl.currency_id as line_currency_id,
+        line_curr.name as line_currency,
+        line_curr.symbol as line_currency_symbol
+        
     FROM ak_tender t
         -- Tender Lines
         INNER JOIN ak_tender_line tl ON tl.tender_id = t.id
@@ -337,6 +353,7 @@ CREATE OR REPLACE VIEW view_tender_lines_detail AS
         
         -- Currency
         LEFT JOIN res_currency curr ON t.currency_id = curr.id
+        LEFT JOIN res_currency line_curr ON tl.currency_id = line_curr.id
         
         -- Hotel Information (for MICE)
         LEFT JOIN res_partner hotel ON tl.hotel_partner_id = hotel.id
@@ -349,7 +366,9 @@ CREATE OR REPLACE VIEW view_tender_lines_detail AS
     ORDER BY t.start_date DESC, t.id DESC, tl.sequence ASC;
 
 
-CREATE OR REPLACE VIEW view_workflow_transition_history AS
+DROP VIEW IF EXISTS view_workflow_transition_history CASCADE;
+
+CREATE VIEW view_workflow_transition_history AS
     -- ============================================================================
     -- 3. WORKFLOW GEÇİŞ GEÇMİŞİ SORGUSU (WORKFLOW TRANSITION HISTORY QUERY)
     -- ============================================================================
@@ -465,7 +484,9 @@ CREATE OR REPLACE VIEW view_workflow_transition_history AS
     ORDER BY wth.create_date DESC;
 
 
-CREATE OR REPLACE VIEW view_tender_performance AS
+DROP VIEW IF EXISTS view_tender_performance CASCADE;
+
+CREATE VIEW view_tender_performance AS
     -- ============================================================================
     -- 4. İHALE PERFORMANS ANALİZİ (TENDER PERFORMANCE ANALYSIS)
     -- ============================================================================
@@ -588,7 +609,9 @@ CREATE OR REPLACE VIEW view_tender_performance AS
     ORDER BY t.start_date DESC, t.id DESC;
 
 
-CREATE OR REPLACE VIEW view_state_statistics AS
+DROP VIEW IF EXISTS view_state_statistics CASCADE;
+
+CREATE VIEW view_state_statistics AS
     -- ============================================================================
     -- 5. DURUM BAZLI İSTATİSTİKLER (STATE-BASED STATISTICS)
     -- ============================================================================
@@ -667,7 +690,9 @@ CREATE OR REPLACE VIEW view_state_statistics AS
     ORDER BY ws.sequence;
 
 
-CREATE OR REPLACE VIEW view_user_performance AS
+DROP VIEW IF EXISTS view_user_performance CASCADE;
+
+CREATE VIEW view_user_performance AS
     -- ============================================================================
     -- 6. KULLANICI PERFORMANSI (USER PERFORMANCE)
     -- ============================================================================
@@ -807,44 +832,48 @@ SELECT
     -- FİNANSAL METRIKLER (ÜRÜN BAZLI) / FINANCIAL METRICS (PER PRODUCT)
     -- Hedef Fiyat (Target Price)
     tl.target_price,
-    tl.target_price * tl.quantity as hedef_fiyat_toplam,
+    tl.target_price * (1 - tl.target_discount) * tl.quantity as hedef_fiyat_toplam,
     
     -- İlk Turda Bu Ürün İçin Verilen En Düşük Teklif
     COALESCE((
-        SELECT MIN(pol.price_unit)
+        SELECT MIN(pol.price_unit * (1 - tl.target_discount))
         FROM purchase_order po
         JOIN purchase_order_line pol ON pol.order_id = po.id
         WHERE po.tender_id = t.id
         AND pol.product_id = tl.product_id
         AND po.tender_round = 1
+        AND pol.price_unit > 0
     ), 0) as ilk_tur_en_dusuk_fiyat,
     
     COALESCE((
-        SELECT MIN(pol.price_unit) * tl.quantity
+        SELECT MIN(pol.price_unit * (1 - tl.target_discount)) * tl.quantity
         FROM purchase_order po
         JOIN purchase_order_line pol ON pol.order_id = po.id
         WHERE po.tender_id = t.id
         AND pol.product_id = tl.product_id
         AND po.tender_round = 1
+        AND pol.price_unit > 0
     ), 0) as ilk_tur_en_dusuk_fiyat_toplam,
     
     -- Mevcut Turdaki En Düşük Teklif (Current Round Lowest Bid) - Bu ürün için
     COALESCE((
-        SELECT MIN(pol.price_unit)
+        SELECT MIN(pol.price_unit * (1 - tl.target_discount))
         FROM purchase_order po
         JOIN purchase_order_line pol ON pol.order_id = po.id
         WHERE po.tender_id = t.id
         AND pol.product_id = tl.product_id
         AND po.tender_round = t.tender_round
+        AND pol.price_unit > 0
     ), 0) as mevcut_tur_en_dusuk_fiyat,
     
     COALESCE((
-        SELECT MIN(pol.price_unit) * tl.quantity
+        SELECT MIN(pol.price_unit * (1 - tl.target_discount)) * tl.quantity
         FROM purchase_order po
         JOIN purchase_order_line pol ON pol.order_id = po.id
         WHERE po.tender_id = t.id
         AND pol.product_id = tl.product_id
         AND po.tender_round = t.tender_round
+        AND pol.price_unit > 0
     ), 0) as mevcut_tur_en_dusuk_fiyat_toplam,
     
     -- Saving (İlk Tur En Düşük - Mevcut Tur En Düşük)
@@ -855,48 +884,54 @@ SELECT
         WHERE po.tender_id = t.id
         AND pol.product_id = tl.product_id
         AND po.tender_round = 1
+        AND pol.price_unit > 0
     ), 0) - COALESCE((
-        SELECT MIN(pol.price_unit) * tl.quantity
+        SELECT MIN(pol.price_unit * (1 - tl.target_discount)) * tl.quantity
         FROM purchase_order po
         JOIN purchase_order_line pol ON pol.order_id = po.id
         WHERE po.tender_id = t.id
         AND pol.product_id = tl.product_id
         AND po.tender_round = t.tender_round
+        AND pol.price_unit > 0
     ), 0) as saving_tutar,
     
     -- Saving Yüzdesi (%)
     CASE
         WHEN COALESCE((
-            SELECT MIN(pol.price_unit) * tl.quantity
+            SELECT MIN(pol.price_unit * (1 - tl.target_discount)) * tl.quantity
             FROM purchase_order po
             JOIN purchase_order_line pol ON pol.order_id = po.id
             WHERE po.tender_id = t.id
             AND pol.product_id = tl.product_id
             AND po.tender_round = 1
+            AND pol.price_unit > 0
         ), 0) > 0 THEN
             ROUND((
                 (COALESCE((
-                    SELECT MIN(pol.price_unit) * tl.quantity
+                    SELECT MIN(pol.price_unit * (1 - tl.target_discount)) * tl.quantity
                     FROM purchase_order po
                     JOIN purchase_order_line pol ON pol.order_id = po.id
                     WHERE po.tender_id = t.id
                     AND pol.product_id = tl.product_id
                     AND po.tender_round = 1
+                    AND pol.price_unit > 0
                 ), 0) - COALESCE((
-                    SELECT MIN(pol.price_unit) * tl.quantity
+                    SELECT MIN(pol.price_unit * (1 - tl.target_discount)) * tl.quantity
                     FROM purchase_order po
                     JOIN purchase_order_line pol ON pol.order_id = po.id
                     WHERE po.tender_id = t.id
                     AND pol.product_id = tl.product_id
                     AND po.tender_round = t.tender_round
+                    AND pol.price_unit > 0
                 ), 0)) /
                 COALESCE((
-                    SELECT MIN(pol.price_unit) * tl.quantity
+                    SELECT MIN(pol.price_unit * (1 - tl.target_discount)) * tl.quantity
                     FROM purchase_order po
                     JOIN purchase_order_line pol ON pol.order_id = po.id
                     WHERE po.tender_id = t.id
                     AND pol.product_id = tl.product_id
                     AND po.tender_round = 1
+                    AND pol.price_unit > 0
                 ), 1) * 100
             )::numeric, 2)
         ELSE 0
@@ -907,12 +942,13 @@ SELECT
         WHEN tl.target_price > 0 THEN
             ROUND((
                 COALESCE((
-                    SELECT MIN(pol.price_unit)
+                    SELECT MIN(pol.price_unit * (1 - tl.target_discount))
                     FROM purchase_order po
                     JOIN purchase_order_line pol ON pol.order_id = po.id
                     WHERE po.tender_id = t.id
                     AND pol.product_id = tl.product_id
                     AND po.tender_round = t.tender_round
+                    AND pol.price_unit > 0
                 ), 0) / tl.target_price * 100
             )::numeric, 0)
         ELSE 0
@@ -926,6 +962,7 @@ SELECT
         JOIN purchase_order_line pol ON pol.order_id = po.id
         WHERE po.tender_id = t.id
         AND pol.product_id = tl.product_id
+        AND pol.price_unit > 0
     ) as tedarikci_sayisi,
     
     -- Mevcut turda en düşük teklifi veren tedarikçi (bu ürün için)
@@ -937,7 +974,8 @@ SELECT
         WHERE po.tender_id = t.id
         AND pol.product_id = tl.product_id
         AND po.tender_round = t.tender_round
-        ORDER BY pol.price_unit ASC
+        AND pol.price_unit > 0
+        ORDER BY pol.price_unit * (1 - pol.discount)   ASC
         LIMIT 1
     ) as en_dusuk_teklif_veren_tedarikci,
     
@@ -954,6 +992,7 @@ SELECT
         WHERE po.tender_id = t.id
         AND pol.product_id = tl.product_id
         AND po.tender_round = t.tender_round
+        AND pol.price_unit > 0
         ORDER BY pol.price_unit ASC
         LIMIT 1
     ) as yeni_tedarikci_mi,
@@ -969,6 +1008,7 @@ SELECT
         WHERE po.tender_id = t.id
         AND pol.product_id = tl.product_id
         AND po.tender_round = t.tender_round
+        AND pol.price_unit > 0
     ), 0) as vade_gun,
     
     -- NPV Kazancı (bu ürün için - mevcut tur en düşük teklif bazlı)
@@ -982,6 +1022,7 @@ SELECT
         WHERE po.tender_id = t.id
         AND pol.product_id = tl.product_id
         AND po.tender_round = t.tender_round
+        AND pol.price_unit > 0
     ), 0)::numeric, 2) as npv_kazanci,
     
     -- ZAMAN VE SLA METRIKLERI / TIME & SLA METRICS
@@ -1028,7 +1069,21 @@ SELECT
     t.is_urgent as acil_mi,
     t.country_id,
     country.name as ulke,
-    t.city as sehir
+    t.city as sehir,
+    
+    -- Line Para Birimi / Line Currency
+    tl.currency_id as line_currency_id,
+    line_curr.name as line_para_birimi,
+    line_curr.symbol as line_para_birimi_sembol,
+    
+    -- Hedef Tipi ve İskonto / Target Type and Discount
+    tl.target_type as line_target_type,
+    CASE
+        WHEN tl.target_type = 'price' THEN 'Fiyat'
+        WHEN tl.target_type = 'discount' THEN 'İndirim'
+        ELSE tl.target_type
+    END as line_target_type_label,
+    tl.target_discount as line_target_discount
 
 FROM ak_tender t
     -- Tender Lines (Her satır bir ürün)
@@ -1050,12 +1105,15 @@ FROM ak_tender t
     
     -- Currency & Country
     LEFT JOIN res_currency curr ON t.currency_id = curr.id
+    LEFT JOIN res_currency line_curr ON tl.currency_id = line_curr.id
     LEFT JOIN res_country country ON t.country_id = country.id
 
 ORDER BY t.start_date DESC, t.id DESC, tl.sequence;
 
 
-CREATE OR REPLACE VIEW view_buyer_monthly_trend AS
+DROP VIEW IF EXISTS view_buyer_monthly_trend CASCADE;
+
+CREATE VIEW view_buyer_monthly_trend AS
 -- ============================================================================
 -- AYLIK TREND DATASET: Satınalmacı Bazında Aylık Toplu Veriler
 -- ============================================================================
@@ -1091,6 +1149,7 @@ SELECT
                     JOIN purchase_order_line pol ON pol.order_id = po.id
                     WHERE po.tender_id = t.id
                     AND po.tender_round = 1
+                    AND pol.price_unit > 0
                     GROUP BY pol.product_id
                 ) first_round
             ) > 0 THEN
@@ -1105,6 +1164,7 @@ SELECT
                          JOIN purchase_order_line pol ON pol.order_id = po.id
                          WHERE po.tender_id = t.id
                          AND po.tender_round = 1
+                         AND pol.price_unit > 0
                          GROUP BY pol.product_id
                      ) first_round) -
                     (SELECT COALESCE(SUM(pol.price_unit * pol.product_qty), 0)
@@ -1123,6 +1183,7 @@ SELECT
                      JOIN purchase_order_line pol ON pol.order_id = po.id
                      WHERE po.tender_id = t.id
                      AND po.tender_round = 1
+                     AND pol.price_unit > 0
                      GROUP BY pol.product_id
                  ) first_round) * 100
             ELSE 0
@@ -1142,6 +1203,7 @@ SELECT
                 JOIN purchase_order_line pol ON pol.order_id = po.id
                 WHERE po.tender_id = t.id
                 AND po.tender_round = 1
+                AND pol.price_unit > 0
                 GROUP BY pol.product_id
             ) first_round
         ), 0) - COALESCE((
@@ -1201,6 +1263,7 @@ SELECT
             LEFT JOIN account_payment_term_line ptl ON ptl.payment_id = pt.id
             WHERE po.tender_id = t.id
             AND po.state IN ('purchase', 'done')
+            AND pol.price_unit > 0
         ), 0)::numeric, 2)
     ) as toplam_npv
 
@@ -1222,7 +1285,9 @@ GROUP BY
 ORDER BY yil DESC, ay DESC, satinalmaci_adi;
 
 
-CREATE OR REPLACE VIEW view_buyer_performance_summary AS
+DROP VIEW IF EXISTS view_buyer_performance_summary CASCADE;
+
+CREATE VIEW view_buyer_performance_summary AS
 -- ============================================================================
 -- 7. SATINALMACI PERFORMANS ÖZET RAPORU (BUYER PERFORMANCE SUMMARY REPORT)
 -- ============================================================================
@@ -1249,7 +1314,7 @@ SELECT
     -- Toplam Saving (Kazanç) Hesaplama / Total Saving Calculation
     -- Hedef fiyat ile kazanılan fiyat arasındaki fark
     SUM(CASE
-        WHEN po.state IN ('purchase', 'done') THEN
+        WHEN po.state IN ('purchase', 'done') AND pol.price_unit > 0 THEN
             ((tl.target_price * tl.quantity) - (pol.price_unit * pol.product_qty))
         ELSE 0
     END) as total_saving_amount,
@@ -1259,7 +1324,7 @@ SELECT
     
     -- Toplam Kazanılan Fiyat / Total Won Price
     SUM(CASE
-        WHEN po.state IN ('purchase', 'done') THEN
+        WHEN po.state IN ('purchase', 'done') AND pol.price_unit > 0 THEN
             (pol.price_unit * pol.product_qty)
         ELSE 0
     END) as total_won_value,
@@ -1268,7 +1333,7 @@ SELECT
     CASE
         WHEN SUM(tl.target_price * tl.quantity) > 0 THEN
             ROUND(((SUM(CASE
-                WHEN po.state IN ('purchase', 'done') THEN
+                WHEN po.state IN ('purchase', 'done') AND pol.price_unit > 0 THEN
                     ((tl.target_price * tl.quantity) - (pol.price_unit * pol.product_qty))
                 ELSE 0
             END) / SUM(tl.target_price * tl.quantity)) * 100)::numeric, 2)
@@ -1280,7 +1345,7 @@ SELECT
     CASE
         WHEN SUM(tl.target_price * tl.quantity) > 0 THEN
             ROUND((100 - (SUM(CASE
-                WHEN po.state IN ('purchase', 'done') THEN
+                WHEN po.state IN ('purchase', 'done') AND pol.price_unit > 0 THEN
                     ((tl.target_price * tl.quantity) - (pol.price_unit * pol.product_qty))
                 ELSE 0
             END) / SUM(tl.target_price * tl.quantity) * 100))::numeric, 2)
@@ -1290,7 +1355,7 @@ SELECT
     -- NPV (Net Present Value) Kazancı / NPV Gain
     -- Vade farkından kaynaklanan kazanç hesabı
     SUM(CASE
-        WHEN po.state IN ('purchase', 'done') AND po.payment_term_id IS NOT NULL THEN
+        WHEN po.state IN ('purchase', 'done') AND po.payment_term_id IS NOT NULL AND pol.price_unit > 0 THEN
             -- Basitleştirilmiş NPV hesabı: tutar * (vade günü / 365) * faiz oranı
             (pol.price_unit * pol.product_qty *
              COALESCE(ptl.nb_days, 30) / 365.0 * 0.25)
@@ -1299,7 +1364,7 @@ SELECT
     
     -- Ortalama Vade / Average Payment Term
     AVG(CASE
-        WHEN po.state IN ('purchase', 'done') AND po.payment_term_id IS NOT NULL THEN
+        WHEN po.state IN ('purchase', 'done') AND po.payment_term_id IS NOT NULL AND pol.price_unit > 0 THEN
             COALESCE(ptl.nb_days, 30)
         ELSE NULL
     END) as avg_payment_term_days,
@@ -1385,7 +1450,9 @@ GROUP BY
 ORDER BY year DESC, month DESC, buyer_name;
 
 
-CREATE OR REPLACE VIEW view_buyer_tender_detail AS
+DROP VIEW IF EXISTS view_buyer_tender_detail CASCADE;
+
+CREATE VIEW view_buyer_tender_detail AS
 -- ============================================================================
 -- 8. SATINALMACI İHALE DETAY RAPORU (BUYER TENDER DETAIL REPORT)
 -- ============================================================================
@@ -1409,7 +1476,7 @@ SELECT
     
     -- Kazanılan Fiyat / Won Price
     SUM(CASE
-        WHEN po.state IN ('purchase', 'done') THEN
+        WHEN po.state IN ('purchase', 'done') AND pol.price_unit > 0 THEN
             (pol.price_unit * pol.product_qty)
         ELSE 0
     END) as won_price_total,
@@ -1418,7 +1485,7 @@ SELECT
     CASE
         WHEN SUM(tl.target_price * tl.quantity) > 0 THEN
             ROUND(((SUM(CASE
-                WHEN po.state IN ('purchase', 'done') THEN
+                WHEN po.state IN ('purchase', 'done') AND pol.price_unit > 0 THEN
                     (pol.price_unit * pol.product_qty)
                 ELSE 0
             END) / SUM(tl.target_price * tl.quantity)) * 100)::numeric, 2)
@@ -1427,14 +1494,14 @@ SELECT
     
     -- Vade (Gün) / Payment Term (Days)
     MAX(CASE
-        WHEN po.state IN ('purchase', 'done') AND po.payment_term_id IS NOT NULL THEN
+        WHEN po.state IN ('purchase', 'done') AND po.payment_term_id IS NOT NULL AND pol.price_unit > 0 THEN
             COALESCE(ptl.nb_days, 0)
         ELSE 0
     END) as payment_term_days,
     
     -- NPV Kazancı / NPV Gain
     SUM(CASE
-        WHEN po.state IN ('purchase', 'done') AND po.payment_term_id IS NOT NULL THEN
+        WHEN po.state IN ('purchase', 'done') AND po.payment_term_id IS NOT NULL AND pol.price_unit > 0 THEN
             (pol.price_unit * pol.product_qty *
              COALESCE(ptl.nb_days, 30) / 365.0 * 0.25)
         ELSE 0
@@ -1450,7 +1517,7 @@ SELECT
     
     -- Saving Tutarı / Saving Amount
     SUM(CASE
-        WHEN po.state IN ('purchase', 'done') THEN
+        WHEN po.state IN ('purchase', 'done') AND pol.price_unit > 0 THEN
             ((tl.target_price * tl.quantity) - (pol.price_unit * pol.product_qty))
         ELSE 0
     END) as saving_amount,
@@ -1459,7 +1526,7 @@ SELECT
     CASE
         WHEN SUM(tl.target_price * tl.quantity) > 0 THEN
             ROUND(((SUM(CASE
-                WHEN po.state IN ('purchase', 'done') THEN
+                WHEN po.state IN ('purchase', 'done') AND pol.price_unit > 0 THEN
                     ((tl.target_price * tl.quantity) - (pol.price_unit * pol.product_qty))
                 ELSE 0
             END) / SUM(tl.target_price * tl.quantity)) * 100)::numeric, 2)
@@ -1520,7 +1587,9 @@ GROUP BY
 ORDER BY t.start_date DESC;
 
 
-CREATE OR REPLACE VIEW view_buyer_supplier_statistics AS
+DROP VIEW IF EXISTS view_buyer_supplier_statistics CASCADE;
+
+CREATE VIEW view_buyer_supplier_statistics AS
 -- ============================================================================
 -- 9. SATINALMACI TEDARİKÇİ İSTATİSTİKLERİ (BUYER SUPPLIER STATISTICS)
 -- ============================================================================
@@ -1584,7 +1653,9 @@ GROUP BY
 ORDER BY year DESC, month DESC, tender_id;
 
 
-CREATE OR REPLACE VIEW view_buyer_monthly_aggregates AS
+DROP VIEW IF EXISTS view_buyer_monthly_aggregates CASCADE;
+
+CREATE VIEW view_buyer_monthly_aggregates AS
 -- ============================================================================
 -- 10. SATINALMACI AYLIK TOPLAM VERİLER (BUYER MONTHLY AGGREGATES)
 -- ============================================================================
@@ -1609,14 +1680,14 @@ SELECT
     
     -- Toplam Tasarruf / Total Savings
     SUM(CASE
-        WHEN po.state IN ('purchase', 'done') THEN
+        WHEN po.state IN ('purchase', 'done') AND pol.price_unit > 0 THEN
             ((tl.target_price * tl.quantity) - (pol.price_unit * pol.product_qty))
         ELSE 0
     END) as total_saving,
     
     -- Toplam Saving Yüzdesi (Aylık Ortalama) / Average Saving Percentage
     AVG(CASE
-        WHEN tl.target_price > 0 AND po.state IN ('purchase', 'done') THEN
+        WHEN tl.target_price > 0 AND po.state IN ('purchase', 'done') AND pol.price_unit > 0 THEN
             (((tl.target_price - pol.price_unit) / tl.target_price) * 100)
         ELSE 0
     END) as avg_saving_percentage,
@@ -1626,21 +1697,21 @@ SELECT
     
     -- Toplam Kazanılan Fiyat / Total Won Price
     SUM(CASE
-        WHEN po.state IN ('purchase', 'done') THEN
+        WHEN po.state IN ('purchase', 'done') AND pol.price_unit > 0 THEN
             (pol.price_unit * pol.product_qty)
         ELSE 0
     END) as total_won_price,
     
     -- Ortalama Yakınlık Oranı / Average Proximity Rate
     AVG(CASE
-        WHEN tl.target_price > 0 AND po.state IN ('purchase', 'done') THEN
+        WHEN tl.target_price > 0 AND po.state IN ('purchase', 'done') AND pol.price_unit > 0 THEN
             ((pol.price_unit / tl.target_price) * 100)
         ELSE 0
     END) as avg_proximity_rate,
     
     -- Toplam NPV Kazancı / Total NPV Gain
     SUM(CASE
-        WHEN po.state IN ('purchase', 'done') AND po.payment_term_id IS NOT NULL THEN
+        WHEN po.state IN ('purchase', 'done') AND po.payment_term_id IS NOT NULL AND pol.price_unit > 0 THEN
             (pol.price_unit * pol.product_qty *
              COALESCE(ptl.nb_days, 30) / 365.0 * 0.25)
         ELSE 0
