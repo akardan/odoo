@@ -27,10 +27,8 @@ class AkWorkflowTransitionHistory(models.Model):
     # Stored time fields for reporting performance
     end_time = fields.Datetime(
         string='End Time',
-        help="The time when this state/stage ended (next transition time or current time if still active)",
-        store=True,
-        compute='_compute_end_time',
-        readonly=True
+        help="The time when this state/stage ended (next transition time)",
+        index=True
     )
     expected_duration = fields.Float(
         string='Expected Duration (Hours)',
@@ -66,31 +64,29 @@ class AkWorkflowTransitionHistory(models.Model):
     )
     display_name = fields.Char(compute='_compute_display_name', store=True)
     
-    @api.depends('create_date', 'res_model', 'res_id')
-    def _compute_end_time(self):
+    @api.model_create_multi
+    def create(self, vals_list):
         """
-        Calculate end time for each history record.
-        End time is only set when there's a next transition.
-        If still in the same state, end_time remains empty.
+        Override create to update end_time of the previous transition
+        for the same record when a new transition is created.
         """
-        for history in self:
-            if not history.create_date:
-                history.end_time = False
-                continue
-            
-            # Find the next transition for the same record
-            next_history = self.search([
-                ('res_model', '=', history.res_model),
-                ('res_id', '=', history.res_id),
-                ('create_date', '>', history.create_date),
-            ], order='create_date asc', limit=1)
-            
-            if next_history:
-                # Use next transition time as end time
-                history.end_time = next_history.create_date
-            else:
-                # No next transition yet, end_time stays empty
-                history.end_time = False
+        records = super().create(vals_list)
+        
+        for record in records:
+            if record.res_model and record.res_id and record.create_date:
+                # Find the previous transition for the same record
+                previous_history = self.search([
+                    ('res_model', '=', record.res_model),
+                    ('res_id', '=', record.res_id),
+                    ('id', '!=', record.id),
+                    ('create_date', '<', record.create_date),
+                ], order='create_date desc', limit=1)
+                
+                if previous_history and not previous_history.end_time:
+                    # Update the previous transition's end_time with current transition's create_date
+                    previous_history.write({'end_time': record.create_date})
+        
+        return records
     
     @api.depends('create_date', 'end_time')
     def _compute_elapsed_time(self):
