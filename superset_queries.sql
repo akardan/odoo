@@ -433,6 +433,7 @@ CREATE VIEW view_workflow_transition_history AS
         wth.comment,
         
         -- Zaman Bilgileri (Hours)
+        wth.start_time,
         wth.end_time,
         wth.elapsed_time as elapsed_hours,
         wth.elapsed_time_display,
