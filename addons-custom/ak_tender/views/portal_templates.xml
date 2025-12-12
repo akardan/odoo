@@ -105,7 +105,7 @@
                                 <th class="text-end" t-if="not update_dates and order.state in ['purchase', 'done']" style="width: 8%;">Miktar</th>
                                 <!-- Additional columns for editable fields -->
                                 <th class="text-end" style="width: 7%;">Teslimat Tar.</th>
-                                <th class="text-end" t-if="order.tender_id.tender_type not in ['direct', 'indirect']" style="width: 6%;">Garanti</th>
+                                <!-- <th class="text-end" t-if="order.tender_id.tender_type not in ['direct', 'indirect']" style="width: 6%;">Garanti</th> -->
                                 <th class="text-end" t-if="order.tender_id.tender_type in ['direct', 'indirect']" style="width: 7%;">SKT</th>
                             </tr>
                         </thead>
@@ -254,8 +254,11 @@
                                             
                                             <!-- Converted price (PO currency) - read only -->
                                             <div class="mt-1" style="font-size: 0.8em; color: #666;">
-                                                <strong>PO Currency:</strong>
-                                                <span t-field="line.price_unit" t-options='{"widget": "monetary", "display_currency": order.currency_id}'/>
+                                                <strong>İhale Fiyatı:</strong>
+                                                <t t-set="display_price" t-value="line.price_unit"/>
+                                                <t t-set="display_currency" t-value="order.currency_id"/>
+                                                <span t-esc="'{:,.2f}'.format(display_price or 0)"/>
+                                                <span t-esc="display_currency.symbol"/>
                                             </div>
                                             
                                             <!-- Target price (read-only) with currency symbol only - only show if target_type is price -->
@@ -286,6 +289,14 @@
                                                 min="0"
                                                 max="100"
                                                 t-att-value="line.discount or '0.00'" />
+                                            
+                                            <!-- Discounted price - shown only if discount > 0 -->
+                                            <div t-if="line.discount and line.discount > 0" class="mt-1" style="font-size: 0.8em; color: #28a745;">
+                                                <strong>İndirimli Fiyat:</strong>
+                                                <t t-set="discounted_price" t-value="(line.line_price_unit or line.price_unit or 0) * (1 - (line.discount or 0) / 100)"/>
+                                                <span t-esc="'{:,.2f}'.format(discounted_price)"/>
+                                                <span t-esc="line.line_currency_id.symbol or order.currency_id.symbol"/>
+                                            </div>
                                             
                                             <!-- Target discount (read-only) - only show if target_type is discount -->
                                             <div class="mt-2" t-if="line.tender_line_id and line.tender_line_id.target_discount and order.tender_id.target_type == 'discount'" style="color: red;">
@@ -329,19 +340,19 @@
                                                 t-att-value="line.date_planned and line.date_planned.strftime('%Y-%m-%d') or ''"/>
                                         </td>
                                         
-                                        <!-- Warranty Period -->
-                                        <td class="text-end" t-if="order.tender_id.tender_type not in ['direct', 'indirect']">
+                                        <!-- Warranty Period - HIDDEN as per request 2025-12-12-->
+                                        <!-- <td class="text-end" t-if="order.tender_id.tender_type not in ['direct', 'indirect']">
                                             <select t-attf-name="warranty_period_line_{{line.id}}"
                                                 class="form-control form-control-sm editable-field"
                                                 style="font-size: 0.9em; width: 100%;">
                                                 <option value="">Seçiniz</option>
-                                                <option value="1" t-att-selected="line.warranty_period == '1'">1 Ay</option>
-                                                <option value="3" t-att-selected="line.warranty_period == '3'">3 Ay</option>
-                                                <option value="6" t-att-selected="line.warranty_period == '6'">6 Ay</option>
-                                                <option value="12" t-att-selected="line.warranty_period == '12'">12 Ay</option>
-                                                <option value="24" t-att-selected="line.warranty_period == '24'">24 Ay</option>
+                                                <option value="1" t-att-selected="line.warranty_period == 1">1 Ay</option>
+                                                <option value="3" t-att-selected="line.warranty_period == 3">3 Ay</option>
+                                                <option value="6" t-att-selected="line.warranty_period == 6">6 Ay</option>
+                                                <option value="12" t-att-selected="line.warranty_period == 12">12 Ay</option>
+                                                <option value="24" t-att-selected="line.warranty_period == 24">24 Ay</option>
                                             </select>
-                                        </td>
+                                        </td> -->
                                         <!-- Expiry Date -->
                                         <td class="text-end" t-if="order.tender_id.tender_type in ['direct', 'indirect']">
                                             <input type="date"

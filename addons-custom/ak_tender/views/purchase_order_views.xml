@@ -35,6 +35,7 @@
                     <field name="tender_line_currency_id" invisible="1"/>
                     <field name="system_selection" string="S.S." optional="show"/>
                     <field name="user_selection" string="K.S." optional="show"/>
+                    <!-- <field name="warranty_period" string="Garanti (Ay)" optional="hide"/> -->
                     <field name="expiry_date" optional="show" invisible="not parent.tender_id"/>
                 </xpath>
                 

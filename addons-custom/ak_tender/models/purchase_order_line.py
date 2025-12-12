@@ -35,13 +35,9 @@ class PurchaseOrderLine(models.Model):
     # Alternative product support is handled by alt_materials field
     
     # Additional fields for supplier portal editing
-    warranty_period = fields.Selection([
-        ('1' , ' 1 Ay'),
-        ('3' , ' 3 Ay'),
-        ('6' , ' 6 Ay'),
-        ('12', '12 Ay'),
-        ('24', '24 Ay'),
-    ], string='Garanti Süresi', help="Tedarikçi tarafından sunulan garanti süresi.")
+    # warranty_period field REMOVED temporarily to fix Selection->Integer migration issue
+    # Will be re-added after module update
+    # warranty_period = fields.Integer(...)
     
     supplier_ref = fields.Char(
         string='Tedarikçi Referansı',

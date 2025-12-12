@@ -2326,7 +2326,8 @@ class AkTender(models.Model):
                 'tender_line_id': tender_line.id,
                 'sequence': tender_line.sequence,
                 'display_type': tender_line.display_type,
-                'alt_materials': tender_line.allow_alternative,
+                # alt_materials is for supplier to fill, not copied from tender_line
+                # tender_line.allow_alternative is boolean, alt_materials is text field
             }
             _logger.info(f"[_create_line_from_tender] Creating purchase order line with values: {line_vals}")
             return self.env['purchase.order.line'].create(line_vals)
@@ -2873,7 +2874,8 @@ class AkTender(models.Model):
                 
                 for line in po.order_line.filtered(lambda l: l.tender_line_id and not l.display_type):
                     total_amount += line.price_subtotal
-                    if line.price_subtotal <= 0.01:
+                    # Birim fiyat kontrolü - %100 indirim geçerli, ama birim fiyat 0 ise teklif verilmemiş
+                    if line.price_unit <= 0:
                         has_incomplete_offer = True
                     if hasattr(line, 'npv_value') and line.npv_value > 0:
                         total_npv += line.npv_value
