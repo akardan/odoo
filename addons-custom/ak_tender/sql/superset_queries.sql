@@ -375,115 +375,144 @@ CREATE VIEW view_workflow_transition_history AS
     -- Bu sorgu workflow geçiş geçmişini detaylı şekilde getirir
     -- This query retrieves detailed workflow transition history
 
-    SELECT
-        -- History Record Info
-        wth.id as history_id,
-        wth.res_model,
-        wth.res_id,
-        wth.create_date as transition_date,
-        
-        -- İhale Bilgileri (eğer tender ise)
-        CASE WHEN wth.res_model = 'ak.tender' THEN t.id ELSE NULL END as tender_id,
-        CASE WHEN wth.res_model = 'ak.tender' THEN t.code ELSE NULL END as tender_code,
-        CASE WHEN wth.res_model = 'ak.tender' THEN t.name ELSE NULL END as tender_name,
-        CASE WHEN wth.res_model = 'ak.tender' THEN t.tender_type ELSE NULL END as tender_type,
-        CASE
-            WHEN wth.res_model = 'ak.tender' AND t.tender_type = 'direct' THEN 'Direkt'
-            WHEN wth.res_model = 'ak.tender' AND t.tender_type = 'indirect' THEN 'Endirekt'
-            WHEN wth.res_model = 'ak.tender' AND t.tender_type = 'mice' THEN 'MICE'
-            WHEN wth.res_model = 'ak.tender' AND t.tender_type = 'promotion' THEN 'Promosyon/Kırtasiye'
-            ELSE NULL
-        END as tender_type_label,
-        
-        -- FROM State Bilgileri
-        wth.from_state_id,
-        COALESCE((fs.name::jsonb)->>'tr_TR', (fs.name::jsonb)->>'en_US', fs.name::text) as from_state_name,
-        fs.code as from_state_code,
-        fs.sequence as from_state_sequence,
-        
-        -- TO State Bilgileri
-        wth.to_state_id,
-        COALESCE((ts.name::jsonb)->>'tr_TR', (ts.name::jsonb)->>'en_US', ts.name::text) as to_state_name,
-        ts.code as to_state_code,
-        ts.sequence as to_state_sequence,
-        
-        -- Geçiş Bilgileri
-        wth.transition_id,
-        COALESCE((wt.name::jsonb)->>'tr_TR', (wt.name::jsonb)->>'en_US', wt.name::text) as transition_name,
-        wt.code as transition_code,
-        
-        -- Aşama Bilgileri
-        wth.stage_id,
-        COALESCE((wts.name::jsonb)->>'tr_TR', (wts.name::jsonb)->>'en_US', wts.name::text) as stage_name,
-        wts.sequence as stage_sequence,
-        
-        -- Kullanıcı Bilgileri
-        wth.user_id,
-        p.name as user_name,
-        u.login as user_login,
-        
-        -- Durum
-        wth.status,
-        CASE
-            WHEN wth.status = 'pending' THEN 'Beklemede'
-            WHEN wth.status = 'completed' THEN 'Tamamlandı'
-            WHEN wth.status = 'failed' THEN 'Başarısız'
-            ELSE wth.status
-        END as status_label,
-        wth.comment,
-        
-        -- Zaman Bilgileri (Hours)
-        wth.start_time,
-        wth.end_time,
-        wth.elapsed_time as elapsed_hours,
-        wth.elapsed_time_display,
-        wth.expected_duration as expected_hours,
-        (wth.elapsed_time - wth.expected_duration) as duration_variance_hours,
-        
-        -- Gecikme Analizi
-        CASE
-            WHEN wth.elapsed_time > wth.expected_duration AND wth.expected_duration > 0 THEN 'Gecikmeli'
-            WHEN wth.elapsed_time <= wth.expected_duration AND wth.expected_duration > 0 THEN 'Zamanında'
-            ELSE 'Hedef Yok'
-        END as timing_status,
-        
-        CASE
-            WHEN wth.expected_duration > 0
-            THEN ROUND(((wth.elapsed_time - wth.expected_duration) / wth.expected_duration * 100)::numeric, 2)
-            ELSE 0
-        END as delay_percentage,
-        
-        -- Zaman Analizi Alanları
-        EXTRACT(YEAR FROM wth.create_date) as year,
-        EXTRACT(MONTH FROM wth.create_date) as month,
-        EXTRACT(QUARTER FROM wth.create_date) as quarter,
-        EXTRACT(WEEK FROM wth.create_date) as week,
-        EXTRACT(DOW FROM wth.create_date) as day_of_week,
-        EXTRACT(HOUR FROM wth.create_date) as hour,
-        TO_CHAR(wth.create_date, 'YYYY-MM') as year_month,
-        TO_CHAR(wth.create_date, 'YYYY-"W"IW') as year_week,
-        TO_CHAR(wth.create_date, 'Day') as day_name
+SELECT
+    -- History Record Info
+    wth.id as history_id,
+    wth.res_model,
+    wth.res_id,
+    wth.create_date as transition_date,
+    
+    -- İhale Bilgileri (eğer tender ise)
+    CASE WHEN wth.res_model = 'ak.tender' THEN t.id ELSE NULL END as tender_id,
+    CASE WHEN wth.res_model = 'ak.tender' THEN t.code ELSE NULL END as tender_code,
+    CASE WHEN wth.res_model = 'ak.tender' THEN t.name ELSE NULL END as tender_name,
+    CASE WHEN wth.res_model = 'ak.tender' THEN t.tender_type ELSE NULL END as tender_type,
+    CASE
+        WHEN wth.res_model = 'ak.tender' AND t.tender_type = 'direct' THEN 'Direkt'
+        WHEN wth.res_model = 'ak.tender' AND t.tender_type = 'indirect' THEN 'Endirekt'
+        WHEN wth.res_model = 'ak.tender' AND t.tender_type = 'mice' THEN 'MICE'
+        WHEN wth.res_model = 'ak.tender' AND t.tender_type = 'promotion' THEN 'Promosyon/Kırtasiye'
+        ELSE NULL
+    END as tender_type_label,
+    
+    -- FROM State Bilgileri
+    wth.from_state_id,
+    COALESCE((fs.name::jsonb)->>'tr_TR', (fs.name::jsonb)->>'en_US', fs.name::text) as from_state_name,
+    fs.code as from_state_code,
+    fs.sequence as from_state_sequence,
+    
+    -- TO State Bilgileri
+    wth.to_state_id,
+    COALESCE((ts.name::jsonb)->>'tr_TR', (ts.name::jsonb)->>'en_US', ts.name::text) as to_state_name,
+    ts.code as to_state_code,
+    ts.sequence as to_state_sequence,
+    
+    -- Geçiş Bilgileri
+    wth.transition_id,
+    COALESCE((wt.name::jsonb)->>'tr_TR', (wt.name::jsonb)->>'en_US', wt.name::text) as transition_name,
+    wt.code as transition_code,
+    
+    -- Aşama Bilgileri
+    wth.stage_id,
+    COALESCE((wts.name::jsonb)->>'tr_TR', (wts.name::jsonb)->>'en_US', wts.name::text) as stage_name,
+    wts.sequence as stage_sequence,
+    
+    -- Kullanıcı Bilgileri
+    wth.user_id,
+    p.name as user_name,
+    u.login as user_login,
+    
+    -- Durum
+    wth.status,
+    CASE
+        WHEN wth.status = 'pending' THEN 'Beklemede'
+        WHEN wth.status = 'completed' THEN 'Tamamlandı'
+        WHEN wth.status = 'failed' THEN 'Başarısız'
+        ELSE wth.status
+    END as status_label,
+    wth.comment,
+    
+    -- ==========================================
+    -- ZAMAN BİLGİLERİ
+    -- ==========================================
+    wth.create_date as start_time,
+    COALESCE(wth.end_time, NOW()) as end_time,
+    
+    -- Devam eden mi?
+    CASE WHEN wth.end_time IS NULL THEN true ELSE false END as is_ongoing,
+    
+    -- Geçen süre (saniye)
+    EXTRACT(EPOCH FROM (COALESCE(wth.end_time, NOW()) - wth.create_date))::numeric as elapsed_seconds,
+    
+    -- Geçen süre (saat)
+    ROUND(
+        (EXTRACT(EPOCH FROM (COALESCE(wth.end_time, NOW()) - wth.create_date)) / 3600.0)::numeric, 
+        2
+    ) as elapsed_hours,
+    
+    -- Geçen süre (gün)
+    ROUND(
+        (EXTRACT(EPOCH FROM (COALESCE(wth.end_time, NOW()) - wth.create_date)) / 86400.0)::numeric, 
+        2
+    ) as elapsed_days,
+    
+    -- Format: DD:HH:MM (gün:saat:dakika)
+    LPAD(FLOOR(EXTRACT(EPOCH FROM (COALESCE(wth.end_time, NOW()) - wth.create_date)) / 86400)::int::text, 2, '0') || ':' ||
+    LPAD(FLOOR(MOD(EXTRACT(EPOCH FROM (COALESCE(wth.end_time, NOW()) - wth.create_date))::numeric, 86400) / 3600)::int::text, 2, '0') || ':' ||
+    LPAD(FLOOR(MOD(EXTRACT(EPOCH FROM (COALESCE(wth.end_time, NOW()) - wth.create_date))::numeric, 3600) / 60)::int::text, 2, '0')
+    as elapsed_time_display,
+    
+    -- Beklenen süre (saat)
+    COALESCE(wth.expected_duration, 0)::numeric as expected_hours,
+    
+    -- Varyans (saat) = Geçen - Beklenen
+    ROUND(
+        (EXTRACT(EPOCH FROM (COALESCE(wth.end_time, NOW()) - wth.create_date)) / 3600.0)::numeric - 
+        COALESCE(wth.expected_duration, 0)::numeric, 
+        2
+    ) as duration_variance_hours,
+    
+    -- Gecikme Durumu
+    CASE
+        WHEN COALESCE(wth.expected_duration, 0) = 0 THEN 'Hedef Yok'
+        WHEN (EXTRACT(EPOCH FROM (COALESCE(wth.end_time, NOW()) - wth.create_date)) / 3600.0) > wth.expected_duration 
+            THEN 'Gecikmeli'
+        ELSE 'Zamanında'
+    END as timing_status,
+    
+    -- Gecikme Yüzdesi
+    CASE
+        WHEN COALESCE(wth.expected_duration, 0) > 0
+        THEN ROUND((
+            ((EXTRACT(EPOCH FROM (COALESCE(wth.end_time, NOW()) - wth.create_date)) / 3600.0)::numeric - wth.expected_duration::numeric) 
+            / wth.expected_duration::numeric * 100
+        ), 2)
+        ELSE 0
+    END as delay_percentage,
+    
+    -- ==========================================
+    -- ZAMAN ANALİZİ ALANLARI
+    -- ==========================================
+    EXTRACT(YEAR FROM wth.create_date)::int as year,
+    EXTRACT(MONTH FROM wth.create_date)::int as month,
+    EXTRACT(QUARTER FROM wth.create_date)::int as quarter,
+    EXTRACT(WEEK FROM wth.create_date)::int as week,
+    EXTRACT(DOW FROM wth.create_date)::int as day_of_week,
+    EXTRACT(HOUR FROM wth.create_date)::int as hour,
+    TO_CHAR(wth.create_date, 'YYYY-MM') as year_month,
+    TO_CHAR(wth.create_date, 'YYYY-"W"IW') as year_week,
+    TO_CHAR(wth.create_date, 'Day') as day_name
 
-    FROM ak_workflow_transition_history wth
-        -- Tender Info (if applicable)
-        LEFT JOIN ak_tender t ON (wth.res_model = 'ak.tender' AND wth.res_id = t.id)
-        
-        -- States
-        LEFT JOIN ak_workflow_state fs ON wth.from_state_id = fs.id
-        LEFT JOIN ak_workflow_state ts ON wth.to_state_id = ts.id
-        
-        -- Transition
-        LEFT JOIN ak_workflow_transition wt ON wth.transition_id = wt.id
-        
-        -- Stage
-        LEFT JOIN ak_workflow_transition_stage wts ON wth.stage_id = wts.id
-        
-        -- User
-        LEFT JOIN res_users u ON wth.user_id = u.id
-        LEFT JOIN res_partner p ON u.partner_id = p.id
+FROM ak_workflow_transition_history wth
+    LEFT JOIN ak_tender t ON (wth.res_model = 'ak.tender' AND wth.res_id = t.id)
+    LEFT JOIN ak_workflow_state fs ON wth.from_state_id = fs.id
+    LEFT JOIN ak_workflow_state ts ON wth.to_state_id = ts.id
+    LEFT JOIN ak_workflow_transition wt ON wth.transition_id = wt.id
+    LEFT JOIN ak_workflow_transition_stage wts ON wth.stage_id = wts.id
+    LEFT JOIN res_users u ON wth.user_id = u.id
+    LEFT JOIN res_partner p ON u.partner_id = p.id
 
-    ORDER BY wth.create_date DESC;
-
+ORDER BY wth.create_date DESC;
 
 DROP VIEW IF EXISTS view_tender_performance CASCADE;
 
