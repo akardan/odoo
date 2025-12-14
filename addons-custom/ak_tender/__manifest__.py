@@ -62,6 +62,7 @@
         'wizards/import_supplier_wizard_views.xml',
         'wizards/import_sat_wizard_views.xml',
         'wizards/tender_template_selection_wizard_views.xml',
+        'wizards/tender_transfer_lines_wizard_views.xml',
         'views/purchase_requisition_views.xml',
         'wizards/import_sat_to_pool_wizard_views.xml',
         'views/menu.xml',

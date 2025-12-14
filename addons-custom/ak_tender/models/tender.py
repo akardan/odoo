@@ -2632,6 +2632,62 @@ class AkTender(models.Model):
             vals['target_price'] = 0.0
             vals['tender_id'] = self.id
             self.env['ak.tender.line'].create(vals)
+    
+    def action_add_from_tender(self):
+        """Open wizard to select a tender and transfer its items to this tender."""
+        self.ensure_one()
+        
+        # Check if there are other tenders available
+        other_tenders = self.env['ak.tender'].search([
+            ('id', '!=', self.id)
+        ])
+        
+        if not other_tenders:
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'title': _('İhale Bulunamadı'),
+                    'message': _('Kalem aktarmak için başka ihale bulunamadı.'),
+                    'sticky': False,
+                    'type': 'warning',
+                }
+            }
+        
+        # Open the tender transfer wizard
+        return {
+            'name': _('İhaleden Kalem Aktarma'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'ak.tender.transfer.lines.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {
+                'default_tender_id': self.id,
+            }
+        }
+    
+    def transfer_lines_from_tender(self, tender_lines):
+        """Transfer (move) tender lines from another tender to this tender.
+        
+        This method moves the lines from the source tender to this tender by updating
+        their tender_id field. The lines are removed from the source tender.
+        
+        Args:
+            tender_lines: recordset of ak.tender.line to transfer
+            
+        Returns:
+            int: number of lines transferred
+        """
+        self.ensure_one()
+        transferred_count = 0
+        
+        # Simply update the tender_id of the selected lines to move them
+        # This is more efficient than creating new records and deleting old ones
+        for source_line in tender_lines:
+            source_line.write({'tender_id': self.id})
+            transferred_count += 1
+        
+        return transferred_count
             
         # Show success message
         return {
