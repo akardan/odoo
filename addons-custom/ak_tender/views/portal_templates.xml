@@ -255,7 +255,7 @@
                                             <!-- Converted price (PO currency) - read only -->
                                             <div class="mt-1" style="font-size: 0.8em; color: #666;">
                                                 <strong>İhale Fiyatı:</strong>
-                                                <t t-set="display_price" t-value="line.price_unit"/>
+                                                <t t-set="display_price" t-value="line.price_unit * (1 - (line.discount or 0) / 100)"/>
                                                 <t t-set="display_currency" t-value="order.currency_id"/>
                                                 <span t-esc="'{:,.2f}'.format(display_price or 0)"/>
                                                 <span t-esc="display_currency.symbol"/>
