@@ -286,7 +286,7 @@
                                 <div style="background-color: #ffeeee; padding: 10px; margin-bottom: 15px; border-left: 5px solid red;">
                                     <h3 style="color: red; font-weight: bold; margin: 0;">Teklifler</h3>
                                 </div>
-                                <field name="purchase_order_ids" nolabel="1" context="{'default_tender_id': id, 'default_state': 'draft', 'group_by': 'tender_round'}">
+                                <field name="purchase_order_ids" nolabel="1" context="{'default_tender_id': id, 'default_state': 'draft', 'group_by': 'tender_round'}" readonly="not workflow_allow_edit">
                                     <list default_group_by="tender_round" decoration-bf="tender_round == parent.tender_round" decoration-info="tender_round == parent.tender_round">
                                         <field name="currency_id" column_invisible="True"/>
                                         <field name="name" string="Sipariş Ref." />
