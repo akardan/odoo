@@ -25,6 +25,12 @@ class PurchaseOrder(models.Model):
     total_npv = fields.Monetary(string='Toplam NPV Değeri', currency_field='currency_id',
                                help="Tüm satırların NPV değerlerinin toplamı.", readonly=True)
     is_readonly = fields.Boolean(compute='_compute_is_readonly', store=False)
+    tender_allow_edit = fields.Boolean(
+        string='Düzenlenebilir mi?',
+        compute='_compute_tender_allow_edit',
+        store=False,
+        help="İhalenin işakışı durum 'una göre düzenleme izni"
+    )
     # Selection fields
     system_selection = fields.Boolean(
         string='Sistem Seçimi',
@@ -74,6 +80,16 @@ class PurchaseOrder(models.Model):
     #             ('message_type', 'in', ['comment', 'email'])
     #         ])
 
+    
+    @api.depends('tender_id', 'tender_id.workflow_allow_edit')
+    def _compute_tender_allow_edit(self):
+        """İhalenin workflow state'ine göre düzenleme iznini hesapla"""
+        for record in self:
+            if record.tender_id:
+                record.tender_allow_edit = record.tender_id.workflow_allow_edit
+            else:
+                # İhaleye bağlı değilse düzenlemeye izin ver
+                record.tender_allow_edit = True
     
     @api.depends('tender_id.workflow_current_state_id', 'tender_round')
     def _compute_is_readonly(self):
