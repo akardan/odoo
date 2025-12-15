@@ -1126,6 +1126,35 @@ class AkTender(models.Model):
         records = super().create(vals_list)
         return records
 
+    def copy(self, default=None):
+        """
+        Override copy method to automatically set a new name for the duplicated tender.
+        Since name field has copy=False but is required, we need to provide a default value.
+        Also explicitly copy tender_lines and purchase_order_ids since they don't copy automatically.
+        """
+        self.ensure_one()
+        if default is None:
+            default = {}
+        if 'name' not in default:
+            default['name'] = _("%s (Kopya)") % (self.name or '')
+        
+        # Temporarily exclude lines and orders from copy, we'll copy them manually
+        default['tender_lines'] = []
+        default['purchase_order_ids'] = []
+        
+        # Copy the tender without lines and orders
+        new_tender = super(AkTender, self).copy(default=default)
+        
+        # Manually copy tender lines
+        for line in self.tender_lines:
+            line.copy({'tender_id': new_tender.id})
+        
+        # Manually copy purchase orders
+        for po in self.purchase_order_ids:
+            po.copy({'tender_id': new_tender.id})
+        
+        return new_tender
+
     @api.onchange('grid_product_tmpl_id')
     def _set_grid_up(self):
         """Set up the grid when a product template is selected"""
