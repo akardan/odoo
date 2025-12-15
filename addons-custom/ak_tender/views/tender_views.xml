@@ -27,6 +27,7 @@
                                 icon="fa-exchange"
                                 string="Kalemleri Taşı"
                                 help="Yeni bir ihaleye taşı"
+                                invisible="not workflow_allow_edit"
                             />
                             <button name="action_add_supplier"
                                 type="object"
@@ -34,6 +35,7 @@
                                 icon="fa-user-plus"
                                 string="Tedarikçi Ekle"
                                 help="İhaleye yeni tedarikçiler ekle"
+                                invisible="not workflow_allow_edit"
                             />
                             <button name="action_review_offers"
                                 type="object"
@@ -254,9 +256,9 @@
                                 </field>
                                 <div class="oe_right mb-2">
                                     <button name="action_add_from_template" string="Şablondan Ekle" type="object" class="btn btn-secondary"
-                                        invisible="not workflow_current_state_id.is_initial"/>
+                                        invisible="not workflow_current_state_id.is_initial or not workflow_allow_edit"/>
                                     <button name="action_add_from_tender" string="İhaleden Aktar" type="object" class="btn btn-secondary ms-2"
-                                        invisible="not workflow_current_state_id.is_initial"/>
+                                        invisible="not workflow_current_state_id.is_initial or not workflow_allow_edit"/>
                                 </div>
                                 <p class="oe_grey">
                                     **Önemli:** İhale başlatılmadan önce en az bir ihale kalemi tanımlanmalıdır.
