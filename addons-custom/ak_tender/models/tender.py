@@ -1130,13 +1130,17 @@ class AkTender(models.Model):
         """
         Override copy method to automatically set a new name for the duplicated tender.
         Since name field has copy=False but is required, we need to provide a default value.
-        Also explicitly copy tender_lines and purchase_order_ids since they don't copy automatically.
+        Also explicitly copy tender_lines, purchase_order_ids, and erp_pr_id.
         """
         self.ensure_one()
         if default is None:
             default = {}
         if 'name' not in default:
             default['name'] = _("%s (Kopya)") % (self.name or '')
+        
+        # Copy erp_pr_id even though it has copy=False
+        if 'erp_pr_id' not in default and self.erp_pr_id:
+            default['erp_pr_id'] = self.erp_pr_id
         
         # Temporarily exclude lines and orders from copy, we'll copy them manually
         default['tender_lines'] = []

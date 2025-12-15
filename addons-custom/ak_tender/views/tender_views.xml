@@ -607,10 +607,10 @@
             <field name="model">ak.tender</field>
             <field name="arch" type="xml">
                 <search string="İhale Ara">
+                    <field name="tender_lines" string="Ürün Adı" filter_domain="[('tender_lines.product_id.name', 'ilike', self)]"/>
                     <field name="name"/>
                     <field name="code"/>
                     <field name="erp_pr_id"/>
-                    <field name="tender_lines" string="Ürün Adı" filter_domain="[('tender_lines.product_id.name', 'ilike', self)]"/>
                     <field name="tender_type"/>
                     <field name="workflow_current_state_id"/>
                     <field name="request_date"/>
