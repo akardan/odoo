@@ -714,13 +714,41 @@ class SatToPoolImportWizard(models.TransientModel):
         
         # Yeni ürün oluştur
         try:
-            product = self.env['product.product'].sudo().create({
+            # Birim bul
+            uom = None
+            if data.get('unit_of_measure'):
+                uom_name = data.get('unit_of_measure')
+                uom_mapping = {
+                    'ADT': 'Adet',
+                    'KG': 'kg',
+                }
+                search_name = uom_mapping.get(uom_name, uom_name)
+                uom = self.env['uom.uom'].search([('name', '=', search_name)], limit=1)
+                if uom:
+                    _logger.info(f"Ürün için UOM bulundu: {uom.name} (Excel'den: {uom_name})")
+            
+            # UOM bulunamadıysa varsayılan birim kullan
+            if not uom:
+                uom = self.env.ref('uom.product_uom_unit', raise_if_not_found=False)
+                if not uom:
+                    uom = self.env['uom.uom'].search([], limit=1)
+                _logger.warning(f"UOM bulunamadı, varsayılan kullanılıyor: {uom.name if uom else 'None'}")
+            
+            product_vals = {
                 'name': material_name or f"Ürün {material_code}",
                 'default_code': material_code,
                 'type': 'consu',
                 'purchase_ok': True,
                 'sale_ok': False,
-            })
+            }
+            
+            # UOM alanlarını ekle
+            if uom:
+                product_vals['uom_id'] = uom.id
+                product_vals['uom_po_id'] = uom.id
+                _logger.info(f"Ürün '{material_code}' için UOM ayarlandı: {uom.name}")
+            
+            product = self.env['product.product'].sudo().create(product_vals)
             return product
         except Exception as e:
             _logger.error(f"Ürün oluşturma hatası: {str(e)}")
