@@ -10,6 +10,9 @@
                         <field name="workflow_current_state_id" widget="statusbar" options="{'clickable': false}" readonly="1"/>
                     </header>
                     <sheet>
+                        <!-- Workflow Allow Edit field - invisible but controls form readonly state -->
+                        <field name="workflow_allow_edit" invisible="1"/>
+                        
                         <!-- Colored header based on tender type -->
                         <div t-attf-class="o_tender_header {{tender_type == 'direct' ? 'o_tender_type_direct' :
                                                             tender_type == 'indirect' ? 'o_tender_type_indirect' :
@@ -57,7 +60,7 @@
                         </div>
                         <div style="display: flex; justify-content: space-between; align-items: center;">
                             <h1 style="margin: 0; flex: 1 1 auto; min-width: 80%; width: 100%;">
-                                <field name="name" placeholder="İhale Adı" style="width: 100%;" />
+                                <field name="name" placeholder="İhale Adı" style="width: 100%;" readonly="not workflow_allow_edit"/>
                             </h1>
                             <field name="workflow_definition_id" options="{'no_create': True}" domain="[('model_name', '=', 'ak.tender')]" style="min-width: 300px; flex: 0 0 auto; max-width: 20%;"/>
                         </div>
@@ -69,48 +72,48 @@
                                 <field name="code" readonly="1"/>
                                 <label for="tender_type" string="İhale Tipi / Alıcı"/>
                                 <div name="tender_type_buyer" class="o_row">
-                                    <field name="tender_type" nolabel="1"/>
-                                    <field name="buyer_id" widget="many2one_avatar_user" nolabel="1"/>
+                                    <field name="tender_type" nolabel="1" readonly="not workflow_allow_edit"/>
+                                    <field name="buyer_id" widget="many2one_avatar_user" nolabel="1" readonly="not workflow_allow_edit"/>
                                 </div>
                                 <label for="start_date" string="İhale Tarihleri"/>
                                 <div name="dates" class="o_row">
-                                    <field name="start_date" widget="daterange" options="{'related_end_date': 'end_date'}"/>
+                                    <field name="start_date" widget="daterange" options="{'related_end_date': 'end_date'}" readonly="not workflow_allow_edit"/>
                                     <i class="fa fa-long-arrow-right mx-2" aria-label="Arrow icon" title="Arrow"/>
-                                    <field name="end_date" widget="daterange" options="{'related_start_date': 'start_date'}"/>
+                                    <field name="end_date" widget="daterange" options="{'related_start_date': 'start_date'}" readonly="not workflow_allow_edit"/>
                                 </div>
                                 <label for="request_date" string="Talep / Teslim Tarih"/>
                                 <div name="request_delivery_dates" class="o_row">
-                                    <field name="request_date" widget="date"/>
+                                    <field name="request_date" widget="date" readonly="not workflow_allow_edit"/>
                                     <i class="fa fa-long-arrow-right mx-2" aria-label="Arrow icon" title="Arrow"/>
-                                    <field name="required_delivery_date" widget="date"/>
+                                    <field name="required_delivery_date" widget="date" readonly="not workflow_allow_edit"/>
                                 </div>
-                                <field name="location_dest_id" string="Teslim Yeri"/>
+                                <field name="location_dest_id" string="Teslim Yeri" readonly="not workflow_allow_edit"/>
 
                             </group>
                             <group>
-                                <field name="tender_round" readonly="0"/>
-                                <field name="erp_pr_id" placeholder="ERP SAT No" />
+                                <field name="tender_round" readonly="1"/>
+                                <field name="erp_pr_id" placeholder="ERP SAT No" readonly="0"/>
                                 <label for="erp_company_code" string="Şirket / Tesis Kodları"/>
                                 <div name="company_plant_codes" class="o_row">
-                                    <field name="erp_company_code" placeholder="ERP Şirket Kodu" nolabel="1"/>
+                                    <field name="erp_company_code" placeholder="ERP Şirket Kodu" nolabel="1" readonly="not workflow_allow_edit"/>
                                     <i class="fa fa-long-arrow-right mx-2" aria-label="Arrow icon" title="Arrow"/>
-                                    <field name="erp_plant_code" placeholder="Tesis Kodu" nolabel="1"/>
+                                    <field name="erp_plant_code" placeholder="Tesis Kodu" nolabel="1" readonly="not workflow_allow_edit"/>
                                 </div>
-                                <field name="erp_requester" placeholder="SAT Talep Eden"/>
+                                <field name="erp_requester" placeholder="SAT Talep Eden" readonly="not workflow_allow_edit"/>
                                 <!-- <separator/> -->
-                                <field name="target_type"/>
+                                <field name="target_type" readonly="not workflow_allow_edit"/>
                                 <label for="target_price" invisible="target_type != 'price'"/>
                                 <div class="d-flex align-items-center" invisible="target_type != 'price'">
-                                    <field name="target_price" widget="monetary" options="{'currency_field': 'currency_id'}" class="me-2" nolabel="1" />
-                                    <field name="currency_id" nolabel="1" />
+                                    <field name="target_price" widget="monetary" options="{'currency_field': 'currency_id'}" class="me-2" nolabel="1" readonly="not workflow_allow_edit"/>
+                                    <field name="currency_id" nolabel="1" readonly="not workflow_allow_edit"/>
                                 </div>
-                                <field name="target_discount" invisible="target_type != 'discount'"/>
+                                <field name="target_discount" invisible="target_type != 'discount'" readonly="not workflow_allow_edit"/>
                             </group>
                         </group>
 
                         <notebook>
                             <page string="İhale Kalemleri" name="tender_lines">
-                                <field name="tender_lines" nolabel="1" widget="product_label_section_and_note_field_o2m">
+                                <field name="tender_lines" nolabel="1" widget="product_label_section_and_note_field_o2m" readonly="not workflow_allow_edit">
                                     <list editable="bottom">
                                         <field name="sequence" widget="handle"/>
                                         <field name="display_type" column_invisible="True"/>
@@ -260,10 +263,10 @@
                                 </p>
                             </page>
                             <page string="Açıklama ve Ekler" name="description_attachments">
-                                <field name="description" widget="html" nolabel="1"/>
+                                <field name="description" widget="html" nolabel="1" readonly="not workflow_allow_edit"/>
                             </page>
                             <page string="Davetli Tedarikçiler" name="invited_partners">
-                                <field name="invited_partners" nolabel="1">
+                                <field name="invited_partners" nolabel="1" readonly="not workflow_allow_edit">
                                     <list>
                                         <field name="name"/>
                                         <field name="email"/>

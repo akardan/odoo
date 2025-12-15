@@ -1116,6 +1116,24 @@ class AkTender(models.Model):
         """
         return self.env.lang or 'en_US'
         
+    # Computed field to check if the record can be edited
+    workflow_allow_edit = fields.Boolean(
+        string='Allow Edit',
+        compute='_compute_workflow_allow_edit',
+        store=False,
+        help="İhale durumuna göre düzenleme izni"
+    )
+    
+    @api.depends('workflow_current_state_id', 'workflow_current_state_id.allow_edit')
+    def _compute_workflow_allow_edit(self):
+        """Check if the current workflow state allows editing"""
+        for record in self:
+            if record.workflow_current_state_id:
+                record.workflow_allow_edit = record.workflow_current_state_id.allow_edit
+            else:
+                # If no workflow state, allow editing
+                record.workflow_allow_edit = True
+
     @api.model_create_multi
     def create(self, vals_list):
         for vals in vals_list:
