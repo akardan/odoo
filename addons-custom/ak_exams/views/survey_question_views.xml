@@ -6,8 +6,10 @@
         <field name="model">survey.question</field>
         <field name="inherit_id" ref="survey.survey_question_form"/>
         <field name="arch" type="xml">
-            <xpath expr="//field[@name='title']" position="after">
+            <xpath expr="//field[@name='question_type']" position="after">
                 <field name="category_id" options="{'no_create': False}" invisible="is_page"/>
+                <field name="is_mandatory" invisible="is_page"/>
+                <field name="question_group" invisible="is_page"/>
             </xpath>
         </field>
     </record>
@@ -20,6 +22,8 @@
         <field name="arch" type="xml">
             <xpath expr="//field[@name='question_type']" position="after">
                 <field name="category_id"/>
+                <field name="is_mandatory" optional="show"/>
+                <field name="question_group" optional="show"/>
             </xpath>
         </field>
     </record>
@@ -96,6 +100,14 @@
                         </ol>
                     </div>
                 </page>
+                <!-- <page string="Randomization Settings" name="randomization">
+                    <group>
+                        <field name="enable_question_randomization"/>
+                        <field name="total_random_questions" invisible="not enable_question_randomization"/>
+                        <field name="randomize_question_order" invisible="not enable_question_randomization"/>
+                        <field name="randomize_answer_order" invisible="not enable_question_randomization"/>
+                    </group>
+                </page> -->
             </xpath>
         </field>
     </record>

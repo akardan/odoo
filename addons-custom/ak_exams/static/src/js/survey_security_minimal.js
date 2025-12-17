@@ -1,5 +1,129 @@
-// Script to handle exam security features - Plain JavaScript
+// Script to handle exam security features and randomization - Plain JavaScript
 console.log("Survey Security Script Loaded (Plain JS Version)");
+
+// Randomization functions
+function randomizeAnswerOptions() {
+    console.log("ak_exams: Randomizing answer options");
+    
+    // Find all question containers with randomization enabled
+    const questionContainers = document.querySelectorAll('.js_question-wrapper[data-randomize-answers="true"]');
+    
+    questionContainers.forEach(function(container) {
+        const questionId = container.getAttribute('data-question-id');
+        
+        console.log(`ak_exams: Randomizing answers for question ${questionId}`);
+        
+        // Find the answer wrapper for simple choice questions
+        const answersContainer = container.querySelector('.o_survey_answer_wrapper.o_survey_form_choice[data-question-type="simple_choice_radio"]');
+        if (answersContainer) {
+            // Get all answer option divs (col-sm-12 divs containing labels)
+            const answerElements = Array.from(answersContainer.querySelectorAll('.col-sm-12'));
+            
+            if (answerElements.length > 1) {
+                console.log(`ak_exams: Found ${answerElements.length} answer options to randomize`);
+                
+                // Store original answer texts and values
+                const answerData = answerElements.map((element, index) => {
+                    const label = element.querySelector('label');
+                    const input = element.querySelector('input[type="radio"]');
+                    const span = element.querySelector('span.text-break');
+                    return {
+                        element: element,
+                        originalIndex: index,
+                        text: span ? span.textContent.trim() : '',
+                        value: input ? input.value : '',
+                        originalLetter: String.fromCharCode(65 + index) // A, B, C, D
+                    };
+                });
+                
+                // Shuffle array using Fisher-Yates algorithm with question ID as seed
+                function seededShuffle(array, seed) {
+                    let currentIndex = array.length;
+                    let randomIndex;
+                    
+                    // Simple seeded random function
+                    function seededRandom() {
+                        seed = (seed * 9301 + 49297) % 233280;
+                        return seed / 233280;
+                    }
+                    
+                    while (currentIndex !== 0) {
+                        randomIndex = Math.floor(seededRandom() * currentIndex);
+                        currentIndex--;
+                        [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+                    }
+                    
+                    return array;
+                }
+                
+                const shuffledData = seededShuffle([...answerData], parseInt(questionId) || 1);
+                
+                // Update the DOM with shuffled answers but keep A, B, C, D codes
+                shuffledData.forEach((data, newIndex) => {
+                    const newLetter = String.fromCharCode(65 + newIndex); // A, B, C, D for new positions
+                    const element = answerElements[newIndex];
+                    const label = element.querySelector('label');
+                    const input = element.querySelector('input[type="radio"]');
+                    const span = element.querySelector('span.text-break');
+                    
+                    // Update the text content
+                    if (span) {
+                        span.textContent = data.text;
+                    }
+                    
+                    // Update input value to match the original answer
+                    if (input) {
+                        input.value = data.value;
+                    }
+                    
+                    // Update any selection keys to show correct letter
+                    const selectionKey = element.querySelector('.o_survey_key');
+                    if (selectionKey) {
+                        selectionKey.textContent = newLetter;
+                    }
+                });
+                
+                console.log(`ak_exams: Successfully randomized ${shuffledData.length} answer options with preserved codes`);
+            }
+        } else {
+            console.log(`ak_exams: No answer container found for question ${questionId}`);
+        }
+    });
+}
+
+// Function to observe DOM changes and re-randomize when new content is loaded
+function setupRandomizationObserver() {
+    const observer = new MutationObserver(function(mutations) {
+        let shouldRandomize = false;
+        
+        mutations.forEach(function(mutation) {
+            if (mutation.type === 'childList') {
+                // Check if new question content was added
+                mutation.addedNodes.forEach(function(node) {
+                    if (node.nodeType === Node.ELEMENT_NODE) {
+                        if (node.classList && node.classList.contains('js_question-wrapper') ||
+                            node.querySelector && node.querySelector('.js_question-wrapper')) {
+                            shouldRandomize = true;
+                        }
+                    }
+                });
+            }
+        });
+        
+        if (shouldRandomize) {
+            console.log('ak_exams: New question content detected, re-randomizing answers');
+            setTimeout(randomizeAnswerOptions, 100); // Small delay to ensure DOM is ready
+        }
+    });
+    
+    // Start observing
+    observer.observe(document.body, {
+        childList: true,
+        subtree: true
+    });
+    
+    console.log('ak_exams: Randomization observer setup complete');
+}
 
 function initializeAkExamsSecurity() {
     console.log("ak_exams: DOM Content Loaded or function called directly. Initializing security features...");
@@ -370,6 +494,12 @@ function initializeAkExamsSecurity() {
 
         }, 100); // Delay for setTimeout
     }); // End of surveyBackgrounds.forEach
+    
+    // Initialize randomization after security setup
+    setTimeout(randomizeAnswerOptions, 200);
+    
+    // Setup observer for AJAX navigation
+    setupRandomizationObserver();
 } // End of initializeAkExamsSecurity
 
 if (document.readyState === 'loading') {

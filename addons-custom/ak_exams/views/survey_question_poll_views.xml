@@ -42,6 +42,8 @@
                 <field name="sequence" widget="handle"/>
                 <field name="name"/>
                 <field name="category_id"/>
+                <field name="is_mandatory" optional="show"/>
+                <field name="question_group" optional="show"/>
                 <field name="company_id" groups="base.group_multi_company"/>
                 <field name="active" widget="boolean_toggle"/>
             </list>
@@ -72,6 +74,8 @@
                         </group>
                         <group>
                             <field name="active"/>
+                            <field name="is_mandatory"/>
+                            <field name="question_group"/>
                         </group>
                     </group>
                     <notebook>

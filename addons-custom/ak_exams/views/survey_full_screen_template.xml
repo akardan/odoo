@@ -10,6 +10,16 @@
                 <attribute name="t-att-data-disable-dev-tools">survey.disable_dev_tools and 'true' or 'false'</attribute>
                 <attribute name="t-att-data-disable-print-screen">survey.disable_print_screen and 'true' or 'false'</attribute>
                 <attribute name="t-att-data-access-token">answer and answer.access_token</attribute>
+                <attribute name="t-att-data-randomize-answers">survey.randomize_answer_order and 'true' or 'false'</attribute>
+                <attribute name="t-att-data-randomize-questions">survey.randomize_question_order and 'true' or 'false'</attribute>
+            </xpath>
+        </template>
+        
+        <template id="survey_question_randomization" inherit_id="survey.question_container" name="Survey Question Randomization">
+            <xpath expr="//div[@t-attf-class and contains(@t-attf-class, 'js_question-wrapper')]" position="attributes">
+                <attribute name="t-att-data-question-id">question.id</attribute>
+                <attribute name="t-att-data-question-type">question.question_type</attribute>
+                <attribute name="t-att-data-randomize-answers">survey.randomize_answer_order and 'true' or 'false'</attribute>
             </xpath>
         </template>
     </data>

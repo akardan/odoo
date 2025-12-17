@@ -1048,6 +1048,106 @@ class SurveySurvey(models.Model):
         default=0,
         help=_("Maximum total penalty points that can be accumulated. If 0, no limit to penalty points, but survey might end due to violation count.")
     )
+    
+    # Randomization settings
+    enable_question_randomization = fields.Boolean(string='Soru Randomizasyonu Aktif', default=False)
+    total_random_questions = fields.Integer(string='Seçilecek Toplam Soru Sayısı', default=20)
+    randomize_question_order = fields.Boolean(string='Soru Sırası Karıştır', default=True)
+    randomize_answer_order = fields.Boolean(string='Cevap Sırası Karıştır', default=True)
+
+    def _generate_randomized_questions(self, user_input_id=None):
+        """Generate randomized question set for exam"""
+        import random
+        
+        if not self.enable_question_randomization:
+            return self.question_ids.filtered(lambda q: not q.is_page)
+            
+        # Use survey ID as seed for consistent randomization per survey
+        # Add user_input_id if provided for per-participant randomization
+        seed_value = self.id
+        if user_input_id:
+            seed_value = f"{self.id}_{user_input_id}"
+        random.seed(seed_value)
+            
+        all_questions = self.question_ids.filtered(lambda q: not q.is_page)
+        
+        # Step 1: Always include mandatory questions
+        mandatory_questions = all_questions.filtered('is_mandatory')
+        selected_questions = list(mandatory_questions)
+        
+        # Step 2: Handle question groups
+        remaining_questions = all_questions - mandatory_questions
+        grouped_questions = {}
+        ungrouped_questions = []
+        
+        for question in remaining_questions:
+            if question.question_group:
+                if question.question_group not in grouped_questions:
+                    grouped_questions[question.question_group] = []
+                grouped_questions[question.question_group].append(question)
+            else:
+                ungrouped_questions.append(question)
+        
+        # Step 3: Randomly select from groups and individual questions
+        available_slots = self.total_random_questions - len(selected_questions)
+        
+        if available_slots > 0:
+            # Create selection pool (groups count as 1 unit each)
+            selection_pool = list(grouped_questions.keys()) + ungrouped_questions
+            random.shuffle(selection_pool)
+            
+            for item in selection_pool:
+                if available_slots <= 0:
+                    break
+                    
+                if isinstance(item, str):  # It's a group name
+                    group_questions = grouped_questions[item]
+                    if len(group_questions) <= available_slots:
+                        selected_questions.extend(group_questions)
+                        available_slots -= len(group_questions)
+                else:  # It's an individual question
+                    selected_questions.append(item)
+                    available_slots -= 1
+        
+        # Step 4: Randomize question order if enabled
+        if self.randomize_question_order:
+            # Keep mandatory questions at the beginning, randomize the rest
+            mandatory_count = len(mandatory_questions)
+            if mandatory_count > 0:
+                non_mandatory = selected_questions[mandatory_count:]
+                random.shuffle(non_mandatory)
+                selected_questions = list(mandatory_questions) + non_mandatory
+            else:
+                random.shuffle(selected_questions)
+        
+        return selected_questions
+
+    def _create_answer(self, user=False, partner=False, email=False, test_entry=False, check_attempts=True, **additional_vals):
+        """Override to generate randomized questions when survey starts"""
+        user_input = super()._create_answer(user, partner, email, test_entry, check_attempts, **additional_vals)
+        
+        if self.enable_question_randomization and not test_entry:
+            # Generate randomized question set for this participant
+            randomized_questions = self._generate_randomized_questions(user_input.id)
+            # Set predefined questions and save the sequence
+            user_input.predefined_question_ids = [(6, 0, [q.id for q in randomized_questions])]
+            user_input.randomized_question_sequence = ','.join([str(q.id) for q in randomized_questions])
+        
+        return user_input
+
+    def _get_randomized_suggested_answers(self, question, user_input_id):
+        """Get randomized suggested answers for a question"""
+        if not self.randomize_answer_order or question.question_type != 'simple_choice':
+            return question.suggested_answer_ids
+        
+        import random
+        answers = list(question.suggested_answer_ids)
+        
+        # Use user_input_id as seed for consistent randomization per participant
+        random.seed(f"{question.id}_{user_input_id}")
+        random.shuffle(answers)
+        
+        return answers
 
     @api.onchange('full_screen_mode', 'disable_copy_paste', 'disable_dev_tools', 'detect_tab_switching', 'disable_print_screen')
     def _onchange_update_security_description(self):
@@ -1100,6 +1200,68 @@ class SurveySurvey(models.Model):
             self.description = ""
 
 
+    def _get_survey_questions(self, answer=None, page_id=None, question_id=None):
+        """Override to handle randomization properly"""
+        if answer and answer.is_session_answer:
+            return self.session_question_id, self.session_question_id.id
+            
+        if self.questions_layout == 'page_per_section':
+            if not page_id:
+                raise ValueError("Page id is needed for question layout 'page_per_section'")
+            page_or_question_id = int(page_id)
+            questions = self.env['survey.question'].sudo().search([
+                ('survey_id', '=', self.id),
+                ('page_id', '=', page_or_question_id)
+            ])
+        elif self.questions_layout == 'page_per_question':
+            if not question_id:
+                raise ValueError("Question id is needed for question layout 'page_per_question'")
+            page_or_question_id = int(question_id)
+            questions = self.env['survey.question'].sudo().browse(page_or_question_id)
+        else:
+            page_or_question_id = None
+            questions = self.question_ids
+
+        # Handle randomization: use predefined_question_ids if available
+        if answer and self.enable_question_randomization and answer.predefined_question_ids:
+            questions = questions & answer.predefined_question_ids
+        elif answer and answer.predefined_question_ids:
+            # Standard Odoo randomization (questions_selection == 'random')
+            questions = questions & answer.predefined_question_ids
+            
+        return questions, page_or_question_id
+
+    def _get_next_page_or_question(self, user_input, page_or_question_id, go_back=False):
+        """Override to handle randomized question navigation"""
+        if self.enable_question_randomization and user_input.randomized_question_sequence:
+            # Use randomized question order from sequence
+            question_ids = [int(qid) for qid in user_input.randomized_question_sequence.split(',') if qid.strip()]
+            questions_list = self.env['survey.question'].browse(question_ids)
+            
+            if not page_or_question_id:
+                # Return first question
+                return questions_list[0] if questions_list else self.env['survey.question']
+            
+            try:
+                current_index = question_ids.index(page_or_question_id)
+                
+                if go_back:
+                    # Get previous question
+                    if current_index > 0:
+                        return questions_list[current_index - 1]
+                else:
+                    # Get next question
+                    if current_index < len(questions_list) - 1:
+                        return questions_list[current_index + 1]
+                        
+            except (ValueError, IndexError):
+                pass
+                
+            return self.env['survey.question']
+        
+        # Use default behavior for non-randomized surveys
+        return super()._get_next_page_or_question(user_input, page_or_question_id, go_back)
+
     def _can_go_back(self, answer, page_or_question):
         self.ensure_one()
         if self.questions_layout == "one_page" or not self.users_can_go_back:
@@ -1115,9 +1277,10 @@ class SurveySurvey(models.Model):
             return True # Can go back if not first page
         else: # 'page_per_question'
             # For 'page_per_question', navigation is based on question_ids
-            # Use predefined_question_ids if random, otherwise survey.question_ids
-            if not answer.is_session_answer and self.questions_selection == 'random':
-                relevant_questions = answer.predefined_question_ids
+            # Use randomized sequence if randomization enabled, otherwise survey.question_ids
+            if self.enable_question_randomization and answer.randomized_question_sequence:
+                question_ids = [int(qid) for qid in answer.randomized_question_sequence.split(',') if qid.strip()]
+                relevant_questions = self.env['survey.question'].browse(question_ids)
             else:
                 relevant_questions = self.question_ids
 
@@ -1163,6 +1326,12 @@ class SurveyUserInput(models.Model):
     )
     
     accumulated_penalty_points = fields.Integer(string=_("Accumulated Penalty Points"), default=0, readonly=True)
+    
+    # Randomization fields
+    predefined_question_ids = fields.Many2many('survey.question', string='Önceden Tanımlı Sorular',
+                                              help="Bu katılımcı için randomize edilmiş sorular")
+    randomized_question_sequence = fields.Text(string='Randomized Question Sequence',
+                                             help="Comma-separated list of question IDs in randomized order")
 
     @api.depends('fullscreen_violation_count', 'tab_switch_violation_count', 'devtools_attempt_count', 'print_screen_attempt_count')
     def _compute_total_security_violations(self):

@@ -35,6 +35,12 @@
                         <field name="max_total_violations_allowed"/>
                         <field name="max_total_penalty_points"/>
                     </group>
+                    <group string="Randomization Settings" invisible="survey_type != 'assessment'">
+                        <field name="enable_question_randomization"/>
+                        <field name="total_random_questions" invisible="not enable_question_randomization"/>
+                        <field name="randomize_question_order" invisible="not enable_question_randomization"/>
+                        <field name="randomize_answer_order" invisible="not enable_question_randomization"/>
+                    </group>
                 </xpath>
             </field>
         </record>

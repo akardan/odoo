@@ -34,3 +34,26 @@ class SurveyExtension(Survey):
 
         # No need to modify the context as we're directly adding data attributes in the template
         return res
+    
+    def _prepare_question_html(self, survey, user_input, **kwargs):
+        """Override to use randomized answers"""
+        result = super()._prepare_question_html(survey, user_input, **kwargs)
+        
+        # If randomization is enabled, use randomized suggested answers
+        if survey.enable_question_randomization and survey.randomize_answer_order:
+            # Get the current question from the result context
+            if hasattr(result, 'qcontext') and 'question' in result.qcontext:
+                question = result.qcontext['question']
+                if question.question_type == 'simple_choice':
+                    randomized_answers = question.get_randomized_suggested_answers(user_input.id)
+                    result.qcontext['question'].suggested_answer_ids = randomized_answers
+        
+        return result
+    
+    def _get_survey_questions(self, survey, user_input, page_or_question_key=None):
+        """Override to use randomized questions"""
+        if survey.enable_question_randomization and user_input.predefined_question_ids:
+            # Use randomized questions for this participant
+            return user_input.predefined_question_ids.filtered(lambda q: not q.is_page)
+        
+        return super()._get_survey_questions(survey, user_input, page_or_question_key)

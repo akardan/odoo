@@ -31,6 +31,12 @@ class SurveyQuestionPoll(models.Model):
         domain="['|', ('company_id', '=', False), ('company_id', '=', company_id)]"
     )
     active = fields.Boolean(default=True, tracking=True)
+    
+    # Randomization fields
+    is_mandatory = fields.Boolean(string='Zorunlu Soru', default=False, 
+                                 help="Bu soru randomize sınavlarda her zaman dahil edilir")
+    question_group = fields.Char(string='Soru Grubu', 
+                                help="Aynı grup adına sahip sorular birlikte seçilir")
 
     excel_file = fields.Binary(string=_('Excel File'), help_=_("Upload an Excel file to import poll templates."))
     excel_file_name = fields.Char(string=_('Excel File Name'))
@@ -297,6 +303,8 @@ class SurveyQuestionPoll(models.Model):
                 'is_time_limited': False,
                 'time_limit': 0,
                 'category_id': category_id,
+                'is_mandatory': template.is_mandatory,
+                'question_group': template.question_group,
                 'suggested_answer_ids': []
             }
 

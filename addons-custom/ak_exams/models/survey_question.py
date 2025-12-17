@@ -12,6 +12,14 @@ class SurveyQuestion(models.Model):
         tracking=True
     )
     
+    # Randomization fields  
+    is_mandatory = fields.Boolean(string='Zorunlu Soru', default=False)
+    question_group = fields.Char(string='Soru Grubu')
+    
+    def get_randomized_suggested_answers(self, user_input_id):
+        """Get randomized suggested answers for this question"""
+        return self.survey_id._get_randomized_suggested_answers(self, user_input_id)
+    
     @api.onchange('survey_id')
     def _onchange_survey_id(self):
         """Update domain of category_id based on survey_id"""
