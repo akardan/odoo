@@ -46,7 +46,22 @@
                                 try {
                                     this.enforceRowExclusivity(checkbox);
                                     this.updateCheckboxUI(checkbox, checkbox.checked);
-                                    this.saveUserSelection(checkbox);
+                                    
+                                    // Check if tender has passed evaluation state
+                                    const comparisonTable = document.querySelector(this.config.selectors.comparisonTable);
+                                    const tenderState = comparisonTable ? comparisonTable.dataset.tenderState : '';
+                                    const allowedStates = ['first_tender_round', 'target_price_set', 'new_tender_round', 'evaluation']; // States where saving is allowed
+                                    
+                                    if (allowedStates.includes(tenderState)) {
+                                        // Save if in evaluation state or earlier states
+                                        this.saveUserSelection(checkbox);
+                                    } else {
+                                        // After evaluation state - only update UI, don't save
+                                        console.log('Tender has passed evaluation state (' + tenderState + '). Skipping save, only updating calculations.');
+                                        this.updateUserTotals();
+                                        // Show notification that changes are not saved
+                                        this.showReadOnlyNotification();
+                                    }
                                     
                                 } catch (e) {
                                     console.error("Error in handleCheckboxSelection:", e);
@@ -695,7 +710,7 @@
                                     box-shadow: 0 2px 10px rgba(0,0,0,0.2);
                                 `;
                                 notification.innerHTML = `
-                                    <i class="fa fa-check"></i> Seçim kaydedildi! 
+                                    <i class="fa fa-check"></i> Seçim kaydedildi!
                                     <button onclick="window.VendorComparison.refreshReport()" style="background: none; border: 1px solid white; color: white; margin-left: 10px; padding: 2px 8px; border-radius: 3px; cursor: pointer;">
                                         Yenile
                                     </button>
@@ -708,6 +723,34 @@
                                         notification.parentNode.removeChild(notification);
                                     }
                                 }, 5000);
+                            },
+
+                            showReadOnlyNotification: function() {
+                                // Show notification that changes are not saved (read-only mode)
+                                const notification = document.createElement('div');
+                                notification.style.cssText = `
+                                    position: fixed;
+                                    top: 20px;
+                                    right: 20px;
+                                    background: #ffc107;
+                                    color: #000;
+                                    padding: 10px 15px;
+                                    border-radius: 5px;
+                                    z-index: 9999;
+                                    font-size: 14px;
+                                    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+                                `;
+                                notification.innerHTML = `
+                                    <i class="fa fa-info-circle"></i> Değerlendirme aşaması geçildi. Sadece hesaplamalar güncelleniyor, kayıt yapılmıyor.
+                                `;
+                                document.body.appendChild(notification);
+                                
+                                // Auto-remove after 4 seconds
+                                setTimeout(function() {
+                                    if (notification.parentNode) {
+                                        notification.parentNode.removeChild(notification);
+                                    }
+                                }, 4000);
                             },
 
                             init: function() {
@@ -866,7 +909,7 @@
                             </div>
                             
                             <!-- Comparison Table -->
-                            <table class="table table-bordered comparison-table mt-0" t-att-data-tender-id="o.id">
+                            <table class="table table-bordered comparison-table mt-0" t-att-data-tender-id="o.id" t-att-data-tender-state="o.workflow_current_state_id.code">
                                 <thead>
                                     <tr>
                                         <th class="product-col">Ürün</th>
