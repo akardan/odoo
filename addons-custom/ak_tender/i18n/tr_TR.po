@@ -731,3 +731,15 @@ msgstr "Görüntüle"
 #: view:ak_tender.supplier_application:ak_tender.view_supplier_application_form
 msgid "Supplier"
 msgstr "Tedarikçi"
+
+#. module: ak_tender
+#: code:addons/ak_tender/models/supplier_application.py:0
+#, python-format
+msgid "At least one IBAN information (TRY, USD or EUR) must be entered."
+msgstr "En az bir IBAN bilgisi (TRY, USD veya EUR) girilmelidir."
+
+#. module: ak_tender
+#: code:addons/ak_tender/models/supplier_application.py:0
+#, python-format
+msgid "Bank name is required when SWIFT code is entered."
+msgstr "SWIFT kodu girildiğinde banka adı zorunludur."

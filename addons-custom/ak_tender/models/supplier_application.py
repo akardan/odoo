@@ -135,7 +135,17 @@ class SupplierApplication(models.Model):
             if record.state in ['submitted', 'under_review', 'approved']:
                 if not record.iban_try and not record.iban_usd and not record.iban_eur:
                     raise ValidationError(_(
-                        'En az bir IBAN bilgisi (TRY, USD veya EUR) girilmelidir.'
+                        'At least one IBAN information (TRY, USD or EUR) must be entered.'
+                    ))
+    
+    @api.constrains('swift_code', 'bank_name', 'state')
+    def _check_swift_code_requires_bank(self):
+        """Check that bank name is provided when Swift code is entered"""
+        for record in self:
+            if record.swift_code and record.state in ['submitted', 'under_review', 'approved']:
+                if not record.bank_name:
+                    raise ValidationError(_(
+                        'Bank name is required when SWIFT code is entered.'
                     ))
     
     @api.constrains('vat_number')
