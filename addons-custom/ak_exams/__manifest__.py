@@ -38,11 +38,14 @@ Exam Management System for customers that isolates based on company
         'views/templates.xml',
         'views/survey_exam_features_view.xml',
         'views/survey_full_screen_template.xml',
+        'views/survey_date_error_template.xml',
         'views/survey_question_poll_views.xml',
         'views/survey_question_poll_import_wizard_views.xml',
         'views/survey_question_pool_wizard_views.xml',
         'views/survey_question_views.xml',
         'views/survey_user_input_views.xml',
+        'views/survey_user_input_photo_views.xml',
+        'views/survey_templates.xml',
     ],
     'assets': {
         'web.assets_frontend': [

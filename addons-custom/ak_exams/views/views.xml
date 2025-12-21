@@ -115,6 +115,53 @@
                             </group>
                         </group>
                     </page>
+                    <page string="Captured Photos" name="captured_photos" invisible="photo_count == 0">
+                        <group>
+                            <group>
+                                <field name="camera_permission_granted"/>
+                                <field name="camera_permission_datetime"/>
+                            </group>
+                            <group>
+                                <field name="photo_count"/>
+                            </group>
+                        </group>
+                        <field name="photo_ids" mode="kanban" nolabel="1">
+                            <kanban>
+                                <field name="id"/>
+                                <field name="photo"/>
+                                <field name="capture_datetime"/>
+                                <field name="capture_type"/>
+                                <field name="capture_success"/>
+                                <templates>
+                                    <t t-name="kanban-box">
+                                        <div class="oe_kanban_global_click" style="max-width: 250px; margin: 5px;">
+                                            <div class="o_kanban_image" style="text-align: center;">
+                                                <img t-att-src="kanban_image('survey.user_input.photo', 'photo', record.id.raw_value)"
+                                                     alt="Exam Photo"
+                                                     style="max-width: 230px; max-height: 200px; margin: 10px;"/>
+                                            </div>
+                                            <div class="oe_kanban_details" style="padding: 5px;">
+                                                <strong>
+                                                    <field name="capture_type"/>
+                                                </strong>
+                                                <div>
+                                                    <field name="capture_datetime" widget="datetime"/>
+                                                </div>
+                                                <div>
+                                                    <span t-if="record.capture_success.raw_value" class="badge badge-success">
+                                                        Success
+                                                    </span>
+                                                    <span t-else="" class="badge badge-danger">
+                                                        Failed
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </t>
+                                </templates>
+                            </kanban>
+                        </field>
+                    </page>
                 </notebook>
             </xpath>
         </field>

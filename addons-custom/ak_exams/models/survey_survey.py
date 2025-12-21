@@ -994,6 +994,16 @@ class SurveySurvey(models.Model):
             raise UserError(_("Error processing Excel file: %s") % str(e))
             raise UserError(_("Error processing Excel file: %s") % str(e))
 
+    # Survey availability date/time fields
+    start_date = fields.Datetime(
+        string=_('Start Date/Time'),
+        help=_("Exam will only be accessible starting from this date and time (in company timezone)"),
+    )
+    end_date = fields.Datetime(
+        string=_('End Date/Time'),
+        help=_("Exam will only be accessible until this date and time (in company timezone)"),
+    )
+
     session_timeout_minutes = fields.Integer(
         string=_('Session Timeout (minutes)'),
         help=_("Automatically end the survey session after this many minutes of inactivity. Set to 0 for no timeout."),
@@ -1031,6 +1041,34 @@ class SurveySurvey(models.Model):
         default=False
     )
 
+    # Photo Capture Settings
+    photo_capture_mode = fields.Selection([
+        ('disabled', 'Disabled'),
+        ('optional', 'Optional'),
+        ('mandatory', 'Mandatory')
+    ], string='Photo Capture Mode',
+       default='disabled',
+       help='Photo capture mode:\n'
+            '- Disabled: No photo capture\n'
+            '- Optional: Camera permission requested but not required to start exam\n'
+            '- Mandatory: Camera permission required to start exam')
+    
+    photo_capture_min_interval = fields.Integer(
+        string='Photo Capture Min Interval (seconds)',
+        default=120,  # 2 minutes
+        help='Minimum time between random photo captures'
+    )
+    photo_capture_max_interval = fields.Integer(
+        string='Photo Capture Max Interval (seconds)',
+        default=600,  # 10 minutes
+        help='Maximum time between random photo captures'
+    )
+    photo_capture_initial = fields.Boolean(
+        string='Capture Initial Photo',
+        default=True,
+        help='Capture photo when exam starts'
+    )
+
     # Penalty and Limit Settings
     penalty_fullscreen_exit = fields.Integer(string=_("Penalty for Fullscreen Exit"), default=0, help=_("Points deducted each time user exits fullscreen."))
     penalty_tab_switch = fields.Integer(string=_("Penalty for Tab Switch"), default=0, help=_("Points deducted each time user switches tab/focus."))
@@ -1055,18 +1093,26 @@ class SurveySurvey(models.Model):
     randomize_question_order = fields.Boolean(string='Soru Sırası Karıştır', default=True)
     randomize_answer_order = fields.Boolean(string='Cevap Sırası Karıştır', default=True)
 
-    def _generate_randomized_questions(self, user_input_id=None):
+    def _generate_randomized_questions(self, user_input_id=None, is_test=False):
         """Generate randomized question set for exam"""
         import random
+        from datetime import datetime
+        import hashlib
         
         if not self.enable_question_randomization:
             return self.question_ids.filtered(lambda q: not q.is_page)
             
-        # Use survey ID as seed for consistent randomization per survey
-        # Add user_input_id if provided for per-participant randomization
-        seed_value = self.id
-        if user_input_id:
-            seed_value = f"{self.id}_{user_input_id}"
+        # Generate a better seed using timestamp + user_input_id + survey_id
+        # This ensures different randomization each time for tests, but consistent for same participant
+        if is_test or not user_input_id:
+            # For test mode or when no user_input, always use unique timestamp
+            seed_str = f"{datetime.now().timestamp()}_{self.id}_{random.random()}"
+        else:
+            # For real exams, use user_input_id so each participant gets their own consistent set
+            seed_str = f"{user_input_id}_{self.id}"
+        
+        # Convert string to integer seed using secure hash
+        seed_value = int(hashlib.sha256(seed_str.encode()).hexdigest(), 16) % (2**31 - 1)
         random.seed(seed_value)
             
         all_questions = self.question_ids.filtered(lambda q: not q.is_page)
@@ -1111,14 +1157,8 @@ class SurveySurvey(models.Model):
         
         # Step 4: Randomize question order if enabled
         if self.randomize_question_order:
-            # Keep mandatory questions at the beginning, randomize the rest
-            mandatory_count = len(mandatory_questions)
-            if mandatory_count > 0:
-                non_mandatory = selected_questions[mandatory_count:]
-                random.shuffle(non_mandatory)
-                selected_questions = list(mandatory_questions) + non_mandatory
-            else:
-                random.shuffle(selected_questions)
+            # Shuffle ALL questions including mandatory ones
+            random.shuffle(selected_questions)
         
         return selected_questions
 
@@ -1126,9 +1166,10 @@ class SurveySurvey(models.Model):
         """Override to generate randomized questions when survey starts"""
         user_input = super()._create_answer(user, partner, email, test_entry, check_attempts, **additional_vals)
         
-        if self.enable_question_randomization and not test_entry:
+        if self.enable_question_randomization:
             # Generate randomized question set for this participant
-            randomized_questions = self._generate_randomized_questions(user_input.id)
+            # Pass is_test=True for test entries to get different questions each time
+            randomized_questions = self._generate_randomized_questions(user_input.id, is_test=test_entry)
             # Set predefined questions and save the sequence
             user_input.predefined_question_ids = [(6, 0, [q.id for q in randomized_questions])]
             user_input.randomized_question_sequence = ','.join([str(q.id) for q in randomized_questions])
@@ -1141,10 +1182,14 @@ class SurveySurvey(models.Model):
             return question.suggested_answer_ids
         
         import random
+        import hashlib
+        
         answers = list(question.suggested_answer_ids)
         
-        # Use user_input_id as seed for consistent randomization per participant
-        random.seed(f"{question.id}_{user_input_id}")
+        # Use secure hash for consistent randomization per participant
+        seed_str = f"{question.id}_{user_input_id}"
+        seed_value = int(hashlib.sha256(seed_str.encode()).hexdigest(), 16) % (2**31 - 1)
+        random.seed(seed_value)
         random.shuffle(answers)
         
         return answers
@@ -1204,6 +1249,23 @@ class SurveySurvey(models.Model):
         """Override to handle randomization properly"""
         if answer and answer.is_session_answer:
             return self.session_question_id, self.session_question_id.id
+        
+        # If randomization is enabled and we have predefined questions, only use those
+        if answer and self.enable_question_randomization and answer.predefined_question_ids:
+            if self.questions_layout == 'page_per_question':
+                if not question_id:
+                    raise ValueError("Question id is needed for question layout 'page_per_question'")
+                page_or_question_id = int(question_id)
+                # Only return the question if it's in the randomized set
+                if page_or_question_id in answer.predefined_question_ids.ids:
+                    questions = self.env['survey.question'].sudo().browse(page_or_question_id)
+                else:
+                    # Question not in randomized set, return empty
+                    questions = self.env['survey.question']
+            else:
+                page_or_question_id = None
+                questions = answer.predefined_question_ids
+            return questions, page_or_question_id
             
         if self.questions_layout == 'page_per_section':
             if not page_id:
@@ -1222,11 +1284,8 @@ class SurveySurvey(models.Model):
             page_or_question_id = None
             questions = self.question_ids
 
-        # Handle randomization: use predefined_question_ids if available
-        if answer and self.enable_question_randomization and answer.predefined_question_ids:
-            questions = questions & answer.predefined_question_ids
-        elif answer and answer.predefined_question_ids:
-            # Standard Odoo randomization (questions_selection == 'random')
+        # Handle standard Odoo randomization (questions_selection == 'random')
+        if answer and answer.predefined_question_ids:
             questions = questions & answer.predefined_question_ids
             
         return questions, page_or_question_id
@@ -1250,11 +1309,15 @@ class SurveySurvey(models.Model):
                     if current_index > 0:
                         return questions_list[current_index - 1]
                 else:
-                    # Get next question
+                    # Get next question - only within randomized set
                     if current_index < len(questions_list) - 1:
                         return questions_list[current_index + 1]
+                    else:
+                        # We've reached the last randomized question, return empty to end survey
+                        return self.env['survey.question']
                         
             except (ValueError, IndexError):
+                # Question not found in randomized set, return empty
                 pass
                 
             return self.env['survey.question']

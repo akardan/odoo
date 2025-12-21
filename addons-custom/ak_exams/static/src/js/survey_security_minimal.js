@@ -500,7 +500,297 @@ function initializeAkExamsSecurity() {
     
     // Setup observer for AJAX navigation
     setupRandomizationObserver();
+    
+    // Initialize photo capture after security setup
+    setTimeout(initializePhotoCapture, 300);
 } // End of initializeAkExamsSecurity
+
+// ========== PHOTO CAPTURE FUNCTIONALITY ==========
+let wakeLockSentinel = null;
+
+async function requestWakeLock() {
+    try {
+        if ('wakeLock' in navigator) {
+            wakeLockSentinel = await navigator.wakeLock.request('screen');
+            console.log('ak_exams: Screen wake lock activated - screen will not dim');
+            
+            // Re-request wake lock when visibility changes
+            document.addEventListener('visibilitychange', async () => {
+                if (wakeLockSentinel !== null && document.visibilityState === 'visible') {
+                    wakeLockSentinel = await navigator.wakeLock.request('screen');
+                }
+            });
+        }
+    } catch (err) {
+        console.log('ak_exams: Wake lock not supported or denied:', err);
+    }
+}
+
+async function releaseWakeLock() {
+    if (wakeLockSentinel !== null) {
+        await wakeLockSentinel.release();
+        wakeLockSentinel = null;
+        console.log('ak_exams: Screen wake lock released');
+    }
+}
+
+async function initializePhotoCapture() {
+    console.log('ak_exams: Initializing photo capture...');
+    const formElement = document.querySelector('form.o_survey_form, form[data-photo-capture-mode]');
+    
+    if (!formElement) {
+        console.log('ak_exams: Form element not found for photo capture');
+        return;
+    }
+    
+    const photoCaptureMode = formElement.getAttribute('data-photo-capture-mode') || 'disabled';
+    const isStartScreen = formElement.getAttribute('data-is-start-screen') === 'true';
+    
+    console.log('ak_exams: Photo capture mode: ' + photoCaptureMode + ', isStartScreen: ' + isStartScreen);
+    
+    // Only proceed if on start screen and photo capture is enabled
+    if (!isStartScreen || photoCaptureMode === 'disabled') {
+        console.log('ak_exams: Not on start screen or photo capture disabled');
+        return;
+    }
+    
+    const photoCaptureConfig = {
+        mode: photoCaptureMode,
+        minInterval: parseInt(formElement.getAttribute('data-photo-capture-min-interval') || '120') * 1000,
+        maxInterval: parseInt(formElement.getAttribute('data-photo-capture-max-interval') || '600') * 1000,
+        captureInitial: formElement.getAttribute('data-photo-capture-initial') === 'true'
+    };
+    
+    const accessToken = formElement.getAttribute('data-access-token');
+    
+    if (!accessToken) {
+        console.error('ak_exams: Access token not found');
+        return;
+    }
+    
+    console.log('ak_exams: Photo capture enabled on start screen, config:', photoCaptureConfig);
+    
+    // Request camera permission
+    try {
+        console.log('ak_exams: Requesting camera permission...');
+        
+        const stream = await navigator.mediaDevices.getUserMedia({
+            video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: 'user' },
+            audio: false
+        });
+        
+        console.log('ak_exams: Camera permission granted');
+        
+        // Update permission status on server
+        fetch('/survey/photo/permission', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                jsonrpc: '2.0',
+                method: 'call',
+                params: { access_token: accessToken, permission_granted: true }
+            })
+        });
+        
+        // Store stream globally for cleanup
+        window.examCameraStream = stream;
+        
+        // Find start button and add photo capture logic
+        const startButton = formElement.querySelector('button[type="submit"][value="start"]');
+        if (startButton) {
+            startButton.addEventListener('click', function() {
+                console.log('ak_exams: Start button clicked, will capture photos during exam');
+                
+                // Request wake lock to prevent screen from dimming
+                requestWakeLock();
+                
+                // Capture initial photo after exam starts
+                setTimeout(function() {
+                    captureAndSendPhoto(stream, accessToken, 'initial');
+                    
+                    // Schedule random captures
+                    scheduleRandomCaptures(stream, accessToken, photoCaptureConfig);
+                }, 1000);
+            });
+        }
+        
+    } catch (error) {
+        console.error('ak_exams: Camera permission denied:', error);
+        
+        // Update permission status on server
+        fetch('/survey/photo/permission', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                jsonrpc: '2.0',
+                method: 'call',
+                params: { access_token: accessToken, permission_granted: false }
+            })
+        });
+        
+        if (photoCaptureConfig.mode === 'mandatory') {
+            // Mandatory mode: BLOCK exam start
+            
+            // Find and disable ALL submit buttons to be sure
+            const allButtons = formElement.querySelectorAll('button[type="submit"]');
+            allButtons.forEach(function(btn) {
+                btn.disabled = true;
+                btn.style.opacity = '0.5';
+                btn.style.cursor = 'not-allowed';
+                btn.style.backgroundColor = '#ccc';
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    alert('Bu sınav için kamera izni zorunludur. Lütfen sayfayı yenileyin ve kamera iznini verin.');
+                    return false;
+                }, true);
+            });
+            
+            // Also prevent form submission
+            formElement.addEventListener('submit', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                alert('Sınav başlatılamaz! Kamera izni gereklidir.');
+                return false;
+            }, true);
+            
+            alert('Kamera İzni Gerekli: Bu sınav için kamera erişimi zorunludur. Lütfen sayfayı yenileyin ve kamera iznini verin.');
+        } else {
+            // Optional mode: show warning but allow exam
+            console.warn('ak_exams: Camera permission denied (optional mode) - continuing without photos');
+            alert('Uyarı: Kamera izni reddedildi. Sınava devam edebilirsiniz ancak fotoğraf çekilmeyecektir.');
+        }
+    }
+}
+
+function captureAndSendPhoto(stream, accessToken, captureType) {
+    try {
+        console.log('ak_exams: Capturing photo (' + captureType + ')...');
+        
+        // Create hidden video element
+        const video = document.createElement('video');
+        video.style.display = 'none';
+        video.autoplay = true;
+        video.srcObject = stream;
+        document.body.appendChild(video);
+        
+        // Wait for video to be ready
+        video.onloadedmetadata = function() {
+            // Create canvas to capture frame
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const context = canvas.getContext('2d');
+            context.drawImage(video, 0, 0);
+            
+            // Convert to base64
+            const photoData = canvas.toDataURL('image/jpeg', 0.8);
+            console.log('ak_exams: Photo captured, size: ' + photoData.length + ' bytes');
+            
+            // Send to server
+            fetch('/survey/photo/capture', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    jsonrpc: '2.0',
+                    method: 'call',
+                    params: {
+                        access_token: accessToken,
+                        photo_data: photoData,
+                        capture_type: captureType
+                    }
+                })
+            }).then(function(response) {
+                return response.json();
+            }).then(function(data) {
+                if (data.result && data.result.success) {
+                    console.log('ak_exams: Photo sent successfully');
+                } else {
+                    console.error('ak_exams: Failed to send photo');
+                }
+            });
+            
+            // Cleanup
+            video.remove();
+        };
+    } catch (error) {
+        console.error('ak_exams: Error capturing photo:', error);
+    }
+}
+
+function scheduleRandomCaptures(stream, accessToken, config) {
+    function scheduleNext() {
+        const interval = Math.floor(Math.random() * (config.maxInterval - config.minInterval) + config.minInterval);
+        console.log('ak_exams: Next photo in ' + (interval / 1000) + ' seconds');
+        
+        const timerId = setTimeout(function() {
+            captureAndSendPhoto(stream, accessToken, 'random');
+            scheduleNext();
+        }, interval);
+        
+        // Store timer ID globally for cleanup
+        if (!window.examPhotoTimers) window.examPhotoTimers = [];
+        window.examPhotoTimers.push(timerId);
+    }
+    
+    scheduleNext();
+}
+
+// Cleanup function for camera and wake lock
+function cleanupExamResources() {
+    console.log('ak_exams: Cleaning up exam resources...');
+    
+    // Stop camera stream
+    if (window.examCameraStream) {
+        window.examCameraStream.getTracks().forEach(track => track.stop());
+        window.examCameraStream = null;
+        console.log('ak_exams: Camera stream stopped');
+    }
+    
+    // Clear photo timers
+    if (window.examPhotoTimers) {
+        window.examPhotoTimers.forEach(timerId => clearTimeout(timerId));
+        window.examPhotoTimers = [];
+        console.log('ak_exams: Photo timers cleared');
+    }
+    
+    // Release wake lock
+    releaseWakeLock();
+}
+
+// Add cleanup button when exam is completed
+function addCleanupButton() {
+    // Check if we're on a completed exam page
+    const completedMessage = document.querySelector('.o_survey_finished, .o_survey_completed');
+    if (!completedMessage) return;
+    
+    // Check if cleanup button already exists
+    if (document.getElementById('exam-cleanup-button')) return;
+    
+    const cleanupButton = document.createElement('button');
+    cleanupButton.id = 'exam-cleanup-button';
+    cleanupButton.textContent = 'Kamerayı Kapat ve Çık';
+    cleanupButton.className = 'btn btn-primary mt-3';
+    Object.assign(cleanupButton.style, {
+        padding: '10px 20px',
+        fontSize: '16px',
+        marginTop: '20px'
+    });
+    
+    cleanupButton.addEventListener('click', function() {
+        cleanupExamResources();
+        alert('Kamera kapatıldı. Sayfayı kapatabilirsiniz.');
+    });
+    
+    completedMessage.appendChild(cleanupButton);
+    console.log('ak_exams: Cleanup button added');
+}
+
+// Call cleanup on page unload
+window.addEventListener('beforeunload', cleanupExamResources);
+
+// Check for completed exam state periodically
+setInterval(addCleanupButton, 2000);
 
 if (document.readyState === 'loading') {
     console.log("ak_exams: Document is loading, adding DOMContentLoaded listener.");

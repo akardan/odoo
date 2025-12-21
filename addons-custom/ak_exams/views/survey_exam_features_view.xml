@@ -5,6 +5,16 @@
             <field name="model">survey.survey</field>
             <field name="inherit_id" ref="survey.survey_survey_view_form"/>
             <field name="arch" type="xml">
+                <!-- Add start/end date fields before time limit in scoring group -->
+                <xpath expr="//label[@for='is_time_limited']" position="before">
+                    <label for="start_date" string="Başlama / Bitiş"/>
+                    <div class="o_row">
+                        <field name="start_date" widget="datetime" placeholder="Başlama Tarihi/Saati" nolabel="1"/>
+                        <span class="mx-2">→</span>
+                        <field name="end_date" widget="datetime" placeholder="Bitiş Tarihi/Saati" nolabel="1"/>
+                    </div>
+                </xpath>
+                
                 <xpath expr="//group[@name='scoring']" position="after">
                     <group string="Exam Security Features &amp; Penalties" invisible="survey_type != 'assessment'">
                         <label for="full_screen_mode"/>
@@ -30,6 +40,25 @@
                         <separator string="Other Security Settings"/>
                         <field name="session_timeout_minutes"/>
                         <field name="disable_copy_paste"/>
+                    </group>
+                    <group string="Photo Capture Settings" invisible="survey_type != 'assessment'">
+                        <field name="photo_capture_mode" widget="radio"/>
+                        <field name="photo_capture_initial" invisible="photo_capture_mode == 'disabled'"/>
+                        <label for="photo_capture_min_interval" invisible="photo_capture_mode == 'disabled'"/>
+                        <div class="o_row" invisible="photo_capture_mode == 'disabled'">
+                            <field name="photo_capture_min_interval" nolabel="1" placeholder="Min (seconds)"/>
+                            <span class="mx-2">to</span>
+                            <field name="photo_capture_max_interval" nolabel="1" placeholder="Max (seconds)"/>
+                            <span class="ms-2 text-muted">(Random interval range)</span>
+                        </div>
+                        <div class="alert alert-info" invisible="photo_capture_mode == 'disabled'" role="alert">
+                            <p><strong>Photo Capture Modes:</strong></p>
+                            <ul class="mb-0">
+                                <li><strong>Disabled:</strong> No photo capture</li>
+                                <li><strong>Optional:</strong> Camera requested but not required</li>
+                                <li><strong>Mandatory:</strong> Camera required to start exam</li>
+                            </ul>
+                        </div>
                     </group>
                     <group string="Global Violation Limits" invisible="survey_type != 'assessment'">
                         <field name="max_total_violations_allowed"/>

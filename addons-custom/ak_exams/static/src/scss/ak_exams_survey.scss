@@ -5,6 +5,31 @@
     font-style: normal;
 }
 
+/* Make survey container wider - for all parts */
+.o_survey_background .container,
+.o_survey_form .container,
+.wrap .container,
+body .container {
+    max-width: 80% !important;
+    width: 80% !important;
+}
+
+/* Make the wrap itself wider */
+.wrap {
+    max-width: 100% !important;
+    width: 100% !important;
+}
+
+/* For larger screens, use a reasonable max-width */
+@media (min-width: 1400px) {
+    .o_survey_background .container,
+    .o_survey_form .container,
+    .wrap .container,
+    body .container {
+        max-width: 1400px !important;
+    }
+}
+
 .o_survey_form {
     h3 { /* Target the question title */
         font-size: 1.5rem !important; /* Slightly reduce font size */

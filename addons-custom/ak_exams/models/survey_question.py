@@ -12,13 +12,17 @@ class SurveyQuestion(models.Model):
         tracking=True
     )
     
-    # Randomization fields  
+    # Randomization fields
     is_mandatory = fields.Boolean(string='Zorunlu Soru', default=False)
     question_group = fields.Char(string='Soru Grubu')
     
-    def get_randomized_suggested_answers(self, user_input_id):
-        """Get randomized suggested answers for this question"""
-        return self.survey_id._get_randomized_suggested_answers(self, user_input_id)
+    def _get_suggested_answer_ids_randomized(self):
+        """Get randomized suggested answers if context has user_input_id"""
+        self.ensure_one()
+        user_input_id = self.env.context.get('user_input_id')
+        if user_input_id and self.survey_id.randomize_answer_order and self.question_type == 'simple_choice':
+            return self.survey_id._get_randomized_suggested_answers(self, user_input_id)
+        return self.suggested_answer_ids
     
     @api.onchange('survey_id')
     def _onchange_survey_id(self):

@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- List view for survey.user_input.photo -->
+    <record id="view_survey_user_input_photo_list" model="ir.ui.view">
+        <field name="name">survey.user.input.photo.list</field>
+        <field name="model">survey.user_input.photo</field>
+        <field name="arch" type="xml">
+            <list string="Exam Photos" create="false" delete="false">
+                <field name="user_input_id"/>
+                <field name="capture_datetime"/>
+                <field name="capture_type"/>
+                <field name="capture_success"/>
+                <field name="ip_address"/>
+                <field name="company_id" groups="base.group_multi_company"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Form view for survey.user_input.photo -->
+    <record id="view_survey_user_input_photo_form" model="ir.ui.view">
+        <field name="name">survey.user.input.photo.form</field>
+        <field name="model">survey.user_input.photo</field>
+        <field name="arch" type="xml">
+            <form string="Exam Photo" create="false" delete="false">
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="toggle_active" type="object" 
+                                class="oe_stat_button" icon="fa-archive"
+                                invisible="1">
+                            <field name="capture_success" widget="boolean_button"/>
+                        </button>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="user_input_id" readonly="1"/>
+                            <field name="capture_datetime" readonly="1"/>
+                            <field name="capture_type" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="ip_address" readonly="1"/>
+                            <field name="browser_info" readonly="1"/>
+                            <field name="capture_success" readonly="1"/>
+                            <field name="company_id" groups="base.group_multi_company" readonly="1"/>
+                        </group>
+                    </group>
+                    <group string="Captured Photo">
+                        <field name="photo" widget="image" readonly="1" 
+                               options="{'size': [0, 400]}" 
+                               nolabel="1"/>
+                    </group>
+                    <group string="Error Information" invisible="capture_success">
+                        <field name="error_message" readonly="1"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Search view for survey.user_input.photo -->
+    <record id="view_survey_user_input_photo_search" model="ir.ui.view">
+        <field name="name">survey.user.input.photo.search</field>
+        <field name="model">survey.user_input.photo</field>
+        <field name="arch" type="xml">
+            <search string="Search Exam Photos">
+                <field name="user_input_id"/>
+                <field name="capture_type"/>
+                <field name="ip_address"/>
+                <separator/>
+                <filter string="Initial Photos" name="initial" 
+                        domain="[('capture_type', '=', 'initial')]"/>
+                <filter string="Random Photos" name="random" 
+                        domain="[('capture_type', '=', 'random')]"/>
+                <filter string="Manual Photos" name="manual" 
+                        domain="[('capture_type', '=', 'manual')]"/>
+                <separator/>
+                <filter string="Successful" name="successful" 
+                        domain="[('capture_success', '=', True)]"/>
+                <filter string="Failed" name="failed" 
+                        domain="[('capture_success', '=', False)]"/>
+                <separator/>
+                <filter string="Today" name="today" 
+                        domain="[('capture_datetime', '>=', datetime.datetime.combine(context_today(), datetime.time(0,0,0)))]"/>
+                <filter string="Last 7 Days" name="last_7_days" 
+                        domain="[('capture_datetime', '>=', (context_today() - datetime.timedelta(days=7)).strftime('%Y-%m-%d'))]"/>
+                <group expand="0" string="Group By">
+                    <filter string="User Input" name="group_user_input" 
+                            context="{'group_by': 'user_input_id'}"/>
+                    <filter string="Capture Type" name="group_capture_type" 
+                            context="{'group_by': 'capture_type'}"/>
+                    <filter string="Capture Date" name="group_capture_datetime" 
+                            context="{'group_by': 'capture_datetime:day'}"/>
+                    <filter string="Company" name="group_company" 
+                            context="{'group_by': 'company_id'}" 
+                            groups="base.group_multi_company"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Action for survey.user_input.photo -->
+    <record id="action_survey_user_input_photo" model="ir.actions.act_window">
+        <field name="name">Exam Photos</field>
+        <field name="res_model">survey.user_input.photo</field>
+        <field name="view_mode">list,form</field>
+        <field name="context">{'search_default_successful': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No exam photos captured yet
+            </p>
+            <p>
+                Photos will appear here when exam participants take exams with photo capture enabled.
+            </p>
+        </field>
+    </record>
+
+    <!-- Menu item for survey.user_input.photo (under Survey > Reports menu) -->
+    <menuitem id="menu_survey_user_input_photo"
+              name="Exam Photos"
+              parent="survey.menu_surveys"
+              action="action_survey_user_input_photo"
+              sequence="100"
+              groups="survey.group_survey_manager"/>
+</odoo>

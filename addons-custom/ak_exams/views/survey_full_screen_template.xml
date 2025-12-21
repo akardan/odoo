@@ -12,6 +12,12 @@
                 <attribute name="t-att-data-access-token">answer and answer.access_token</attribute>
                 <attribute name="t-att-data-randomize-answers">survey.randomize_answer_order and 'true' or 'false'</attribute>
                 <attribute name="t-att-data-randomize-questions">survey.randomize_question_order and 'true' or 'false'</attribute>
+                <!-- Photo Capture Settings -->
+                <attribute name="t-att-data-photo-capture-mode">survey.photo_capture_mode</attribute>
+                <attribute name="t-att-data-photo-capture-min-interval">survey.photo_capture_min_interval</attribute>
+                <attribute name="t-att-data-photo-capture-max-interval">survey.photo_capture_max_interval</attribute>
+                <attribute name="t-att-data-photo-capture-initial">survey.photo_capture_initial and 'true' or 'false'</attribute>
+                <attribute name="t-att-data-is-start-screen">answer and answer.state == 'new' and 'true' or 'false'</attribute>
             </xpath>
         </template>
         

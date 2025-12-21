@@ -4,3 +4,5 @@ access_survey_question_poll_option_user,survey.question.poll.option.user,model_s
 access_survey_question_poll_category_user,survey.question.poll.category.user,model_survey_question_poll_category,base.group_user,1,1,1,1
 access_survey_question_poll_import_wizard_user,survey.question.poll.import.wizard.user,model_survey_question_poll_import_wizard,base.group_user,1,1,1,1
 access_survey_question_pool_wizard_user,survey.question.pool.wizard.user,model_survey_question_pool_wizard,base.group_user,1,1,1,1
+access_survey_user_input_photo_survey_user,survey.user.input.photo.survey.user,model_survey_user_input_photo,survey.group_survey_user,1,0,0,0
+access_survey_user_input_photo_survey_manager,survey.user.input.photo.survey.manager,model_survey_user_input_photo,survey.group_survey_manager,1,1,1,1
