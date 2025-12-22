@@ -36,8 +36,18 @@
                                 }
                             },
 
-                            parseAmount: function(text) {
+                            parseAmount: function(text, dataValue) {
+                                // First try to use data-value attribute if available
+                                if (dataValue !== undefined && dataValue !== null && dataValue !== '') {
+                                    const numValue = parseFloat(dataValue);
+                                    return isNaN(numValue) ? 0 : numValue;
+                                }
+                                
+                                // Fallback to parsing text
                                 if (!text || text.trim() === '-' || text.trim() === '') return 0;
+                                
+                                // Handle Turkish number format: "57.480,00" -> 57480.00
+                                // Remove all dots (thousands separator), then replace comma with dot (decimal separator)
                                 const cleanText = text.replace(/[^\d.,]/g, '').replace(/\./g, '').replace(',', '.');
                                 return parseFloat(cleanText) || 0;
                             },
@@ -270,15 +280,17 @@
                                           );
  
                                           vendorAmountCells.forEach(function(cell) {
+                                              const dataValue = cell.getAttribute('data-value');
                                               const span = cell.querySelector('span');
                                               const amountText = span ? span.textContent : '';
-                                              userTotalAmount += self.parseAmount(amountText);
+                                              userTotalAmount += self.parseAmount(amountText, dataValue);
                                           });
  
                                           vendorNpvCells.forEach(function(cell) {
-                                              const span = cell.querySelector('span');
+                                              const span = cell.querySelector('span[data-value]');
+                                              const dataValue = span ? span.getAttribute('data-value') : null;
                                               const npvText = span ? span.textContent : '';
-                                              const npvValue = self.parseAmount(npvText);
+                                              const npvValue = self.parseAmount(npvText, dataValue);
                                               if (npvValue > 0) {
                                                   userTotalNpv += npvValue;
                                                   hasNpvForVendor = true;
@@ -322,11 +334,13 @@
                                                   
                                                   if (tutarRow) {
                                                       // Use the PO ID from the checkbox for the cell lookup
-                                                      const amountCell = tutarRow.querySelector('td[data-vendor-id="' + checkboxVendorId + '"] span');
+                                                      const amountTd = tutarRow.querySelector('td[data-vendor-id="' + checkboxVendorId + '"]');
                                                       
-                                                      if (amountCell) {
-                                                          const amountText = amountCell.textContent || '';
-                                                          const amount = self.parseAmount(amountText);
+                                                      if (amountTd) {
+                                                          const dataValue = amountTd.getAttribute('data-value');
+                                                          const amountSpan = amountTd.querySelector('span');
+                                                          const amountText = amountSpan ? amountSpan.textContent : '';
+                                                          const amount = self.parseAmount(amountText, dataValue);
                                                           userTotalAmount += amount;
                                                       }
                                                   }
@@ -342,11 +356,14 @@
                                                   
                                                   if (npvRow) {
                                                       // Use the PO ID from the checkbox for the cell lookup
-                                                      const npvCell = npvRow.querySelector('td[data-vendor-id="' + checkboxVendorId + '"] span');
+                                                      const npvTd = npvRow.querySelector('td[data-vendor-id="' + checkboxVendorId + '"]');
                                                       
-                                                      if (npvCell) {
-                                                          const npvText = npvCell.textContent || '';
-                                                          const npvValue = self.parseAmount(npvText);
+                                                      if (npvTd) {
+                                                          const dataValueSpan = npvTd.querySelector('span[data-value]');
+                                                          const dataValue = dataValueSpan ? dataValueSpan.getAttribute('data-value') : null;
+                                                          const npvSpan = npvTd.querySelector('span');
+                                                          const npvText = npvSpan ? npvSpan.textContent : '';
+                                                          const npvValue = self.parseAmount(npvText, dataValue);
                                                           if (npvValue > 0) {
                                                               userTotalNpv += npvValue;
                                                               hasNpvForVendor = true;
@@ -1202,7 +1219,7 @@
                                                         </t>
                                                     </t>
                                                     
-                                                    <td t-attf-class="vendor-col #{vendor_line and vendor_line.system_selection and 'system-selection' or ''} #{vendor_line and vendor_line.user_selection and 'user-selection' or ''}" t-att-data-vendor-id="vendor.partner_id.id" t-att-data-field="price_subtotal">
+                                                    <td t-attf-class="vendor-col #{vendor_line and vendor_line.system_selection and 'system-selection' or ''} #{vendor_line and vendor_line.user_selection and 'user-selection' or ''}" t-att-data-vendor-id="vendor.partner_id.id" t-att-data-field="price_subtotal" t-att-data-value="vendor_line and vendor_line.price_subtotal or 0">
                                                         <t t-if="vendor_line">
                                                             <span t-field="vendor_line.price_subtotal" t-options='{"widget": "monetary", "display_currency": vendor.currency_id}'/>
                                                             <small t-if="vendor_line.line_currency_id != vendor.currency_id" class="text-muted d-block">
@@ -1254,11 +1271,15 @@
                                                     <td t-attf-class="vendor-col #{vendor_line and vendor_line.system_selection and 'system-selection' or ''} #{vendor_line and vendor_line.user_selection and 'user-selection' or ''}" t-att-data-vendor-id="vendor.partner_id.id" t-att-data-field="npv_value">
                                                         <t t-if="vendor_line">
                                                             <t t-set="has_npv" t-value="False"/>
+                                                            <t t-set="npv_raw_value" t-value="0"/>
                                                             <t t-foreach="vendor_line._fields" t-as="field">
                                                                 <t t-if="field == 'npv_value'">
                                                                     <t t-set="has_npv" t-value="True"/>
+                                                                    <t t-set="npv_raw_value" t-value="vendor_line.npv_value or 0"/>
                                                                 </t>
                                                             </t>
+                                                            <t t-set="cell_data_value" t-value="npv_raw_value if has_npv else 0"/>
+                                                            <span t-att-data-value="cell_data_value" style="display: none;"></span>
                                                             <!-- Show NPV value, bold and red if it's the lowest -->
                                                             <t t-if="has_npv">
                                                                 <t t-if="vendor_line.npv_value > 0 and vendor_line.npv_value == min_npv">
