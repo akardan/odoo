@@ -613,9 +613,32 @@ SELECT
     COALESCE(
         -- Önce purchase/done state'inde PO var mı kontrol et
         (
-            SELECT pol2.price_subtotal - pol2.npv_value
+            SELECT pol2.price_subtotal - (COALESCE(pol2.npv_value, 0) *
+                CASE WHEN npv_curr.name = po_curr.name THEN 1.0
+                     ELSE COALESCE(cr_po.rate, 1.0) / COALESCE(cr_npv.rate, 1.0)
+                END)
             FROM purchase_order po2
             JOIN purchase_order_line pol2 ON pol2.order_id = po2.id
+            JOIN res_currency po_curr ON po2.currency_id = po_curr.id
+            LEFT JOIN res_currency npv_curr ON pol2.tender_line_currency_id = npv_curr.id
+            LEFT JOIN LATERAL (
+                SELECT rate
+                FROM res_currency_rate
+                WHERE currency_id = po2.currency_id
+                AND (company_id = po2.company_id OR company_id IS NULL)
+                AND name <= CURRENT_DATE
+                ORDER BY name DESC
+                LIMIT 1
+            ) cr_po ON true
+            LEFT JOIN LATERAL (
+                SELECT rate
+                FROM res_currency_rate
+                WHERE currency_id = pol2.tender_line_currency_id
+                AND (company_id = po2.company_id OR company_id IS NULL)
+                AND name <= CURRENT_DATE
+                ORDER BY name DESC
+                LIMIT 1
+            ) cr_npv ON true
             WHERE po2.tender_id = t.id
             AND pol2.product_id = tl.product_id
             AND po2.tender_round = t.tender_round
@@ -625,9 +648,32 @@ SELECT
         ),
         -- Yoksa mevcut turdaki en düşük teklifi al
         (
-            SELECT pol2.price_subtotal - COALESCE(pol2.npv_value, 0)
+            SELECT pol2.price_subtotal - (COALESCE(pol2.npv_value, 0) *
+                CASE WHEN npv_curr.name = po_curr.name THEN 1.0
+                     ELSE COALESCE(cr_po.rate, 1.0) / COALESCE(cr_npv.rate, 1.0)
+                END)
             FROM purchase_order po2
             JOIN purchase_order_line pol2 ON pol2.order_id = po2.id
+            JOIN res_currency po_curr ON po2.currency_id = po_curr.id
+            LEFT JOIN res_currency npv_curr ON pol2.tender_line_currency_id = npv_curr.id
+            LEFT JOIN LATERAL (
+                SELECT rate
+                FROM res_currency_rate
+                WHERE currency_id = po2.currency_id
+                AND (company_id = po2.company_id OR company_id IS NULL)
+                AND name <= CURRENT_DATE
+                ORDER BY name DESC
+                LIMIT 1
+            ) cr_po ON true
+            LEFT JOIN LATERAL (
+                SELECT rate
+                FROM res_currency_rate
+                WHERE currency_id = pol2.tender_line_currency_id
+                AND (company_id = po2.company_id OR company_id IS NULL)
+                AND name <= CURRENT_DATE
+                ORDER BY name DESC
+                LIMIT 1
+            ) cr_npv ON true
             WHERE po2.tender_id = t.id
             AND pol2.product_id = tl.product_id
             AND po2.tender_round = t.tender_round
@@ -641,13 +687,17 @@ SELECT
     COALESCE(
         -- Önce purchase/done state'inde PO var mı kontrol et
         (
-            SELECT (pol2.price_subtotal - pol2.npv_value) *
+            SELECT (pol2.price_subtotal *
                 CASE WHEN po_curr.name = 'TRY' THEN 1.0
-                     ELSE COALESCE(cr_try.rate, 1.0) / COALESCE(cr.rate, 1.0)
-                END
+                     ELSE COALESCE(cr_try.rate, 1.0) / COALESCE(cr_po.rate, 1.0)
+                END) - (COALESCE(pol2.npv_value, 0) *
+                CASE WHEN npv_curr.name = 'TRY' THEN 1.0
+                     ELSE COALESCE(cr_try.rate, 1.0) / COALESCE(cr_npv.rate, 1.0)
+                END)
             FROM purchase_order po2
             JOIN purchase_order_line pol2 ON pol2.order_id = po2.id
             JOIN res_currency po_curr ON po2.currency_id = po_curr.id
+            LEFT JOIN res_currency npv_curr ON pol2.tender_line_currency_id = npv_curr.id
             LEFT JOIN LATERAL (
                 SELECT rate
                 FROM res_currency_rate
@@ -656,7 +706,16 @@ SELECT
                 AND name <= CURRENT_DATE
                 ORDER BY name DESC
                 LIMIT 1
-            ) cr ON true
+            ) cr_po ON true
+            LEFT JOIN LATERAL (
+                SELECT rate
+                FROM res_currency_rate
+                WHERE currency_id = pol2.tender_line_currency_id
+                AND (company_id = po2.company_id OR company_id IS NULL)
+                AND name <= CURRENT_DATE
+                ORDER BY name DESC
+                LIMIT 1
+            ) cr_npv ON true
             LEFT JOIN LATERAL (
                 SELECT rate
                 FROM res_currency_rate cr_t
@@ -676,13 +735,17 @@ SELECT
         ),
         -- Yoksa mevcut turdaki en düşük teklifi al
         (
-            SELECT (pol2.price_subtotal - COALESCE(pol2.npv_value, 0)) *
+            SELECT (pol2.price_subtotal *
                 CASE WHEN po_curr.name = 'TRY' THEN 1.0
-                     ELSE COALESCE(cr_try.rate, 1.0) / COALESCE(cr.rate, 1.0)
-                END
+                     ELSE COALESCE(cr_try.rate, 1.0) / COALESCE(cr_po.rate, 1.0)
+                END) - (COALESCE(pol2.npv_value, 0) *
+                CASE WHEN npv_curr.name = 'TRY' THEN 1.0
+                     ELSE COALESCE(cr_try.rate, 1.0) / COALESCE(cr_npv.rate, 1.0)
+                END)
             FROM purchase_order po2
             JOIN purchase_order_line pol2 ON pol2.order_id = po2.id
             JOIN res_currency po_curr ON po2.currency_id = po_curr.id
+            LEFT JOIN res_currency npv_curr ON pol2.tender_line_currency_id = npv_curr.id
             LEFT JOIN LATERAL (
                 SELECT rate
                 FROM res_currency_rate
@@ -691,7 +754,16 @@ SELECT
                 AND name <= CURRENT_DATE
                 ORDER BY name DESC
                 LIMIT 1
-            ) cr ON true
+            ) cr_po ON true
+            LEFT JOIN LATERAL (
+                SELECT rate
+                FROM res_currency_rate
+                WHERE currency_id = pol2.tender_line_currency_id
+                AND (company_id = po2.company_id OR company_id IS NULL)
+                AND name <= CURRENT_DATE
+                ORDER BY name DESC
+                LIMIT 1
+            ) cr_npv ON true
             LEFT JOIN LATERAL (
                 SELECT rate
                 FROM res_currency_rate cr_t
