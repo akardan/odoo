@@ -2134,6 +2134,39 @@ class AkTender(models.Model):
         
         return None
     
+    def check_has_confirmed_purchase_orders(self):
+        """
+        Onaya Gönder transition için kontrol:
+        Satınalmacının seçim yapıp purchase order oluşturup oluşturmadığını kontrol eder.
+        Purchase order'ların state'i 'purchase' veya 'done' olmalıdır.
+        
+        Eğer onaylanmış purchase order yoksa UserError fırlatır.
+        
+        Returns:
+            bool: True - kontrol başarılı
+        
+        Raises:
+            UserError: Onaylanmış purchase order bulunamadığında
+        """
+        self.ensure_one()
+        
+        # Bu ihalede state'i 'purchase' veya 'done' olan purchase order var mı kontrol et
+        confirmed_pos = self.purchase_order_ids.filtered(
+            lambda po: po.state in ('purchase', 'done')
+        )
+        
+        if not confirmed_pos:
+            raise UserError(_(
+                'Onaya göndermeden önce satınalmacı seçimlerini yapıp, '
+                'en az bir satınalma siparişini onaylamalısınız (Durumu: Satınalma Siparişi veya Tamamlandı).\n\n'
+                'Lütfen önce:\n'
+                '1. Satınalmacı seçimlerini yapın\n'
+                '2. Seçilen teklifleri onaylayın (Satınalma Siparişine dönüştürün)\n'
+                '3. Ardından "Onaya Gönder" butonuna tıklayın.'
+            ))
+        
+        return True
+    
     def _get_suppliers_to_process(self):
         """
         Determine which suppliers need purchase orders created.

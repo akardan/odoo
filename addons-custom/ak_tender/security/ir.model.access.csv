@@ -38,3 +38,4 @@ access_supplier_application_public,supplier.application.public,model_supplier_ap
 access_supplier_application_manager,supplier.application.manager,model_supplier_application,ak_tender.group_tender_manager,1,1,1,1
 access_supplier_application_user,supplier.application.user,model_supplier_application,ak_tender.group_tender_user,1,1,1,0
 access_supplier_application_reject_wizard,supplier.application.reject.wizard,model_supplier_application_reject_wizard,ak_tender.group_tender_manager,1,1,1,1
+access_import_historical_po_wizard,access.import.historical.po.wizard,model_import_historical_po_wizard,ak_tender.group_tender_manager,1,1,1,1

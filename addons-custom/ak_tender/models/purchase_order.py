@@ -11,6 +11,19 @@ class PurchaseOrder(models.Model):
 
     tender_id = fields.Many2one('ak.tender', string='İhale', ondelete='restrict')
     tender_type = fields.Selection(related='tender_id.tender_type', string="İhale Tipi", store=True)
+    
+    # Geçmiş Dönem Import İşaretleme
+    is_historical_import = fields.Boolean(
+        string='Geçmiş Dönem',
+        default=False,
+        index=True,
+        help="Bu sipariş SAP'den geçmiş dönem olarak import edildi"
+    )
+    import_batch = fields.Char(
+        string='İmport Batch',
+        index=True,
+        help="Import işlem grubu (tarih-saat)"
+    )
     location_dest_id = fields.Many2one(
         comodel_name="stock.location",
         string=_("Teslim Yeri"),
