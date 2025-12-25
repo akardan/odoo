@@ -515,7 +515,7 @@ class AkTender(models.Model):
                 record.workflow_state_name = False
     
     @api.model
-    def _expand_workflow_states(self, states, domain, order):
+    def _expand_workflow_states(self, states, domain):
         """
         Kanban view'de workflow state kolonlarını sequence'e göre sıralar
         Tüm state'leri gösterir (kayıt olmasa bile)
