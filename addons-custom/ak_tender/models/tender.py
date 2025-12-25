@@ -522,50 +522,34 @@ class AkTender(models.Model):
         """
         Kanban görünümünde workflow state kolonlarını sequence'e göre sıralar.
         Aynı isme sahip state'leri gruplar ve minimum sequence'e göre sıralar.
-        State isimleri kullanıcının diline çevrilir.
+        State isimleri İngilizce olarak döndürülür (veritabanında saklanan dil).
         """
         # Tüm ak.tender için kullanılan workflow'ları al
         all_workflows = self.env['ak.workflow.definition'].search([
             ('model_name', '=', 'ak.tender')
         ])
         
-        # Tüm workflow state'lerini İngilizce ve kullanıcının diliyle al
+        # Tüm workflow state'lerini İngilizce olarak al
         all_states_en = self.env['ak.workflow.state'].search([
             ('workflow_id', 'in', all_workflows.ids)
         ], order='sequence').with_context(lang='en_US')
         
-        all_states_user_lang = self.env['ak.workflow.state'].search([
-            ('workflow_id', 'in', all_workflows.ids)
-        ], order='sequence').with_context(lang=self.env.user.lang)
-        
-        # State isimlerini grupla (İngilizce name'e göre) ve her grup için minimum sequence'i ve çevrilmiş name'i bul
-        state_dict = {}  # {en_name: {'sequence': min_sequence, 'translated_name': str}}
-        for state_en, state_user in zip(all_states_en, all_states_user_lang):
+        # State isimlerini grupla (İngilizce name'e göre) ve her grup için minimum sequence'i bul
+        state_dict = {}  # {en_name: min_sequence}
+        for state_en in all_states_en:
             en_name = state_en.name
             if en_name not in state_dict:
-                state_dict[en_name] = {
-                    'sequence': state_en.sequence,
-                    'translated_name': state_user.name
-                }
+                state_dict[en_name] = state_en.sequence
             else:
                 # Minimum sequence'i kullan
-                if state_en.sequence < state_dict[en_name]['sequence']:
-                    state_dict[en_name]['sequence'] = state_en.sequence
+                if state_en.sequence < state_dict[en_name]:
+                    state_dict[en_name] = state_en.sequence
         
-        # Minimum sequence'e göre sırala, benzersiz çevrilmiş name'leri döndür
-        # Aynı çevrilmiş name'e sahip state'ler varsa en düşük sequence'lisi kullanılır
-        sorted_states = sorted(state_dict.items(), key=lambda x: x[1]['sequence'])
+        # Minimum sequence'e göre sırala, İngilizce name'leri döndür
+        sorted_states = sorted(state_dict.items(), key=lambda x: x[1])
         
-        # Benzersiz translated name'leri topla (order korunarak)
-        seen_names = set()
-        unique_names = []
-        for name, info in sorted_states:
-            translated_name = info['translated_name']
-            if translated_name not in seen_names:
-                seen_names.add(translated_name)
-                unique_names.append(translated_name)
-        
-        return unique_names
+        # İngilizce name'leri döndür (read_group'ta çevrilecek)
+        return [name for name, seq in sorted_states]
     
     @api.model
     def read_group(self, domain, fields, groupby, offset=0, limit=None, orderby=False, lazy=True):
