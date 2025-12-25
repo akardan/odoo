@@ -793,7 +793,7 @@
                                         <span class="me-auto text-success o_form_label">
                                             <i class="fa fa-trophy"/> Kazanan
                                         </span>
-                                        <span class="text-success fw-bold">
+                                        <span class="text-success fw-bold text-truncate" style="max-width: 170px;" t-att-title="record.winning_supplier_ids.raw_value">
                                             <field name="winning_supplier_ids" options="{'no_open': True}"/>
                                         </span>
                                     </div>
