@@ -656,9 +656,10 @@
             <field name="name">ak.tender.kanban</field>
             <field name="model">ak.tender</field>
             <field name="arch" type="xml">
-                <kanban default_group_by="workflow_current_state_id" class="o_kanban_dashboard o_tender_kanban" edit="false" sample="1" group_create="false" group_delete="false" group_edit="false" groups_limit="10" expand_groups="true" load_more_on_reload="true">
+                <kanban default_group_by="workflow_state_name" class="o_kanban_dashboard o_tender_kanban" edit="false" sample="1" group_create="false" group_delete="false" group_edit="false" groups_limit="10" expand_groups="true" load_more_on_reload="true">
                     <field name="id"/>
                     <field name="workflow_current_state_id"/>
+                    <field name="workflow_state_name"/>
                     <field name="workflow_state"/>
                     <field name="name"/>
                     <field name="code"/>

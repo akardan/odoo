@@ -452,28 +452,29 @@ class AkTenderLine(models.Model):
             'url': attachment_url,
             'target': 'new',
         }
+    
+    @api.constrains('days', 'product_id', 'tender_id.tender_type')
+    def _check_days_for_accommodation(self):
+        """
+        Validate that accommodation products (for MICE tender type) have a days value greater than 0.
+        This is important for hotel bookings and similar services where duration matters.
+        """
+        for line in self:
+            if line.tender_id.tender_type == 'mice' and line.product_id and line.product_id.type == 'service':
+                # Check if the product name or category contains accommodation-related keywords
+                accommodation_keywords = ['hotel', 'konaklama', 'accommodation', 'room', 'oda']
+                product_name_lower = line.product_id.name.lower() if line.product_id.name else ''
+                category_name_lower = line.product_id.categ_id.name.lower() if line.product_id.categ_id else ''
+                
+                is_accommodation = any(keyword in product_name_lower or keyword in category_name_lower
+                                      for keyword in accommodation_keywords)
+                
+                if is_accommodation and line.days <= 0:
+                    raise ValidationError(_(
+                        "Konaklama ürünleri için gün sayısı 0'dan büyük olmalıdır. "
+                        "Lütfen '%s' ürünü için gün sayısını belirtin."
+                    ) % line.product_id.name)
 
-@api.constrains('days', 'product_id', 'tender_id.tender_type')
-def _check_days_for_accommodation(self):
-    """
-    Validate that accommodation products (for MICE tender type) have a days value greater than 0.
-    This is important for hotel bookings and similar services where duration matters.
-    """
-    for line in self:
-        if line.tender_id.tender_type == 'mice' and line.product_id and line.product_id.type == 'service':
-            # Check if the product name or category contains accommodation-related keywords
-            accommodation_keywords = ['hotel', 'konaklama', 'accommodation', 'room', 'oda']
-            product_name_lower = line.product_id.name.lower() if line.product_id.name else ''
-            category_name_lower = line.product_id.categ_id.name.lower() if line.product_id.categ_id else ''
-            
-            is_accommodation = any(keyword in product_name_lower or keyword in category_name_lower
-                                  for keyword in accommodation_keywords)
-            
-            if is_accommodation and line.days <= 0:
-                raise ValidationError(_(
-                    "Konaklama ürünleri için gün sayısı 0'dan büyük olmalıdır. "
-                    "Lütfen '%s' ürünü için gün sayısını belirtin."
-                ) % line.product_id.name)
 
 class AkTender(models.Model):
     _name = 'ak.tender'
@@ -483,6 +484,15 @@ class AkTender(models.Model):
     state = fields.Char(string="State (deprecated)",
                         help="Technical field for upgrade purpose. Not used anymore. Use workflow_state instead.",
                         compute="_compute_legacy_state", store=False)
+    
+    # Field for grouping by state name in kanban view
+    workflow_state_name = fields.Char(
+        string=_("Durum Adı"),
+        related='workflow_current_state_id.name',
+        store=True,
+        readonly=True,
+        help=_("Workflow state'in adı (kanban gruplama için)")
+    )
     
     @api.depends('workflow_current_state_id')
     def _compute_legacy_state(self):
