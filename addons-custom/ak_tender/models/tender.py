@@ -517,42 +517,20 @@ class AkTender(models.Model):
     @api.model
     def _expand_workflow_states(self, states, domain):
         """
-        Kanban view'de workflow state kolonlarını sequence'e göre sıralar
-        Tüm state'leri gösterir (kayıt olmasa bile)
+        Kanban görünümünde workflow state kolonlarını sequence'e göre sıralar
         """
-        # İlk tender kaydını bul ve onun workflow'unu kullan
-        # Eğer domain'de workflow_definition_id varsa onu kullan
-        workflow_id = None
-        for item in domain:
-            if isinstance(item, (list, tuple)) and len(item) >= 3:
-                if item[0] == 'workflow_definition_id':
-                    workflow_id = item[2] if item[1] == '=' else None
-                    break
+        # İlk tender kaydından workflow'u al
+        tender = self.search(domain, limit=1)
+        if not tender or not tender.workflow_definition_id:
+            return states
         
-        # Eğer domain'de bulunamazsa, mevcut kayıtlardan birini al
-        if not workflow_id:
-            tender = self.search(domain, limit=1)
-            if tender and tender.workflow_definition_id:
-                workflow_id = tender.workflow_definition_id.id
-        
-        # Workflow bulunursa, state'lerini sequence'e göre getir
-        if workflow_id:
-            state_ids = self.env['ak.workflow.state'].search([
-                ('workflow_id', '=', workflow_id)
-            ], order='sequence')
-            # Translated names using current user's language
-            return state_ids.with_context(lang=self.env.user.lang).mapped('name')
-        
-        # Fallback: Tüm ak.tender için olan tüm workflow state'leri
-        all_workflows = self.env['ak.workflow.definition'].search([
-            ('model_name', '=', 'ak.tender')
-        ])
-        
-        state_ids = self.env['ak.workflow.state'].search([
-            ('workflow_id', 'in', all_workflows.ids)
+        # Workflow'un tüm state'lerini sequence'e göre getir
+        all_states = self.env['ak.workflow.state'].search([
+            ('workflow_id', '=', tender.workflow_definition_id.id)
         ], order='sequence')
         
-        return state_ids.with_context(lang=self.env.user.lang).mapped('name')
+        # Çevrilmiş isimleri döndür
+        return all_states.with_context(lang=self.env.user.lang).mapped('name')
     
     # Field for folding kanban columns
     workflow_state_fold = fields.Boolean(
