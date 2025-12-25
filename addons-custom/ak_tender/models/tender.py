@@ -620,7 +620,11 @@ class AkTender(models.Model):
                         merged_groups[translated_name] = groupdata
                     else:
                         # Aynı isimli grupları birleştir: record sayısını topla
-                        merged_groups[translated_name]['workflow_state_name_count'] += groupdata.get('workflow_state_name_count', 0)
+                        # Count field can be either 'workflow_state_name_count' or '__count'
+                        count_field = 'workflow_state_name_count' if 'workflow_state_name_count' in merged_groups[translated_name] else '__count'
+                        current_count = merged_groups[translated_name].get(count_field, 0)
+                        new_count = groupdata.get('workflow_state_name_count', groupdata.get('__count', 0))
+                        merged_groups[translated_name][count_field] = current_count + new_count
                         # Fold değerini güncelle (herhangi biri fold ise fold olsun)
                         merged_groups[translated_name]['__fold'] = merged_groups[translated_name].get('__fold', False) or state_info_dict[state_name_en]['fold']
             
