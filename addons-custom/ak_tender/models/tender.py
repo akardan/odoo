@@ -517,20 +517,31 @@ class AkTender(models.Model):
     @api.model
     def _expand_workflow_states(self, states, domain):
         """
-        Kanban görünümünde workflow state kolonlarını sequence'e göre sıralar
+        Kanban görünümünde workflow state kolonlarını sequence'e göre sıralar.
+        Aynı isme sahip state'leri gruplar ve minimum sequence'e göre sıralar.
         """
-        # İlk tender kaydından workflow'u al
-        tender = self.search(domain, limit=1)
-        if not tender or not tender.workflow_definition_id:
-            return states
+        # Tüm ak.tender için kullanılan workflow'ları al
+        all_workflows = self.env['ak.workflow.definition'].search([
+            ('model_name', '=', 'ak.tender')
+        ])
         
-        # Workflow'un tüm state'lerini sequence'e göre getir
+        # Tüm workflow state'lerini al
         all_states = self.env['ak.workflow.state'].search([
-            ('workflow_id', '=', tender.workflow_definition_id.id)
+            ('workflow_id', 'in', all_workflows.ids)
         ], order='sequence')
         
-        # Çevrilmiş isimleri döndür
-        return all_states.with_context(lang=self.env.user.lang).mapped('name')
+        # State isimlerini grupla ve her grup için minimum sequence'i bul
+        state_dict = {}  # {name: min_sequence}
+        for state in all_states:
+            name = state.with_context(lang=self.env.user.lang).name
+            if name not in state_dict:
+                state_dict[name] = state.sequence
+            else:
+                state_dict[name] = min(state_dict[name], state.sequence)
+        
+        # Minimum sequence'e göre sırala ve name'leri döndür
+        sorted_states = sorted(state_dict.items(), key=lambda x: x[1])
+        return [name for name, sequence in sorted_states]
     
     # Field for folding kanban columns
     workflow_state_fold = fields.Boolean(
