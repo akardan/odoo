@@ -525,15 +525,15 @@ class AkTender(models.Model):
             ('model_name', '=', 'ak.tender')
         ])
         
-        # Tüm workflow state'lerini al
+        # Tüm workflow state'lerini kullanıcının diliyle al
         all_states = self.env['ak.workflow.state'].search([
             ('workflow_id', 'in', all_workflows.ids)
-        ], order='sequence')
+        ], order='sequence').with_context(lang=self.env.user.lang)
         
         # State isimlerini grupla ve her grup için minimum sequence'i bul
         state_dict = {}  # {name: min_sequence}
         for state in all_states:
-            name = state.with_context(lang=self.env.user.lang).name
+            name = state.name  # Context zaten set edildi
             if name not in state_dict:
                 state_dict[name] = state.sequence
             else:
