@@ -489,9 +489,18 @@ class AkTender(models.Model):
     workflow_state_name = fields.Char(
         string=_("Durum Adı"),
         compute='_compute_workflow_state_name',
-        store=True,
+        store=False,
         readonly=True,
         help=_("Workflow state'in adı (kanban gruplama için)")
+    )
+    
+    # Field for ordering kanban columns by state sequence
+    workflow_state_sequence = fields.Integer(
+        string=_("Durum Sırası"),
+        related='workflow_current_state_id.sequence',
+        store=True,
+        readonly=True,
+        help=_("Workflow state'in sırası (kanban sıralama için)")
     )
     
     @api.depends('workflow_current_state_id', 'workflow_current_state_id.name')
