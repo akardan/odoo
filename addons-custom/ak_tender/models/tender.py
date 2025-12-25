@@ -517,12 +517,12 @@ class AkTender(models.Model):
     @api.model
     def _expand_workflow_states(self, states, domain):
         """
-        Kanban görünümünde workflow state kolonlarını sequence'e göre sıralar.
+        Kanban görünümünde workflow state kolonlarını sequence'e göbe sıralar.
         Aynı isme sahip state'leri gruplar ve minimum sequence'e göre sıralar.
         """
         # Tüm ak.tender için kullanılan workflow'ları al
         all_workflows = self.env['ak.workflow.definition'].search([
-            ('model_name', '=', 'ak.tender')
+       ('model_name', '=', 'ak.tender')
         ])
         
         # Tüm workflow state'lerini kullanıcının diliyle al
@@ -542,6 +542,45 @@ class AkTender(models.Model):
         # Minimum sequence'e göre sırala ve name'leri döndür
         sorted_states = sorted(state_dict.items(), key=lambda x: x[1])
         return [name for name, sequence in sorted_states]
+    
+    @api.model
+    def read_group(self, domain, fields, groupby, offset=0, limit=None, orderby=False, lazy=True):
+        """
+        Kan kanban view'da workflow_state_name'e göre gruplama yapıldığında,
+        her grubun fold değerini workflow state'in fold değerinden alır.
+        """
+        result = super(AkTender, self).read_group(domain, fields, groupby, offset, limit, orderby, lazy)
+        
+        # workflow_state_name'e göre gruplama yapılıyorsa fold bilgisini ekle
+        if groupby and 'workflow_state_name' in groupby[0]:
+            # Tüm ak.tender için kullanılan workflow'ları al
+            all_workflows = self.env['ak.workflow.definition'].search([
+                ('model_name', '=', 'ak.tender')
+            ])
+            
+            # Tüm workflow state'lerini kullanıcının diliyle al
+            all_states = self.env['ak.workflow.state'].search([
+                ('workflow_id', 'in', all_workflows.ids)
+            ]).with_context(lang=self.env.user.lang)
+            
+            # State isimlerine göre fold değerlerini eşle
+            # Aynı isme sahip birden fazla state varsa, herhangi biri fold ise fold olarak işaretle
+            state_fold_dict = {}  # {name: fold_value}
+            for state in all_states:
+                name = state.name
+                if name not in state_fold_dict:
+                    state_fold_dict[name] = state.fold
+                else:
+                    # Aynı isme sahip state'lerden herhangi biri fold ise, fold olarak işaretle
+                    state_fold_dict[name] = state_fold_dict[name] or state.fold
+            
+            # Gruplama sonuçlarına fold bilgisini ekle
+            for groupdata in result:
+                state_name = groupdata.get('workflow_state_name')
+                if state_name and state_name in state_fold_dict:
+                    groupdata['__fold'] = state_fold_dict[state_name]
+        
+        return result
     
     # Field for folding kanban columns
     workflow_state_fold = fields.Boolean(
