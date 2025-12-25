@@ -19,6 +19,7 @@
                                 <field name="is_final"/>
                                 <field name="allow_edit"/>
                                 <field name="default_duration_days"/>
+                                <field name="fold"/>
                             </group>
                         </group>
                         <notebook>
@@ -77,6 +78,7 @@
                     <field name="is_initial"/>
                     <field name="is_final"/>
                     <field name="default_duration_days"/>
+                    <field name="fold"/>
                 </list>
             </field>
         </record>

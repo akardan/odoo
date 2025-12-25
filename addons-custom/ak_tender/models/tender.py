@@ -488,11 +488,21 @@ class AkTender(models.Model):
     # Field for grouping by state name in kanban view
     workflow_state_name = fields.Char(
         string=_("Durum Adı"),
-        related='workflow_current_state_id.name',
+        compute='_compute_workflow_state_name',
         store=True,
         readonly=True,
         help=_("Workflow state'in adı (kanban gruplama için)")
     )
+    
+    @api.depends('workflow_current_state_id', 'workflow_current_state_id.name')
+    def _compute_workflow_state_name(self):
+        """Compute workflow state name with proper translation context"""
+        for record in self:
+            if record.workflow_current_state_id:
+                # Get translated name using the current user's language context
+                record.workflow_state_name = record.workflow_current_state_id.with_context(lang=self.env.user.lang).name
+            else:
+                record.workflow_state_name = False
     
     # Field for folding kanban columns
     workflow_state_fold = fields.Boolean(
