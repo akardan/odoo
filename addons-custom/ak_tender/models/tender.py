@@ -489,7 +489,7 @@ class AkTender(models.Model):
     workflow_state_name = fields.Char(
         string=_("Durum Adı"),
         compute='_compute_workflow_state_name',
-        store=False,
+        store=True,
         readonly=True,
         help=_("Workflow state'in adı (kanban gruplama için)")
     )
