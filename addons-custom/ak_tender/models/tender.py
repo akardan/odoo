@@ -494,6 +494,15 @@ class AkTender(models.Model):
         help=_("Workflow state'in adı (kanban gruplama için)")
     )
     
+    # Field for folding kanban columns
+    workflow_state_fold = fields.Boolean(
+        string=_("Katlanmış Sütun"),
+        related='workflow_current_state_id.fold',
+        store=True,
+        readonly=True,
+        help=_("Kanban görünümünde bu sütunun varsayılan olarak katlanıp katlanmayacağı")
+    )
+    
     @api.depends('workflow_current_state_id')
     def _compute_legacy_state(self):
         """Compute the legacy state field based on the current workflow state for backward compatibility."""

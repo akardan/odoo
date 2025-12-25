@@ -660,6 +660,7 @@
                     <field name="id"/>
                     <field name="workflow_current_state_id"/>
                     <field name="workflow_state_name"/>
+                    <field name="workflow_state_fold"/>
                     <field name="workflow_state"/>
                     <field name="name"/>
                     <field name="code"/>

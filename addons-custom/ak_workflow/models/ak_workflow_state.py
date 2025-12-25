@@ -45,6 +45,8 @@ class AkWorkflowState(models.Model):
                            help=_("Color for kanban/calendar views (0-11)"))
     icon = fields.Char(_('Icon'), help=_("FontAwesome icon class"),
                        default="fa-circle-o")
+    fold = fields.Boolean(_('Folded in Kanban'), default=False,
+                          help=_("Fold this state column by default in kanban view"))
     
     # Time Configuration
     default_duration_days = fields.Integer(_('Default Duration (Days)'), default=0, store=True,
