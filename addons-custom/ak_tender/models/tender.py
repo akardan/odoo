@@ -593,43 +593,56 @@ class AkTender(models.Model):
                 ('workflow_id', 'in', all_workflows.ids)
             ]).with_context(lang=self.env.user.lang)
             
-            # İngilizce name ile fold ve çevrilmiş name'i eşle
-            state_info_dict = {}  # {en_name: {'fold': bool, 'translated_name': str}}
+            # İngilizce name ile fold, çevrilmiş name ve sequence'i eşle
+            state_info_dict = {}  # {en_name: {'fold': bool, 'translated_name': str, 'sequence': int}}
             for state_en, state_user in zip(all_states_en, all_states_user_lang):
                 en_name = state_en.name
                 if en_name not in state_info_dict:
                     state_info_dict[en_name] = {
                         'fold': state_en.fold,
-                        'translated_name': state_user.name
+                        'translated_name': state_user.name,
+                        'sequence': state_en.sequence
                     }
                 else:
                     # Aynı isme sahip state'lerden herhangi biri fold ise, fold olarak işaretle
                     state_info_dict[en_name]['fold'] = state_info_dict[en_name]['fold'] or state_en.fold
+                    # Minimum sequence'i kullan
+                    if state_en.sequence < state_info_dict[en_name]['sequence']:
+                        state_info_dict[en_name]['sequence'] = state_en.sequence
             
             # Gruplama sonuçlarını çevir ve birleştir
-            merged_groups = {}  # {translated_name: groupdata}
+            merged_groups = {}  # {translated_name: {'groupdata': dict, 'min_sequence': int}}
             for groupdata in result:
                 state_name_en = groupdata.get('workflow_state_name')
                 if state_name_en and state_name_en in state_info_dict:
                     translated_name = state_info_dict[state_name_en]['translated_name']
+                    current_sequence = state_info_dict[state_name_en]['sequence']
                     
                     # Aynı çevrilmiş name'e sahip grupları birleştir
                     if translated_name not in merged_groups:
                         groupdata['workflow_state_name'] = translated_name
                         groupdata['__fold'] = state_info_dict[state_name_en]['fold']
-                        merged_groups[translated_name] = groupdata
+                        merged_groups[translated_name] = {
+                            'groupdata': groupdata,
+                            'min_sequence': current_sequence
+                        }
                     else:
                         # Aynı isimli grupları birleştir: record sayısını topla
                         # Count field can be either 'workflow_state_name_count' or '__count'
-                        count_field = 'workflow_state_name_count' if 'workflow_state_name_count' in merged_groups[translated_name] else '__count'
-                        current_count = merged_groups[translated_name].get(count_field, 0)
+                        existing_data = merged_groups[translated_name]['groupdata']
+                        count_field = 'workflow_state_name_count' if 'workflow_state_name_count' in existing_data else '__count'
+                        current_count = existing_data.get(count_field, 0)
                         new_count = groupdata.get('workflow_state_name_count', groupdata.get('__count', 0))
-                        merged_groups[translated_name][count_field] = current_count + new_count
+                        existing_data[count_field] = current_count + new_count
                         # Fold değerini güncelle (herhangi biri fold ise fold olsun)
-                        merged_groups[translated_name]['__fold'] = merged_groups[translated_name].get('__fold', False) or state_info_dict[state_name_en]['fold']
+                        existing_data['__fold'] = existing_data.get('__fold', False) or state_info_dict[state_name_en]['fold']
+                        # Minimum sequence'i güncelle
+                        if current_sequence < merged_groups[translated_name]['min_sequence']:
+                            merged_groups[translated_name]['min_sequence'] = current_sequence
             
-            # Birleştirilmiş grupları döndür
-            result = list(merged_groups.values())
+            # Birleştirilmiş grupları sequence'e göre sırala ve döndür
+            sorted_groups = sorted(merged_groups.values(), key=lambda x: x['min_sequence'])
+            result = [item['groupdata'] for item in sorted_groups]
         
         return result
     
