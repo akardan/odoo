@@ -573,6 +573,7 @@ class AkTender(models.Model):
         Kanban view'da workflow_state_name'e göre gruplama yapıldığında:
         1. Fold değerini workflow state'in fold değerinden alır
         2. State name'leri kullanıcının diline çevirir
+        3. Aynı çevrilmiş name'e sahip grupları birleştirir
         """
         result = super(AkTender, self).read_group(domain, fields, groupby, offset, limit, orderby, lazy)
         
@@ -605,13 +606,26 @@ class AkTender(models.Model):
                     # Aynı isme sahip state'lerden herhangi biri fold ise, fold olarak işaretle
                     state_info_dict[en_name]['fold'] = state_info_dict[en_name]['fold'] or state_en.fold
             
-            # Gruplama sonuçlarına fold bilgisini ve çevrilmiş name'i ekle
+            # Gruplama sonuçlarını çevir ve birleştir
+            merged_groups = {}  # {translated_name: groupdata}
             for groupdata in result:
                 state_name_en = groupdata.get('workflow_state_name')
                 if state_name_en and state_name_en in state_info_dict:
-                    groupdata['__fold'] = state_info_dict[state_name_en]['fold']
-                    # Gruplamanın görünen adını çevir
-                    groupdata['workflow_state_name'] = state_info_dict[state_name_en]['translated_name']
+                    translated_name = state_info_dict[state_name_en]['translated_name']
+                    
+                    # Aynı çevrilmiş name'e sahip grupları birleştir
+                    if translated_name not in merged_groups:
+                        groupdata['workflow_state_name'] = translated_name
+                        groupdata['__fold'] = state_info_dict[state_name_en]['fold']
+                        merged_groups[translated_name] = groupdata
+                    else:
+                        # Aynı isimli grupları birleştir: record sayısını topla
+                        merged_groups[translated_name]['workflow_state_name_count'] += groupdata.get('workflow_state_name_count', 0)
+                        # Fold değerini güncelle (herhangi biri fold ise fold olsun)
+                        merged_groups[translated_name]['__fold'] = merged_groups[translated_name].get('__fold', False) or state_info_dict[state_name_en]['fold']
+            
+            # Birleştirilmiş grupları döndür
+            result = list(merged_groups.values())
         
         return result
     
