@@ -504,81 +504,103 @@ class AkTender(models.Model):
         help=_("Workflow state'in sırası (kanban sıralama için)")
     )
     
-    @api.depends('workflow_current_state_id', 'workflow_current_state_id.name')
+    @api.depends('workflow_current_state_id')
     def _compute_workflow_state_name(self):
-        """Compute workflow state name with proper translation context"""
+        """
+        Compute workflow state name. Always store in English (en_US) for consistency.
+        Translations will be handled at the view layer via read_group.
+        """
         for record in self:
             if record.workflow_current_state_id:
-                # Get translated name using the current user's language context
-                record.workflow_state_name = record.workflow_current_state_id.with_context(lang=self.env.user.lang).name
+                # Always store in English to ensure consistent grouping
+                record.workflow_state_name = record.workflow_current_state_id.with_context(lang='en_US').name
             else:
                 record.workflow_state_name = False
     
     @api.model
     def _expand_workflow_states(self, states, domain):
         """
-        Kanban görünümünde workflow state kolonlarını sequence'e göbe sıralar.
+        Kanban görünümünde workflow state kolonlarını sequence'e göre sıralar.
         Aynı isme sahip state'leri gruplar ve minimum sequence'e göre sıralar.
+        State isimleri kullanıcının diline çevrilir.
         """
         # Tüm ak.tender için kullanılan workflow'ları al
         all_workflows = self.env['ak.workflow.definition'].search([
-       ('model_name', '=', 'ak.tender')
+            ('model_name', '=', 'ak.tender')
         ])
         
-        # Tüm workflow state'lerini kullanıcının diliyle al
-        all_states = self.env['ak.workflow.state'].search([
+        # Tüm workflow state'lerini İngilizce ve kullanıcının diliyle al
+        all_states_en = self.env['ak.workflow.state'].search([
+            ('workflow_id', 'in', all_workflows.ids)
+        ], order='sequence').with_context(lang='en_US')
+        
+        all_states_user_lang = self.env['ak.workflow.state'].search([
             ('workflow_id', 'in', all_workflows.ids)
         ], order='sequence').with_context(lang=self.env.user.lang)
         
-        # State isimlerini grupla ve her grup için minimum sequence'i bul
-        state_dict = {}  # {name: min_sequence}
-        for state in all_states:
-            name = state.name  # Context zaten set edildi
-            if name not in state_dict:
-                state_dict[name] = state.sequence
+        # State isimlerini grupla (İngilizce name'e göre) ve her grup için minimum sequence'i ve çevrilmiş name'i bul
+        state_dict = {}  # {en_name: {'sequence': min_sequence, 'translated_name': str}}
+        for state_en, state_user in zip(all_states_en, all_states_user_lang):
+            en_name = state_en.name
+            if en_name not in state_dict:
+                state_dict[en_name] = {
+                    'sequence': state_en.sequence,
+                    'translated_name': state_user.name
+                }
             else:
-                state_dict[name] = min(state_dict[name], state.sequence)
+                # Minimum sequence'i kullan
+                if state_en.sequence < state_dict[en_name]['sequence']:
+                    state_dict[en_name]['sequence'] = state_en.sequence
         
-        # Minimum sequence'e göre sırala ve name'leri döndür
-        sorted_states = sorted(state_dict.items(), key=lambda x: x[1])
-        return [name for name, sequence in sorted_states]
+        # Minimum sequence'e göre sırala ve çevrilmiş name'leri döndür
+        sorted_states = sorted(state_dict.items(), key=lambda x: x[1]['sequence'])
+        return [info['translated_name'] for name, info in sorted_states]
     
     @api.model
     def read_group(self, domain, fields, groupby, offset=0, limit=None, orderby=False, lazy=True):
         """
-        Kan kanban view'da workflow_state_name'e göre gruplama yapıldığında,
-        her grubun fold değerini workflow state'in fold değerinden alır.
+        Kanban view'da workflow_state_name'e göre gruplama yapıldığında:
+        1. Fold değerini workflow state'in fold değerinden alır
+        2. State name'leri kullanıcının diline çevirir
         """
         result = super(AkTender, self).read_group(domain, fields, groupby, offset, limit, orderby, lazy)
         
-        # workflow_state_name'e göre gruplama yapılıyorsa fold bilgisini ekle
+        # workflow_state_name'e göre gruplama yapılıyorsa
         if groupby and 'workflow_state_name' in groupby[0]:
             # Tüm ak.tender için kullanılan workflow'ları al
             all_workflows = self.env['ak.workflow.definition'].search([
                 ('model_name', '=', 'ak.tender')
             ])
             
-            # Tüm workflow state'lerini kullanıcının diliyle al
-            all_states = self.env['ak.workflow.state'].search([
+            # Tüm workflow state'lerini İngilizce ve kullanıcının diliyle al
+            all_states_en = self.env['ak.workflow.state'].search([
+                ('workflow_id', 'in', all_workflows.ids)
+            ]).with_context(lang='en_US')
+            
+            all_states_user_lang = self.env['ak.workflow.state'].search([
                 ('workflow_id', 'in', all_workflows.ids)
             ]).with_context(lang=self.env.user.lang)
             
-            # State isimlerine göre fold değerlerini eşle
-            # Aynı isme sahip birden fazla state varsa, herhangi biri fold ise fold olarak işaretle
-            state_fold_dict = {}  # {name: fold_value}
-            for state in all_states:
-                name = state.name
-                if name not in state_fold_dict:
-                    state_fold_dict[name] = state.fold
+            # İngilizce name ile fold ve çevrilmiş name'i eşle
+            state_info_dict = {}  # {en_name: {'fold': bool, 'translated_name': str}}
+            for state_en, state_user in zip(all_states_en, all_states_user_lang):
+                en_name = state_en.name
+                if en_name not in state_info_dict:
+                    state_info_dict[en_name] = {
+                        'fold': state_en.fold,
+                        'translated_name': state_user.name
+                    }
                 else:
                     # Aynı isme sahip state'lerden herhangi biri fold ise, fold olarak işaretle
-                    state_fold_dict[name] = state_fold_dict[name] or state.fold
+                    state_info_dict[en_name]['fold'] = state_info_dict[en_name]['fold'] or state_en.fold
             
-            # Gruplama sonuçlarına fold bilgisini ekle
+            # Gruplama sonuçlarına fold bilgisini ve çevrilmiş name'i ekle
             for groupdata in result:
-                state_name = groupdata.get('workflow_state_name')
-                if state_name and state_name in state_fold_dict:
-                    groupdata['__fold'] = state_fold_dict[state_name]
+                state_name_en = groupdata.get('workflow_state_name')
+                if state_name_en and state_name_en in state_info_dict:
+                    groupdata['__fold'] = state_info_dict[state_name_en]['fold']
+                    # Gruplamanın görünen adını çevir
+                    groupdata['workflow_state_name'] = state_info_dict[state_name_en]['translated_name']
         
         return result
     
