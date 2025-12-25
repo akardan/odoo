@@ -552,9 +552,20 @@ class AkTender(models.Model):
                 if state_en.sequence < state_dict[en_name]['sequence']:
                     state_dict[en_name]['sequence'] = state_en.sequence
         
-        # Minimum sequence'e göre sırala ve çevrilmiş name'leri döndür
+        # Minimum sequence'e göre sırala, benzersiz çevrilmiş name'leri döndür
+        # Aynı çevrilmiş name'e sahip state'ler varsa en düşük sequence'lisi kullanılır
         sorted_states = sorted(state_dict.items(), key=lambda x: x[1]['sequence'])
-        return [info['translated_name'] for name, info in sorted_states]
+        
+        # Benzersiz translated name'leri topla (order korunarak)
+        seen_names = set()
+        unique_names = []
+        for name, info in sorted_states:
+            translated_name = info['translated_name']
+            if translated_name not in seen_names:
+                seen_names.add(translated_name)
+                unique_names.append(translated_name)
+        
+        return unique_names
     
     @api.model
     def read_group(self, domain, fields, groupby, offset=0, limit=None, orderby=False, lazy=True):
