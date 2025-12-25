@@ -8,6 +8,7 @@
     """,
     'author': 'Kardan.Digital',
     'website': "https://kardan.digital",
+    'license': 'OPL-1',
     'depends': ['base', 'payment'],
     'data': [
         # 'security/ir.model.access.csv',

@@ -17,6 +17,7 @@
     """,
     'author': 'kardan.digital',
     'website': 'https://kardan.digital',
+    'license': 'OPL-1',
     'depends': ['base', 'web'],
     'data': [
         'security/ir.model.access.csv',

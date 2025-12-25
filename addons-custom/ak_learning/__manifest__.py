@@ -17,6 +17,7 @@ This module enables random ordering of questions in Odoo 18 CE certification exa
 
     'author': "Kardan.Digital",
     'website': "https://kardan.digital",
+    'license': 'OPL-1',
 
     # Categories can be used to filter modules in modules listing
     'category': 'Website/eLearning',

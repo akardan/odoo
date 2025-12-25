@@ -11,6 +11,7 @@ It supports the management of historical price changes, country-specific price m
 
     'author': "Kardan.Digital",
     'website': "https://kardan.digital",
+    'license': 'OPL-1',
 
     # Modül kategorisi (Daha spesifik bir kategori kullanılıyor)
     'category': 'Sales Management',

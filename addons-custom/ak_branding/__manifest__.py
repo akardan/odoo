@@ -3,6 +3,7 @@
     'version': '1.0',
     'summary': 'Dynamic branding customization for Powered by Kardan.Digital',
     'author': 'Kardan.Digital',
+    'license': 'OPL-1',
     'depends': ['base', 'web'],
     'data': [
         'views/branding_views.xml',
