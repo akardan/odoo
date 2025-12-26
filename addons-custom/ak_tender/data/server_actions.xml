@@ -83,21 +83,8 @@ action['context'] = {'active_id': records.id}
             <field name="code">
 if records:
     for record in records:
-        # Bu ihalede state'i 'purchase' veya 'done' olan purchase order var mı kontrol et
-        confirmed_pos = record.purchase_order_ids.filtered(
-            lambda po: po.state in ('purchase', 'done')
-        )
-        
-        if not confirmed_pos:
-            raise UserError(_(
-                'Onaya göndermeden önce satınalmacı seçimlerini yapıp, '
-                'en az bir satınalma siparişini onaylamalısınız (Durumu: Satınalma Siparişi veya Tamamlandı).\n\n'
-                'Lütfen önce:\n'
-                '1. Satınalmacı seçimlerini yapın\n'
-                '2. Seçilen teklifleri onaylayın (Satınalma Siparişine dönüştürün)\n'
-                '3. Ardından "Onaya Gönder" butonuna tıklayın.'
-            ))
+        record.check_has_confirmed_purchase_orders()
             </field>
         </record>
-    </data>
+    </data>t
 </odoo>
