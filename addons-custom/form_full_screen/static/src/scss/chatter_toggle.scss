@@ -1,0 +1,38 @@
+.o_form_sheet_bg .o_form_statusbar .o_statusbar_buttons {
+    margin-right : auto;
+}
+.max-width-unset {
+    max-width: unset !important;
+}
+.o_chatter_toggle_btn {
+    transform: rotate(90deg);
+    transition: transform .5s ease;
+    &[data-collapsed='false']{
+        transform: rotate(-90deg);
+    }
+    span {
+        display: block;
+        width: 12px;
+        height: 12px;
+        transform: translateY(-30%) rotate(45deg);
+        border-bottom: 3px solid #000000;
+        border-right: 3px solid #240d0d;
+        position: relative;
+        top: 0;
+        animation: scrollanimate 1.5s linear infinite;
+    }
+}
+@keyframes scrollanimate {
+  0% {
+    top: -6px;
+    opacity: 0;
+  }
+  25% {
+    top: 0px;
+    opacity: 1;
+  }
+  50%, 100% {
+    top: 6px;
+    opacity: 0;
+  }
+}
