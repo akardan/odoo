@@ -55,5 +55,6 @@
     'installable': True,
     'application': True,
     'auto_install': False,
-    'sequence': 100,
+    'sequence': -200,
+    'images': ['static/description/icon.png'],
 }

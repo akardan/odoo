@@ -2,7 +2,7 @@
 {
     'name': "İhale",
     'summary': """
-        ERP entegrasyonlu ve çok aşamalı ihale yönetimi modülü prototipi.
+        Çok aşamalı ihale yönetimi modülü.
     """,
     'description': """
         Çok aşamalı satın alma ihale süreçlerini Odoo üzerinde yönetmek için tasarlanmış gelişmiş ihale yönetim modülü.
@@ -19,7 +19,7 @@
         - E-posta Entegrasyonu: Otomatik bildirimler ve takip sistemi
     """,
     'author': "Kardan.Digital",
-    'website': "https://www.kardan.digital",
+    'website': "https://kardan.digital",
     'category': 'Purchases',
     'version': '0.5', # Versiyon yükseltildi
     'sequence': -225,
