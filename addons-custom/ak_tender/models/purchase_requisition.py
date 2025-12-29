@@ -364,6 +364,12 @@ class PurchaseRequisitionLine(models.Model):
         help="Bu SAT kaleminin dahil olduğu ihale"
     )
     
+    tender_state = fields.Selection(
+        related='tender_id.state',
+        string='İhale Durumu',
+        readonly=True
+    )
+    
     # Computed Fields
     can_create_tender = fields.Boolean(
         string='İhale Oluşturulabilir',
