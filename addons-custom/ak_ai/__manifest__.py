@@ -58,4 +58,5 @@ Features:
     'auto_install': False,
     'application': True,
     'sequence': 1,
+    'icon': '/ak_ai/static/description/icon.png',
 }
