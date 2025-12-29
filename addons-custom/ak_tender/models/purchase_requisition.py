@@ -389,6 +389,12 @@ class PurchaseRequisitionLine(models.Model):
                 # Manuel girişlerde taslak durumunda başlasın
                 vals['state'] = 'draft'
         return super().create(vals_list)
+
+    def action_in_progress(self):
+        self.write({'state': 'in_progress'})
+
+    def action_done(self):
+        self.write({'state': 'done'})
     
     @api.depends('erp_pr_id', 'material_group', 'purchasing_group', 'erp_company_code', 'erp_plant_code', 'line_processing_status', 'deletion_indicator')
     def _compute_tender_group_info(self):
