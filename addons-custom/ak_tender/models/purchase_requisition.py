@@ -166,6 +166,12 @@ class PurchaseRequisition(models.Model):
                 'target': 'current',
             }
 
+    def action_in_progress(self):
+        self.write({'state': 'in_progress'})
+
+    def action_done(self):
+        self.write({'state': 'done'})
+
 
 class PurchaseRequisitionLine(models.Model):
     """
