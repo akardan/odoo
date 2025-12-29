@@ -479,7 +479,7 @@ class AkTenderLine(models.Model):
 class AkTender(models.Model):
     _name = 'ak.tender'
     _description = _('İLKOis Tender')
-    _inherit = ['ak.workflow.mixin', 'mail.thread', 'mail.activity.mixin']
+    _inherit = ['ak.workflow.mixin', 'mail.thread', 'mail.activity.mixin', 'ak_ai.mixin']
     # Dummy field to allow smooth upgrade from previous versions
     state = fields.Char(string="State (deprecated)",
                         help="Technical field for upgrade purpose. Not used anymore. Use workflow_state instead.",
