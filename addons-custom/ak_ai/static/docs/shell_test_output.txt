@@ -1,0 +1,47 @@
+================================================================================
+AK AI Shell Commands Test - 2025-12-28 12:08:54
+================================================================================
+
+=== TEST 1: AI Assistant Check ===
+✅ PASS | AI Assistant: Active assistant found: KAI - Kardan AI Assistant
+  - Provider: openrouter
+  - Model: openai/gpt-5.1-codex-mini
+  - API Key exists: True
+
+=== TEST 2: Model Mixin Check ===
+✅ PASS | Model Mixin: ak_ai.mixin in ak.tender: True
+  - Model _inherit: ['ak.workflow.mixin', 'mail.thread', 'mail.activity.mixin', 'ak_ai.mixin']
+
+=== TEST 3: Recent Conversations ===
+✅ PASS | Conversations: Found 1 conversations
+  1. ID: 2 | New Conversation | chatter | Messages: 0
+
+=== TEST 4: Messages Count ===
+✅ PASS | Messages: Total messages in system: 0
+
+=== TEST 5: Interaction Logs ===
+✅ PASS | Interaction Logs: Found 0 recent logs
+
+=== TEST 6: Module Installation ===
+✅ PASS | Module ak_ai: State: installed
+✅ PASS | Module ak_tender: State: installed
+
+=== TEST 7: Database Configuration ===
+✅ PASS | Database Config: DB: od18, User: System, Company: Digipharma Sağlık İlaç Bilişim ve Dan.Ltd. Şti.
+
+================================================================================
+TEST SUMMARY
+================================================================================
+✅ PASS | AI Assistant: Active assistant found: KAI - Kardan AI Assistant
+✅ PASS | Model Mixin: ak_ai.mixin in ak.tender: True
+✅ PASS | Conversations: Found 1 conversations
+✅ PASS | Messages: Total messages in system: 0
+✅ PASS | Interaction Logs: Found 0 recent logs
+✅ PASS | Module ak_ai: State: installed
+✅ PASS | Module ak_tender: State: installed
+✅ PASS | Database Config: DB: od18, User: System, Company: Digipharma Sağlık İlaç Bilişim ve Dan.Ltd. Şti.
+
+--------------------------------------------------------------------------------
+Total Tests: 8 | Passed: 8 | Failed: 0
+Success Rate: 100.0%
+================================================================================

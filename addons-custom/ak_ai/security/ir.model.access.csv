@@ -1,0 +1,11 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_ak_ai_assistant_user,ak_ai.assistant.user,model_ak_ai_assistant,base.group_user,1,0,0,0
+access_ak_ai_assistant_manager,ak_ai.assistant.manager,model_ak_ai_assistant,base.group_system,1,1,1,1
+access_ak_ai_conversation_user,ak_ai.conversation.user,model_ak_ai_conversation,base.group_user,1,1,1,1
+access_ak_ai_message_user,ak_ai.message.user,model_ak_ai_message,base.group_user,1,1,1,1
+access_ak_ai_interaction_log_user,ak_ai.interaction_log.user,model_ak_ai_interaction_log,base.group_user,1,0,0,0
+access_ak_ai_interaction_log_manager,ak_ai.interaction_log.manager,model_ak_ai_interaction_log,base.group_system,1,1,1,1
+access_ak_ai_learning_user,ak_ai.learning.user,model_ak_ai_learning,base.group_user,1,1,1,0
+access_ak_ai_learning_manager,ak_ai.learning.manager,model_ak_ai_learning,base.group_system,1,1,1,1
+access_ak_ai_knowledge_builder_user,ak_ai.knowledge_builder.user,model_ak_ai_knowledge_builder,base.group_user,1,0,0,0
+access_ak_ai_knowledge_builder_manager,ak_ai.knowledge_builder.manager,model_ak_ai_knowledge_builder,base.group_system,1,1,1,1

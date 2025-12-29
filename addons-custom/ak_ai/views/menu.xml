@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        
+        <!-- Main Menu -->
+        <menuitem id="menu_ak_ai_main" 
+                  name="KAI Assistant" 
+                  sequence="100"
+                  web_icon="ak_ai,static/description/icon.png"/>
+        
+        <!-- User Menus -->
+        <menuitem id="menu_ak_ai_conversations" 
+                  name="My Conversations" 
+                  parent="menu_ak_ai_main"
+                  action="action_ak_ai_conversation"
+                  sequence="10"/>
+        
+        <menuitem id="menu_ak_ai_logs" 
+                  name="My Interactions" 
+                  parent="menu_ak_ai_main"
+                  action="action_ak_ai_interaction_log"
+                  sequence="20"/>
+        
+        <!-- Admin Menus -->
+        <menuitem id="menu_ak_ai_admin" 
+                  name="Configuration" 
+                  parent="menu_ak_ai_main"
+                  groups="base.group_system"
+                  sequence="90"/>
+        
+        <menuitem id="menu_ak_ai_assistant_config" 
+                  name="AI Assistant" 
+                  parent="menu_ak_ai_admin"
+                  action="action_ak_ai_assistant"
+                  sequence="10"/>
+        
+        <menuitem id="menu_ak_ai_knowledge" 
+                  name="Knowledge Base" 
+                  parent="menu_ak_ai_admin"
+                  action="action_ak_ai_knowledge_builder"
+                  sequence="20"/>
+        
+    </data>
+</odoo>

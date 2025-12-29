@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        
+        <!-- Default AI Assistant Configuration -->
+        <record id="default_ai_assistant" model="ak_ai.assistant">
+            <field name="name">KAI - Kardan AI Assistant</field>
+            <field name="active">True</field>
+            <field name="ai_provider">openai</field>
+            <field name="model_name">gpt-4o-mini</field>
+            <field name="max_tokens">1000</field>
+            <field name="temperature">0.7</field>
+            <field name="rate_limit_per_user">100</field>
+            <field name="enable_learning">True</field>
+            <field name="knowledge_retention_days">365</field>
+        </record>
+        
+        <!-- Default Knowledge Base Entries -->
+        <record id="knowledge_odoo_basics" model="ak_ai.knowledge_builder">
+            <field name="title">Odoo Temel Kullanım</field>
+            <field name="category">odoo_help</field>
+            <field name="content">Odoo, işletmenizin tüm süreçlerini yönetebileceğiniz entegre bir ERP sistemidir. 
+            
+Temel Modüller:
+- Satış: Müşteri siparişleri ve teklifler
+- Satın Alma: Tedarikçi siparişleri
+- Muhasebe: Faturalar ve mali raporlar
+- Stok: Envanter yönetimi
+- İnsan Kaynakları: Personel yönetimi
+- Proje: Proje takibi
+
+Yardım için: Herhangi bir ekranda F1 tuşuna basın veya sağ üst köşedeki yardım ikonuna tıklayın.</field>
+            <field name="tags">odoo,temel,kullanım,modüller</field>
+        </record>
+        
+        <record id="knowledge_security_best_practices" model="ak_ai.knowledge_builder">
+            <field name="title">Güvenlik En İyi Uygulamaları</field>
+            <field name="category">technical</field>
+            <field name="content">Odoo güvenliği için önemli noktalar:
+
+1. Kullanıcı Yetkileri:
+   - Her kullanıcıya sadece ihtiyacı olan yetkileri verin
+   - Düzenli olarak kullanıcı yetkilerini gözden geçirin
+   - Ayrılan personelin hesaplarını hemen kapatın
+
+2. Veri Güvenliği:
+   - Düzenli yedek alın
+   - Hassas verilere erişimi sınırlayın
+   - Kayıt kurallarını (record rules) kullanın
+
+3. Sistem Güvenliği:
+   - Odoo'yu güncel tutun
+   - Güçlü şifreler kullanın
+   - SSL sertifikası kullanın</field>
+            <field name="tags">güvenlik,yetki,veri,sistem</field>
+        </record>
+        
+        <record id="knowledge_troubleshooting" model="ak_ai.knowledge_builder">
+            <field name="title">Yaygın Sorunlar ve Çözümleri</field>
+            <field name="category">troubleshooting</field>
+            <field name="content">Sık karşılaşılan sorunlar:
+
+1. "Erişim Reddedildi" Hatası:
+   - Kullanıcı yetkilerinizi kontrol edin
+   - Sistem yöneticinizle iletişime geçin
+   - Kayıt kurallarını kontrol edin
+
+2. Sayfa Yüklenmiyor:
+   - Tarayıcı önbelleğini temizleyin
+   - Farklı tarayıcı deneyin
+   - İnternet bağlantınızı kontrol edin
+
+3. Rapor Oluşturamıyorum:
+   - Rapor yetkilerinizi kontrol edin
+   - Veri filtrelerini kontrol edin
+   - Sistem kaynaklarını kontrol edin</field>
+            <field name="tags">sorun,çözüm,hata,yardım</field>
+        </record>
+
+        <!-- Server Action to Execute AI Code -->
+        <record id="action_execute_code" model="ir.actions.server">
+            <field name="name">KAI: Kodu Çalıştır</field>
+            <field name="model_id" ref="model_ak_ai_conversation"/>
+            <field name="state">code</field>
+            <field name="code">
+if env.context.get('conversation_id'):
+    conversation = env['ak_ai.conversation'].browse(int(env.context['conversation_id']))
+    if conversation.exists():
+        result = conversation.action_execute_last_code()
+        if result.get('success'):
+            action = {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'title': 'Başarılı',
+                    'message': result.get('message', 'Kod başarıyla çalıştırıldı'),
+                    'type': 'success',
+                    'sticky': False,
+                }
+            }
+        else:
+            action = {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'title': 'Hata',
+                    'message': result.get('message', 'Kod çalıştırılırken hata oluştu'),
+                    'type': 'danger',
+                    'sticky': True,
+                }
+            }
+            </field>
+        </record>
+        
+    </data>
+</odoo>
