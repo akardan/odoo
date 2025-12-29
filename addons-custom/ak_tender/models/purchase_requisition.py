@@ -364,8 +364,8 @@ class PurchaseRequisitionLine(models.Model):
         help="Bu SAT kaleminin dahil olduğu ihale"
     )
     
-    tender_state = fields.Selection(
-        related='tender_id.state',
+    tender_state = fields.Char(
+        related='tender_id.workflow_state_name',
         string='İhale Durumu',
         readonly=True
     )
@@ -394,16 +394,16 @@ class PurchaseRequisitionLine(models.Model):
                 not rec.deletion_indicator
             )
 
-    @api.model_create_multi
-    def create(self, vals_list):
-        for vals in vals_list:
-            if not vals.get('erp_pr_id'):
-                # Manuel girişlerde taslak durumunda başlasın
-                vals['state'] = 'draft'
-        return super().create(vals_list)
+    # @api.model_create_multi
+    # def create(self, vals_list):
+    #     for vals in vals_list:
+    #         if not vals.get('erp_pr_id'):
+    #             # Manuel girişlerde taslak durumunda başlasın
+    #             vals['state'] = 'draft'
+    #     return super().create(vals_list)
 
     def action_in_progress(self):
-        self.write({'state': 'in_progress'})
+        self.write({'state': 'confirmed'})
 
     def action_done(self):
         self.write({'state': 'done'})
