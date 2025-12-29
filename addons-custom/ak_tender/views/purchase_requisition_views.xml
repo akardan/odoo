@@ -245,7 +245,7 @@
                             <field name="department_id" readonly="state != 'draft'"/>
                         </group>
                         <group>
-                            <field name="ordering_date" string="Talep Tarihi" readonly="state != 'draft'"/>
+                            <field name="date_start" string="Talep Tarihi" readonly="state != 'draft'"/>
                             <field name="type_id" invisible="1"/>
                         </group>
                     </group>
