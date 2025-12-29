@@ -30,8 +30,8 @@ class AkAiAssistant(models.Model):
     api_base_url = fields.Char('API Base URL')
     
     # Security Settings
-    max_tokens = fields.Integer('Max Tokens', default=1000)
-    temperature = fields.Float('Temperature', default=0.7)
+    max_tokens = fields.Integer('Max Tokens', default=4000, help="Maximum tokens for AI response. Increase if responses are being cut off. Most models support 4000-8000 output tokens.")
+    temperature = fields.Float('Temperature', default=0.3, help="Controls randomness (0.0-1.0). Lower values (0.2-0.3) are better for code generation, higher values (0.7-0.9) for creative tasks.")
     rate_limit_per_user = fields.Integer('Rate Limit (per user/hour)', default=100)
     
     # Knowledge Settings
@@ -96,6 +96,12 @@ class AkAiAssistant(models.Model):
             user_id = self.env.user.id
             
         user = self.env['res.users'].browse(user_id)
+        
+        # Check if user has KAI User group
+        kai_user_group = self.env.ref('ak_ai.group_ak_ai_user', raise_if_not_found=False)
+        if kai_user_group and kai_user_group not in user.groups_id:
+            # If group exists and user doesn't have it, deny access
+            return False
         
         # Check if user is in allowed users
         if self.allowed_user_ids and user not in self.allowed_user_ids:
@@ -175,8 +181,8 @@ class AkAiAssistant(models.Model):
                 'name': 'KAI',
                 'ai_provider': 'openai',
                 'model_name': 'gpt-4o-mini',
-                'max_tokens': 1000,
-                'temperature': 0.7,
+                'max_tokens': 4000,
+                'temperature': 0.3,
                 'rate_limit_per_user': 100,
                 'enable_learning': True,
                 'knowledge_retention_days': 365,

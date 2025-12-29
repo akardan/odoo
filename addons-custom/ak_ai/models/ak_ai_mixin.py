@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from odoo import models, fields, api, _
+from odoo.exceptions import ValidationError, AccessError
 from markupsafe import Markup
 import logging
 
@@ -79,6 +80,14 @@ class AkAiMixin(models.AbstractModel):
         """Send message to KAI and post response to chatter"""
         self.ensure_one()
         
+        # Check if user has access to AI assistant
+        try:
+            assistant = self.env['ak_ai.assistant'].get_active_assistant()
+            if not assistant.check_user_access(self.env.user.id):
+                raise ValidationError(_('You do not have permission to use KAI. Please contact your administrator.'))
+        except AccessError:
+            raise ValidationError(_('You do not have permission to use KAI. Please contact your administrator.'))
+        
         # Get or create conversation
         if not self.ai_conversation_id:
             conversation_info = self.get_or_create_ai_conversation()
@@ -118,16 +127,14 @@ class AkAiMixin(models.AbstractModel):
                 # Escape HTML in code
                 import html
                 escaped_code = html.escape(code)
-                return f"""<div style="margin: 15px 0; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden; background-color: #ffffff; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-                    <div style="background-color: #f8f9fa; padding: 8px 15px; border-bottom: 1px solid #e0e0e0; display: flex; justify-content: space-between; align-items: center;">
-                        <span style="font-weight: bold; color: #444; font-size: 0.9em;">🐍 Python Kodu</span>
-                        <span style="background-color: #e9ecef; color: #495057; padding: 2px 8px; border-radius: 4px; font-size: 0.8em;">Onay Bekliyor</span>
+                return f"""<div class="o_kai_code_block" style="margin: 15px 0; border: 1px solid #e0e0e0; border-radius: 8px; background-color: #ffffff;">
+                    <div style="background-color: #f8f9fa; padding: 8px 15px; border-bottom: 1px solid #e0e0e0;">
+                        <span style="font-weight: bold; color: #444;">🐍 Python Kodu</span>
                     </div>
-                    <pre style="margin: 0; padding: 15px; background-color: #272822; color: #f8f8f2; font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', monospace; font-size: 0.9em; overflow-x: auto; line-height: 1.4;">{escaped_code}</pre>
-                    <div style="padding: 10px 15px; background-color: #fff; border-top: 1px solid #e0e0e0; text-align: right;">
-                        <p style="margin: 0 0 10px 0; font-size: 0.85em; color: #666; text-align: left;">⚠️ Bu kod sizin yetkilerinizle çalıştırılacaktır.</p>
-                        <a href="/ak_ai/execute_code/{self.ai_conversation_id.id}"
-                           style="display: inline-block; padding: 10px 20px; background-color: #0066cc; color: #ffffff !important; text-decoration: none !important; border-radius: 4px; font-weight: bold; font-size: 1em; border: none;">Kodu Çalıştır</a>
+                    <pre style="margin: 0; padding: 15px; background-color: #272822; color: #f8f8f2; overflow-x: auto;">{escaped_code}</pre>
+                    <div style="padding: 10px 15px; background-color: #fff; border-top: 1px solid #e0e0e0;">
+                        <p style="margin: 0 0 10px 0; font-size: 0.85em; color: #666;">⚠️ Bu kod sizin yetkilerinizle çalıştırılacaktır.</p>
+                        <a href="/ak_ai/execute_code/{self.ai_conversation_id.id}" class="btn btn-primary">Kodu Çalıştır</a>
                     </div>
                 </div>"""
             
@@ -154,9 +161,10 @@ class AkAiMixin(models.AbstractModel):
             response_html = content.replace('\n', '<br/>')
             
             # Create safe HTML using Markup
-            safe_html = Markup(f"""<div style="border-left: 4px solid #0066cc; padding: 15px; margin: 10px 0; background-color: #f8f9fa; border-radius: 0 5px 5px 0; font-family: sans-serif;">
+            # Use classes instead of inline styles where possible to avoid Odoo's HTML sanitizer
+            safe_html = Markup(f"""<div class="o_kai_response" style="border-left: 4px solid #0066cc; padding: 15px; margin: 10px 0; background-color: #f8f9fa; border-radius: 0 5px 5px 0;">
 <p style="margin: 0 0 10px 0;"><strong style="color: #0066cc; font-size: 1.1em;">✨ KAI - AI Asistan</strong></p>
-<div style="color: #333; line-height: 1.5;">{response_html}</div>
+<div class="o_kai_content" style="color: #333; line-height: 1.5;">{response_html}</div>
 </div>""")
             
             # Post KAI response to chatter

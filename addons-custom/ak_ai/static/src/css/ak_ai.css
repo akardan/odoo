@@ -112,23 +112,106 @@
     color: #ddd;
 }
 
-/* Chatter Ask KAI Button */
+/* Chatter Ask KAI Button - Modern, Clean Design */
 .o_chatter_button_ask_kai {
-    background: #875A7B !important;
-    color: white !important;
-    border: none !important;
-    padding: 6px 16px !important;
-    border-radius: 4px !important;
-    font-weight: 500 !important;
-    transition: background 0.3s ease !important;
+    background: #e3f2fd !important;
+    color: #1565c0 !important;
+    border: 2px solid #42a5f5 !important;
+    padding: 8px 18px !important;
+    border-radius: 8px !important;
+    font-weight: 600 !important;
+    font-size: 14px !important;
+    transition: all 0.2s ease !important;
     margin-left: 8px !important;
     margin-right: 4px !important;
+    box-shadow: none !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 8px !important;
 }
 
 .o_chatter_button_ask_kai:hover {
-    background: #6d4661 !important;
+    background: #bbdefb !important;
+    color: #0d47a1 !important;
+    border-color: #1e88e5 !important;
+    transform: translateY(-1px) !important;
 }
 
-.o_chatter_button_ask_kai i {
-    margin-right: 6px;
+.o_chatter_button_ask_kai:active {
+    transform: translateY(0) !important;
+    background: #90caf9 !important;
+}
+
+.o_chatter_button_ask_kai img {
+    /* İkon zaten mavi, olduğu gibi bırak */
+    filter: none !important;
+    width: 22px !important;
+    height: 22px !important;
+    object-fit: contain !important;
+}
+
+/* KAI Response Styles in Chatter */
+.o_kai_response {
+    border-left: 4px solid #0066cc !important;
+    padding: 15px !important;
+    margin: 10px 0 !important;
+    background-color: #f8f9fa !important;
+    border-radius: 0 5px 5px 0 !important;
+}
+
+.o_kai_content {
+    color: #333 !important;
+    line-height: 1.5 !important;
+}
+
+.o_kai_code_block {
+    margin: 15px 0 !important;
+    border: 1px solid #e0e0e0 !important;
+    border-radius: 8px !important;
+    background-color: #ffffff !important;
+    overflow: hidden !important;
+}
+
+.o_kai_code_block pre {
+    margin: 0 !important;
+    padding: 15px !important;
+    background-color: #272822 !important;
+    color: #f8f8f2 !important;
+    overflow-x: auto !important;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', monospace !important;
+}
+
+/* Send to KAI Button - Matching Style */
+.o_chatter_button_send_kai {
+    background: #1976d2 !important;
+    color: #ffffff !important;
+    border: none !important;
+    padding: 10px 20px !important;
+    border-radius: 8px !important;
+    font-weight: 600 !important;
+    font-size: 14px !important;
+    transition: all 0.2s ease !important;
+    box-shadow: none !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+}
+
+.o_chatter_button_send_kai:hover {
+    background: #1565c0 !important;
+    color: #ffffff !important;
+    transform: translateY(-1px) !important;
+}
+
+.o_chatter_button_send_kai:active {
+    transform: translateY(0) !important;
+    background: #0d47a1 !important;
+}
+
+.o_chatter_button_send_kai img {
+    /* Beyaz arka planda mavi ikon güzel görünsün diye filtre uygulama */
+    filter: brightness(0) invert(1) !important;
+    width: 22px !important;
+    height: 22px !important;
+    object-fit: contain !important;
 }

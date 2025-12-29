@@ -97,13 +97,13 @@ KOD ÇALIŞTIRMA KURALLARI:
   [EXECUTE_CODE]
   # Kod buraya
   # ÖNEMLİ: İşlem sonrası kritik alanları (fiyat, miktar, toplam) kontrol et!
-  result = {'success': True, 'message': 'İşlem tamamlandı', 'details': 'Oluşturulan kayıt: ...'}
+  result = {{"success": True, "message": "İşlem tamamlandı", "details": "Oluşturulan kayıt: ..."}}
   [/EXECUTE_CODE]
 - Bu blok içindeki kod kullanıcı onayıyla OTOMATİK çalıştırılabilir.
 - Kod içinde `env`, `record`, `datetime`, `fields` kullanılabilir.
 - `sudo()` KULLANMA! Kullanıcının yetkisi varsa çalışacaktır.
 - **SEMANTİK KONTROL:** Kodun sonunda mutlaka bir özet hazırla. Eğer bir fiyat 0 ise veya beklenen bir değer atanmamışsa kullanıcıyı uyar!
-- **DOĞRULAMA:** Kayıt oluşturduktan sonra `new_record.read()` ile veriyi tekrar oku ve `result['details']` içine ekle ki kullanıcı ne oluştuğunu görsün.
+- **DOĞRULAMA:** Kayıt oluşturduktan sonra `new_record.read()` ile veriyi tekrar oku ve result["details"] içine ekle ki kullanıcı ne oluştuğunu görsün.
 
 İLİŞKİLİ VERİLERİ OKUMA KURALLARI:
 - tender_lines.items içinde product_id, quantity, name, target_price varsa → DOĞRUDAN kullan

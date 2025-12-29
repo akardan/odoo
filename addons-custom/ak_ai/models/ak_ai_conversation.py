@@ -334,7 +334,7 @@ class AkAiConversation(models.Model):
                 # If this is a retry, add error info to prompt
                 current_prompt = user_message.content
                 if retry_count > 0 and last_error:
-                    current_prompt = f"Önceki kod çalıştırma hatası: {last_error}\n\nLütfen kodu düzeltip tekrar dene.\n\nKullanıcı isteği: {user_message.content}"
+                    current_prompt = "Önceki kod çalıştırma hatası: " + str(last_error) + "\n\nLütfen kodu düzeltip tekrar dene.\n\nKullanıcı isteği: " + str(user_message.content)
 
                 # Generate response using AI service
                 response_content = ai_service.generate_response(
@@ -361,12 +361,16 @@ class AkAiConversation(models.Model):
                     if exec_result.get('success'):
                         # Code executed successfully!
                         # Append the code and result to the response content
-                        response_content += f"\n\n**Çalıştırılan Kod:**\n```python\n{code}\n```\n\n**Sonuç:** {exec_result.get('message')}"
+                        result_message = exec_result.get('message', '')
+                        result_details = exec_result.get('result', '')
+                        response_content += f"\n\n**Çalıştırılan Kod:**\n```python\n{code}\n```\n\n**Sonuç:** {result_message}"
+                        if result_details:
+                            response_content += f"\n\n**Detaylar:** ```\n{result_details}\n```"
                         break
                     else:
                         # Code failed, retry with error info
                         last_error = exec_result.get('error')
-                        _logger.warning(f"Code execution failed: {last_error}")
+                        _logger.warning("Code execution failed: " + str(last_error))
                         retry_count += 1
                         continue
                 else:
@@ -382,10 +386,10 @@ class AkAiConversation(models.Model):
 
         # Final response handling
         if last_error and retry_count >= max_retries:
-            if "402" in last_error or "Insufficient credits" in last_error:
+            if "402" in str(last_error) or "Insufficient credits" in str(last_error):
                 msg = "🤖 **KAI Notu:** OpenRouter kredisi tükenmiş görünüyor. Lütfen sistem yöneticisine haber verin."
             else:
-                msg = f'Üzgünüm, 5 denemeden sonra hala hata alıyorum. Lütfen tekrar deneyin.\n\nSon hata detayı: {last_error}'
+                msg = 'Üzgünüm, 5 denemeden sonra hala hata alıyorum. Lütfen tekrar deneyin.\n\nSon hata detayı: ' + str(last_error)
             response_content = msg
 
         # Create AI message
@@ -469,21 +473,22 @@ class AkAiConversation(models.Model):
             assistant = self.env['ak_ai.assistant'].get_active_assistant()
             self.env['ak_ai.interaction_log'].create({
                 'user_id': self.env.user.id,
-                'user_message': f'EXECUTE CODE:\n{code}',
-                'ai_response': f'RESULT: {result}',
+                'user_message': 'EXECUTE CODE:\n' + str(code),
+                'ai_response': 'RESULT: ' + str(result),
                 'ai_provider': assistant.ai_provider,
             })
             
             return {
                 'success': True,
                 'result': result,
-                'message': _('Code executed successfully')
+                'message': 'İşlem başarıyla tamamlandı'
             }
             
         except Exception as e:
             _logger.error(f"Error executing AI code: {e}")
+            error_message = f"Kod çalıştırma hatası: {str(e)}"
             return {
                 'success': False,
                 'error': str(e),
-                'message': _('Error executing code: %s') % str(e)
+                'message': error_message
             }
