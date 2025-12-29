@@ -45,7 +45,14 @@ class PurchaseRequisition(models.Model):
         ('C', 'Tamamlandı'),
     ], string='İşleme Durumu', default='N', copy=False,
        help="SAT'ın genel işleme durumu")
-    
+
+    # Manuel Giriş Alanları
+    department_id = fields.Many2one(
+        'hr.department', 
+        string='Departman',
+        default=lambda self: self.env.user.employee_id.department_id
+    )
+
     # İstatistikler
     total_lines = fields.Integer(
         string='Toplam Kalem',
@@ -374,6 +381,14 @@ class PurchaseRequisitionLine(models.Model):
                 not rec.tender_line_id and
                 not rec.deletion_indicator
             )
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if not vals.get('erp_pr_id'):
+                # Manuel girişlerde taslak durumunda başlasın
+                vals['state'] = 'draft'
+        return super().create(vals_list)
     
     @api.depends('erp_pr_id', 'material_group', 'purchasing_group', 'erp_company_code', 'erp_plant_code', 'line_processing_status', 'deletion_indicator')
     def _compute_tender_group_info(self):
