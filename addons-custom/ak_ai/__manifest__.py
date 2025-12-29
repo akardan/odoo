@@ -25,7 +25,7 @@ Features:
     """,
     'author': 'Kardan.Digital',
     'website': 'https://kardan.digital',
-    'license': 'LGPL-3',
+    'license': 'OPL-1',
     'depends': [
         'base',
         'web',
@@ -59,4 +59,5 @@ Features:
     'application': True,
     'sequence': 1,
     'icon': '/ak_ai/static/description/icon.png',
+    'images': ['static/description/icon.png'], # Modül ikonu için
 }
