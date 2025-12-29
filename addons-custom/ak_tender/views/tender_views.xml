@@ -483,6 +483,8 @@
                                 </field>
                             </page>
                         </notebook>
+                        <!-- Chatter -->
+                        <chatter/>
                     </sheet>
                 </form>
             </field>

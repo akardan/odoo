@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        
+        <!-- Conversation Views -->
+        <record id="view_ak_ai_conversation_form" model="ir.ui.view">
+            <field name="name">ak_ai.conversation.form</field>
+            <field name="model">ak_ai.conversation</field>
+            <field name="arch" type="xml">
+                <form string="AI Conversation">
+                    <header>
+                        <field name="state" widget="statusbar"/>
+                    </header>
+                    <sheet>
+                        <div class="oe_title">
+                            <h1>
+                                <field name="title"/>
+                            </h1>
+                        </div>
+                        <group>
+                            <group>
+                                <field name="user_id"/>
+                                <field name="integration_type"/>
+                                <field name="discuss_channel_id" invisible="integration_type != 'discuss'"/>
+                            </group>
+                            <group>
+                                <field name="context_model"/>
+                                <field name="context_res_id"/>
+                                <field name="message_count"/>
+                                <field name="last_message_date"/>
+                            </group>
+                        </group>
+                        <notebook>
+                            <page string="Messages">
+                                <field name="message_ids" readonly="1">
+                                    <list>
+                                        <field name="create_date"/>
+                                        <field name="message_type"/>
+                                        <field name="content"/>
+                                        <field name="rating"/>
+                                    </list>
+                                </field>
+                                <group>
+                                    <group colspan="2">
+                                        <label for="new_message_content" string="Ask KAI"/>
+                                        <div class="o_row">
+                                            <field name="new_message_content"
+                                                   placeholder="Type your question or request here..."
+                                                   widget="text"
+                                                   nolabel="1"
+                                                   style="width: 100%; min-height: 80px;"/>
+                                        </div>
+                                        <div class="oe_button_box">
+                                            <button name="send_message"
+                                                    string="Send to KAI"
+                                                    type="object"
+                                                    class="oe_highlight"
+                                                    icon="fa-paper-plane"/>
+                                        </div>
+                                    </group>
+                                </group>
+                            </page>
+                        </notebook>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+        
+        <record id="view_ak_ai_conversation_tree" model="ir.ui.view">
+            <field name="name">ak_ai.conversation.tree</field>
+            <field name="model">ak_ai.conversation</field>
+            <field name="arch" type="xml">
+                <list string="AI Conversations">
+                    <field name="title"/>
+                    <field name="user_id"/>
+                    <field name="integration_type"/>
+                    <field name="message_count"/>
+                    <field name="last_message_date"/>
+                    <field name="state"/>
+                </list>
+            </field>
+        </record>
+        
+        <record id="action_ak_ai_conversation" model="ir.actions.act_window">
+            <field name="name">AI Conversations</field>
+            <field name="res_model">ak_ai.conversation</field>
+            <field name="view_mode">list,form</field>
+            <field name="domain">[('user_id', '=', uid)]</field>
+        </record>
+        
+        <!-- Message Views -->
+        <record id="view_ak_ai_message_form" model="ir.ui.view">
+            <field name="name">ak_ai.message.form</field>
+            <field name="model">ak_ai.message</field>
+            <field name="arch" type="xml">
+                <form string="AI Message">
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="conversation_id"/>
+                                <field name="user_id"/>
+                                <field name="message_type"/>
+                            </group>
+                            <group>
+                                <field name="ai_model"/>
+                                <field name="tokens_used"/>
+                                <field name="response_time"/>
+                            </group>
+                        </group>
+                        <group>
+                            <field name="content" widget="text"/>
+                        </group>
+                        <group string="Feedback">
+                            <group>
+                                <field name="rating"/>
+                                <field name="is_helpful"/>
+                            </group>
+                            <group>
+                                <field name="feedback_text"/>
+                            </group>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+        
+    </data>
+</odoo>
