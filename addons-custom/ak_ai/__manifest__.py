@@ -54,9 +54,9 @@ Features:
             'ak_ai/static/src/css/**/*',
         ],
     },
+    'images': ['static/description/icon.png'], 
     'installable': True,
     'auto_install': False,
     'application': True,
     'sequence': 1,
-    'images': ['static/description/icon.png'], # Modül ikonu için
 }

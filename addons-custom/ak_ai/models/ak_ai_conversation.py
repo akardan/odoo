@@ -32,6 +32,9 @@ class AkAiConversation(models.Model):
     # Discuss Integration
     discuss_channel_id = fields.Many2one('discuss.channel', 'Discuss Channel')
     
+    # Assistants API Specifics
+    thread_id = fields.Char('Thread ID', help="OpenAI Thread ID for stateful conversations")
+    
     # Messages
     message_ids = fields.One2many('ak_ai.message', 'conversation_id', 'Messages')
     message_count = fields.Integer('Message Count', compute='_compute_message_count')
@@ -150,7 +153,7 @@ class AkAiConversation(models.Model):
                                 line_info = {'id': line.id, 'display_name': line.display_name}
                                 # Extract basic fields from related record
                                 for lf_name, lf in line._fields.items():
-                                    if lf_name.startswith('_') or lf.type in ('one2many', 'many2many', 'binary', 'reference'):
+                                    if lf_name.startswith('_') or lf.type in ('binary', 'reference'):
                                         continue
                                     if lf_name in ['id', 'display_name', 'create_uid', 'write_uid', 'create_date', 'write_date']:
                                         continue
@@ -158,6 +161,15 @@ class AkAiConversation(models.Model):
                                         lv = line[lf_name]
                                         if lv is False and lf.type != 'boolean':
                                             continue
+                                        
+                                        # Handle nested x2many - provide summary only
+                                        if lf.type in ('one2many', 'many2many'):
+                                            line_info[lf_name] = {
+                                                'count': len(lv),
+                                                'model': getattr(lv, '_name', 'unknown')
+                                            }
+                                            continue
+
                                         if lf.type in ('char', 'text', 'html', 'selection'):
                                             line_info[lf_name] = lv
                                         elif lf.type in ('integer', 'float', 'monetary'):
@@ -167,7 +179,11 @@ class AkAiConversation(models.Model):
                                         elif lf.type in ('date', 'datetime'):
                                             line_info[lf_name] = lv.isoformat() if lv else None
                                         elif lf.type == 'many2one':
-                                            line_info[lf_name] = {'id': lv.id, 'name': lv.display_name} if lv else None
+                                            line_info[lf_name] = {
+                                                'id': lv.id, 
+                                                'name': lv.display_name,
+                                                'model': getattr(lv, '_name', 'unknown')
+                                            } if lv else None
                                     except Exception:
                                         continue
                                 lines_data.append(line_info)
@@ -316,8 +332,13 @@ class AkAiConversation(models.Model):
                 # Get context data
                 context_data = self.get_context_data()
                 
+                # DEBUG: Log context data size
+                import sys
+                context_size = sys.getsizeof(str(context_data))
+                _logger.info(f"Context data size: {context_size} bytes, fields count: {len(context_data.get('fields', {}))}")
+                
                 # Get conversation history
-                history = self._get_conversation_history(limit=10)
+                history = self._get_conversation_history(limit=5)
                 
                 # Prepare context for AI
                 context = {
@@ -330,6 +351,14 @@ class AkAiConversation(models.Model):
                     },
                     'conversation': context_data,
                 }
+                
+                # DEBUG: Log what fields are being sent
+                if context_data and 'fields' in context_data:
+                    _logger.info(f"Fields being sent to AI: {list(context_data['fields'].keys())}")
+                    # Check if user_input_ids exists and has data
+                    if 'user_input_ids' in context_data['fields']:
+                        user_inputs = context_data['fields']['user_input_ids']
+                        _logger.info(f"user_input_ids: count={user_inputs.get('count')}, items={len(user_inputs.get('items', []))}")
                 
                 # If this is a retry, add error info to prompt
                 current_prompt = user_message.content
@@ -402,15 +431,22 @@ class AkAiConversation(models.Model):
         
         return ai_message
     
-    def _get_conversation_history(self, limit=10):
-        """Get conversation history for context"""
+    def _get_conversation_history(self, limit=5):
+        """Get conversation history for context - optimized to reduce token usage"""
+        # Reduced from 10 to 5 to save tokens
         messages = self.message_ids.sorted('create_date')[-limit:]
         
         history = []
         for message in messages:
+            # Truncate very long assistant messages to save tokens
+            content = message.content
+            if message.message_type == 'assistant' and len(content) > 2000:
+                # Keep first "2000" chars for context
+                content = content[:2000] + "\n...(truncated for context)..."
+            
             history.append({
                 'role': 'user' if message.message_type == 'user' else 'assistant',
-                'content': message.content,
+                'content': content,
                 'timestamp': message.create_date.isoformat(),
             })
             

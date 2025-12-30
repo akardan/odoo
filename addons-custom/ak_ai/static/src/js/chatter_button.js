@@ -48,7 +48,7 @@ patch(Chatter.prototype, {
      * Check if current model has AI mixin and user has access
      */
     get hasAiButton() {
-        const allowedModels = ['ak.tender', 'sale.order', 'purchase.order', 'res.partner'];
+        const allowedModels = ['ak.tender', 'sale.order', 'purchase.order', 'res.partner', 'purchase.requisition', 'product.template', 'product.product', 'survey.survey'];
         return this.props.threadModel &&
                allowedModels.includes(this.props.threadModel) &&
                this.state.hasAiAccess;

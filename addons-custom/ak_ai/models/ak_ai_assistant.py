@@ -23,6 +23,15 @@ class AkAiAssistant(models.Model):
         ('local', 'Local LLM'),
     ], string='AI Provider', default='openrouter', required=True)
     
+    # Mode Configuration
+    mode = fields.Selection([
+        ('chat', 'Chat Completion (Stateless)'),
+        ('assistant', 'Assistants API (Stateful)'),
+    ], string='Mode', default='chat', required=True, help="Chat: Sends full context every time. Assistant: Uses OpenAI Assistants API with threads and files.")
+    
+    # Assistants API Specifics
+    ai_assistant_id = fields.Char('AI Assistant ID', help="ID of the existing assistant (e.g., asst_... for OpenAI)")
+    
     # Simple Char field for model name - user can type any model
     model_name = fields.Char('Model Name', required=True, help="Enter the model ID. Examples: gpt-4o-mini, claude-3-5-haiku-20241022, anthropic/claude-3.5-haiku")
     
