@@ -25,6 +25,7 @@ Exam Management System for customers that isolates based on company
         'crm',
         'mail',
         'website', # Added website dependency
+        'ak_ai',
     ],
 
     # always loaded

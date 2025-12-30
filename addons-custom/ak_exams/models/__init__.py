@@ -5,6 +5,7 @@ from . import crm_team
 from . import survey_user_input
 from . import survey_user_input_photo
 from . import survey_survey
+from . import survey_survey_ai
 from . import survey_question
 
 from . import survey_question_poll
