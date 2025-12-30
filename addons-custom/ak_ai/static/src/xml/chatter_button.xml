@@ -11,7 +11,7 @@
                     type="button"
                     title="Ask KAI - AI Assistant"
                     t-on-click="toggleAiInput">
-                <img src="/ak_ai/static/description/icon.png" style="width: 16px; height: 16px; margin-right: 4px; vertical-align: middle;"/> Ask KAI
+                <img src="/ak_ai/static/src/img/icon.png" style="width: 24px; height: 24px; margin-right: 6px; vertical-align: middle;"/> Ask KAI
             </button>
         </xpath>
         
@@ -20,7 +20,7 @@
             <div t-if="state.showAiInput and hasAiButton" class="o-mail-AiInput border rounded p-3 mb-3" style="background-color: #f8f9fa;">
                 <div class="mb-2">
                     <label class="fw-bold text-primary">
-                        <img src="/ak_ai/static/description/icon.png" style="width: 18px; height: 18px; margin-right: 6px; vertical-align: middle;"/> Ask KAI - AI Assistant
+                        <img src="/ak_ai/static/src/img/icon.png" style="width: 18px; height: 18px; margin-right: 6px; vertical-align: middle;"/> Ask KAI - AI Assistant
                     </label>
                 </div>
                 <div class="d-flex gap-2">
@@ -35,8 +35,8 @@
                     <button class="btn btn-secondary btn-sm" t-on-click="closeAiInput" type="button">
                         <i class="fa fa-times"/> Cancel
                     </button>
-                    <button class="btn btn-primary btn-sm" t-on-click="sendAiMessage" type="button">
-                        <img src="/ak_ai/static/description/icon.png" style="width: 14px; height: 14px; margin-right: 4px; vertical-align: middle;"/> Send to KAI
+                    <button class="btn btn-primary btn-sm o_chatter_button_send_kai" t-on-click="sendAiMessage" type="button">
+                        <img src="/ak_ai/static/src/img/icon.png" style="width: 24px; height: 24px; margin-right: 6px; vertical-align: middle;"/> Send to KAI
                     </button>
                 </div>
             </div>

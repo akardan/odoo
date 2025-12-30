@@ -45,7 +45,14 @@ class PurchaseRequisition(models.Model):
         ('C', 'Tamamlandı'),
     ], string='İşleme Durumu', default='N', copy=False,
        help="SAT'ın genel işleme durumu")
-    
+
+    # Manuel Giriş Alanları
+    department_id = fields.Many2one(
+        'hr.department', 
+        string='Departman',
+        default=lambda self: self.env.user.employee_id.department_id
+    )
+
     # İstatistikler
     total_lines = fields.Integer(
         string='Toplam Kalem',
@@ -158,6 +165,12 @@ class PurchaseRequisition(models.Model):
                 'domain': [('id', 'in', created_tenders.ids)],
                 'target': 'current',
             }
+
+    def action_in_progress(self):
+        self.write({'state': 'in_progress'})
+
+    def action_done(self):
+        self.write({'state': 'done'})
 
 
 class PurchaseRequisitionLine(models.Model):
@@ -351,6 +364,12 @@ class PurchaseRequisitionLine(models.Model):
         help="Bu SAT kaleminin dahil olduğu ihale"
     )
     
+    tender_state = fields.Char(
+        related='tender_id.workflow_state_name',
+        string='İhale Durumu',
+        readonly=True
+    )
+    
     # Computed Fields
     can_create_tender = fields.Boolean(
         string='İhale Oluşturulabilir',
@@ -374,6 +393,20 @@ class PurchaseRequisitionLine(models.Model):
                 not rec.tender_line_id and
                 not rec.deletion_indicator
             )
+
+    # @api.model_create_multi
+    # def create(self, vals_list):
+    #     for vals in vals_list:
+    #         if not vals.get('erp_pr_id'):
+    #             # Manuel girişlerde taslak durumunda başlasın
+    #             vals['state'] = 'draft'
+    #     return super().create(vals_list)
+
+    def action_in_progress(self):
+        self.write({'state': 'confirmed'})
+
+    def action_done(self):
+        self.write({'state': 'done'})
     
     @api.depends('erp_pr_id', 'material_group', 'purchasing_group', 'erp_company_code', 'erp_plant_code', 'line_processing_status', 'deletion_indicator')
     def _compute_tender_group_info(self):

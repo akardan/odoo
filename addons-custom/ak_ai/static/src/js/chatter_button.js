@@ -18,15 +18,40 @@ patch(Chatter.prototype, {
         this.state = useState({
             showAiInput: false,
             aiMessage: "",
+            hasAiAccess: false,
         });
+        
+        // Check user access to AI on init
+        this.checkAiAccess();
+    },
+    
+    /**
+     * Check if user has access to AI assistant
+     */
+    async checkAiAccess() {
+        try {
+            // Check if user has access to ak_ai.assistant model
+            const hasAccess = await this.orm.call(
+                'ak_ai.assistant',
+                'search_count',
+                [[['active', '=', true]]],
+                { limit: 1 }
+            );
+            this.state.hasAiAccess = hasAccess > 0;
+        } catch (error) {
+            // User doesn't have access to assistant model
+            this.state.hasAiAccess = false;
+        }
     },
 
     /**
-     * Check if current model has AI mixin
+     * Check if current model has AI mixin and user has access
      */
     get hasAiButton() {
-        const allowedModels = ['ak.tender', 'sale.order', 'purchase.order', 'res.partner'];
-        return this.props.threadModel && allowedModels.includes(this.props.threadModel);
+        const allowedModels = ['ak.tender', 'sale.order', 'purchase.order', 'res.partner', 'purchase.requisition', 'product.template', 'product.product', 'survey.survey'];
+        return this.props.threadModel &&
+               allowedModels.includes(this.props.threadModel) &&
+               this.state.hasAiAccess;
     },
 
     /**

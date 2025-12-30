@@ -221,6 +221,56 @@
         </field>
     </record>
 
+    <!-- Purchase Requisition Simple Form View for Manual Entry -->
+    <record id="view_purchase_requisition_form_simple" model="ir.ui.view">
+        <field name="name">purchase.requisition.form.simple</field>
+        <field name="model">purchase.requisition</field>
+        <field name="priority">100</field>
+        <field name="arch" type="xml">
+            <form string="Talep Girişi">
+                <header>
+                    <button name="action_in_progress" string="Onaya Gönder" type="object" class="oe_highlight" invisible="state != 'draft'"/>
+                    <button name="action_done" string="Onayla" type="object" class="oe_highlight" invisible="state != 'in_progress'" groups="ak_tender.group_tender_user,ak_tender.group_tender_manager"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,in_progress,done"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" readonly="1"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="user_id" string="Talep Eden" readonly="state != 'draft'"/>
+                            <field name="department_id" readonly="state != 'draft'"/>
+                        </group>
+                        <group>
+                            <field name="date_start" string="Talep Tarihi" readonly="state != 'draft'"/>
+                            <field name="requisition_type" invisible="1"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Ürünler" name="products">
+                            <field name="line_ids">
+                                <list editable="bottom">
+                                    <field name="product_id"/>
+                                    <field name="product_qty"/>
+                                    <field name="product_uom_id" string="Birim" groups="uom.group_uom"/>
+                                    <field name="line_processing_status" string="Durum" readonly="1"/>
+                                    <!-- <field name="tender_id" string="İhale" readonly="1"/> -->
+                                    <field name="tender_state" string="İhale Durumu" readonly="1"/>
+                                    <field name="account_assignment_type" optional="hide"/>
+                                </list>
+                            </field>
+                            <field name="description" placeholder="Talebinizle ilgili ek notlar..." readonly="state != 'draft'"/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
     <!-- Actions -->
     <record id="action_purchase_requisition_line_pool" model="ir.actions.act_window">
         <field name="name">SAT Havuzu</field>
@@ -254,6 +304,37 @@
                 SAP'den import edilen SAT'lar burada görünür.
             </p>
         </field>
+    </record>
+
+    <record id="action_purchase_requisition_manual" model="ir.actions.act_window">
+        <field name="name">Talepler</field>
+        <field name="res_model">purchase.requisition</field>
+        <field name="view_mode">list,form</field>
+        <field name="view_id" ref="view_purchase_requisition_form_simple"/>
+        <field name="domain">[('erp_pr_id', '=', False)]</field>
+        <field name="context">{}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Yeni bir talep oluşturun
+            </p>
+            <p>
+                Buradan satınalma taleplerinizi girebilirsiniz.
+            </p>
+        </field>
+    </record>
+
+    <record id="action_purchase_requisition_manual_list" model="ir.actions.act_window.view">
+        <field name="sequence" eval="1"/>
+        <field name="view_mode">list</field>
+        <field name="view_id" ref="purchase_requisition.view_purchase_requisition_tree"/>
+        <field name="act_window_id" ref="action_purchase_requisition_manual"/>
+    </record>
+
+    <record id="action_purchase_requisition_manual_form" model="ir.actions.act_window.view">
+        <field name="sequence" eval="2"/>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="view_purchase_requisition_form_simple"/>
+        <field name="act_window_id" ref="action_purchase_requisition_manual"/>
     </record>
 
     <!-- Server Action: Otomatik İhale Oluştur -->
@@ -296,9 +377,15 @@ else:
 
     <!-- Menu Items -->
     <menuitem id="menu_sat_pool_root"
-              name="SAT Havuzu"
+              name="Talepler"
               parent="ak_tender.ak_tender_menu_root"
               sequence="15"/>
+
+    <menuitem id="menu_purchase_requisition_manual"
+              name="Talep Girişi"
+              parent="menu_sat_pool_root"
+              action="action_purchase_requisition_manual"
+              sequence="5"/>
 
     <menuitem id="menu_sat_pool_lines"
               name="SAT Kalemleri"

@@ -25,7 +25,7 @@ Features:
     """,
     'author': 'Kardan.Digital',
     'website': 'https://kardan.digital',
-    'license': 'LGPL-3',
+    'license': 'OPL-1',
     'depends': [
         'base',
         'web',
@@ -39,8 +39,8 @@ Features:
         'python': ['openai', 'anthropic', 'tiktoken'],
     },
     'data': [
-        'security/ir.model.access.csv',
         'security/ak_ai_security.xml',
+        'security/ir.model.access.csv',
         'data/ak_ai_data.xml',
         'views/ak_ai_assistant_views.xml',
         'views/ak_ai_conversation_views.xml',
@@ -54,9 +54,9 @@ Features:
             'ak_ai/static/src/css/**/*',
         ],
     },
+    'images': ['static/description/icon.png'], 
     'installable': True,
     'auto_install': False,
     'application': True,
     'sequence': 1,
-    'icon': '/ak_ai/static/description/icon.png',
 }

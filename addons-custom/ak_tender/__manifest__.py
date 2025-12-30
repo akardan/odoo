@@ -77,7 +77,7 @@
     'installable': True,
     'application': True,
     'auto_install': False,
-    'license': 'LGPL-3',
+    'license': 'OPL-1',
     'images': ['static/description/icon.png'], # Modül ikonu için
     'assets': {
         'web.assets_backend': [

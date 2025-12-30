@@ -71,6 +71,51 @@
             <field name="perm_unlink" eval="False"/>
         </record>
 
+        <!-- Purchase Requisition Rules -->
+        <record id="purchase_requisition_rule_manager" model="ir.rule">
+            <field name="name">Purchase Requisition: Manager Access</field>
+            <field name="model_id" ref="purchase_requisition.model_purchase_requisition"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups" eval="[(4, ref('ak_tender.group_tender_manager')), (4, ref('ak_tender.group_tender_user'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+        </record>
+
+        <record id="purchase_requisition_rule_requester" model="ir.rule">
+            <field name="name">Purchase Requisition: Requester Access</field>
+            <field name="model_id" ref="purchase_requisition.model_purchase_requisition"/>
+            <field name="domain_force">[('create_uid', '=', user.id)]</field>
+            <field name="groups" eval="[(4, ref('ak_tender.group_tender_requester'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+
+        <record id="purchase_requisition_line_rule_manager" model="ir.rule">
+            <field name="name">Purchase Requisition Line: Manager Access</field>
+            <field name="model_id" ref="purchase_requisition.model_purchase_requisition_line"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups" eval="[(4, ref('ak_tender.group_tender_manager')), (4, ref('ak_tender.group_tender_user'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+        </record>
+
+        <record id="purchase_requisition_line_rule_requester" model="ir.rule">
+            <field name="name">Purchase Requisition Line: Requester Access</field>
+            <field name="model_id" ref="purchase_requisition.model_purchase_requisition_line"/>
+            <field name="domain_force">[('requisition_id.create_uid', '=', user.id)]</field>
+            <field name="groups" eval="[(4, ref('ak_tender.group_tender_requester'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+
         <!-- Supplier Application Rules -->
         <!-- Public users can create and edit their own draft applications via token -->
         <record id="supplier_application_rule_public" model="ir.rule">

@@ -10,6 +10,7 @@ from . import tender_template
 from . import tier_definition
 from . import economic_data
 from . import email_import
+from . import purchase_requisition_ai  # Import AI mixin first
 from . import purchase_requisition
 from . import tender_type_rule
 from . import supplier_application
