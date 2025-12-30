@@ -3,6 +3,7 @@
     <!-- Main Menu -->
     <menuitem id="menu_superset_main" 
               name="Analytics" 
+              web_icon="ak_superset_analytics,static/description/icon.png"
               sequence="10"/>
     
     <!-- Dashboard Configuration Menu -->
