@@ -53,6 +53,11 @@ class PurchaseRequisition(models.Model):
         default=lambda self: self.env.user.employee_id.department_id
     )
 
+    @api.onchange('user_id')
+    def _onchange_user_id_set_dept(self):
+        if self.user_id and self.user_id.employee_id:
+            self.department_id = self.user_id.employee_id.department_id
+
     # İstatistikler
     total_lines = fields.Integer(
         string='Toplam Kalem',
@@ -376,7 +381,20 @@ class PurchaseRequisitionLine(models.Model):
         compute='_compute_can_create_tender',
         store=True
     )
-    
+
+    @api.onchange('product_id')
+    def _onchange_product_id_set_price(self):
+        for line in self:
+            if not line.price_unit:
+                line.price_unit = 0.0
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if 'price_unit' not in vals:
+                vals['price_unit'] = 0.0
+        return super().create(vals_list)
+
     tender_group_info = fields.Char(
         string='İhale Grubu',
         compute='_compute_tender_group_info',
