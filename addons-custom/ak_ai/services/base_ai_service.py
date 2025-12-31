@@ -68,15 +68,15 @@ If an operation requires elevated permissions:
     def _build_system_prompt(self, context):
         """Build system prompt with security rules and context"""
         
-        user_context = context.get('user', {})
-        conversation_context = context.get('conversation', {})
-        record_context = context.get('record', {})
+        user_context = context.get('user', {}) or {}
+        conversation_context = context.get('conversation', {}) or {}
+        record_context = context.get('record', {}) or {}
         
         # Use record_context for the actual data
         full_context = record_context if record_context else conversation_context
         
-        user_name = user_context.get('name', 'Bilinmiyor')
-        user_lang = user_context.get('lang', 'tr_TR')
+        user_name = user_context.get('name', 'Bilinmiyor') if isinstance(user_context, dict) else 'Bilinmiyor'
+        user_lang = user_context.get('lang', 'tr_TR') if isinstance(user_context, dict) else 'tr_TR'
         
         # Optimize context size - limit large lists/dicts
         if isinstance(full_context, dict):
@@ -135,7 +135,7 @@ KOD ÇALIŞTIRMA KURALLARI:
 İLİŞKİLİ VERİLERİ OKUMA KURALLARI:
 - tender_lines.items içinde product_id, quantity, name, target_price varsa → DOĞRUDAN kullan
 - tender_lines.items boş veya eksikse → Python kodu ile okumayı göster.
-- Many2one alanlar (örn: question_id) sadece {id, name} içerir. Eğer bu kaydın DETAYLARINA (kategori, tip, vb.) ihtiyacın varsa → [EXECUTE_CODE] ile sorgula!
+- Many2one alanlar (örn: question_id) sadece {{id, name}} içerir. Eğer bu kaydın DETAYLARINA (kategori, tip, vb.) ihtiyacın varsa → [EXECUTE_CODE] ile sorgula!
 
 Örnek (Eksik veri okuma):
 ```python
@@ -219,12 +219,29 @@ Her zaman yardımcı, güvenli ve kullanıcı dostu ol! [EXECUTE_CODE] bloğunu 
             # Optimize context to reduce token usage
             optimized_context = self._optimize_context_for_tokens(context)
             
-            # Use JSON for complete data representation
-            formatted = json.dumps(optimized_context, ensure_ascii=False, indent=2, default=str)
+            # Use JSON for complete data representation with safe string conversion
+            def safe_default(obj):
+                """Safely convert objects to string, handling errors"""
+                try:
+                    # Try to get a string representation
+                    return str(obj)
+                except NameError as ne:
+                    # This catches "name 'name' is not defined" errors
+                    _logger.warning(f"NameError converting {type(obj).__name__} to string: {ne}")
+                    return f"<{type(obj).__name__}>"
+                except Exception as e:
+                    _logger.debug(f"Error converting {type(obj).__name__} to string: {e}")
+                    return f"<{type(obj).__name__} object>"
+            
+            formatted = json.dumps(optimized_context, ensure_ascii=False, indent=2, default=safe_default)
             # Use string concatenation to avoid f-string formatting issues with curly braces in JSON
             return "```json\n" + formatted + "\n```\n\nYukarıdaki JSON verisi kayıtın BÜTÜN bilgilerini içeriyor. Bu datayı DOĞRUDAN kullanarak cevap ver!"
+        except NameError as ne:
+            _logger.error(f"NameError in _format_full_context: {ne}", exc_info=True)
+            # Fallback to simple format
+            return self._format_context(context)
         except Exception as e:
-            _logger.error(f"Error formatting full context: {e}")
+            _logger.error(f"Error formatting full context: {e}", exc_info=True)
             # Fallback to simple format
             return self._format_context(context)
     
