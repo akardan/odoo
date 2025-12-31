@@ -106,8 +106,6 @@
                 
                 <!-- Search Panel - Quick Filters -->
                 <searchpanel>
-                    <field name="active" string="Durum" icon="fa-check-circle"
-                           select="multi" enable_counters="1"/>
                     <field name="create_uid" string="Oluşturan" icon="fa-user"
                            select="multi" enable_counters="1"/>
                 </searchpanel>
