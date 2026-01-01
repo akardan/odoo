@@ -55,13 +55,10 @@ Bu modül, çok aşamalı satın alma ihale süreçlerini Odoo 18 CE üzerinde y
 - İndirim oranı belirtme
 
 ### Karşılaştırma ve Raporlama
-- Tedarikçi Karşılaştırma Raporu
-- En düşük fiyat vurgulama
-- NPV (Net Bugünkü Değer) hesaplamaları
-- Ödeme koşullarına göre bölünmüş ödeme desteği
-- Gecikme günleri hesaplaması
-- Kazanan siparişler işlevselliği
-- SAT durumu görselleştirme (iptal/teklif verildi/beklemede)
+- **Superset Entegrasyonu**: Apache Superset ile gelişmiş analitik dashboard desteği.
+- **Tedarikçi Karşılaştırma Raporu**: En düşük fiyat vurgulama ve NPV hesaplamaları.
+- **Gelişmiş Analiz**: Ödeme koşulları, teslimat süreleri ve garanti sürelerine göre karşılaştırmalı raporlama.
+- **SAT Durumu Görselleştirme**: İptal/teklif verildi/beklemede durumlarının görsel takibi.
 
 ### Validasyon ve Hata Yönetimi
 - UoM kategori validasyonu (SAT içe aktarma)
@@ -427,6 +424,18 @@ NPV (Net Bugünkü Değer) hesaplamaları, farklı tedarikçilerden gelen teklif
 - İskonto oranı belirleme ve ekonomik faktörleri dikkate alma
 
 ## Son Güncellemeler (Git Commit Geçmişi)
+
+### KAI (Kardan AI) Entegrasyonu
+- **Yapay Zeka Desteği**: `ak_ai` modülü ile entegrasyon sayesinde ihale süreçlerinde yapay zeka desteği (KAI) eklendi.
+- **Kullanıcı Destek ve Yönlendirme**: Kullanıcıların ihale süreçlerinde doğru adımları atması için AI tabanlı rehberlik ve yönlendirme sistemi.
+- **Akıllı Analiz**: İhale kalemleri ve tedarikçi teklifleri üzerinde AI tabanlı analiz ve öneri mekanizması.
+- **Otomatik Sınıflandırma**: SAT kalemlerinin ve ihale gruplarının AI yardımıyla otomatik kategorize edilmesi.
+
+### Talep Yönetimi (Manual Requisition)
+- **Talep Girişi**: Kullanıcıların manuel olarak satınalma talebi girebileceği basitleştirilmiş form (`purchase.requisition.form.simple`).
+- **Talep Eden Takibi**: `user_id` alanı "Talep Eden" olarak özelleştirildi, avatar desteği ve otomatik departman belirleme eklendi.
+- **Görünüm İyileştirmeleri**: Liste görünümünde "Sözleşme" yerine "Talep No" kullanımı, gereksiz kolonların (Tedarikçi, Sözleşme Türü, Satınalma Temsilcisi) temizlenmesi.
+- **Hata Yönetimi**: Manuel ürün girişi sırasında yaşanan `price_unit` (birim fiyat) hatası, model seviyesinde varsayılan değer atamasıyla giderildi.
 
 ### PDF ve Dosya Yönetimi İyileştirmeleri
 - **PDF Ek Görüntüleme**: Türkçe karakterli dosya adlarında encoding sorunu düzeltildi (RFC 5987)
