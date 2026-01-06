@@ -24,6 +24,11 @@ class SurveyQuestionPoll(models.Model):
         string=_('Company'),
         default=lambda self: self.env.company
     )
+    team_id = fields.Many2one(
+        'crm.team',
+        string=_('Group'),
+        domain="[('team_type', '=', 'G')]"
+    )
     category_id = fields.Many2one(
         'survey.question.poll.category',
         string=_('Category'),
@@ -66,7 +71,7 @@ class SurveyQuestionPoll(models.Model):
             workbook = load_workbook(filename=io.BytesIO(decoded_file))
             sheet = workbook.active
 
-            # Headers: KATEGORİ, ID, SORU, A, B, C, D, CEVAP
+            # Headers: KATEGORİ, ALT KATEGORİ, ID, SORU, A, B, C, D, CEVAP
             # We assume headers are in the first row and skip them.
             header = [str(cell.value).upper() if cell.value else '' for cell in sheet[1]]
             
@@ -75,6 +80,9 @@ class SurveyQuestionPoll(models.Model):
                 'KATEGORI': 'KATEGORİ',
                 'KATEGOR': 'KATEGORİ',
                 'CATEGORY': 'KATEGORİ',
+                'ALT KATEGORI': 'ALT KATEGORİ',
+                'SUB CATEGORY': 'ALT KATEGORİ',
+                'SUBCATEGORY': 'ALT KATEGORİ',
                 'QUESTION': 'SORU',
                 'ANSWER': 'CEVAP',
                 'CORRECT': 'CEVAP'
@@ -123,6 +131,13 @@ class SurveyQuestionPoll(models.Model):
             if hasattr(self, 'company_id') and self.company_id:
                 current_poll_company_id = self.company_id.id
 
+            current_poll_team_id = False
+            if hasattr(self, 'team_id') and self.team_id:
+                current_poll_team_id = self.team_id.id
+
+            # Get job positions from context if provided
+            default_job_position_ids = self.env.context.get('default_job_position_ids', [])
+
             # Process each row
             for row_idx, row in enumerate(sheet.iter_rows(min_row=2, values_only=True), start=2):
                 if row_idx % 50 == 0:
@@ -135,6 +150,7 @@ class SurveyQuestionPoll(models.Model):
                 
                 # Extract data from row
                 category_name = row[col_map.get('KATEGORİ', 0)] if 'KATEGORİ' in col_map else None
+                sub_category_name = row[col_map.get('ALT KATEGORİ', -1)] if 'ALT KATEGORİ' in col_map else None
                 role_name = row[0] if len(row) > 0 else None  # First column is ROLE
                 question_id = row[col_map.get('ID', 1)] if 'ID' in col_map else None
                 question_text = row[col_map.get('SORU', 2)] if 'SORU' in col_map else None
@@ -148,7 +164,7 @@ class SurveyQuestionPoll(models.Model):
                 category = False
                 if category_name:
                     # Search for category specific to the company or a global one
-                    domain = [('name', '=ilike', category_name)]
+                    domain = [('name', '=ilike', category_name), ('parent_id', '=', False)]
                     company_specific_domain = ['&'] + domain + [('company_id', '=', current_poll_company_id)]
                     global_domain = ['&'] + domain + [('company_id', '=', False)]
                     
@@ -176,12 +192,39 @@ class SurveyQuestionPoll(models.Model):
                             'company_id': current_poll_company_id  # Create new categories under the poll's company
                         }
                         
-                        # Add job position if found
+                        # Add job position if found or from context
                         if job_position:
                             category_vals['job_position_ids'] = [(4, job_position.id)]
                             stats['roles_assigned'] += 1
+                        elif default_job_position_ids:
+                            category_vals['job_position_ids'] = [(6, 0, default_job_position_ids)]
+                            stats['roles_assigned'] += len(default_job_position_ids)
                         
                         category = PollCategory.create(category_vals)
+                        stats['categories_created'] += 1
+
+                # Handle Sub Category
+                if sub_category_name and category:
+                    # Search for sub category
+                    sub_domain = [('name', '=ilike', sub_category_name), ('parent_id', '=', category.id)]
+                    sub_company_specific_domain = ['&'] + sub_domain + [('company_id', '=', current_poll_company_id)]
+                    sub_global_domain = ['&'] + sub_domain + [('company_id', '=', False)]
+
+                    sub_category = PollCategory.search(sub_company_specific_domain, limit=1)
+                    if not sub_category:
+                        sub_category = PollCategory.search(sub_global_domain, limit=1)
+                    
+                    if sub_category:
+                        category = sub_category # Use sub category as the main category for the question
+                    else:
+                        # Create sub category
+                        sub_category_vals = {
+                            'name': sub_category_name,
+                            'parent_id': category.id,
+                            'company_id': current_poll_company_id
+                        }
+                        sub_category = PollCategory.create(sub_category_vals)
+                        category = sub_category # Use sub category as the main category for the question
                         stats['categories_created'] += 1
 
                 # Check if poll already exists to prevent duplication
@@ -233,6 +276,7 @@ class SurveyQuestionPoll(models.Model):
                         'name': question_text,
                         'category_id': category.id if category else False,
                         'company_id': current_poll_company_id,
+                        'team_id': current_poll_team_id,
                         'option_ids': [(0, 0, opt_data) for opt_data in options_data],
                     }
                     Poll.create(poll_vals)
@@ -252,6 +296,9 @@ class SurveyQuestionPoll(models.Model):
                 "- Existing categories used: %(categories_existing)s\n"
                 "- Roles assigned: %(roles_assigned)s"
             ) % stats
+
+            if current_poll_team_id:
+                message += _("\n- Assigned to Sales Team ID: %s") % current_poll_team_id
 
             return {
                 'type': 'ir.actions.client',

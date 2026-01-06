@@ -1092,6 +1092,13 @@ class SurveySurvey(models.Model):
     total_random_questions = fields.Integer(string='Seçilecek Toplam Soru Sayısı', default=20)
     randomize_question_order = fields.Boolean(string='Soru Sırası Karıştır', default=True)
     randomize_answer_order = fields.Boolean(string='Cevap Sırası Karıştır', default=True)
+    
+    # Category question count settings
+    category_question_count_ids = fields.One2many(
+        'survey.category.question.count',
+        'survey_id',
+        string=_('Category Question Counts')
+    )
 
     def _generate_randomized_questions(self, user_input_id=None, is_test=False):
         """Generate randomized question set for exam"""
@@ -1116,48 +1123,92 @@ class SurveySurvey(models.Model):
         random.seed(seed_value)
             
         all_questions = self.question_ids.filtered(lambda q: not q.is_page)
+        selected_questions = []
         
-        # Step 1: Always include mandatory questions
-        mandatory_questions = all_questions.filtered('is_mandatory')
-        selected_questions = list(mandatory_questions)
-        
-        # Step 2: Handle question groups
-        remaining_questions = all_questions - mandatory_questions
-        grouped_questions = {}
-        ungrouped_questions = []
-        
-        for question in remaining_questions:
-            if question.question_group:
-                if question.question_group not in grouped_questions:
-                    grouped_questions[question.question_group] = []
-                grouped_questions[question.question_group].append(question)
-            else:
-                ungrouped_questions.append(question)
-        
-        # Step 3: Randomly select from groups and individual questions
-        available_slots = self.total_random_questions - len(selected_questions)
-        
-        if available_slots > 0:
-            # Create selection pool (groups count as 1 unit each)
-            selection_pool = list(grouped_questions.keys()) + ungrouped_questions
-            random.shuffle(selection_pool)
+        # Check if category-based selection is configured
+        if self.category_question_count_ids:
+            # Category-based selection
+            category_settings = {setting.category_id.id: setting.questions_to_ask 
+                               for setting in self.category_question_count_ids if setting.questions_to_ask > 0}
             
-            for item in selection_pool:
-                if available_slots <= 0:
-                    break
+            # Group questions by category
+            questions_by_category = {}
+            for question in all_questions:
+                cat_id = question.category_id.id if question.category_id else False
+                if cat_id not in questions_by_category:
+                    questions_by_category[cat_id] = []
+                questions_by_category[cat_id].append(question)
+            
+            # Select from configured categories
+            for category_id, count in category_settings.items():
+                if category_id in questions_by_category:
+                    category_questions = questions_by_category[category_id]
+                    # Prioritize mandatory questions
+                    mandatory = [q for q in category_questions if q.is_mandatory]
+                    non_mandatory = [q for q in category_questions if not q.is_mandatory]
                     
-                if isinstance(item, str):  # It's a group name
-                    group_questions = grouped_questions[item]
-                    if len(group_questions) <= available_slots:
-                        selected_questions.extend(group_questions)
-                        available_slots -= len(group_questions)
-                else:  # It's an individual question
-                    selected_questions.append(item)
-                    available_slots -= 1
+                    # Select questions from this category
+                    to_select = min(count, len(category_questions))
+                    if len(mandatory) >= to_select:
+                        selected_questions.extend(random.sample(mandatory, to_select))
+                    else:
+                        selected_questions.extend(mandatory)
+                        remaining = to_select - len(mandatory)
+                        if remaining > 0 and non_mandatory:
+                            selected_questions.extend(random.sample(non_mandatory, min(remaining, len(non_mandatory))))
+            
+            # Fill remaining slots from unconfigured categories if needed
+            total_configured = sum(category_settings.values())
+            if total_configured < self.total_random_questions:
+                remaining_slots = self.total_random_questions - len(selected_questions)
+                if remaining_slots > 0:
+                    # Get questions from unconfigured categories
+                    unconfigured_questions = []
+                    for cat_id, questions in questions_by_category.items():
+                        if cat_id not in category_settings:
+                            unconfigured_questions.extend([q for q in questions if q not in selected_questions])
+                    
+                    if unconfigured_questions:
+                        to_add = min(remaining_slots, len(unconfigured_questions))
+                        selected_questions.extend(random.sample(unconfigured_questions, to_add))
+        else:
+            # Original logic for backward compatibility
+            mandatory_questions = all_questions.filtered('is_mandatory')
+            selected_questions = list(mandatory_questions)
+            
+            remaining_questions = all_questions - mandatory_questions
+            grouped_questions = {}
+            ungrouped_questions = []
+            
+            for question in remaining_questions:
+                if question.question_group:
+                    if question.question_group not in grouped_questions:
+                        grouped_questions[question.question_group] = []
+                    grouped_questions[question.question_group].append(question)
+                else:
+                    ungrouped_questions.append(question)
+            
+            available_slots = self.total_random_questions - len(selected_questions)
+            
+            if available_slots > 0:
+                selection_pool = list(grouped_questions.keys()) + ungrouped_questions
+                random.shuffle(selection_pool)
+                
+                for item in selection_pool:
+                    if available_slots <= 0:
+                        break
+                        
+                    if isinstance(item, str):
+                        group_questions = grouped_questions[item]
+                        if len(group_questions) <= available_slots:
+                            selected_questions.extend(group_questions)
+                            available_slots -= len(group_questions)
+                    else:
+                        selected_questions.append(item)
+                        available_slots -= 1
         
-        # Step 4: Randomize question order if enabled
+        # Randomize question order if enabled
         if self.randomize_question_order:
-            # Shuffle ALL questions including mandatory ones
             random.shuffle(selected_questions)
         
         return selected_questions
@@ -1194,6 +1245,35 @@ class SurveySurvey(models.Model):
         
         return answers
 
+    @api.onchange('enable_question_randomization')
+    def _onchange_enable_question_randomization(self):
+        """Auto-populate category question count settings when randomization is enabled"""
+        if self.enable_question_randomization:
+            self._populate_category_question_counts()
+    
+    def _populate_category_question_counts(self):
+        """Populate category question count settings based on existing questions"""
+        if not self.enable_question_randomization:
+            return
+            
+        # Get all categories used in this survey's questions
+        categories = self.question_ids.mapped('category_id').filtered(lambda c: c)
+        
+        # Get existing settings
+        existing_categories = self.category_question_count_ids.mapped('category_id')
+        
+        # Create settings for new categories
+        new_settings = []
+        for category in categories:
+            if category not in existing_categories:
+                new_settings.append((0, 0, {
+                    'category_id': category.id,
+                    'questions_to_ask': 0,
+                }))
+        
+        if new_settings:
+            self.category_question_count_ids = new_settings
+    
     @api.onchange('full_screen_mode', 'disable_copy_paste', 'disable_dev_tools', 'detect_tab_switching', 'disable_print_screen')
     def _onchange_update_security_description(self):
         """

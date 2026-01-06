@@ -20,6 +20,17 @@ class SurveyQuestionPollCategory(models.Model):
         string=_('Role'),
         help=_("Roles this question category applies to (e.g., Regional Managers, Product Representatives)")
     )
+    parent_id = fields.Many2one(
+        'survey.question.poll.category',
+        string=_('Parent Category'),
+        index=True,
+        ondelete='cascade'
+    )
+    child_ids = fields.One2many(
+        'survey.question.poll.category',
+        'parent_id',
+        string=_('Sub Categories')
+    )
 
     _sql_constraints = [
         ('name_company_uniq', 'unique (name, company_id)', _('Category name must be unique per company (or globally if no company is set)!'))

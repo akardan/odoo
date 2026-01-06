@@ -31,6 +31,7 @@ Exam Management System for customers that isolates based on company
     # always loaded
     'data': [
         'security/ir.model.access.csv',
+        'security/groups.xml',
         'security/survey_security.xml',
         'security/survey_question_poll_security.xml',
         'data/survey_question_poll_category_data.xml',
@@ -42,6 +43,7 @@ Exam Management System for customers that isolates based on company
         'views/survey_date_error_template.xml',
         'views/survey_question_poll_views.xml',
         'views/survey_question_poll_import_wizard_views.xml',
+        'views/survey_participant_import_wizard_views.xml',
         'views/survey_question_pool_wizard_views.xml',
         'views/survey_question_views.xml',
         'views/survey_user_input_views.xml',

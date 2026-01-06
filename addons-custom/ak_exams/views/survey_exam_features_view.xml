@@ -70,6 +70,15 @@
                         <field name="randomize_question_order" invisible="not enable_question_randomization"/>
                         <field name="randomize_answer_order" invisible="not enable_question_randomization"/>
                     </group>
+                    <group string="Category Question Counts" invisible="survey_type != 'assessment' or not enable_question_randomization">
+                        <field name="category_question_count_ids" nolabel="1">
+                            <list editable="bottom">
+                                <field name="category_id"/>
+                                <field name="total_questions" readonly="1"/>
+                                <field name="questions_to_ask"/>
+                            </list>
+                        </field>
+                    </group>
                 </xpath>
             </field>
         </record>

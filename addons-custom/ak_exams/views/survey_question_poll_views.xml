@@ -9,6 +9,7 @@
             <list string="Poll Categories">
                 <field name="sequence" widget="handle"/>
                 <field name="name"/>
+                <field name="parent_id"/>
                 <field name="job_position_ids" widget="many2many_tags"/>
                 <field name="company_id" groups="base.group_multi_company"/>
                 <field name="active" widget="boolean_toggle"/>
@@ -24,6 +25,7 @@
                 <sheet>
                     <group>
                         <field name="name"/>
+                        <field name="parent_id"/>
                         <field name="company_id" groups="base.group_multi_company"/>
                         <field name="active"/>
                         <field name="job_position_ids" widget="many2many_tags"/>
@@ -41,10 +43,11 @@
             <list string="Poll Templates">
                 <field name="sequence" widget="handle"/>
                 <field name="name"/>
-                <field name="category_id"/>
+                <field name="team_id" optional="show"/>
+                <field name="category_id" optional="show"/>
                 <field name="is_mandatory" optional="show"/>
                 <field name="question_group" optional="show"/>
-                <field name="company_id" groups="base.group_multi_company"/>
+                <field name="company_id" groups="base.group_multi_company" optional="show"/>
                 <field name="active" widget="boolean_toggle"/>
             </list>
         </field>
@@ -69,6 +72,7 @@
                     </div>
                     <group>
                         <group>
+                            <field name="team_id"/>
                             <field name="category_id"/>
                             <field name="company_id" groups="base.group_multi_company"/>
                         </group>

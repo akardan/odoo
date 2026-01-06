@@ -16,6 +16,17 @@ class SurveyQuestionPollImportWizard(models.TransientModel):
         default=lambda self: self.env.company,
         help=_("Company to associate with imported polls. Leave empty for current company.")
     )
+    team_id = fields.Many2one(
+        'crm.team',
+        string=_('Sales Team'),
+        groups='sales_team.group_sale_manager',
+        domain="[('team_type', '=', 'G')]"
+    )
+    job_position_ids = fields.Many2many(
+        'hr.job',
+        string=_('Role'),
+        help=_('Roles to assign to question categories')
+    )
 
     def action_import(self):
         """
@@ -32,7 +43,12 @@ class SurveyQuestionPollImportWizard(models.TransientModel):
             'excel_file': self.excel_file,
             'excel_file_name': self.excel_file_name,
             'company_id': self.company_id.id or self.env.company.id,
+            'team_id': self.team_id.id,
         })
+        
+        # Store job_position_ids in context for import method
+        if self.job_position_ids:
+            temp_poll = temp_poll.with_context(default_job_position_ids=self.job_position_ids.ids)
         
         try:
             # Call the import method on the poll record

@@ -3,6 +3,9 @@ access_survey_question_poll_user,survey.question.poll.user,model_survey_question
 access_survey_question_poll_option_user,survey.question.poll.option.user,model_survey_question_poll_option,base.group_user,1,1,1,1
 access_survey_question_poll_category_user,survey.question.poll.category.user,model_survey_question_poll_category,base.group_user,1,1,1,1
 access_survey_question_poll_import_wizard_user,survey.question.poll.import.wizard.user,model_survey_question_poll_import_wizard,base.group_user,1,1,1,1
+access_survey_participant_import_wizard_user,survey.participant.import.wizard.user,model_survey_participant_import_wizard,base.group_user,1,1,1,1
 access_survey_question_pool_wizard_user,survey.question.pool.wizard.user,model_survey_question_pool_wizard,base.group_user,1,1,1,1
 access_survey_user_input_photo_survey_user,survey.user.input.photo.survey.user,model_survey_user_input_photo,survey.group_survey_user,1,0,0,0
 access_survey_user_input_photo_survey_manager,survey.user.input.photo.survey.manager,model_survey_user_input_photo,survey.group_survey_manager,1,1,1,1
+access_survey_category_question_count_user,survey.category.question.count.user,model_survey_category_question_count,base.group_user,1,1,1,1
+access_survey_category_question_count_manager,survey.category.question.count.manager,model_survey_category_question_count,survey.group_survey_manager,1,1,1,1

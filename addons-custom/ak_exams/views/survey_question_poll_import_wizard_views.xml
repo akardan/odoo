@@ -20,6 +20,8 @@
                     <group>
                         <field name="excel_file" filename="excel_file_name"/>
                         <field name="excel_file_name" invisible="1"/>
+                        <field name="team_id"/>
+                        <field name="job_position_ids" widget="many2many_tags"/>
                         <field name="company_id" groups="base.group_multi_company"/>
                     </group>
                 </sheet>
