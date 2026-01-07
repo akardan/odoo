@@ -39,6 +39,22 @@
         </xpath>
     </template>
 
+    <template id="survey_fill_form_done" inherit_id="survey.survey_fill_form_done">
+        <xpath expr="//t[@t-call='survey.survey_button_retake']" position="replace">
+            <t t-if="survey.survey_type != 'assessment'">
+                <t t-call="survey.survey_button_retake"/>
+            </t>
+        </xpath>
+        <xpath expr="//a[hasclass('o_survey_review')]" position="replace">
+            <t t-if="survey.survey_type != 'assessment'">
+                <a role="button" class="o_survey_review btn btn-secondary btn-lg"
+                    t-att-href="'/survey/print/%s?answer_token=%s&amp;review=True' % (survey.access_token, answer.access_token)">
+                    Review your answers
+                </a>
+            </t>
+        </xpath>
+    </template>
+
 
 </data>
 </odoo>

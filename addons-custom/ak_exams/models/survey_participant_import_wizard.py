@@ -522,8 +522,13 @@ class SurveyParticipantImportWizard(models.TransientModel):
                         
                 if region_name:
                     region_name = str(region_name).strip()
-                    if region_name not in teams_cache:
-                        region_team = Team.search([('name', '=', region_name)], limit=1)
+                    cache_key = f"{group_team.id}-{region_name}" if group_team else region_name
+                    if cache_key not in teams_cache:
+                        search_domain = [('name', '=', region_name)]
+                        if group_team:
+                            search_domain.append(('parent_id', '=', group_team.id))
+                        
+                        region_team = Team.search(search_domain, limit=1)
                         if not region_team:
                             region_team = Team.create({
                                 'name': region_name,
@@ -532,13 +537,9 @@ class SurveyParticipantImportWizard(models.TransientModel):
                                 'company_id': self.env.company.id
                             })
                             stats['teams_created'] += 1
-                        elif group_team and region_team.parent_id != group_team:
-                            region_team.write({'parent_id': group_team.id})
-                        teams_cache[region_name] = region_team
+                        teams_cache[cache_key] = region_team
                     else:
-                        region_team = teams_cache[region_name]
-                        if group_team and region_team.parent_id != group_team:
-                            region_team.write({'parent_id': group_team.id})
+                        region_team = teams_cache[cache_key]
             
             elif sheet.title == 'BM':
                 # BM sheet: Only Region Team from Bölge, BM becomes team leader

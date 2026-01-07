@@ -122,7 +122,21 @@ class SurveyExtension(Survey):
         
         # Call parent method to get the base survey data
         data = super(SurveyExtension, self)._prepare_survey_data(survey_sudo, answer_sudo, **post)
-        
+
+        # Custom logic for answer randomization to prevent re-shuffling
+        if answer_sudo and survey_sudo.randomize_answer_order:
+            import json
+            import random
+
+            if not answer_sudo.randomized_question_ids:
+                randomized_data = {}
+                questions = survey_sudo.question_ids.filtered(lambda q: q.question_type in ['simple_choice', 'multiple_choice'])
+                for question in questions:
+                    answer_ids = question.suggested_answer_ids.ids
+                    random.shuffle(answer_ids)
+                    randomized_data[str(question.id)] = answer_ids
+                answer_sudo.randomized_question_ids = json.dumps(randomized_data)
+
         # Check if survey has end_date and is time limited
         if survey_sudo.end_date and survey_sudo.is_time_limited and answer_sudo.state == 'in_progress':
             from datetime import datetime
@@ -169,6 +183,12 @@ class SurveyExtension(Survey):
                 else:
                     data['survey_last'] = False
         
+        # CRITICAL FIX: Ensure can_go_back is always set when question is present
+        # This fixes the issue where back button stays disabled until F5 refresh
+        if 'question' in data and 'can_go_back' not in data:
+            question = data['question']
+            data['can_go_back'] = survey_sudo._can_go_back(answer_sudo, question)
+        
         return data
     
     def _prepare_question_html(self, survey_sudo, answer_sudo, **post):
@@ -205,8 +225,6 @@ class SurveyExtension(Survey):
                     # No randomization
                     page_ids = survey_sudo.question_ids.ids
                 
-
-                
                 # Only render progress if current question is in the page_ids
                 if survey_data.get('question') and survey_data['question'].id in page_ids:
                     # Use 0-based index like Odoo's original template
@@ -225,8 +243,9 @@ class SurveyExtension(Survey):
             background_image_url = survey_data['page'].background_image_url
 
         return {
+            'has_skipped_questions': any(answer_sudo._get_skipped_questions()),
             'survey_content': survey_content,
             'survey_progress': survey_progress,
-            'survey_navigation': survey_data.get('survey_navigation'),
+            'survey_navigation': request.env['ir.qweb']._render('survey.survey_navigation', survey_data),
             'background_image_url': background_image_url,
         }

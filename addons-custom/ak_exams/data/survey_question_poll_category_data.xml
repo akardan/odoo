@@ -42,5 +42,12 @@
             <field name="company_id" model="res.company" search="[('name', '=', 'Numil-Danone')]"/>
         </record>
 
+        <record id="survey_question_poll_category_test" model="survey.question.poll.category">
+            <field name="name">TEST</field>
+            <field name="sequence">60</field>
+            <field name="active" eval="True"/>
+            <field name="company_id" model="res.company" search="[('name', '=', 'Numil-Danone')]"/>
+        </record>
+
     </data>
 </odoo>

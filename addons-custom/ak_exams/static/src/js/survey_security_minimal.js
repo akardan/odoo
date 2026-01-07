@@ -766,6 +766,14 @@ function addCleanupButton() {
     
     // Check if cleanup button already exists
     if (document.getElementById('exam-cleanup-button')) return;
+
+    // Check if photo capture was actually enabled/active
+    // We can check if the video element exists or if the global capture object is present
+    const videoElement = document.getElementById('exam-webcam-video');
+    const hasActiveCamera = videoElement && videoElement.srcObject;
+    
+    // If no active camera, don't show the button
+    if (!hasActiveCamera && !window.surveyPhotoCapture) return;
     
     const cleanupButton = document.createElement('button');
     cleanupButton.id = 'exam-cleanup-button';
@@ -780,6 +788,7 @@ function addCleanupButton() {
     cleanupButton.addEventListener('click', function() {
         cleanupExamResources();
         alert('Kamera kapatıldı. Sayfayı kapatabilirsiniz.');
+        this.style.display = 'none'; // Hide button after clicking
     });
     
     completedMessage.appendChild(cleanupButton);

@@ -1332,19 +1332,22 @@ class SurveySurvey(models.Model):
         
         # If randomization is enabled and we have predefined questions, only use those
         if answer and self.enable_question_randomization and answer.predefined_question_ids:
+            # Make sure we're only working with existing questions
+            existing_predefined_questions = answer.predefined_question_ids.exists()
+            
             if self.questions_layout == 'page_per_question':
                 if not question_id:
                     raise ValueError("Question id is needed for question layout 'page_per_question'")
                 page_or_question_id = int(question_id)
                 # Only return the question if it's in the randomized set
-                if page_or_question_id in answer.predefined_question_ids.ids:
+                if page_or_question_id in existing_predefined_questions.ids:
                     questions = self.env['survey.question'].sudo().browse(page_or_question_id)
                 else:
                     # Question not in randomized set, return empty
                     questions = self.env['survey.question']
             else:
                 page_or_question_id = None
-                questions = answer.predefined_question_ids
+                questions = existing_predefined_questions
             return questions, page_or_question_id
             
         if self.questions_layout == 'page_per_section':
@@ -1375,19 +1378,39 @@ class SurveySurvey(models.Model):
         if self.enable_question_randomization and user_input.randomized_question_sequence:
             # Use randomized question order from sequence
             question_ids = [int(qid) for qid in user_input.randomized_question_sequence.split(',') if qid.strip()]
-            questions_list = self.env['survey.question'].browse(question_ids)
+            
+            # Fetch all existing questions in one query and filter out deleted questions
+            existing_questions = self.env['survey.question'].sudo().browse(question_ids).exists()
+            existing_ids = existing_questions.ids
+            
+            # Filter the question_ids to only include existing questions while preserving order
+            valid_question_ids = [qid for qid in question_ids if qid in existing_ids]
+            
+            # If no valid questions remain, return empty recordset
+            if not valid_question_ids:
+                return self.env['survey.question']
+                
+            questions_list = self.env['survey.question'].sudo().browse(valid_question_ids)
             
             if not page_or_question_id:
                 # Return first question
                 return questions_list[0] if questions_list else self.env['survey.question']
             
             try:
-                current_index = question_ids.index(page_or_question_id)
+                # Make sure page_or_question_id is an integer
+                if isinstance(page_or_question_id, int):
+                    current_index = valid_question_ids.index(page_or_question_id)
+                else:
+                    # If it's a record, use its id
+                    current_index = valid_question_ids.index(page_or_question_id.id)
                 
                 if go_back:
                     # Get previous question
                     if current_index > 0:
                         return questions_list[current_index - 1]
+                    else:
+                        # Already at first question, can't go back
+                        return self.env['survey.question']
                 else:
                     # Get next question - only within randomized set
                     if current_index < len(questions_list) - 1:
@@ -1396,9 +1419,9 @@ class SurveySurvey(models.Model):
                         # We've reached the last randomized question, return empty to end survey
                         return self.env['survey.question']
                         
-            except (ValueError, IndexError):
+            except (ValueError, IndexError, AttributeError) as e:
                 # Question not found in randomized set, return empty
-                pass
+                _logger.debug("Error in _get_next_page_or_question: %s", e)
                 
             return self.env['survey.question']
         
@@ -1422,14 +1445,41 @@ class SurveySurvey(models.Model):
             # For 'page_per_question', navigation is based on question_ids
             # Use randomized sequence if randomization enabled, otherwise survey.question_ids
             if self.enable_question_randomization and answer.randomized_question_sequence:
+                # Get the list of question IDs from the randomized sequence
                 question_ids = [int(qid) for qid in answer.randomized_question_sequence.split(',') if qid.strip()]
-                relevant_questions = self.env['survey.question'].browse(question_ids)
+                
+                # Fetch all existing questions in one query with sudo to avoid permission issues
+                existing_questions = self.env['survey.question'].sudo().browse(question_ids).exists()
+                existing_ids = existing_questions.ids
+                
+                # Filter the question_ids to only include existing questions while preserving order
+                valid_question_ids = [qid for qid in question_ids if qid in existing_ids]
+                
+                # Log for debugging
+                _logger.info("ak_exams _can_go_back: valid_question_ids=%s, current_question_id=%s, page_or_question=%s",
+                            valid_question_ids, page_or_question.id if page_or_question else None, page_or_question)
+                
+                # Check if the current question is the first one in the valid randomized list
+                if not valid_question_ids:
+                    # If there are no valid questions, don't allow going back
+                    _logger.info("ak_exams _can_go_back: No valid questions, returning False")
+                    return False
+                    
+                # Get the current question ID
+                current_question_id = page_or_question.id if hasattr(page_or_question, 'id') else page_or_question
+                
+                if current_question_id == valid_question_ids[0]:
+                    # If this is the first question, don't allow going back
+                    _logger.info("ak_exams _can_go_back: First question, returning False")
+                    return False
+                    
+                _logger.info("ak_exams _can_go_back: Not first question, returning True")
+                return True
             else:
                 relevant_questions = self.question_ids
-
-            if relevant_questions and page_or_question == relevant_questions[0]:
-                return False
-            return True # Can go back if not first question in the relevant list
+                if relevant_questions and page_or_question == relevant_questions[0]:
+                    return False
+                return True
 
 class SurveyUserInput(models.Model):
     _inherit = 'survey.user_input'

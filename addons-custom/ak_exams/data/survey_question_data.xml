@@ -1,0 +1,247 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <!-- Survey Questions -->
+        <record id="survey_question_poll_1" model="survey.question.poll">
+            <field name="name">Türkiye'nin başkenti neresidir?</field>
+            <field name="category_id" ref="survey_question_poll_category_test"/>
+            <field name="company_id" model="res.company" search="[('name', '=', 'Numil-Danone')]"/>
+            <field name="option_ids" eval="[
+                (0, 0, {'name': 'İstanbul'}),
+                (0, 0, {'name': 'Ankara', 'is_correct': True, 'answer_score': 1}),
+                (0, 0, {'name': 'İzmir'}),
+                (0, 0, {'name': 'Bursa'})
+            ]"/>
+        </record>
+
+        <record id="survey_question_poll_2" model="survey.question.poll">
+            <field name="name">Türkiye hangi kıtalarda yer alır?</field>
+            <field name="category_id" ref="survey_question_poll_category_test"/>
+            <field name="company_id" model="res.company" search="[('name', '=', 'Numil-Danone')]"/>
+            <field name="option_ids" eval="[
+                (0, 0, {'name': 'Sadece Avrupa'}),
+                (0, 0, {'name': 'Sadece Asya'}),
+                (0, 0, {'name': 'Avrupa ve Asya', 'is_correct': True, 'answer_score': 1}),
+                (0, 0, {'name': 'Asya ve Afrika'})
+            ]"/>
+        </record>
+
+        <record id="survey_question_poll_3" model="survey.question.poll">
+            <field name="name">Türkiye Cumhuriyeti hangi yıl kurulmuştur?</field>
+            <field name="category_id" ref="survey_question_poll_category_test"/>
+            <field name="company_id" model="res.company" search="[('name', '=', 'Numil-Danone')]"/>
+            <field name="option_ids" eval="[
+                (0, 0, {'name': '1920'}),
+                (0, 0, {'name': '1921'}),
+                (0, 0, {'name': '1922'}),
+                (0, 0, {'name': '1923', 'is_correct': True, 'answer_score': 1})
+            ]"/>
+        </record>
+
+        <record id="survey_question_poll_4" model="survey.question.poll">
+            <field name="name">Türkiye'nin en kalabalık şehri hangisidir?</field>
+            <field name="category_id" ref="survey_question_poll_category_test"/>
+            <field name="company_id" model="res.company" search="[('name', '=', 'Numil-Danone')]"/>
+            <field name="option_ids" eval="[
+                (0, 0, {'name': 'Ankara'}),
+                (0, 0, {'name': 'İstanbul', 'is_correct': True, 'answer_score': 1}),
+                (0, 0, {'name': 'İzmir'}),
+                (0, 0, {'name': 'Bursa'})
+            ]"/>
+        </record>
+
+        <record id="survey_question_poll_5" model="survey.question.poll">
+            <field name="name">İstanbul Boğazı hangi iki denizi birbirine bağlar?</field>
+            <field name="category_id" ref="survey_question_poll_category_test"/>
+            <field name="company_id" model="res.company" search="[('name', '=', 'Numil-Danone')]"/>
+            <field name="option_ids" eval="[
+                (0, 0, {'name': 'Karadeniz ve Akdeniz'}),
+                (0, 0, {'name': 'Karadeniz ve Marmara Denizi', 'is_correct': True, 'answer_score': 1}),
+                (0, 0, {'name': 'Marmara Denizi ve Ege Denizi'}),
+                (0, 0, {'name': 'Ege Denizi ve Akdeniz'})
+            ]"/>
+        </record>
+
+        <record id="survey_question_poll_6" model="survey.question.poll">
+            <field name="name">Türkiye'nin resmi dili nedir?</field>
+            <field name="category_id" ref="survey_question_poll_category_test"/>
+            <field name="company_id" model="res.company" search="[('name', '=', 'Numil-Danone')]"/>
+            <field name="option_ids" eval="[
+                (0, 0, {'name': 'Arapça'}),
+                (0, 0, {'name': 'Farsça'}),
+                (0, 0, {'name': 'Türkçe', 'is_correct': True, 'answer_score': 1}),
+                (0, 0, {'name': 'Kürtçe'})
+            ]"/>
+        </record>
+
+        <record id="survey_question_poll_7" model="survey.question.poll">
+            <field name="name">Türkiye'nin para birimi nedir?</field>
+            <field name="category_id" ref="survey_question_poll_category_test"/>
+            <field name="company_id" model="res.company" search="[('name', '=', 'Numil-Danone')]"/>
+            <field name="option_ids" eval="[
+                (0, 0, {'name': 'Dolar'}),
+                (0, 0, {'name': 'Euro'}),
+                (0, 0, {'name': 'Lira', 'is_correct': True, 'answer_score': 1}),
+                (0, 0, {'name': 'Dinar'})
+            ]"/>
+        </record>
+
+        <record id="survey_question_poll_8" model="survey.question.poll">
+            <field name="name">Türkiye'nin en yüksek dağı hangisidir?</field>
+            <field name="category_id" ref="survey_question_poll_category_test"/>
+            <field name="company_id" model="res.company" search="[('name', '=', 'Numil-Danone')]"/>
+            <field name="option_ids" eval="[
+                (0, 0, {'name': 'Erciyes Dağı'}),
+                (0, 0, {'name': 'Süphan Dağı'}),
+                (0, 0, {'name': 'Ağrı Dağı (Ararat)', 'is_correct': True, 'answer_score': 1}),
+                (0, 0, {'name': 'Uludağ'})
+            ]"/>
+        </record>
+
+        <record id="survey_question_poll_9" model="survey.question.poll">
+            <field name="name">Türkiye kaç ile sahiptir? (2024 itibarıyla)</field>
+            <field name="category_id" ref="survey_question_poll_category_test"/>
+            <field name="company_id" model="res.company" search="[('name', '=', 'Numil-Danone')]"/>
+            <field name="option_ids" eval="[
+                (0, 0, {'name': '67'}),
+                (0, 0, {'name': '79'}),
+                (0, 0, {'name': '81', 'is_correct': True, 'answer_score': 1}),
+                (0, 0, {'name': '83'})
+            ]"/>
+        </record>
+
+        <record id="survey_question_poll_10" model="survey.question.poll">
+            <field name="name">Türkiye'nin en uzun nehri hangisidir?</field>
+            <field name="category_id" ref="survey_question_poll_category_test"/>
+            <field name="company_id" model="res.company" search="[('name', '=', 'Numil-Danone')]"/>
+            <field name="option_ids" eval="[
+                (0, 0, {'name': 'Fırat Nehri'}),
+                (0, 0, {'name': 'Dicle Nehri'}),
+                (0, 0, {'name': 'Sakarya Nehri'}),
+                (0, 0, {'name': 'Kızılırmak', 'is_correct': True, 'answer_score': 1})
+            ]"/>
+        </record>
+
+        <record id="survey_question_poll_11" model="survey.question.poll">
+            <field name="name">Türkiye'yi hangi denizler çevreler?</field>
+            <field name="category_id" ref="survey_question_poll_category_test"/>
+            <field name="company_id" model="res.company" search="[('name', '=', 'Numil-Danone')]"/>
+            <field name="option_ids" eval="[
+                (0, 0, {'name': 'Karadeniz, Akdeniz, Ege Denizi', 'is_correct': True, 'answer_score': 1}),
+                (0, 0, {'name': 'Karadeniz, Kızıldeniz, Ege Denizi'}),
+                (0, 0, {'name': 'Akdeniz, Kızıldeniz, Marmara Denizi'}),
+                (0, 0, {'name': 'Sadece Karadeniz ve Akdeniz'})
+            ]"/>
+        </record>
+
+        <record id="survey_question_poll_12" model="survey.question.poll">
+            <field name="name">Türkiye Cumhuriyeti'nin kurucusu kimdir?</field>
+            <field name="category_id" ref="survey_question_poll_category_test"/>
+            <field name="company_id" model="res.company" search="[('name', '=', 'Numil-Danone')]"/>
+            <field name="option_ids" eval="[
+                (0, 0, {'name': 'İsmet İnönü'}),
+                (0, 0, {'name': 'Mustafa Kemal Atatürk', 'is_correct': True, 'answer_score': 1}),
+                (0, 0, {'name': 'Celal Bayar'}),
+                (0, 0, {'name': 'Fevzi Çakmak'})
+            ]"/>
+        </record>
+
+        <record id="survey_question_poll_13" model="survey.question.poll">
+            <field name="name">Türkiye'nin en büyük gölü hangisidir?</field>
+            <field name="category_id" ref="survey_question_poll_category_test"/>
+            <field name="company_id" model="res.company" search="[('name', '=', 'Numil-Danone')]"/>
+            <field name="option_ids" eval="[
+                (0, 0, {'name': 'Tuz Gölü'}),
+                (0, 0, {'name': 'Van Gölü', 'is_correct': True, 'answer_score': 1}),
+                (0, 0, {'name': 'Beyşehir Gölü'}),
+                (0, 0, {'name': 'Eğirdir Gölü'})
+            ]"/>
+        </record>
+
+        <record id="survey_question_poll_14" model="survey.question.poll">
+            <field name="name">Türkiye'nin en büyük sanayi kenti hangisidir?</field>
+            <field name="category_id" ref="survey_question_poll_category_test"/>
+            <field name="company_id" model="res.company" search="[('name', '=', 'Numil-Danone')]"/>
+            <field name="option_ids" eval="[
+                (0, 0, {'name': 'Ankara'}),
+                (0, 0, {'name': 'İzmir'}),
+                (0, 0, {'name': 'Kocaeli', 'is_correct': True, 'answer_score': 1}),
+                (0, 0, {'name': 'Adana'})
+            ]"/>
+        </record>
+
+        <record id="survey_question_poll_15" model="survey.question.poll">
+            <field name="name">Çanakkale Zaferi hangi yıl kazanılmıştır?</field>
+            <field name="category_id" ref="survey_question_poll_category_test"/>
+            <field name="company_id" model="res.company" search="[('name', '=', 'Numil-Danone')]"/>
+            <field name="option_ids" eval="[
+                (0, 0, {'name': '1914'}),
+                (0, 0, {'name': '1915', 'is_correct': True, 'answer_score': 1}),
+                (0, 0, {'name': '1916'}),
+                (0, 0, {'name': '1917'})
+            ]"/>
+        </record>
+
+        <record id="survey_question_poll_16" model="survey.question.poll">
+            <field name="name">Türkiye'nin plaka kodu kaçtır? (TR)</field>
+            <field name="category_id" ref="survey_question_poll_category_test"/>
+            <field name="company_id" model="res.company" search="[('name', '=', 'Numil-Danone')]"/>
+            <field name="option_ids" eval="[
+                (0, 0, {'name': 'TR', 'is_correct': True, 'answer_score': 1}),
+                (0, 0, {'name': 'TU'}),
+                (0, 0, {'name': 'TK'}),
+                (0, 0, {'name': 'TY'})
+            ]"/>
+        </record>
+
+        <record id="survey_question_poll_17" model="survey.question.poll">
+            <field name="name">Türkiye'nin UNESCO Dünya Mirası Listesi'nde yer alan ilk alanı hangisidir?</field>
+            <field name="category_id" ref="survey_question_poll_category_test"/>
+            <field name="company_id" model="res.company" search="[('name', '=', 'Numil-Danone')]"/>
+            <field name="option_ids" eval="[
+                (0, 0, {'name': 'Efes Antik Kenti'}),
+                (0, 0, {'name': 'Kapadokya'}),
+                (0, 0, {'name': 'Göreme Milli Parkı ve Kapadokya', 'is_correct': True, 'answer_score': 1}),
+                (0, 0, {'name': 'Topkapı Sarayı'})
+            ]"/>
+        </record>
+
+        <record id="survey_question_poll_18" model="survey.question.poll">
+            <field name="name">Türkiye hangi iklim kuşağında yer alır?</field>
+            <field name="category_id" ref="survey_question_poll_category_test"/>
+            <field name="company_id" model="res.company" search="[('name', '=', 'Numil-Danone')]"/>
+            <field name="option_ids" eval="[
+                (0, 0, {'name': 'Tropikal'}),
+                (0, 0, {'name': 'Kutup'}),
+                (0, 0, {'name': 'Ilıman', 'is_correct': True, 'answer_score': 1}),
+                (0, 0, {'name': 'Savan'})
+            ]"/>
+        </record>
+
+        <record id="survey_question_poll_19" model="survey.question.poll">
+            <field name="name">Türkiye'nin milli sporu hangisidir?</field>
+            <field name="category_id" ref="survey_question_poll_category_test"/>
+            <field name="company_id" model="res.company" search="[('name', '=', 'Numil-Danone')]"/>
+            <field name="option_ids" eval="[
+                (0, 0, {'name': 'Futbol'}),
+                (0, 0, {'name': 'Basketbol'}),
+                (0, 0, {'name': 'Yağlı Güreş', 'is_correct': True, 'answer_score': 1}),
+                (0, 0, {'name': 'Voleybol'})
+            ]"/>
+        </record>
+
+        <record id="survey_question_poll_20" model="survey.question.poll">
+            <field name="name">Pamukkale Travertenleri hangi ilde bulunur?</field>
+            <field name="category_id" ref="survey_question_poll_category_test"/>
+            <field name="company_id" model="res.company" search="[('name', '=', 'Numil-Danone')]"/>
+            <field name="option_ids" eval="[
+                (0, 0, {'name': 'Antalya'}),
+                (0, 0, {'name': 'Muğla'}),
+                (0, 0, {'name': 'Denizli', 'is_correct': True, 'answer_score': 1}),
+                (0, 0, {'name': 'Aydın'})
+            ]"/>
+        </record>
+
+    </data>
+</odoo>
