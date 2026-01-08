@@ -1090,6 +1090,47 @@ class SurveySurvey(models.Model):
     # Randomization settings
     enable_question_randomization = fields.Boolean(string='Soru Randomizasyonu Aktif', default=False)
     total_random_questions = fields.Integer(string='Seçilecek Toplam Soru Sayısı', default=20)
+    
+    def action_distribute_scores_equally(self):
+        """
+        Distribute 100 points equally among all questions in the survey.
+        Calculate score per question by dividing 100 by the total number of questions.
+        Assign this score to correct answers only.
+        """
+        self.ensure_one()
+        
+        # Get all questions in this survey
+        questions = self.question_ids.filtered(lambda q: not q.is_page)
+        
+        if not questions:
+            raise UserError(_("Ankette soru bulunamadı. Lütfen önce sorular ekleyin."))
+        
+        # Calculate score per question
+        total_questions = self.total_random_questions
+        score_per_question = 100 / total_questions
+        
+        # Update all correct answers with the calculated score
+        updated_count = 0
+        for question in questions:
+            # Only process questions with answers
+            if question.suggested_answer_ids:
+                for answer in question.suggested_answer_ids:
+                    # Only update correct answers
+                    if answer.is_correct:
+                        answer.answer_score = score_per_question
+                        updated_count += 1
+        
+        # Show success message
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': _('Başarılı'),
+                'message': _('%d soru için doğru cevaplara %.2f puan atandı.') % (total_questions, score_per_question),
+                'type': 'success',
+                'sticky': False,
+            }
+        }
     randomize_question_order = fields.Boolean(string='Soru Sırası Karıştır', default=True)
     randomize_answer_order = fields.Boolean(string='Cevap Sırası Karıştır', default=True)
     

@@ -66,9 +66,10 @@
                     </group>
                     <group string="Randomization Settings" invisible="survey_type != 'assessment'">
                         <field name="enable_question_randomization"/>
-                        <field name="total_random_questions" invisible="not enable_question_randomization"/>
                         <field name="randomize_question_order" invisible="not enable_question_randomization"/>
                         <field name="randomize_answer_order" invisible="not enable_question_randomization"/>
+                        <field name="total_random_questions" invisible="not enable_question_randomization"/>
+                        <button name="action_distribute_scores_equally" string="Puanları Eşit Dağıt" type="object" class="btn-primary" invisible="not enable_question_randomization" icon="fa-calculator" help="100 puanı toplam soru sayısına göre eşit dağıtır ve doğru cevaplara atar"/>
                     </group>
                     <group string="Category Question Counts" invisible="survey_type != 'assessment' or not enable_question_randomization">
                         <field name="category_question_count_ids" nolabel="1">
