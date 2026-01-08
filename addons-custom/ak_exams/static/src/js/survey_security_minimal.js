@@ -1,6 +1,49 @@
 // Script to handle exam security features and randomization - Plain JavaScript
 console.log("Survey Security Script Loaded (Plain JS Version)");
 
+// Global variables for visibility modal
+let visibilityWarningModal = null;
+
+// Global function for showing visibility warning modal
+function showVisibilityWarningModal(reason = "Tab switched or focus lost") {
+    let isVisible = document.visibilityState === 'visible';
+    let isFocused = document.hasFocus();
+    console.log(`ak_exams: showVisibilityWarningModal called. Reason: ${reason}. Visible: ${isVisible}, Focused: ${isFocused}`);
+
+    if (isVisible && isFocused) {
+        if (visibilityWarningModal) {
+            console.log("ak_exams: Tab/window is active, removing visibility warning.");
+            visibilityWarningModal.remove();
+            visibilityWarningModal = null;
+        }
+        return;
+    }
+    
+    if (visibilityWarningModal) {
+        console.log("ak_exams: Visibility warning overlay already shown.");
+        return; 
+    }
+
+    console.log(`ak_exams: Creating visibility warning modal overlay (${reason}).`);
+    visibilityWarningModal = document.createElement('div');
+    visibilityWarningModal.id = 'ak-visibility-warning-overlay';
+    Object.assign(visibilityWarningModal.style, {position: 'fixed', top: '0', left: '0', width: '100vw', height: '100vh', backgroundColor: 'rgba(0,0,0,0.9)', zIndex: '100000', display: 'flex', justifyContent: 'center', alignItems: 'center', webkitBackdropFilter: 'blur(4px)', backdropFilter: 'blur(4px)'});
+    
+    const messageBox = document.createElement('div');
+    Object.assign(messageBox.style, {backgroundColor: 'white', padding: '30px 40px', borderRadius: '8px', textAlign: 'center', boxShadow: '0 4px 15px rgba(0,0,0,0.2)', color: '#333'});
+    
+    const messageText = document.createElement('p');
+    messageText.textContent = "You have navigated away from the exam. Please return to the exam window to continue.";
+    if (reason === "PrintScreen attempt") {
+        messageText.textContent = "Attempting to take a screenshot is not allowed. Please focus on the exam.";
+    }
+    Object.assign(messageText.style, {fontSize: '1.2em', marginBottom: '0px'});
+                        
+    messageBox.appendChild(messageText);
+    visibilityWarningModal.appendChild(messageBox);
+    document.body.appendChild(visibilityWarningModal);
+}
+
 // Randomization functions
 function randomizeAnswerOptions() {
     console.log("ak_exams: Randomizing answer options");
@@ -388,64 +431,24 @@ function initializeAkExamsSecurity() {
             // Tab Switching and Focus Loss Detection
             if (detectTabSwitching) {
                 console.log(`ak_exams: Container ${containerIndex} - Setting up tab switch/focus loss detection`);
-                let visibilityWarningModal = null;
-
-                function showVisibilityWarningModal(reason = "Tab switched or focus lost") {
-                    let isVisible = document.visibilityState === 'visible';
-                    let isFocused = document.hasFocus();
-                    console.log(`ak_exams: showVisibilityWarningModal called. Reason: ${reason}. Visible: ${isVisible}, Focused: ${isFocused}`);
-
-                    if (isVisible && isFocused) {
-                        if (visibilityWarningModal) {
-                            console.log("ak_exams: Tab/window is active, removing visibility warning.");
-                            visibilityWarningModal.remove();
-                            visibilityWarningModal = null;
-                        }
-                        return;
-                    }
-                    
-                    if (visibilityWarningModal) {
-                        console.log("ak_exams: Visibility warning overlay already shown.");
-                        return; 
-                    }
-
-                    console.log(`ak_exams: Creating visibility warning modal overlay (${reason}).`);
-                    visibilityWarningModal = document.createElement('div');
-                    visibilityWarningModal.id = 'ak-visibility-warning-overlay';
-                    Object.assign(visibilityWarningModal.style, {position: 'fixed', top: '0', left: '0', width: '100vw', height: '100vh', backgroundColor: 'rgba(0,0,0,0.9)', zIndex: '100000', display: 'flex', justifyContent: 'center', alignItems: 'center', webkitBackdropFilter: 'blur(4px)', backdropFilter: 'blur(4px)'});
-                    
-                    const messageBox = document.createElement('div');
-                    Object.assign(messageBox.style, {backgroundColor: 'white', padding: '30px 40px', borderRadius: '8px', textAlign: 'center', boxShadow: '0 4px 15px rgba(0,0,0,0.2)', color: '#333'});
-                    
-                    const messageText = document.createElement('p');
-                    messageText.textContent = "You have navigated away from the exam. Please return to the exam window to continue.";
-                    if (reason === "PrintScreen attempt") { // Check for specific reason
-                        messageText.textContent = "Attempting to take a screenshot is not allowed. Please focus on the exam.";
-                    }
-                    Object.assign(messageText.style, {fontSize: '1.2em', marginBottom: '0px'});
-                                        
-                    messageBox.appendChild(messageText);
-                    visibilityWarningModal.appendChild(messageBox);
-                    document.body.appendChild(visibilityWarningModal);
-                }
 
                 function handleVisibilityChange() {
                     console.log(`ak_exams: Event - visibilitychange. New state: ${document.visibilityState}`);
                     if (document.visibilityState === 'hidden') {
                         logSecurityViolation('tab_switch', { detail: 'visibility_hidden' });
                     }
-                    showVisibilityWarningModal("Visibility changed"); // Keep existing modal
+                    showVisibilityWarningModal("Visibility changed");
                 }
                 function handleWindowBlur() {
                     console.log("ak_exams: Event - window blur (lost focus)");
                     if (document.visibilityState === 'visible') {
                         logSecurityViolation('tab_switch', { detail: 'window_blur' });
-                        showVisibilityWarningModal("Window lost focus"); // Keep existing modal
+                        showVisibilityWarningModal("Window lost focus");
                     }
                 }
                 function handleWindowFocus() {
                     console.log("ak_exams: Event - window focus (gained focus)");
-                    showVisibilityWarningModal("Window gained focus"); // Keep existing modal
+                    showVisibilityWarningModal("Window gained focus");
                 }
  
                 document.addEventListener('visibilitychange', handleVisibilityChange);
@@ -487,7 +490,7 @@ function initializeAkExamsSecurity() {
                     if (e.key === 'PrintScreen' || e.keyCode === 44) {
                         console.log("ak_exams: PrintScreen key detected");
                         logSecurityViolation('print_screen_attempt');
-                        showVisibilityWarningModal("PrintScreen attempt"); // Keep existing modal
+                        alert('UYARI: Ekran görüntüsü almaya çalıştınız! Bu işlem sınav güvenliği nedeniyle yasaktır.');
                     }
                 });
             }
@@ -495,11 +498,11 @@ function initializeAkExamsSecurity() {
         }, 100); // Delay for setTimeout
     }); // End of surveyBackgrounds.forEach
     
-    // Initialize randomization after security setup
-    setTimeout(randomizeAnswerOptions, 200);
+    // Initialize randomization after security setup - DISABLED FOR BACKEND RANDOMIZATION
+    // setTimeout(randomizeAnswerOptions, 200);
     
-    // Setup observer for AJAX navigation
-    setupRandomizationObserver();
+    // Setup observer for AJAX navigation - DISABLED FOR BACKEND RANDOMIZATION  
+    // setupRandomizationObserver();
     
     // Initialize photo capture after security setup
     setTimeout(initializePhotoCapture, 300);

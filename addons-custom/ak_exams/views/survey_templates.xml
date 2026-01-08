@@ -3,8 +3,14 @@
 <data>
     <template id="question_simple_choice" name="Question: simple choice" inherit_id="survey.question_simple_choice">
         <xpath expr="//t[@t-foreach='question.suggested_answer_ids']" position="replace">
-            <t t-set="suggested_answers" t-value="randomized_suggested_answer_ids if randomized_suggested_answer_ids else question.suggested_answer_ids"/>
-            <t t-foreach='suggested_answers' t-as='label'>
+            <!-- Debug: Check if randomized order exists -->
+            <t t-if="answer and answer.randomized_answer_order and str(question.id) in answer.randomized_answer_order">
+                <t t-set="ordered_answers" t-value="[question.suggested_answer_ids.browse(aid) for aid in answer.randomized_answer_order[str(question.id)] if question.suggested_answer_ids.browse(aid).exists()]"/>
+            </t>
+            <t t-else="">
+                <t t-set="ordered_answers" t-value="question.suggested_answer_ids"/>
+            </t>
+            <t t-foreach='ordered_answers' t-as='label'>
                 <t t-set="item_idx" t-value="label_index"/>
                 <t t-set="answer_selected" t-value="answer_line and answer_line.suggested_answer_id.id == label.id"/>
 
@@ -39,9 +45,50 @@
         </xpath>
     </template>
 
+    <template id="question_multiple_choice" name="Question: multiple choice" inherit_id="survey.question_multiple_choice">
+        <xpath expr="//t[@t-foreach='question.suggested_answer_ids']" position="replace">
+            <!-- Debug: Check if randomized order exists -->
+            <t t-if="answer and answer.randomized_answer_order and str(question.id) in answer.randomized_answer_order">
+                <t t-set="ordered_answers" t-value="[question.suggested_answer_ids.browse(aid) for aid in answer.randomized_answer_order[str(question.id)] if question.suggested_answer_ids.browse(aid).exists()]"/>
+            </t>
+            <t t-else="">
+                <t t-set="ordered_answers" t-value="question.suggested_answer_ids"/>
+            </t>
+            <t t-foreach='ordered_answers' t-as='label'>
+                <t t-set="item_idx" t-value="label_index"/>
+                <t t-set="answer_line" t-value="answer_lines.filtered(lambda line: line.suggested_answer_id == label)"/>
+                <t t-set="answer_selected" t-value="answer_line and answer_line.suggested_answer_id.id == label.id"/>
+
+                <!--Used for print mode with corrections -->
+                <t t-set="answer_class" t-value="'' if not has_correct_answer else 'bg-success' if label.is_correct else 'bg-danger'"/>
+
+                <div t-attf-class="col-sm-12 #{use_half_col_lg}">
+                    <label t-attf-class="o_survey_choice_btn py-1 px-3 w-100 h-100 rounded #{answer_class} #{'o_survey_selected' if answer_selected else ''}">
+                        <t t-call="survey.survey_selection_key">
+                            <t t-set="selection_key_class" t-value="'position-relative float-start d-flex'"/>
+                        </t>
+                        <!-- While displaying results: change icons to have a check mark for a right answer and a cross for a wrong one -->
+                        <i t-if="has_correct_answer and answer_selected" t-attf-class="float-end mt-1 position-relative d-inline
+                            fa #{'fa-check-square' if is_correct else 'fa-times-square'}"/>
+                        <t t-else="">
+                            <i class="fa fa-check-square float-end mt-1 ms-1 position-relative"/>
+                            <i class="fa fa-square-o float-end mt-1 ms-1 position-relative"/>
+                        </t>
+                        <input type="checkbox" t-att-value='label.id' class="o_survey_form_choice_item invisible position-absolute"
+                            t-att-name="question.id"
+                            t-att-checked="'checked' if answer_line else None"
+                            t-att-data-selection-key="letters[item_idx] if useKeySelection else ''"/>
+                        <span class="ms-2 text-break" t-field='label.value'/>
+                        <t t-call="survey.question_suggested_value_image"/>
+                    </label>
+                </div>
+            </t>
+        </xpath>
+    </template>
+
     <template id="survey_fill_form_done" inherit_id="survey.survey_fill_form_done">
         <xpath expr="//t[@t-call='survey.survey_button_retake']" position="replace">
-            <t t-if="survey.survey_type != 'assessment'">
+            <t t-if="survey.survey_type != 'assessment' or survey.is_attempts_limited">
                 <t t-call="survey.survey_button_retake"/>
             </t>
         </xpath>

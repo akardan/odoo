@@ -1215,15 +1215,24 @@ class SurveySurvey(models.Model):
 
     def _create_answer(self, user=False, partner=False, email=False, test_entry=False, check_attempts=True, **additional_vals):
         """Override to generate randomized questions when survey starts"""
+        _logger.error(f"=== _create_answer called for survey {self.title} (ID: {self.id}) ===")
+        _logger.error(f"Parameters: user={user}, partner={partner}, email={email}, test_entry={test_entry}")
+        _logger.error(f"Randomization enabled: {self.enable_question_randomization}")
+        
         user_input = super()._create_answer(user, partner, email, test_entry, check_attempts, **additional_vals)
+        _logger.error(f"Created user_input with ID: {user_input.id}")
         
         if self.enable_question_randomization:
+            _logger.error("Generating randomized questions...")
             # Generate randomized question set for this participant
             # Pass is_test=True for test entries to get different questions each time
             randomized_questions = self._generate_randomized_questions(user_input.id, is_test=test_entry)
+            _logger.error(f"Generated {len(randomized_questions)} randomized questions: {[q.id for q in randomized_questions]}")
+            
             # Set predefined questions and save the sequence
             user_input.predefined_question_ids = [(6, 0, [q.id for q in randomized_questions])]
             user_input.randomized_question_sequence = ','.join([str(q.id) for q in randomized_questions])
+            _logger.error(f"Set randomized_question_sequence: {user_input.randomized_question_sequence}")
         
         return user_input
 
