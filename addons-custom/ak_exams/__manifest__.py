@@ -62,6 +62,6 @@ Exam Management System for customers that isolates based on company
     'installable': True,
     'application': False,
     'auto_install': False,
-    'license': 'LGPL-3',
+    'license': 'OPL-1',
 }
 

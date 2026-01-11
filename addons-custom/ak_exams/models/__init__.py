@@ -16,3 +16,4 @@ from . import survey_category_question_count
 from . import survey_question_poll_import_wizard
 from . import survey_participant_import_wizard
 from . import survey_question_pool_wizard
+from . import ir_prevention
