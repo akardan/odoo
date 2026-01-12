@@ -3,12 +3,19 @@ from bs4 import BeautifulSoup
 import random
 import logging
 import os
+import warnings
+import urllib3
+
+# Suppress SSL warnings and deprecation warnings
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 class SurveyUser(HttpUser):
     wait_time = between(2, 5)
     
     # Token will be read from environment variable
     survey_token = None
+    question_number = 0
 
     def on_start(self):
         self.client.verify = False  # Ignore SSL warnings
@@ -19,6 +26,9 @@ class SurveyUser(HttpUser):
         if not self.survey_token:
             logging.error("SURVEY_TOKEN environment variable is not set! Please run with: SURVEY_TOKEN=your_token locust")
             self.environment.runner.quit()
+        
+        # Reset question counter for this user
+        self.question_number = 0
 
     @task
     def take_survey(self):
@@ -87,7 +97,9 @@ class SurveyUser(HttpUser):
                 if "Sınavınız tamamlandı" in response.text or "Thank you" in response.text or "survey_fill_form_done" in response.text:
                     logging.info("Survey completed successfully.")
                 else:
-                    logging.warning("No survey form found and not finished. Stopping.")
+                    logging.error("No survey form found! Survey may not be active or accessible. Stopping all tests.")
+                    if self.environment.runner:
+                        self.environment.runner.quit()
                 break
             
             action = form.get('action')
@@ -122,6 +134,13 @@ class SurveyUser(HttpUser):
 
             for question in questions:
                 q_id = question.get('id') # e.g. question_123
+                
+                # Increment question number (max 20)
+                self.question_number += 1
+                
+                # Simulate violations for this question (random 1-15 for each type)
+                if self.question_number <= 20:
+                    self._simulate_violations_for_question(self.question_number)
                 
                 # Find inputs within this question
                 inputs = question.find_all('input')
@@ -164,6 +183,72 @@ class SurveyUser(HttpUser):
             if "print" in response.url or "results" in response.url:
                 logging.info("Survey finished (redirected).")
                 break
+
+    def _simulate_violations_for_question(self, question_num):
+        """Simulate random violations (1-15) for each violation type for a specific question"""
+        if not self.survey_token:
+            return
+        
+        # Extract survey_token
+        token = self.survey_token.split('/')[-1] if '/' in self.survey_token else self.survey_token
+        
+        # Generate random counts for each violation type (1-3)
+        fullscreen_count = random.randint(1, 3)
+        tab_switch_count = random.randint(1, 3)
+        devtools_count = random.randint(1, 3)
+        print_screen_count = random.randint(1, 3)
+        
+        logging.info(f"Question {question_num}: Simulating violations - "
+                    f"Fullscreen: {fullscreen_count}, Tab Switch: {tab_switch_count}, "
+                    f"DevTools: {devtools_count}, Print Screen: {print_screen_count}")
+        
+        # Simulate fullscreen violations
+        for i in range(fullscreen_count):
+            self.client.post(
+                f"/survey/log_violation/{token}",
+                json={
+                    'violation_type': 'fullscreen_exit',
+                    'question_number': question_num,
+                    'timestamp': i
+                },
+                name="/survey/log_violation [fullscreen]"
+            )
+        
+        # Simulate tab switch violations
+        for i in range(tab_switch_count):
+            self.client.post(
+                f"/survey/log_violation/{token}",
+                json={
+                    'violation_type': 'tab_switch',
+                    'question_number': question_num,
+                    'timestamp': i
+                },
+                name="/survey/log_violation [tab_switch]"
+            )
+        
+        # Simulate devtools attempt violations
+        for i in range(devtools_count):
+            self.client.post(
+                f"/survey/log_violation/{token}",
+                json={
+                    'violation_type': 'devtools_open',
+                    'question_number': question_num,
+                    'timestamp': i
+                },
+                name="/survey/log_violation [devtools]"
+            )
+        
+        # Simulate print screen violations
+        for i in range(print_screen_count):
+            self.client.post(
+                f"/survey/log_violation/{token}",
+                json={
+                    'violation_type': 'print_screen',
+                    'question_number': question_num,
+                    'timestamp': i
+                },
+                name="/survey/log_violation [print_screen]"
+            )
 
     def _get_csrf_token(self, soup):
         token_input = soup.find('input', {'name': 'csrf_token'})
