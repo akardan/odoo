@@ -1436,9 +1436,10 @@ class SurveySurvey(models.Model):
             # Filter the question_ids to only include existing questions while preserving order
             valid_question_ids = [qid for qid in question_ids if qid in existing_ids]
             
-            # If no valid questions remain, return empty recordset
+            # If no valid questions remain, fallback to default behavior
             if not valid_question_ids:
-                return self.env['survey.question']
+                _logger.warning("No valid randomized questions for user_input %s, falling back to default navigation", user_input.id)
+                return super()._get_next_page_or_question(user_input, page_or_question_id, go_back)
                 
             questions_list = self.env['survey.question'].sudo().browse(valid_question_ids)
             
@@ -1563,8 +1564,8 @@ class SurveyUserInput(models.Model):
 
     total_security_violations = fields.Integer(
         string=_('Total Security Violations'),
-        compute='_compute_total_security_violations',
-        store=True,
+        default=0,
+        readonly=True,
         help=_("Total number of all types of security violations detected during this survey session.")
     )
     
@@ -1575,16 +1576,6 @@ class SurveyUserInput(models.Model):
                                               help="Bu katılımcı için randomize edilmiş sorular")
     randomized_question_sequence = fields.Text(string='Randomized Question Sequence',
                                              help="Comma-separated list of question IDs in randomized order")
-
-    @api.depends('fullscreen_violation_count', 'tab_switch_violation_count', 'devtools_attempt_count', 'print_screen_attempt_count')
-    def _compute_total_security_violations(self):
-        for record in self:
-            record.total_security_violations = (
-                record.fullscreen_violation_count +
-                record.tab_switch_violation_count +
-                record.devtools_attempt_count +
-                record.print_screen_attempt_count
-            )
 
     def _get_penalty_for_violation(self, violation_type):
         self.ensure_one()
@@ -1636,28 +1627,18 @@ class SurveyUserInput(models.Model):
         # a 'note' or similar Text field should be added to the SurveyUserInput model extension.
         # For now, we rely on the specific violation counters and accumulated penalty points.
         
-        self.write(vals_to_write) # Write accumulated changes
-
-        # Recompute total violations after individual counts are updated
-        # The @api.depends should handle this if store=True, but explicit recompute can be safer if called within same transaction.
-        # self._compute_total_security_violations() # Not strictly needed if store=True and ORM handles it.
-
-        # Check if the overall violation limit is reached
-        # Need to access the recomputed total_security_violations or sum them manually here for the check
-        current_total_violations = (
-            self.fullscreen_violation_count +
-            self.tab_switch_violation_count +
-            self.devtools_attempt_count +
-            self.print_screen_attempt_count
-        ) # This uses values before potential write if not re-read.
-        # It's better to sum the new values based on vals_to_write
-        
+        # Calculate total violations manually (no longer a computed field)
         updated_total_violations = sum([
             vals_to_write.get('fullscreen_violation_count', self.fullscreen_violation_count),
             vals_to_write.get('tab_switch_violation_count', self.tab_switch_violation_count),
             vals_to_write.get('devtools_attempt_count', self.devtools_attempt_count),
             vals_to_write.get('print_screen_attempt_count', self.print_screen_attempt_count),
         ])
+        
+        # Add total_security_violations to the write values
+        vals_to_write['total_security_violations'] = updated_total_violations
+        
+        self.write(vals_to_write) # Write accumulated changes in single write operation
 
         max_allowed = self.survey_id.sudo().max_total_violations_allowed
         if max_allowed > 0 and updated_total_violations >= max_allowed:

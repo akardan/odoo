@@ -68,6 +68,14 @@ class SurveyExtension(Survey):
 
         # Call the original method to handle survey submission logic
         res = super(SurveyExtension, self).survey_submit(survey_token, access_token, **post)
+        
+        # CRITICAL FIX: Prevent automatic _mark_done() when reaching end without explicit submit
+        # Only mark as done if user explicitly clicked "Submit" button (button_submit=True in post)
+        # This prevents false "Survey Completed" state during navigation errors
+        if user_input and user_input.state == 'done' and not post.get('button_submit'):
+            # Rollback to in_progress if it was automatically marked done without explicit submit
+            user_input.sudo().write({'state': 'in_progress'})
+        
         return res
 
     @http.route('/survey/start/<string:survey_token>', type='http', auth='public', website=True)

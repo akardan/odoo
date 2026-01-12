@@ -3,12 +3,12 @@
     'name': "ak_exams",
     'summary': "Exam Management System for Exam Providers",
     'description': """
-Exam Management System for customers that isolates based on company
-Özellikler:
+        Exam Management System for customers that isolates based on company
+        Özellikler:
         - Yerleşik Odoo API Key yönetimi
         - Takım kodu ve hiyerarşi alanları
         - API ile satış ekibi hiyerarşisi senkronizasyonu
- """,
+    """,
 
     'author': "Kardan.Digital",
     'website': "https://kardan.digital",
@@ -47,6 +47,7 @@ Exam Management System for customers that isolates based on company
         'views/survey_question_pool_wizard_views.xml',
         'views/survey_question_views.xml',
         'views/survey_user_input_views.xml',
+        'views/survey_user_input_actions.xml',
         'views/survey_user_input_photo_views.xml',
         'views/survey_templates.xml',
         'data/survey_question_data.xml',
