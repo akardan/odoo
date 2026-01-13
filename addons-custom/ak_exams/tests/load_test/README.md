@@ -209,8 +209,18 @@ docker-compose up
 | `SURVEY_TOKEN` | **Zorunlu**. Sınav URL'sindeki token | - | `49660127-9ee1-4377-ad89-4771401ae43b` |
 | `BASE_URL` | Odoo sunucu URL'i | `https://digipharma.com.tr` | `https://myodoo.com` |
 | `USER_COUNT` | Toplam simulasyon yapılacak kullanıcı sayısı | `50` | `100` |
-| `PARALLEL` | Aynı anda çalışacak kullanıcı sayısı | `10` | `20` |
+| `PARALLEL` | Aynı anda çalışacak kullanıcı sayısı | `5` | `10` |
 | `HEADLESS` | Tarayıcıyı gizli modda çalıştır | `true` | `false` (görmek için) |
+
+### 🍎 iPad Emulasyonu
+
+Test scripti, gerçekçi test senaryoları için otomatik olarak iPad cihaz emülasyonu kullanır:
+
+- **iPad Pro 12.9**: 1024x1366 viewport
+- **iPad Air**: 820x1180 viewport
+- **iPad Mini**: 768x1024 viewport
+
+Her test kullanıcısı için rastgele bir iPad modeli seçilir, böylece farklı ekran boyutlarında test yapılır. Bu, touch events, mobile user-agent ve device pixel ratio gibi özellikleri içerir.
 
 ### Survey Token Nasıl Bulunur?
 
@@ -323,12 +333,46 @@ playwright install-deps  # Linux için sistem bağımlılıkları
 timeout-minutes: 240  # 4 saat
 ```
 
+### ⚠️ EPIPE Error / Browser Crashes
+
+**Semptom**: `Error: write EPIPE` hatası, tarayıcıların beklenmedik şekilde kapanması
+
+**Neden**: Çok fazla paralel tarayıcı, yetersiz kaynak temizliği veya sistem kaynakları tükenmesi.
+
+**Çözümler**:
+
+1. **PARALLEL sayısını azaltın**:
+   ```bash
+   PARALLEL=3 python test_exam_playwright.py  # 5 yerine 3
+   ```
+
+2. **Daha fazla bellek ayırın** (Docker için):
+   ```bash
+   docker run --shm-size=2gb ...  # Varsayılan 64mb yerine
+   ```
+
+3. **Browser launch delay artırılmış**: Script otomatik olarak 0.5s delay ekler
+   
+4. **Resource cleanup garantili**: Finally bloklarında otomatik browser cleanup
+
+5. **Linux'ta ek güvenlik**: Script otomatik olarak şu argümanları kullanır:
+   - `--disable-dev-shm-usage` (shared memory sorunları için)
+   - `--no-sandbox` (container ortamları için)
+
+**NOT**: Son güncellemede EPIPE hataları önlenmek için:
+- Garantili browser cleanup (zombie process önleme)
+- Paralel browser limiti 10→5 azaltıldı
+- Browser lansmanları arasında 0.5s delay eklendi
+- Her test için 5 dakika timeout
+- Executor hata yakalama iyileştirildi
+
 ### Çok fazla başarısızlık
 
-- `PARALLEL` sayısını azaltın (sunucu yükü için)
+- `PARALLEL` sayısını azaltın (sunucu yükü için) - **Önerilen: 3-5**
 - `USER_COUNT` sayısını azaltın
 - Sınav tokenının geçerli olduğundan emin olun
 - Sunucunun erişilebilir olduğunu kontrol edin
+- Screenshot'lar devre dışı (performans optimize edildi)
 
 ---
 
@@ -383,10 +427,17 @@ on:
 
 | Senaryo | Önerilen Ayar | Açıklama |
 |---------|---------------|----------|
-| Düşük yük testi | `USER_COUNT=10`, `PARALLEL=2` | Hızlı test |
-| Orta yük testi | `USER_COUNT=50`, `PARALLEL=10` | Dengeli |
-| Yüksek yük testi | `USER_COUNT=200`, `PARALLEL=20` | Sunucu limitlerine dikkat |
-| Stress test | `USER_COUNT=500`, `PARALLEL=50` | Sadece production-like ortamda |
+| Düşük yük testi | `USER_COUNT=10`, `PARALLEL=2` | Hızlı test, debugging için ideal |
+| Orta yük testi | `USER_COUNT=50`, `PARALLEL=5` | **VARSAYILAN** - Dengeli, güvenli |
+| Yüksek yük testi | `USER_COUNT=100`, `PARALLEL=5-8` | EPIPE riskini önlemek için parallel düşük tutun |
+| Stress test | `USER_COUNT=200`, `PARALLEL=5-10` | Paralel artırma yerine toplam artırın |
+
+**⚠️ EPIPE Hatalarını Önlemek İçin**:
+- **ASLA** `PARALLEL > 10` kullanmayın (özellikle GitHub Actions/CI'da)
+- Toplam yükü artırmak için `USER_COUNT`'u artırın, `PARALLEL`'i değil
+- Her browser ~500MB RAM kullanır, buna göre hesaplayın
+- GitHub Actions free tier: 7GB RAM → Max 10-12 parallel browser güvenli
+- Screenshot'lar otomatik devre dışı (performans için)
 
 ---
 
@@ -396,6 +447,9 @@ Sorunlar için GitHub Issues kullanın veya projeye katkıda bulunun.
 
 ### Geliştirme Yapılacaklar
 
+- [x] EPIPE error protection (browser cleanup, delays, limits)
+- [x] iPad device emulation (Pro, Air, Mini)
+- [x] Screenshot performance optimization
 - [ ] Daha detaylı metrikler (response time, page load time)
 - [ ] Grafana/Prometheus entegrasyonu
 - [ ] Slack/Discord bildirimler
