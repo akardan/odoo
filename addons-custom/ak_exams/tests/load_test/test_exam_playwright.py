@@ -42,21 +42,27 @@ class ExamTester:
         self.end_time = None
     
     def _simulate_real_violations(self, page, question_number, logger):
-        """Gerçek kullanıcı gibi ihlal yap - fullscreen çık, tab değiştir, vs."""
-        # Her ihlal tipi için 1-3 arası rastgele sayıda ihlal
+        """Gerçek kullanıcı gibi HAFIF ihlal yap - max_total_violations_allowed limitini aşmamak için"""
+        # GERÇEK KULLANICI DAVRANIŞI: Her violation simülasyonunda sadece 1-2 ihlal
+        # Çok fazla violation yaparsak max_total_violations_allowed limitini aşıp sınav otomatik kapanır
+        
+        # Rastgele bir violation tipi seç (her seferinde sadece 1 tip)
+        violation_types = ['fullscreen', 'tab_switch', 'devtools', 'print_screen']
+        selected_type = random.choice(violation_types)
+        
+        # Seçilen tip için 1 kez ihlal yap (nadiren 2)
+        count = 1 if random.random() < 0.8 else 2  # %80 ihtimalle 1, %20 ihtimalle 2
+        
         violations_config = {
-            'fullscreen': random.randint(1, 3),
-            'tab_switch': random.randint(1, 3),
-            'devtools': random.randint(0, 2),  # DevTools daha az
-            'print_screen': random.randint(1, 2)
+            'fullscreen': count if selected_type == 'fullscreen' else 0,
+            'tab_switch': count if selected_type == 'tab_switch' else 0,
+            'devtools': count if selected_type == 'devtools' else 0,
+            'print_screen': count if selected_type == 'print_screen' else 0
         }
         
         total = sum(violations_config.values())
-        logger.info(f"Soru {question_number}: 🚨 İhlal simülasyonu başlıyor - "
-                   f"Fullscreen:{violations_config['fullscreen']}, "
-                   f"Tab:{violations_config['tab_switch']}, "
-                   f"DevTools:{violations_config['devtools']}, "
-                   f"PrintScr:{violations_config['print_screen']} (Toplam:{total})")
+        logger.info(f"Soru {question_number}: 🚨 Hafif ihlal simülasyonu - "
+                   f"Tip:{selected_type}, Miktar:{count} (max_violations limitini aşmamak için)")
         
         # 1. FULLSCREEN ÇIKIŞ İHLALİ
         for i in range(violations_config['fullscreen']):
@@ -341,8 +347,10 @@ class ExamTester:
                     if not answered:
                         logger.error(f"Soru {question_number}: ❌ HİÇBİR CEVAP VERİLEMEDİ!")
                     
-                    # İhlal simülasyonu yap (her 3-5 soruda bir)
-                    if question_number % random.randint(3, 5) == 0:
+                    # İhlal simülasyonu yap (her 8-12 soruda bir, çok daha az agresif)
+                    # Gerçek kullanıcılar her soruda violation yapmaz
+                    # max_total_violations_allowed limitini aşıp sınavın erken kapanmasını engellemek için
+                    if question_number % random.randint(8, 12) == 0:
                         self._simulate_real_violations(page, question_number, logger)
                     
                     # Submit butonunu bul
