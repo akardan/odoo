@@ -186,11 +186,11 @@ class ExamTester:
                 url = f"{self.base_url}/survey/start/{self.survey_token}"
                 page.goto(url, wait_until='networkidle', timeout=30000)
                 
-                # Screenshot al
-                screenshot_path = f"/tmp/user_{user_id}_start.png"
-                page.screenshot(path=screenshot_path)
-                result['screenshots'].append(screenshot_path)
-                logger.info(f"Başlangıç screenshot alındı: {screenshot_path}")
+                # Screenshot al (Disabled for performance)
+                # screenshot_path = f"/tmp/user_{user_id}_start.png"
+                # page.screenshot(path=screenshot_path)
+                # result['screenshots'].append(screenshot_path)
+                logger.info(f"Başlangıç - screenshot devre dışı (performans)")
                 
                 # "Start" butonunu bul ve tıkla
                 try:
@@ -399,9 +399,10 @@ class ExamTester:
                             
                     except PlaywrightTimeout as e:
                         logger.error(f"Soru {question_number}: Timeout hatası - {str(e)}")
-                        screenshot_path = f"/tmp/user_{user_id}_error_q{question_number}.png"
-                        page.screenshot(path=screenshot_path)
-                        result['screenshots'].append(screenshot_path)
+                        # Screenshot disabled for performance
+                        # screenshot_path = f"/tmp/user_{user_id}_error_q{question_number}.png"
+                        # page.screenshot(path=screenshot_path)
+                        # result['screenshots'].append(screenshot_path)
                         result['errors'].append(f"Question {question_number}: Timeout")
                         
                         # Sınav bitmiş olabilir
@@ -416,9 +417,10 @@ class ExamTester:
                             
                     except Exception as e:
                         logger.error(f"Soru {question_number}: Beklenmeyen hata - {str(e)}")
-                        screenshot_path = f"/tmp/user_{user_id}_error_q{question_number}.png"
-                        page.screenshot(path=screenshot_path)
-                        result['screenshots'].append(screenshot_path)
+                        # Screenshot disabled for performance
+                        # screenshot_path = f"/tmp/user_{user_id}_error_q{question_number}.png"
+                        # page.screenshot(path=screenshot_path)
+                        # result['screenshots'].append(screenshot_path)
                         result['errors'].append(f"Question {question_number}: {str(e)}")
                         result['status'] = 'FAILED'
                         break
@@ -435,10 +437,10 @@ class ExamTester:
                     result['errors'].extend([f"Console: {err}" for err in console_errors])
                     logger.warning(f"{len(console_errors)} console hatası tespit edildi")
                 
-                # Son screenshot
-                screenshot_path = f"/tmp/user_{user_id}_end.png"
-                page.screenshot(path=screenshot_path)
-                result['screenshots'].append(screenshot_path)
+                # Son screenshot (Disabled for performance)
+                # screenshot_path = f"/tmp/user_{user_id}_end.png"
+                # page.screenshot(path=screenshot_path)
+                # result['screenshots'].append(screenshot_path)
                 
                 # Tarayıcıyı kapat
                 browser.close()
