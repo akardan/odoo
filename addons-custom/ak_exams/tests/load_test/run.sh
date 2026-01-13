@@ -40,7 +40,7 @@ echo -e "${GREEN}✅ Konfigürasyon:${NC}"
 echo -e "  Survey Token: ${SURVEY_TOKEN:0:8}...${SURVEY_TOKEN: -8}"
 echo -e "  Base URL: ${BASE_URL:-https://digipharma.com.tr}"
 echo -e "  User Count: ${USER_COUNT:-50}"
-echo -e "  Parallel: ${PARALLEL:-10}\n"
+echo -e "  Parallel: ${PARALLEL:-50}\n"
 
 # Çalıştırma modu seç
 echo -e "${YELLOW}Çalıştırma modunu seçin:${NC}"
@@ -52,7 +52,16 @@ read -p "Seçim (1-3): " choice
 case $choice in
     1)
         echo -e "\n${BLUE}🐳 Docker Compose ile başlatılıyor...${NC}\n"
-        docker-compose up --build
+        # Docker Compose v2 (docker compose) veya v1 (docker-compose) kontrolü
+        if command -v docker-compose &> /dev/null; then
+            docker-compose up --build
+        elif docker compose version &> /dev/null; then
+            docker compose up --build
+        else
+            echo -e "${RED}❌ Hata: Docker Compose bulunamadı!${NC}"
+            echo -e "${YELLOW}Yükleme: https://docs.docker.com/compose/install/${NC}"
+            exit 1
+        fi
         ;;
     2)
         echo -e "\n${BLUE}🐳 Docker ile başlatılıyor...${NC}\n"
