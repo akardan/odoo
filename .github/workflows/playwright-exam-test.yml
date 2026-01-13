@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
     inputs:
       survey_token:
-        description: 'Survey Token (URL sonundaki token)'
+        description: '16a184a0-d826-4451-bb61-ce4754b1526d'
         required: true
         type: string
       base_url:
@@ -21,7 +21,7 @@ on:
       parallel_count:
         description: 'Paralel çalışacak kullanıcı sayısı'
         required: false
-        default: '10'
+        default: '50'
         type: string
   # İsteğe bağlı: Schedule ile otomatik çalıştırma
   # schedule:
@@ -57,7 +57,7 @@ jobs:
           SURVEY_TOKEN: ${{ github.event.inputs.survey_token || secrets.SURVEY_TOKEN }}
           BASE_URL: ${{ github.event.inputs.base_url || 'https://digipharma.com.tr' }}
           USER_COUNT: ${{ github.event.inputs.user_count || '50' }}
-          PARALLEL: ${{ github.event.inputs.parallel_count || '10' }}
+          PARALLEL: ${{ github.event.inputs.parallel_count || '50' }}
           HEADLESS: 'true'
         run: |
           cd addons-custom/ak_exams/tests/load_test
