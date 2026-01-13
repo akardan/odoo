@@ -1,0 +1,42 @@
+# Playwright Exam Load Test - Git Ignore
+# ========================================
+
+# Environment variables - GÜVENLİK: Token içerir, asla commit etmeyin!
+.env
+
+# Test raporları
+playwright_report_*.json
+reports/
+
+# Screenshots
+*.png
+/tmp/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+
+# Playwright
+.pytest_cache/
+playwright-report/
+test-results/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log

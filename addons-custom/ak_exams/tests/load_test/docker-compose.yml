@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  playwright-test:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: playwright-exam-test
+    environment:
+      # Zorunlu: Survey token (.env dosyasından veya komut satırından)
+      - SURVEY_TOKEN=${SURVEY_TOKEN}
+      
+      # Opsiyonel: Varsayılan değerler kullanılır
+      - BASE_URL=${BASE_URL:-https://digipharma.com.tr}
+      - USER_COUNT=${USER_COUNT:-50}
+      - PARALLEL=${PARALLEL:-10}
+      - HEADLESS=true
+    
+    volumes:
+      # Raporları ve screenshot'ları host'a kaydet
+      - ./reports:/app/reports
+      - /tmp:/tmp
+    
+    # Memory ve CPU limitleri (opsiyonel, ayarlayabilirsiniz)
+    deploy:
+      resources:
+        limits:
+          cpus: '4.0'
+          memory: 8G
+        reservations:
+          cpus: '2.0'
+          memory: 4G
+    
+    # Network ayarları
+    network_mode: bridge
+    
+    # Container otomatik restart etmesin (tek seferlik test için)
+    restart: "no"
+
+# İsteğe bağlı: Multiple test scenarios
+  # production-test:
+  #   extends: playwright-test
+  #   environment:
+  #     - SURVEY_TOKEN=${PROD_SURVEY_TOKEN}
+  #     - BASE_URL=https://production.example.com
+  #     - USER_COUNT=100
+  
+  # staging-test:
+  #   extends: playwright-test
+  #   environment:
+  #     - SURVEY_TOKEN=${STAGING_SURVEY_TOKEN}
+  #     - BASE_URL=https://staging.example.com
+  #     - USER_COUNT=50

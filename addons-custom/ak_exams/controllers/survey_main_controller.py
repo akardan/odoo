@@ -69,12 +69,18 @@ class SurveyExtension(Survey):
         # Call the original method to handle survey submission logic
         res = super(SurveyExtension, self).survey_submit(survey_token, access_token, **post)
         
-        # CRITICAL FIX: Prevent automatic _mark_done() when reaching end without explicit submit
-        # Only mark as done if user explicitly clicked "Submit" button (button_submit=True in post)
-        # This prevents false "Survey Completed" state during navigation errors
-        if user_input and user_input.state == 'done' and not post.get('button_submit'):
-            # Rollback to in_progress if it was automatically marked done without explicit submit
-            user_input.sudo().write({'state': 'in_progress'})
+        # DISABLED: Rollback logic has been temporarily disabled for testing
+        # This was preventing surveys from being marked as 'done' properly
+        
+        # OLD CODE (COMMENTED OUT FOR TESTING):
+        # if user_input and user_input.state == 'done' and not post.get('button_submit'):
+        #     if isinstance(res, dict) and res.get('survey_content') and 'survey_fill_form_done' in str(res.get('survey_content', '')):
+        #         pass
+        #     else:
+        #         answered_question_ids = user_input.user_input_line_ids.mapped('question_id').ids
+        #         required_question_ids = survey.question_ids.filtered(lambda q: q.constr_mandatory).ids
+        #         if required_question_ids and not all(qid in answered_question_ids for qid in required_question_ids):
+        #             user_input.sudo().write({'state': 'in_progress'})
         
         return res
 
