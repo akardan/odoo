@@ -1252,28 +1252,29 @@ class SurveySurvey(models.Model):
         if self.randomize_question_order:
             random.shuffle(selected_questions)
         
+        _logger.info(f"_generate_randomized_questions: total_random_questions={self.total_random_questions}, selected_questions_count={len(selected_questions)}")
         return selected_questions
 
     def _create_answer(self, user=False, partner=False, email=False, test_entry=False, check_attempts=True, **additional_vals):
         """Override to generate randomized questions when survey starts"""
-        _logger.error(f"=== _create_answer called for survey {self.title} (ID: {self.id}) ===")
-        _logger.error(f"Parameters: user={user}, partner={partner}, email={email}, test_entry={test_entry}")
-        _logger.error(f"Randomization enabled: {self.enable_question_randomization}")
+        _logger.info(f"=== _create_answer called for survey {self.title} (ID: {self.id}) ===")
+        _logger.info(f"Parameters: user={user}, partner={partner}, email={email}, test_entry={test_entry}")
+        _logger.info(f"Randomization enabled: {self.enable_question_randomization}")
         
         user_input = super()._create_answer(user, partner, email, test_entry, check_attempts, **additional_vals)
-        _logger.error(f"Created user_input with ID: {user_input.id}")
+        _logger.info(f"Created user_input with ID: {user_input.id}")
         
         if self.enable_question_randomization:
-            _logger.error("Generating randomized questions...")
+            _logger.info("Generating randomized questions...")
             # Generate randomized question set for this participant
             # Pass is_test=True for test entries to get different questions each time
             randomized_questions = self._generate_randomized_questions(user_input.id, is_test=test_entry)
-            _logger.error(f"Generated {len(randomized_questions)} randomized questions: {[q.id for q in randomized_questions]}")
+            _logger.info(f"Generated {len(randomized_questions)} randomized questions: {[q.id for q in randomized_questions]}")
             
             # Set predefined questions and save the sequence
             user_input.predefined_question_ids = [(6, 0, [q.id for q in randomized_questions])]
             user_input.randomized_question_sequence = ','.join([str(q.id) for q in randomized_questions])
-            _logger.error(f"Set randomized_question_sequence: {user_input.randomized_question_sequence}")
+            _logger.info(f"Set randomized_question_sequence (length: {len(randomized_questions)}): {user_input.randomized_question_sequence}")
         
         return user_input
 
@@ -1445,6 +1446,7 @@ class SurveySurvey(models.Model):
             
             if not page_or_question_id:
                 # Return first question
+                _logger.info(f"_get_next_page_or_question: Returning first question. Total valid questions: {len(valid_question_ids)}")
                 return questions_list[0] if questions_list else self.env['survey.question']
             
             try:
@@ -1455,29 +1457,38 @@ class SurveySurvey(models.Model):
                     # If it's a record, use its id
                     current_index = valid_question_ids.index(page_or_question_id.id)
                 
+                _logger.info(f"_get_next_page_or_question: Current question ID: {page_or_question_id}, Index: {current_index}, Total valid questions: {len(valid_question_ids)}")
+
                 if go_back:
                     # Get previous question
                     if current_index > 0:
                         return questions_list[current_index - 1]
                     else:
                         # Already at first question, can't go back
+                        _logger.info("_get_next_page_or_question: Already at first question, cannot go back.")
                         return self.env['survey.question']
                 else:
                     # Get next question - only within randomized set
                     if current_index < len(questions_list) - 1:
+                        _logger.info(f"_get_next_page_or_question: Moving to next question at index {current_index + 1}.")
                         return questions_list[current_index + 1]
                     else:
                         # We've reached the last randomized question, return empty to end survey
+                        _logger.info("_get_next_page_or_question: Reached last randomized question, ending survey.")
                         return self.env['survey.question']
                         
             except (ValueError, IndexError, AttributeError) as e:
                 # Question not found in randomized set, return empty
                 _logger.debug("Error in _get_next_page_or_question: %s", e)
                 
+            _logger.info(f"_get_next_page_or_question: Returning empty question (error or end of survey). Current page_or_question_id: {page_or_question_id}")
             return self.env['survey.question']
         
         # Use default behavior for non-randomized surveys
-        return super()._get_next_page_or_question(user_input, page_or_question_id, go_back)
+        _logger.info(f"_get_next_page_or_question: Falling back to super method. Current page_or_question_id: {page_or_question_id}")
+        result = super()._get_next_page_or_question(user_input, page_or_question_id, go_back)
+        _logger.info(f"_get_next_page_or_question: Super method returned: {result} (ID: {result.id if result else 'None'})")
+        return result
 
     def _can_go_back(self, answer, page_or_question):
         self.ensure_one()
@@ -1643,12 +1654,10 @@ class SurveyUserInput(models.Model):
         max_allowed = self.survey_id.sudo().max_total_violations_allowed
         if max_allowed > 0 and updated_total_violations >= max_allowed:
             if self.state == 'in_progress': # Double check state before terminating
+                _logger.warning(f"Survey (User Input ID: {self.id}) auto-submitted due to security violations. Total violations: {updated_total_violations}/{max_allowed}. State set to 'done'.")
                 self.write({
                     'state': 'done',
                     'is_terminated': True
-                    # Note: Removed note update here as well.
-                    # A custom message could be logged to server logs if needed:
-                    # _logger.info(f"Survey (User Input ID: {self.id}) auto-submitted. Exceeded max violations ({updated_total_violations}/{max_allowed}).")
                 })
                 return True # Survey terminated
         

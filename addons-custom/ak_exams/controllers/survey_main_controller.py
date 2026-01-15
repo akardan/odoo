@@ -14,9 +14,35 @@ class SurveyExtension(Survey):
             from datetime import datetime
             import pytz
             
+            # TODO: Remove DEBUG logs after verification
+            # DEBUG: Log initial state
+            logging.getLogger(__name__).warning(
+                f"TIME CHECK - Survey: {survey.id}, User Input: {user_input.id}\n"
+                f"  - is_time_limited: {survey.is_time_limited}\n"
+                f"  - time_limit: {survey.time_limit}\n"
+                f"  - start_datetime: {user_input.start_datetime}\n"
+                f"  - end_date: {survey.end_date}"
+            )
+            
             # Check if time limit exceeded
             if survey.is_time_limited and survey.time_limit > 0:
-                time_elapsed = (datetime.now() - user_input.start_datetime).total_seconds() / 60
+                # FIX: Use UTC-aware datetime to match start_datetime timezone
+                now_utc = datetime.now(pytz.UTC)
+                start_dt = user_input.start_datetime
+                
+                # Ensure start_dt is timezone-aware (convert if naive)
+                if start_dt.tzinfo is None:
+                    start_dt = pytz.UTC.localize(start_dt)
+                
+                time_elapsed = (now_utc - start_dt).total_seconds() / 60
+                
+                logging.getLogger(__name__).warning(
+                    f"TIME LIMIT CHECK:\n"
+                    f"  - datetime.now(pytz.UTC): {now_utc}\n"
+                    f"  - start_datetime: {start_dt} (tzinfo: {getattr(start_dt, 'tzinfo', 'N/A')})\n"
+                    f"  - time_elapsed (minutes): {time_elapsed:.2f}\n"
+                    f"  - time_limit (minutes): {survey.time_limit}"
+                )
                 
                 # Also check end_date if set
                 if survey.end_date:
@@ -24,13 +50,28 @@ class SurveyExtension(Survey):
                     end_date_utc = pytz.UTC.localize(survey.end_date) if survey.end_date.tzinfo is None else survey.end_date
                     time_remaining_minutes = (end_date_utc - now_utc).total_seconds() / 60
                     
+                    logging.getLogger(__name__).warning(
+                        f"END DATE CHECK:\n"
+                        f"  - now_utc: {now_utc}\n"
+                        f"  - end_date_utc: {end_date_utc}\n"
+                        f"  - time_remaining_minutes: {time_remaining_minutes:.2f}"
+                    )
+                    
                     # Use the shorter of the two limits
                     effective_limit = min(survey.time_limit, time_remaining_minutes) if time_remaining_minutes > 0 else survey.time_limit
                 else:
                     effective_limit = survey.time_limit
                 
+                logging.getLogger(__name__).warning(
+                    f"  - effective_limit (minutes): {effective_limit}\n"
+                    f"  - Will expire: {time_elapsed > effective_limit}"
+                )
+                
                 if time_elapsed > effective_limit:
                     # Time limit exceeded - mark survey as done
+                    logging.getLogger(__name__).error(
+                        f"TIME LIMIT EXCEEDED! Closing exam for user_input {user_input.id}"
+                    )
                     user_input.sudo().write({'state': 'done'})
                     return {
                         'error': 'time_expired',
@@ -44,23 +85,24 @@ class SurveyExtension(Survey):
                 
                 if now_utc > end_date_utc:
                     # Survey end date passed - mark as done
+                    logging.getLogger(__name__).error(
+                        f"EXAM END DATE PASSED! Closing exam for user_input {user_input.id}"
+                    )
                     user_input.sudo().write({'state': 'done'})
                     return {
                         'error': 'exam_closed',
                         'error_message': 'Sınav süresi sona erdi. Sınav otomatik olarak sonlandırıldı.'
                     }
 
-        # Session Timeout Logic for Certification Surveys
-        if survey and survey.session_timeout_minutes > 0:
-            if user_input.start_datetime:
-                from datetime import datetime, timedelta
-                time_elapsed = (datetime.now() - user_input.start_datetime).total_seconds() / 60
-                if time_elapsed > survey.session_timeout_minutes:
-                    user_input.sudo().write({'state': 'done'})
-                    return {
-                        'error': 'session_timeout',
-                        'error_message': 'Oturum zaman aşımına uğradı.'
-                    }
+        # REMOVED: Session Timeout Logic - This was causing premature exam closure
+        # The session_timeout_minutes field is kept for potential future use, but the check is disabled
+        # Use time_limit (is_time_limited) for exam duration control instead
+        #
+        # Issue: session_timeout_minutes was being treated as total elapsed time instead of inactivity timeout,
+        # and when set lower than time_limit (e.g., 5 min vs 25 min), it would close exams prematurely.
+        #
+        # if survey and survey.session_timeout_minutes > 0:
+        #     ...session timeout logic removed...
 
         # Capture IP address and save it to survey.user_input
         if request.httprequest.remote_addr and user_input:
