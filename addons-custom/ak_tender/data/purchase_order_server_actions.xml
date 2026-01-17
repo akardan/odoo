@@ -77,5 +77,47 @@ else:
     raise UserError(f"Tamamlandı!\n\n{success_count} sipariş iptal edildi.")
             </field>
         </record>
+
+        <!-- Server Action: PO'ları İptal Et ve Sil -->
+        <record id="action_server_cancel_and_delete_po" model="ir.actions.server">
+            <field name="name">Siparişleri İptal Et ve Sil</field>
+            <field name="model_id" ref="purchase.model_purchase_order"/>
+            <field name="binding_model_id" ref="purchase.model_purchase_order"/>
+            <field name="binding_view_types">list,form</field>
+            <field name="state">code</field>
+            <field name="code">
+# Seçili siparişleri iptal et ve sil
+success_count = 0
+error_count = 0
+errors = []
+order_names = []
+
+for order in records:
+    try:
+        order_name = order.name
+        order_names.append(order_name)
+        
+        # Önce iptal et (eğer iptal değilse)
+        if order.state != 'cancel':
+            order.button_cancel()
+        
+        # Sonra sil
+        order.unlink()
+        success_count += 1
+    except Exception as e:
+        errors.append(f"{order_name}: {str(e)}")
+        error_count += 1
+
+# Sonuç mesajı
+if errors:
+    error_msg = "\n".join(errors)
+    raise UserError(f"Başarılı: {success_count}\nHatalı: {error_count}\n\nHatalar:\n{error_msg}")
+else:
+    deleted_orders = ", ".join(order_names[:10])
+    if len(order_names) > 10:
+        deleted_orders += f"... ve {len(order_names) - 10} sipariş daha"
+    raise UserError(f"Tamamlandı!\n\n{success_count} sipariş iptal edilip silindi:\n{deleted_orders}")
+            </field>
+        </record>
     </data>
 </odoo>
