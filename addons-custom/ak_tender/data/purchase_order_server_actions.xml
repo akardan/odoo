@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Server Action: Kilitli PO'ları Draft'a Çevir -->
+        <record id="action_server_set_po_to_draft" model="ir.actions.server">
+            <field name="name">Kilitli PO'ları Draft'a Çevir</field>
+            <field name="model_id" ref="purchase.model_purchase_order"/>
+            <field name="binding_model_id" ref="purchase.model_purchase_order"/>
+            <field name="binding_view_types">list,form</field>
+            <field name="state">code</field>
+            <field name="code">
+# Seçili siparişleri draft'a çevir
+success_count = 0
+error_count = 0
+errors = []
+
+for order in records:
+    try:
+        if order.state in ('purchase', 'done'):
+            # Kilitli siparişi draft'a çevir
+            order.button_draft()
+            success_count += 1
+        elif order.state == 'draft':
+            # Zaten draft
+            success_count += 1
+        else:
+            # Diğer durumlar (cancel, sent, to approve)
+            errors.append(f"{order.name}: Durum '{order.state}' - draft'a çevrilemez")
+            error_count += 1
+    except Exception as e:
+        errors.append(f"{order.name}: {str(e)}")
+        error_count += 1
+
+# Sonuç mesajı
+if errors:
+    error_msg = "\n".join(errors)
+    raise UserError(f"Başarılı: {success_count}\nHatalı: {error_count}\n\nHatalar:\n{error_msg}")
+else:
+    raise UserError(f"Tamamlandı!\n\n{success_count} sipariş draft durumuna çevrildi.")
+            </field>
+        </record>
+    </data>
+</odoo>

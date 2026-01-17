@@ -150,8 +150,8 @@ class ImportHistoricalPOWizard(models.TransientModel):
                     'Evet',    # VADE
                     'Hayır',   # IHALE_TIPI
                     'Evet',    # SIRKET_KODU
-                    'Evet',    # TESIS
-                    'Evet',    # SATIN_ALMACI
+                    'Hayır',   # TESIS
+                    'Hayır',   # SATIN_ALMACI
                     'Hayır',   # TESLIMAT_TARIHI
                     'Hayır'    # NOTLAR
                 ]
@@ -197,8 +197,7 @@ class ImportHistoricalPOWizard(models.TransientModel):
         required_columns = [
             'SIPARIS_NO', 'SIPARIS_TARIHI', 'TEDARIKCI_KODU', 'TEDARIKCI_ADI',
             'MALZEME_ADI', 'MALZEME_GRUBU', 'MIKTAR', 'BIRIM',
-            'BIRIM_FIYAT', 'PARA_BIRIMI', 'VADE', 'SIRKET_KODU',
-            'TESIS', 'SATIN_ALMACI'
+            'BIRIM_FIYAT', 'PARA_BIRIMI', 'VADE', 'SIRKET_KODU'
         ]
         
         missing_columns = [col for col in required_columns if col not in df.columns]
@@ -235,14 +234,31 @@ class ImportHistoricalPOWizard(models.TransientModel):
         # Satırları grupla (aynı sipariş numarasına göre)
         grouped = df.groupby('SIPARIS_NO')
         
-        for order_no, order_lines in grouped:
+        # Process edilecek siparişleri listele
+        order_list = list(grouped)
+        total_orders = len(order_list)
+        
+        for idx, (order_no, order_lines) in enumerate(order_list, 1):
             try:
                 self._process_order(order_no, order_lines, import_batch, stats)
+                
+                # Her 20 siparişte bir commit yap (daha küçük batch, daha az timeout riski)
+                # Ancak sadece hata yoksa commit yap
+                if idx % 20 == 0:
+                    self.env.cr.commit()
+                    _logger.info(f"Progress: {idx}/{total_orders} siparişler işlendi")
+                    
             except Exception as e:
+                # Hata durumunda sadece log tut, rollback yapma (çünkü diğer siparişler etkilenmesin)
                 error_msg = f"Sipariş {order_no}: {str(e)}"
                 _logger.error(error_msg)
                 stats['errors'].append(error_msg)
                 stats['skipped'] += len(order_lines)
+                # Hatadan sonra devam et
+                continue
+        
+        # Son batch'i commit et
+        self.env.cr.commit()
         
         # Sonuç mesajı
         return self._show_import_result(stats)
@@ -267,33 +283,64 @@ class ImportHistoricalPOWizard(models.TransientModel):
         partner = self._get_or_create_partner(first_line)
         
         # Para birimini bul
-        currency = self._get_currency(first_line.get('PARA_BIRIMI', 'TRY'))
+        currency = self._get_currency(str(first_line.get('PARA_BIRIMI', 'TRY')))
         
         # Ödeme vadesini bul
-        payment_term = self._get_payment_term(first_line.get('VADE'))
+        payment_term = self._get_payment_term(str(first_line.get('VADE', '')))
         
         # Sipariş tarihini parse et
         order_date = self._parse_date(first_line.get('SIPARIS_TARIHI'))
         
+        # Ana şirketi kullan
+        company = self.env.company
+
+        # Depo ve Operasyon Tipini bul
+        warehouse = self.env['stock.warehouse'].search([('company_id', '=', company.id)], limit=1)
+        if not warehouse:
+            raise UserError(_("%s şirketi için tanımlı bir depo bulunamadı. Lütfen önce bir depo oluşturun.") % company.name)
+            
+        picking_type = self.env['stock.picking.type'].search([
+            ('code', '=', 'incoming'),
+            ('warehouse_id', '=', warehouse.id)
+        ], limit=1)
+
         # PO oluştur veya güncelle
         po_vals = {
             'partner_id': partner.id,
+            'company_id': company.id,
             'date_order': order_date,
             'currency_id': currency.id,
             'is_historical_import': True,
             'import_batch': import_batch,
-            'notes': first_line.get('NOTLAR', ''),
+            'notes': str(first_line.get('NOTLAR', '')),
         }
+        
+        if picking_type:
+            po_vals['picking_type_id'] = picking_type.id
         
         if payment_term:
             po_vals['payment_term_id'] = payment_term.id
         
         # İhale tipi
-        tender_type = first_line.get('IHALE_TIPI', '').lower()
+        tender_type = str(first_line.get('IHALE_TIPI', '')).lower()
         if tender_type in ['direct', 'indirect', 'promotion', 'service']:
             po_vals['tender_type'] = tender_type
         
         if existing_po:
+            # Mevcut siparişi güncelle
+            # Eğer sipariş kilitliyse (locked/done state), önce draft'a çek
+            if existing_po.state in ('purchase', 'done'):
+                # Kilitli siparişi draft'a çekmek için button_draft kullan
+                try:
+                    existing_po.button_draft()
+                except:
+                    # Eğer draft'a çekilemiyorsa, bu siparişi atla
+                    raise ValidationError(
+                        _('Sipariş %s kilitli durumda ve draft\'a çekilemiyor. Lütfen manuel olarak kontrol edin.') % order_no
+                    )
+            
+            # Mevcut satırları sil (artık draft durumda olduğu için silinebilir)
+            existing_po.order_line.unlink()
             existing_po.write(po_vals)
             purchase_order = existing_po
             stats['updated_po'] += 1
@@ -304,13 +351,13 @@ class ImportHistoricalPOWizard(models.TransientModel):
         
         # Satırları ekle
         for idx, line_data in order_lines.iterrows():
-            self._create_order_line(purchase_order, line_data, stats)
+            self._create_order_line(purchase_order, line_data, currency, stats)
         
         # Siparişi onayla (istenirse)
         if self.confirm_orders and purchase_order.state == 'draft':
             purchase_order.button_confirm()
 
-    def _create_order_line(self, purchase_order, line_data, stats):
+    def _create_order_line(self, purchase_order, line_data, currency, stats):
         """Sipariş satırı oluştur"""
         POLine = self.env['purchase.order.line']
         
@@ -318,32 +365,87 @@ class ImportHistoricalPOWizard(models.TransientModel):
         product = self._get_or_create_product(line_data)
         
         # Birim bul
-        uom = self._get_uom(line_data.get('BIRIM', 'AD'))
+        uom = self._get_uom(str(line_data.get('BIRIM', 'AD')))
+        
+        # Eğer ürünün birimi ile Excel'deki birim farklı kategorideyse (örn: kg vs Adet)
+        # Hata almamak için ürünün mevcut birimini kullan
+        if product.uom_id.category_id != uom.category_id:
+            uom = product.uom_id
         
         # Teslimat tarihini parse et
         date_planned = self._parse_date(line_data.get('TESLIMAT_TARIHI'))
         if not date_planned:
             date_planned = purchase_order.date_order
         
+        # Miktar parse et - pandas zaten sayısal değer döndürür
+        miktar_raw = line_data.get('MIKTAR', 1.0)
+        if isinstance(miktar_raw, (int, float)):
+            product_qty = float(miktar_raw)
+        else:
+            # String ise parse et
+            product_qty = float(str(miktar_raw).split(' ')[0].replace(',', '.'))
+        
+        
+        # Fiyat hesaplama: TOPLAM_TUTAR varsa öncelik ver, yoksa BIRIM_FIYAT kullan
+        total_amount_excel = line_data.get('TOPLAM_TUTAR')
+        unit_price_excel = line_data.get('BIRIM_FIYAT')
+        
+        # TOPLAM_TUTAR'ı parse et - pandas zaten sayısal değer döndürür
+        if total_amount_excel is not None and not pd.isna(total_amount_excel):
+            # Pandas Excel'den sayısal değer döndürür, string parse etmeye gerek yok
+            if isinstance(total_amount_excel, (int, float)):
+                total_amount = float(total_amount_excel)
+            else:
+                # Eğer string ise (nadir durum), sadece virgülü noktaya çevir
+                total_amount = float(str(total_amount_excel).replace(',', '.'))
+            
+            if total_amount > 0 and product_qty > 0:
+                # TOPLAM_TUTAR varsa, birim fiyatı buradan hesapla (en doğru yöntem)
+                price_unit = total_amount / product_qty
+            else:
+                price_unit = 0.0
+        elif unit_price_excel is not None and not pd.isna(unit_price_excel):
+            # BIRIM_FIYAT'ı parse et - pandas zaten sayısal değer döndürür
+            if isinstance(unit_price_excel, (int, float)):
+                price_unit = float(unit_price_excel)
+            else:
+                # Eğer string ise, sadece virgülü noktaya çevir
+                price_unit = float(str(unit_price_excel).replace(',', '.'))
+        else:
+            price_unit = 0.0
+        
         line_vals = {
             'order_id': purchase_order.id,
             'product_id': product.id,
             'name': str(line_data.get('MALZEME_ADI', product.name)),
-            'product_qty': float(line_data.get('MIKTAR', 1.0)),
+            'product_qty': product_qty,
             'product_uom': uom.id,
-            'price_unit': float(line_data.get('BIRIM_FIYAT', 0.0)),
+            'price_unit': price_unit,
+            'line_price_unit': price_unit,  # ÖNEMLI: _compute_price_unit() bu alandan hesaplıyor
+            'currency_id': purchase_order.currency_id.id,  # Para birimi
+            'line_currency_id': currency.id,  # Para birimini de set et
             'date_planned': date_planned,
+            'taxes_id': [(5, 0, 0)], # Geçmiş verilerde vergi olmasın
         }
         
-        POLine.create(line_vals)
+        # Satırı oluştur
+        new_line = POLine.create(line_vals)
+        
+        # Güvenlik için: Eğer hala fiyat sıfırsa, zorla yaz
+        if new_line.price_unit != price_unit and price_unit > 0:
+            new_line.write({
+                'price_unit': price_unit,
+                'line_price_unit': price_unit,
+            })
+        
         stats['created_lines'] += 1
 
     def _get_or_create_partner(self, line_data):
         """Tedarikçiyi bul veya oluştur"""
         Partner = self.env['res.partner']
         
-        vendor_code = line_data.get('TEDARIKCI_KODU', '').strip()
-        vendor_name = line_data.get('TEDARIKCI_ADI', '').strip()
+        vendor_code = str(line_data.get('TEDARIKCI_KODU', '')).strip()
+        vendor_name = str(line_data.get('TEDARIKCI_ADI', '')).strip()
         
         if not vendor_name:
             raise ValidationError(_('Tedarikçi adı zorunludur'))
@@ -361,11 +463,16 @@ class ImportHistoricalPOWizard(models.TransientModel):
         
         # Oluştur
         if self.create_partners:
+            tag = self.env['res.partner.category'].search([('name', '=', 'Geçmiş PO Import')], limit=1)
+            if not tag:
+                tag = self.env['res.partner.category'].create({'name': 'Geçmiş PO Import'})
+            
             partner_vals = {
                 'name': vendor_name,
                 'ref': vendor_code if vendor_code else False,
                 'supplier_rank': 1,
                 'company_type': 'company',
+                'category_id': [(4, tag.id)],
             }
             return Partner.create(partner_vals)
         else:
@@ -377,30 +484,36 @@ class ImportHistoricalPOWizard(models.TransientModel):
         """Ürünü bul veya oluştur"""
         Product = self.env['product.product']
         
-        product_code = line_data.get('MALZEME_KODU', '').strip()
-        product_name = line_data.get('MALZEME_ADI', '').strip()
+        product_code = str(line_data.get('MALZEME_KODU', '')).strip()
+        product_name = str(line_data.get('MALZEME_ADI', '')).strip()
         
         if not product_name:
             raise ValidationError(_('Malzeme adı zorunludur'))
         
         # Önce koda göre ara
-        if product_code:
+        if product_code and product_code != 'nan':
             product = Product.search([('default_code', '=', product_code)], limit=1)
             if product:
                 return product
         
         # İsme göre ara
-        product = Product.search([('name', '=', product_name)], limit=1)
-        if product:
-            return product
+        if product_name and product_name != 'nan':
+            product = Product.search([('name', '=', product_name)], limit=1)
+            if product:
+                return product
         
         # Oluştur
         if self.create_products:
+            tag = self.env['product.tag'].search([('name', '=', 'Geçmiş PO Import')], limit=1)
+            if not tag:
+                tag = self.env['product.tag'].create({'name': 'Geçmiş PO Import'})
+
             product_vals = {
                 'name': product_name,
                 'default_code': product_code if product_code else False,
-                'type': 'product',
+                'type': 'consu',
                 'purchase_ok': True,
+                'product_tag_ids': [(4, tag.id)],
             }
             return Product.create(product_vals)
         else:
@@ -410,35 +523,36 @@ class ImportHistoricalPOWizard(models.TransientModel):
 
     def _get_currency(self, currency_code):
         """Para birimini bul"""
-        if not currency_code:
+        if not currency_code or pd.isna(currency_code):
             return self.env.company.currency_id
         
         currency = self.env['res.currency'].search([
-            ('name', '=', currency_code.upper())
+            ('name', '=', str(currency_code).upper().strip())
         ], limit=1)
         
         return currency if currency else self.env.company.currency_id
 
     def _get_payment_term(self, payment_term_text):
         """Ödeme vadesini  bul"""
-        if not payment_term_text:
+        if not payment_term_text or pd.isna(payment_term_text):
             return False
         
         PaymentTerm = self.env['account.payment.term']
         
         # İsme göre ara
         term = PaymentTerm.search([
-            ('name', 'ilike', payment_term_text)
+            ('name', 'ilike', str(payment_term_text).strip())
         ], limit=1)
         
         return term if term else False
 
     def _get_uom(self, uom_text):
         """Ölçü birimini bul"""
-        if not uom_text:
+        if not uom_text or pd.isna(uom_text):
             return self.env.ref('uom.product_uom_unit')
         
         Uom = self.env['uom.uom']
+        uom_text = str(uom_text).upper().strip()
         
         # Yaygın kısaltmaları eşle
         uom_mapping = {
@@ -451,7 +565,7 @@ class ImportHistoricalPOWizard(models.TransientModel):
             'METRE': 'm',
         }
         
-        search_name = uom_mapping.get(uom_text.upper(), uom_text)
+        search_name = uom_mapping.get(uom_text, uom_text)
         
         uom = Uom.search([
             '|', ('name', '=', search_name),

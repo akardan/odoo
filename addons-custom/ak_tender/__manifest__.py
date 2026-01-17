@@ -31,6 +31,7 @@
         'data/config_data.xml',
         'data/workflow_templates.xml',
         'data/server_actions.xml',
+        'data/purchase_order_server_actions.xml',
         'data/economic_data.xml',
         'data/tender_type_rules_data.xml',
         'data/mail_templates.xml',
