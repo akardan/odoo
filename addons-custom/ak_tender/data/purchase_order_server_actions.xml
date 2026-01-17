@@ -39,5 +39,43 @@ else:
     raise UserError(f"Tamamlandı!\n\n{success_count} sipariş draft durumuna çevrildi.")
             </field>
         </record>
+
+        <!-- Server Action: PO'ları İptal Et -->
+        <record id="action_server_cancel_po" model="ir.actions.server">
+            <field name="name">Siparişleri İptal Et</field>
+            <field name="model_id" ref="purchase.model_purchase_order"/>
+            <field name="binding_model_id" ref="purchase.model_purchase_order"/>
+            <field name="binding_view_types">list,form</field>
+            <field name="state">code</field>
+            <field name="code">
+# Seçili siparişleri iptal et
+success_count = 0
+error_count = 0
+errors = []
+
+for order in records:
+    try:
+        if order.state == 'cancel':
+            # Zaten iptal
+            success_count += 1
+        elif order.state in ('draft', 'sent', 'to approve', 'purchase', 'done'):
+            # İptal edilebilir durumlar
+            order.button_cancel()
+            success_count += 1
+        else:
+            errors.append(f"{order.name}: Durum '{order.state}' - iptal edilemez")
+            error_count += 1
+    except Exception as e:
+        errors.append(f"{order.name}: {str(e)}")
+        error_count += 1
+
+# Sonuç mesajı
+if errors:
+    error_msg = "\n".join(errors)
+    raise UserError(f"Başarılı: {success_count}\nHatalı: {error_count}\n\nHatalar:\n{error_msg}")
+else:
+    raise UserError(f"Tamamlandı!\n\n{success_count} sipariş iptal edildi.")
+            </field>
+        </record>
     </data>
 </odoo>
