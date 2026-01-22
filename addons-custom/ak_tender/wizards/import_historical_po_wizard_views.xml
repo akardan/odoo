@@ -54,7 +54,8 @@
                                         • SIRKET_KODU: SAP Şirket Kodu<br/>
                                         • TESIS: Tesis/Depo Adı<br/>
                                         • SATIN_ALMACI: Satınalmacı Adı<br/>
-                                        • MALZEME_GRUBU: SAP Malzeme Grubu<br/>
+                                        • MALZEME_GRUBU: SAP Malzeme Grubu (ör: 1000-01, 6000-0801)<br/>
+                                        • SAG: SAP Satınalma Grubu (ör: 101, 105, 110)<br/>
                                         • TESLIMAT_TARIHI: Teslimat Tarihi (YYYY-MM-DD)<br/>
                                         • NOTLAR: Ek Notlar<br/>
                                     </p>
@@ -63,7 +64,8 @@
                                         • <strong>Zaman:</strong> SIPARIS_TARIHI (yıl, çeyrek, ay bazında analiz için)<br/>
                                         • <strong>İhale Tipi:</strong> IHALE_TIPI (direct/indirect/promotion karşılaştırması için)<br/>
                                         • <strong>Satınalmacı:</strong> SATIN_ALMACI (kişi bazlı performans analizi için)<br/>
-                                        • <strong>Ürün/Hizmet:</strong> MALZEME_ADI, MALZEME_KODU, MALZEME_GRUBU<br/>
+                                        • <strong>Ürün/Hizmet:</strong> MALZEME_ADI, MALZEME_KODU, MALZEME_GRUBU (ilk 4 hane)<br/>
+                                        • <strong>Satınalma Grubu:</strong> SAG (departman/fonksiyon analizi için)<br/>
                                         • <strong>Fiyat:</strong> BIRIM_FIYAT, TOPLAM_TUTAR (fiyat trend analizi için)<br/>
                                         • <strong>Vade:</strong> VADE (nakit akışı analizi için)<br/>
                                         • <strong>Tedarikçi:</strong> TEDARIKCI_ADI (tedarikçi performans analizi için)<br/>
@@ -97,13 +99,18 @@
                 </sheet>
                 
                 <footer>
-                    <button name="action_download_template" 
-                            string="Excel Şablonu İndir" 
-                            type="object" 
+                    <button name="action_download_template"
+                            string="Excel Şablonu İndir"
+                            type="object"
                             class="btn-secondary"/>
-                    <button name="action_import_po" 
-                            string="İmport Et" 
-                            type="object" 
+                    <button name="action_import_master_data"
+                            string="1. Master Data İmport (MG + SAG)"
+                            type="object"
+                            class="btn-info"
+                            help="Önce Material Group ve Purchasing Group verilerini import edin"/>
+                    <button name="action_import_po"
+                            string="2. PO İmport Et"
+                            type="object"
                             class="btn-primary"/>
                     <button string="İptal" class="btn-secondary" special="cancel"/>
                 </footer>

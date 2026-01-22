@@ -24,6 +24,11 @@ class PurchaseOrder(models.Model):
         index=True,
         help="Import işlem grubu (tarih-saat)"
     )
+    purchasing_group = fields.Char(
+        string='Satınalma Grubu (SAG)',
+        index=True,
+        help="SAP Satınalma Grubu - Talep eden departman/fonksiyon"
+    )
     location_dest_id = fields.Many2one(
         comodel_name="stock.location",
         string=_("Teslim Yeri"),

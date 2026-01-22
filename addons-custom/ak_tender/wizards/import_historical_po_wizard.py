@@ -69,6 +69,170 @@ class ImportHistoricalPOWizard(models.TransientModel):
         except Exception as e:
             raise UserError(_("Pandas kurulum hatası: %s") % str(e))
 
+    def action_import_master_data(self):
+        """Excel'den Material Group ve Purchasing Group verilerini import et"""
+        self.ensure_one()
+        
+        if not self.excel_file:
+            raise UserError(_('Lütfen bir Excel dosyası seçin.'))
+        
+        if not pd:
+            self._install_pandas()
+        
+        # Excel dosyasını oku
+        try:
+            excel_data = base64.b64decode(self.excel_file)
+            df = pd.read_excel(io.BytesIO(excel_data), sheet_name='Geçmiş_PO')
+        except Exception as e:
+            raise UserError(_('Excel dosyası okunamadı: %s') % str(e))
+        
+        # İstatistikler
+        stats = {
+            'total_rows': len(df),
+            'material_groups': {'created': 0, 'existing': 0, 'codes': set()},
+            'purchasing_groups': {'created': 0, 'existing': 0, 'codes': set()},
+            'errors': []
+        }
+        
+        # MALZEME_GRUBU verilerini topla
+        if 'MALZEME_GRUBU' in df.columns:
+            for idx, row in df.iterrows():
+                mg_raw = row.get('MALZEME_GRUBU')
+                if pd.notna(mg_raw):
+                    mg_code = str(mg_raw).strip()[:4] if len(str(mg_raw)) >= 4 else str(mg_raw).strip()
+                    if mg_code:
+                        stats['material_groups']['codes'].add(mg_code)
+        
+        # SAG verilerini topla
+        if 'SAG' in df.columns:
+            for idx, row in df.iterrows():
+                sag_raw = row.get('SAG')
+                if pd.notna(sag_raw):
+                    sag_code = str(sag_raw).strip()
+                    if sag_code:
+                        stats['purchasing_groups']['codes'].add(sag_code)
+        
+        # Material Group'ları oluştur
+        for mg_code in stats['material_groups']['codes']:
+            try:
+                mg_record = self._get_or_create_material_group_record(mg_code)
+                if mg_record:
+                    if mg_record.id:
+                        # Yeni oluşturuldu mu kontrol et (basit kontrol)
+                        if 'Tanımsız' in mg_record.name:
+                            stats['material_groups']['created'] += 1
+                        else:
+                            stats['material_groups']['existing'] += 1
+            except Exception as e:
+                error_msg = f"Material Group {mg_code}: {str(e)}"
+                _logger.error(error_msg)
+                stats['errors'].append(error_msg)
+        
+        # Purchasing Group'ları oluştur
+        for sag_code in stats['purchasing_groups']['codes']:
+            try:
+                pg_record = self._get_or_create_purchasing_group_record(sag_code)
+                if pg_record:
+                    if pg_record.id:
+                        # Yeni oluşturuldu mu kontrol et
+                        if 'Tanımsız' in pg_record.name:
+                            stats['purchasing_groups']['created'] += 1
+                        else:
+                            stats['purchasing_groups']['existing'] += 1
+            except Exception as e:
+                error_msg = f"Purchasing Group {sag_code}: {str(e)}"
+                _logger.error(error_msg)
+                stats['errors'].append(error_msg)
+        
+        # Commit yap
+        self.env.cr.commit()
+        
+        # Sonuç mesajı
+        return self._show_master_data_import_result(stats)
+    
+    def _get_or_create_material_group_record(self, mg_code):
+        """Material Group kaydını bul veya oluştur (import için)"""
+        MaterialGroup = self.env['tender.type.material.group']
+        
+        # Önce ara
+        mg_record = MaterialGroup.search([('code', '=', mg_code)], limit=1)
+        if mg_record:
+            return mg_record
+        
+        # Yoksa oluştur
+        return self._create_material_group(mg_code)
+    
+    def _get_or_create_purchasing_group_record(self, sag_code):
+        """Purchasing Group kaydını bul veya oluştur (import için)"""
+        PurchasingGroup = self.env['tender.type.purchasing.group']
+        
+        # Önce ara
+        pg_record = PurchasingGroup.search([('code', '=', sag_code)], limit=1)
+        if pg_record:
+            return pg_record
+        
+        # Yoksa oluştur
+        try:
+            existing_undefined = PurchasingGroup.search([
+                ('name', 'ilike', 'Tanımsız SAG')
+            ])
+            next_number = len(existing_undefined) + 1
+            pg_name = f"Tanımsız SAG {next_number}"
+            
+            pg_vals = {
+                'code': sag_code,
+                'name': pg_name,
+                'description': f'Geçmiş PO import\'undan otomatik oluşturuldu',
+                'active': True,
+            }
+            
+            pg_record = PurchasingGroup.create(pg_vals)
+            _logger.info(f"Yeni Purchasing Group oluşturuldu: {sag_code} - {pg_name}")
+            return pg_record
+        except Exception as e:
+            _logger.error(f"Purchasing Group oluşturulamadı ({sag_code}): {str(e)}")
+            return False
+    
+    def _show_master_data_import_result(self, stats):
+        """Master data import sonucunu göster"""
+        message = _(
+            "Master Data İmport Tamamlandı!\n\n"
+            "Toplam Satır: %d\n\n"
+            "Material Groups:\n"
+            "  - Toplam Benzersiz Kod: %d\n"
+            "  - Yeni Oluşturulan: %d\n"
+            "  - Mevcut: %d\n\n"
+            "Purchasing Groups:\n"
+            "  - Toplam Benzersiz Kod: %d\n"
+            "  - Yeni Oluşturulan: %d\n"
+            "  - Mevcut: %d\n"
+        ) % (
+            stats['total_rows'],
+            len(stats['material_groups']['codes']),
+            stats['material_groups']['created'],
+            stats['material_groups']['existing'],
+            len(stats['purchasing_groups']['codes']),
+            stats['purchasing_groups']['created'],
+            stats['purchasing_groups']['existing']
+        )
+        
+        if stats['errors']:
+            message += _("\n\nHatalar (%d):\n") % len(stats['errors'])
+            message += "\n".join(stats['errors'][:10])
+            if len(stats['errors']) > 10:
+                message += _("\n... ve %d hata daha") % (len(stats['errors']) - 10)
+        
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': _('Master Data İmport Sonucu'),
+                'message': message,
+                'type': 'success' if not stats['errors'] else 'warning',
+                'sticky': True,
+            }
+        }
+    
     def action_download_template(self):
         """Excel template dosyasını indir"""
         self.ensure_one()
@@ -82,7 +246,8 @@ class ImportHistoricalPOWizard(models.TransientModel):
             'TEDARIKCI_ADI': ['ABC Tedarik A.Ş.', 'ABC Tedarik A.Ş.', 'XYZ Ltd. Şti.'],
             'MALZEME_KODU': ['MAL001', 'MAL002', 'MAL003'],
             'MALZEME_ADI': ['Buğday Unu', 'Şeker', 'Ayçiçek Yağı'],
-            'MALZEME_GRUBU': ['100', '100', '200'],
+            'MALZEME_GRUBU': ['1000-01', '6000-01', '9000-01'],
+            'SAG': ['105', '110', '101'],
             'MIKTAR': [1000, 500, 2000],
             'BIRIM': ['KG', 'KG', 'LT'],
             'BIRIM_FIYAT': [15.50, 25.00, 45.75],
@@ -93,6 +258,7 @@ class ImportHistoricalPOWizard(models.TransientModel):
             'SIRKET_KODU': ['2100', '2100', '2100'],
             'TESIS': ['İlko Merkez', 'İlko Merkez', 'İlko Fabrika'],
             'SATIN_ALMACI': ['Ahmet Yılmaz', 'Ahmet Yılmaz', 'Mehmet Kaya'],
+            'SAG': ['105', '110', '101'],
             'TESLIMAT_TARIHI': ['2023-02-15', '2023-02-15', '2023-03-25'],
             'NOTLAR': ['', 'Acil sipariş', '']
         }
@@ -119,7 +285,8 @@ class ImportHistoricalPOWizard(models.TransientModel):
                     'Tedarikçi Ünvanı',
                     'Malzeme SAP Kodu',
                     'Malzeme Açıklaması',
-                    'SAP Malzeme Grubu',
+                    'SAP Malzeme Grubu (ör: 1000-01, 6000-01)',
+                    'SAP Satınalma Grubu (ör: 101, 105, 110)',
                     'Sipariş Miktarı',
                     'Ölçü Birimi (KG, LT, AD, vb.)',
                     'Birim Fiyat',
@@ -141,7 +308,8 @@ class ImportHistoricalPOWizard(models.TransientModel):
                     'Evet',    # TEDARIKCI_ADI
                     'Hayır',   # MALZEME_KODU
                     'Evet',    # MALZEME_ADI
-                    'Evet',    # MALZEME_GRUBU
+                    'Hayır',   # MALZEME_GRUBU
+                    'Hayır',   # SAG
                     'Evet',    # MIKTAR
                     'Evet',    # BIRIM
                     'Evet',    # BIRIM_FIYAT
@@ -196,7 +364,7 @@ class ImportHistoricalPOWizard(models.TransientModel):
         # Zorunlu kolonları kontrol et
         required_columns = [
             'SIPARIS_NO', 'SIPARIS_TARIHI', 'TEDARIKCI_KODU', 'TEDARIKCI_ADI',
-            'MALZEME_ADI', 'MALZEME_GRUBU', 'MIKTAR', 'BIRIM',
+            'MALZEME_ADI', 'MIKTAR', 'BIRIM',
             'BIRIM_FIYAT', 'PARA_BIRIMI', 'VADE', 'SIRKET_KODU'
         ]
         
@@ -243,18 +411,16 @@ class ImportHistoricalPOWizard(models.TransientModel):
                 self._process_order(order_no, order_lines, import_batch, stats)
                 
                 # Her 20 siparişte bir commit yap (daha küçük batch, daha az timeout riski)
-                # Ancak sadece hata yoksa commit yap
                 if idx % 20 == 0:
                     self.env.cr.commit()
                     _logger.info(f"Progress: {idx}/{total_orders} siparişler işlendi")
                     
             except Exception as e:
-                # Hata durumunda sadece log tut, rollback yapma (çünkü diğer siparişler etkilenmesin)
+                # Hata durumunda sadece log tut, devam et
                 error_msg = f"Sipariş {order_no}: {str(e)}"
-                _logger.error(error_msg)
+                _logger.error(error_msg, exc_info=True)
                 stats['errors'].append(error_msg)
                 stats['skipped'] += len(order_lines)
-                # Hatadan sonra devam et
                 continue
         
         # Son batch'i commit et
@@ -282,6 +448,12 @@ class ImportHistoricalPOWizard(models.TransientModel):
         # Tedarikçiyi bul veya oluştur
         partner = self._get_or_create_partner(first_line)
         
+        # SAG (Satınalma Grubu) bilgisini al ve kontrol et
+        purchasing_group = str(first_line.get('SAG', '')).strip() if pd.notna(first_line.get('SAG')) else ''
+        if purchasing_group:
+            # SAG kaydının sistemde olup olmadığını kontrol et, yoksa oluştur
+            self._get_or_create_purchasing_group(purchasing_group)
+        
         # Para birimini bul
         currency = self._get_currency(str(first_line.get('PARA_BIRIMI', 'TRY')))
         
@@ -294,7 +466,7 @@ class ImportHistoricalPOWizard(models.TransientModel):
         # Ana şirketi kullan
         company = self.env.company
 
-        # Depo ve Operasyon Tipini bul
+        # Depo ve Operasyon Tipini bul - purchase_stock modülü için ZORUNLU
         warehouse = self.env['stock.warehouse'].search([('company_id', '=', company.id)], limit=1)
         if not warehouse:
             raise UserError(_("%s şirketi için tanımlı bir depo bulunamadı. Lütfen önce bir depo oluşturun.") % company.name)
@@ -303,6 +475,9 @@ class ImportHistoricalPOWizard(models.TransientModel):
             ('code', '=', 'incoming'),
             ('warehouse_id', '=', warehouse.id)
         ], limit=1)
+        
+        if not picking_type:
+            raise UserError(_("%s deposu için 'Incoming' tipi operasyon bulunamadı.") % warehouse.name)
 
         # PO oluştur veya güncelle
         po_vals = {
@@ -310,13 +485,12 @@ class ImportHistoricalPOWizard(models.TransientModel):
             'company_id': company.id,
             'date_order': order_date,
             'currency_id': currency.id,
+            'picking_type_id': picking_type.id,  # ZORUNLU - purchase_stock modülü için
             'is_historical_import': True,
             'import_batch': import_batch,
+            'purchasing_group': purchasing_group,  # SAG bilgisini kaydet
             'notes': str(first_line.get('NOTLAR', '')),
         }
-        
-        if picking_type:
-            po_vals['picking_type_id'] = picking_type.id
         
         if payment_term:
             po_vals['payment_term_id'] = payment_term.id
@@ -325,6 +499,9 @@ class ImportHistoricalPOWizard(models.TransientModel):
         tender_type = str(first_line.get('IHALE_TIPI', '')).lower()
         if tender_type in ['direct', 'indirect', 'promotion', 'service']:
             po_vals['tender_type'] = tender_type
+        
+        # Context ile tracking'i devre dışı bırak
+        ctx = dict(self.env.context, tracking_disable=True, mail_create_nolog=True)
         
         if existing_po:
             # Mevcut siparişi güncelle
@@ -341,12 +518,12 @@ class ImportHistoricalPOWizard(models.TransientModel):
             
             # Mevcut satırları sil (artık draft durumda olduğu için silinebilir)
             existing_po.order_line.unlink()
-            existing_po.write(po_vals)
+            existing_po.with_context(ctx).write(po_vals)
             purchase_order = existing_po
             stats['updated_po'] += 1
         else:
             po_vals['name'] = str(order_no)
-            purchase_order = PurchaseOrder.create(po_vals)
+            purchase_order = PurchaseOrder.with_context(ctx).create(po_vals)
             stats['created_po'] += 1
         
         # Satırları ekle
@@ -481,11 +658,12 @@ class ImportHistoricalPOWizard(models.TransientModel):
             )
 
     def _get_or_create_product(self, line_data):
-        """Ürünü bul veya oluştur"""
+        """Ürünü bul veya oluştur - MALZEME_GRUBU bilgisini de işle"""
         Product = self.env['product.product']
         
         product_code = str(line_data.get('MALZEME_KODU', '')).strip()
         product_name = str(line_data.get('MALZEME_ADI', '')).strip()
+        material_group = str(line_data.get('MALZEME_GRUBU', '')).strip() if pd.notna(line_data.get('MALZEME_GRUBU')) else ''
         
         if not product_name:
             raise ValidationError(_('Malzeme adı zorunludur'))
@@ -494,12 +672,16 @@ class ImportHistoricalPOWizard(models.TransientModel):
         if product_code and product_code != 'nan':
             product = Product.search([('default_code', '=', product_code)], limit=1)
             if product:
+                # Ürün bulundu, MALZEME_GRUBU bilgisini güncelle (hem kategori hem de alan)
+                self._update_product_material_group(product, material_group)
                 return product
         
         # İsme göre ara
         if product_name and product_name != 'nan':
             product = Product.search([('name', '=', product_name)], limit=1)
             if product:
+                # Ürün bulundu, MALZEME_GRUBU bilgisini güncelle
+                self._update_product_material_group(product, material_group)
                 return product
         
         # Oluştur
@@ -508,18 +690,178 @@ class ImportHistoricalPOWizard(models.TransientModel):
             if not tag:
                 tag = self.env['product.tag'].create({'name': 'Geçmiş PO Import'})
 
+            # MALZEME_GRUBU'na göre kategori bul veya oluştur
+            category_id = self._get_or_create_category(material_group) if material_group else False
+
             product_vals = {
                 'name': product_name,
                 'default_code': product_code if product_code else False,
                 'type': 'consu',
                 'purchase_ok': True,
                 'product_tag_ids': [(4, tag.id)],
+                'categ_id': category_id.id if category_id else False,
+                'material_group': material_group if material_group else False,  # İlk 4 hane (BI raporlama için)
             }
-            return Product.create(product_vals)
+            
+            new_product = Product.create(product_vals)
+            
+            # MALZEME_GRUBU bilgisini log'la
+            if material_group:
+                _logger.info(f"Ürün oluşturuldu: {product_name} - Malzeme Grubu: {material_group}")
+            
+            return new_product
         else:
             raise ValidationError(
                 _('Ürün bulunamadı: %s. Lütfen önce ürünü oluşturun veya "Yeni Ürün Oluştur" seçeneğini işaretleyin.') % product_name
             )
+    
+    def _update_product_material_group(self, product, material_group):
+        """Ürünün MALZEME_GRUBU bilgisini güncelle (hem kategori hem de alan)
+        
+        material_group: İlk 4 hane (1000, 6000, 9000)
+        """
+        if not material_group or material_group == 'nan':
+            return
+        
+        update_vals = {}
+        
+        # Kategoriyi güncelle
+        category = self._get_or_create_category(material_group)
+        if category and product.categ_id != category:
+            update_vals['categ_id'] = category.id
+        
+        # Material group alanını güncelle (ilk 4 hane)
+        if product.material_group != material_group:
+            update_vals['material_group'] = material_group
+        
+        if update_vals:
+            product.write(update_vals)
+            _logger.info(f"Ürün güncellendi: {product.name} - Malzeme Grubu: {material_group}")
+    
+    def _get_or_create_category(self, material_group):
+        """MALZEME_GRUBU'na göre kategori bul veya oluştur
+        
+        Material Group kaydından kategori oluşturur
+        """
+        if not material_group or material_group == 'nan':
+            return False
+        
+        # İlk 4 karakteri al (ör: 1000, 6000, 9000)
+        mg_code = material_group[:4] if len(material_group) >= 4 else material_group
+        
+        Category = self.env['product.category']
+        MaterialGroup = self.env['tender.type.material.group']
+        
+        # Malzeme grubu kaydını bul veya oluştur
+        mg_record = MaterialGroup.search([('code', '=', mg_code)], limit=1)
+        if not mg_record:
+            mg_record = self._create_material_group(mg_code)
+        
+        if not mg_record:
+            return False
+        
+        # Kategori adı: "Kod - İsim" formatında
+        category_name = f"{mg_record.code} - {mg_record.name}"
+        
+        # Kategoriyi ara
+        category = Category.search([
+            '|',
+            ('name', '=', category_name),
+            ('name', 'ilike', f"{mg_record.code} -")
+        ], limit=1)
+        
+        if category:
+            return category
+        
+        # Kategori yoksa oluştur
+        try:
+            # Ana kategori
+            parent_category = Category.search([('name', '=', 'SAP Malzeme Grupları')], limit=1)
+            if not parent_category:
+                parent_category = Category.create({'name': 'SAP Malzeme Grupları'})
+            
+            category = Category.create({
+                'name': category_name,
+                'parent_id': parent_category.id,
+            })
+            _logger.info(f"Yeni kategori oluşturuldu: {category_name}")
+            return category
+        except Exception as e:
+            _logger.warning(f"Kategori oluşturulamadı ({category_name}): {str(e)}")
+            return False
+    
+    def _create_material_group(self, mg_code):
+        """Yeni Material Group kaydı oluştur"""
+        MaterialGroup = self.env['tender.type.material.group']
+        
+        try:
+            # Kaç tane "Tanımsız" kaydı var kontrol et
+            existing_undefined = MaterialGroup.search([
+                ('name', 'ilike', 'Tanımsız')
+            ])
+            
+            # Sıradaki numarayı bul
+            next_number = len(existing_undefined) + 1
+            mg_name = f"Tanımsız {next_number}"
+            
+            # Yeni Material Group oluştur
+            mg_vals = {
+                'code': mg_code,
+                'name': mg_name,
+                'description': f'Geçmiş PO import\'undan otomatik oluşturuldu',
+                'active': True,
+            }
+            
+            mg_record = MaterialGroup.create(mg_vals)
+            _logger.info(
+                f"Yeni Material Group oluşturuldu: {mg_code} - {mg_name} "
+                f"(Excel'deki tam kod için ilk 4 hane kullanıldı)"
+            )
+            return mg_record
+            
+        except Exception as e:
+            _logger.error(f"Material Group oluşturulamadı ({mg_code}): {str(e)}")
+            return False
+    
+    def _get_or_create_purchasing_group(self, sag_code):
+        """SAG kaydını bul veya oluştur"""
+        if not sag_code or sag_code == 'nan':
+            return False
+        
+        PurchasingGroup = self.env['tender.type.purchasing.group']
+        
+        # SAG kaydını ara
+        pg_record = PurchasingGroup.search([('code', '=', sag_code)], limit=1)
+        
+        if pg_record:
+            return pg_record
+        
+        # Yoksa yeni oluştur
+        try:
+            # Kaç tane "Tanımsız" SAG kaydı var kontrol et
+            existing_undefined = PurchasingGroup.search([
+                ('name', 'ilike', 'Tanımsız SAG')
+            ])
+            
+            # Sıradaki numarayı bul
+            next_number = len(existing_undefined) + 1
+            pg_name = f"Tanımsız SAG {next_number}"
+            
+            # Yeni Purchasing Group oluştur
+            pg_vals = {
+                'code': sag_code,
+                'name': pg_name,
+                'description': f'Geçmiş PO import\'undan otomatik oluşturuldu',
+                'active': True,
+            }
+            
+            pg_record = PurchasingGroup.create(pg_vals)
+            _logger.info(f"Yeni Purchasing Group oluşturuldu: {sag_code} - {pg_name}")
+            return pg_record
+            
+        except Exception as e:
+            _logger.error(f"Purchasing Group oluşturulamadı ({sag_code}): {str(e)}")
+            return False
 
     def _get_currency(self, currency_code):
         """Para birimini bul"""

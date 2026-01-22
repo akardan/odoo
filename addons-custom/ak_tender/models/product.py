@@ -17,3 +17,20 @@ class ProductTemplate(models.Model):
     
     is_hotel_accommodation = fields.Boolean(string=_("Otel Konaklaması"))
     manufacturer_id = fields.Many2one('res.partner', string=_("Manufacturer"), help=_("Manufacturer of the product"))
+    material_group = fields.Char(
+        string=_("Malzeme Grubu"),
+        index=True,
+        help=_("SAP Malzeme Grubu Kodu (ör: 1000, 6000)")
+    )
+
+class ProductProduct(models.Model):
+    _inherit = 'product.product'
+    
+    material_group = fields.Char(
+        related='product_tmpl_id.material_group',
+        string=_("Malzeme Grubu"),
+        store=True,
+        readonly=False,
+        index=True,
+        help=_("SAP Malzeme Grubu Kodu (ör: 10000, 6000)")
+    )
