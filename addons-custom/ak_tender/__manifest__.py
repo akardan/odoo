@@ -61,6 +61,7 @@
         'views/tender_type_rules_views.xml',
         'wizards/import_hotel_wizard_views.xml',
         'wizards/import_supplier_wizard_views.xml',
+        'wizards/import_product_supplier_wizard_views.xml',
         'wizards/import_sat_wizard_views.xml',
         'wizards/import_historical_po_wizard_views.xml',
         'wizards/tender_template_selection_wizard_views.xml',

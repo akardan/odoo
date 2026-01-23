@@ -4,6 +4,7 @@ from . import bulk_purchase_wizard
 from . import purchase_order
 from . import purchase_order_line
 from . import product
+from . import product_supplier_extension
 from . import res_config_settings
 from . import tender
 from . import tender_template

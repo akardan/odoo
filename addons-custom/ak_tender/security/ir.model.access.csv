@@ -15,6 +15,7 @@ access_ak_tender_template_line_user,ak.tender.template.line.user,model_ak_tender
 access_ak_tender_template_line_requester,ak.tender.template.line.requester,model_ak_tender_template_line,ak_tender.group_tender_requester,1,0,0,0
 access_import_hotel_wizard,access.import.hotel.wizard,model_import_hotel_wizard,ak_tender.group_tender_user,1,1,1,1
 access_import_supplier_wizard,access.import.supplier.wizard,model_import_supplier_wizard,ak_tender.group_tender_user,1,1,1,1
+access_import_product_supplier_wizard,access.import.product.supplier.wizard,model_import_product_supplier_wizard,ak_tender.group_tender_user,1,1,1,1
 access_import_sat_wizard,access.import.sat.wizard,model_import_sat_wizard,ak_tender.group_tender_user,1,1,1,1
 access_ak_tender_template_selection_wizard,access.ak.tender.template.selection.wizard,model_ak_tender_template_selection_wizard,ak_tender.group_tender_user,1,1,1,1
 access_ak_tender_transfer_lines_wizard,access.ak.tender.transfer.lines.wizard,model_ak_tender_transfer_lines_wizard,ak_tender.group_tender_user,1,1,1,1
