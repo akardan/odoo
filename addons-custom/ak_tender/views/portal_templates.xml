@@ -125,6 +125,11 @@
                                                 <span t-field="line.product_id.display_name"/>
                                             </div>
                                             
+                                            <!-- Line description (includes approved manufacturer info) -->
+                                            <div t-if="line.name" class="mt-2 text-muted fst-italic" style="font-size: 0.9em; white-space: pre-line;">
+                                                <t t-esc="line.name"/>
+                                            </div>
+                                            
                                             <!-- Purchase Description field (initially hidden) -->
                                             <div t-attf-id="description_{{line.id}}" class="mt-2 mb-2 description-field" style="display: none;">
                                                 <div class="border p-2 bg-light" style="width: 100%;">
