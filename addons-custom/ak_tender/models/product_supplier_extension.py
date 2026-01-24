@@ -25,6 +25,6 @@ class ProductSupplierInfo(models.Model):
     is_approved = fields.Boolean(
         string='Onaylı',
         default=False,
-        help='Bu tedarikçi/üretici onaylı mı?'
+        help='Onaylı mı?'
     )
 
