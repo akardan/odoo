@@ -742,11 +742,27 @@ class PurchaseRequisitionLine(models.Model):
         
         for req_line in requisition_lines:
             try:
+                # Açıklama alanını hazırla
+                description = req_line.product_id.name or req_line.material_code
+                
+                # Onaylı üretici bilgilerini ekle
+                if req_line.product_id and req_line.product_id.product_tmpl_id:
+                    # Onaylı üreticileri bul (partner_type='manufacturer' ve is_approved=True)
+                    approved_manufacturers = self.env['product.supplierinfo'].search([
+                        ('product_tmpl_id', '=', req_line.product_id.product_tmpl_id.id),
+                        ('partner_type', '=', 'manufacturer'),
+                        ('is_approved', '=', True)
+                    ])
+                    
+                    if approved_manufacturers:
+                        manufacturer_names = ", ".join(approved_manufacturers.mapped('partner_id.name'))
+                        description += f"\nOnaylı üretici: {manufacturer_names}"
+                
                 # İhale kalemi oluştur
                 tender_line_vals = {
                     'tender_id': tender.id,
                     'product_id': req_line.product_id.id,
-                    'name': req_line.product_id.name or req_line.material_code,
+                    'name': description,
                     'quantity': req_line.product_qty,
                     'uom_id': req_line.product_uom_id.id,
                     'required_delivery_date': req_line.required_delivery_date,
