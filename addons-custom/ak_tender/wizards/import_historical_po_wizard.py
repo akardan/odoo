@@ -893,28 +893,74 @@ class ImportHistoricalPOWizard(models.TransientModel):
         if not uom_text or pd.isna(uom_text):
             return self.env.ref('uom.product_uom_unit')
         
-        Uom = self.env['uom.uom']
-        uom_text = str(uom_text).upper().strip()
+        uom_text_original = str(uom_text).strip()
+        uom_text_upper = uom_text_original.upper()
         
-        # Yaygın kısaltmaları eşle
-        uom_mapping = {
-            'AD': 'Units',
-            'ADET': 'Units',
-            'KG': 'kg',
-            'LT': 'L',
-            'LITRE': 'L',
-            'M': 'm',
-            'METRE': 'm',
+        # Yaygın kısaltmaları Odoo XML ID'leriyle eşle (en güvenli yöntem)
+        uom_xmlid_mapping = {
+            'AD': 'uom.product_uom_unit',
+            'ADET': 'uom.product_uom_unit',
+            'UNITS': 'uom.product_uom_unit',
+            'KG': 'uom.product_uom_kgm',  # Odoo'da 'kg' olarak tanımlı
+            'KILOGRAM': 'uom.product_uom_kgm',
+            'G': 'uom.product_uom_gram',
+            'GRAM': 'uom.product_uom_gram',
+            'T': 'uom.product_uom_ton',
+            'TON': 'uom.product_uom_ton',
+            'LT': 'uom.product_uom_litre',
+            'L': 'uom.product_uom_litre',
+            'LITRE': 'uom.product_uom_litre',
+            'M': 'uom.product_uom_meter',
+            'METRE': 'uom.product_uom_meter',
+            'METER': 'uom.product_uom_meter',
+            'CM': 'uom.product_uom_cm',
+            'MM': 'uom.product_uom_millimeter',
+            'KM': 'uom.product_uom_km',
         }
         
-        search_name = uom_mapping.get(uom_text, uom_text)
+        # Önce XML ID mapping'den ara (en güvenli)
+        xmlid = uom_xmlid_mapping.get(uom_text_upper)
+        if xmlid:
+            try:
+                uom = self.env.ref(xmlid, raise_if_not_found=False)
+                if uom:
+                    _logger.debug(f"UOM bulundu (XML ID): '{uom_text_original}' -> '{uom.name}' (ID: {xmlid})")
+                    return uom
+            except Exception as e:
+                _logger.warning(f"UOM XML ID hatası ({xmlid}): {str(e)}")
         
+        # XML ID'den bulunamadı, isim araması yap
+        Uom = self.env['uom.uom']
+        
+        # Önce tam eşleşme ara (hem büyük hem küçük harf)
         uom = Uom.search([
-            '|', ('name', '=', search_name),
-            ('name', 'ilike', uom_text)
+            '|',
+            ('name', '=', uom_text_upper),
+            ('name', '=', uom_text_original.lower())
         ], limit=1)
         
-        return uom if uom else self.env.ref('uom.product_uom_unit')
+        if uom:
+            _logger.debug(f"UOM bulundu (tam eşleşme): '{uom_text_original}' -> '{uom.name}'")
+            return uom
+        
+        # Tam eşleşme yok, ilike ile ara
+        uom = Uom.search([
+            '|',
+            ('name', 'ilike', uom_text_upper),
+            ('name', 'ilike', uom_text_original)
+        ], limit=1)
+        
+        if uom:
+            _logger.debug(f"UOM bulundu (ilike): '{uom_text_original}' -> '{uom.name}'")
+            return uom
+        
+        # Hala bulunamadıysa, UYARI ver ve varsayılan döndür
+        _logger.warning(
+            f"UOM bulunamadı: '{uom_text_original}' (büyük harf: '{uom_text_upper}') "
+            f"- Varsayılan 'Units' (Adet) kullanılıyor. "
+            f"Lütfen sistemde bu UOM'u oluşturun veya mapping'e ekleyin."
+        )
+        return self.env.ref('uom.product_uom_unit')
 
     def _parse_date(self, date_value):
         """Tarih değerini parse et"""
