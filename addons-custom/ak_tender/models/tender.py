@@ -224,19 +224,8 @@ class AkTenderLine(models.Model):
         for no_variant_attribute_value in self.product_no_variant_attribute_value_ids:
             self.name += "\n" + no_variant_attribute_value.attribute_id.name + ': ' + no_variant_attribute_value.name
         
-        # Onaylı tedarikçi ve üretici bilgilerini ekle
+        # Onaylı üretici bilgilerini ekle
         if self.product_id.product_tmpl_id:
-            # Onaylı tedarikçileri bul (partner_type='supplier' ve is_approved=True)
-            # approved_suppliers = self.env['product.supplierinfo'].search([
-            #     ('product_tmpl_id', '=', self.product_id.product_tmpl_id.id),
-            #     ('partner_type', '=', 'supplier'),
-            #     ('is_approved', '=', True)
-            # ])
-            
-            # if approved_suppliers:
-            #     supplier_names = ", ".join(approved_suppliers.mapped('partner_id.name'))
-            #     self.name += f"\nOnaylı tedarikçi: {supplier_names}"
-            
             # Onaylı üreticileri bul (partner_type='manufacturer' ve is_approved=True)
             approved_manufacturers = self.env['product.supplierinfo'].search([
                 ('product_tmpl_id', '=', self.product_id.product_tmpl_id.id),

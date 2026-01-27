@@ -263,8 +263,14 @@ class TenderTemplateLine(models.Model):
         :rtype: dict
         """
         self.ensure_one()
+        # Convert display_type: 'product' -> False for ak.tender.line compatibility
+        # ak.tender.line uses False for product lines, not 'product'
+        display_type = self.display_type
+        if display_type == 'product':
+            display_type = False
+            
         vals = {
-            'display_type': self.display_type,
+            'display_type': display_type,
             'product_id': self.product_id.id,
             'days': self.days,
             'product_qty': self.product_qty,

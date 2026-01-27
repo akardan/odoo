@@ -426,6 +426,12 @@ class ImportHistoricalPOWizard(models.TransientModel):
         # Son batch'i commit et
         self.env.cr.commit()
         
+        # Import sonrası UOM düzeltmesi yap
+        fix_stats = self._fix_incorrect_uoms_after_import(import_batch)
+        if fix_stats:
+            stats['uom_fixed'] = fix_stats['fixed']
+            stats['uom_checked'] = fix_stats['checked']
+        
         # Sonuç mesajı
         return self._show_import_result(stats)
 
@@ -975,6 +981,75 @@ class ImportHistoricalPOWizard(models.TransientModel):
         
         return date_value
 
+    def _fix_incorrect_uoms_after_import(self, import_batch):
+        """Import sonrası yanlış UOM'ları düzelt
+        
+        Bu fonksiyon, bu import batch'inde oluşturulan satırları kontrol eder
+        ve Units (Adet) olarak kaydedilmiş ama ürünün varsayılan birimi farklı olanları düzeltir.
+        """
+        _logger.info(f"Import batch {import_batch} için UOM düzeltmesi başlatılıyor...")
+        
+        # Units (Adet) birimini bul
+        units_uom = self.env.ref('uom.product_uom_unit', raise_if_not_found=False)
+        if not units_uom:
+            _logger.warning("Units UOM bulunamadı, UOM düzeltmesi atlanıyor")
+            return None
+        
+        # Bu batch'te oluşturulan ve Units birimi olan satırları bul
+        affected_lines = self.env['purchase.order.line'].search([
+            ('order_id.is_historical_import', '=', True),
+            ('order_id.import_batch', '=', import_batch),
+            ('product_uom', '=', units_uom.id),
+        ])
+        
+        stats = {
+            'checked': len(affected_lines),
+            'fixed': 0,
+            'skipped': 0,
+        }
+        
+        if not affected_lines:
+            _logger.info("Düzeltilecek UOM bulunamadı")
+            return stats
+        
+        _logger.info(f"{len(affected_lines)} satır kontrol ediliyor...")
+        
+        for line in affected_lines:
+            try:
+                # Ürünün varsayılan birimini al
+                correct_uom = line.product_id.uom_id
+                
+                # Eğer ürünün varsayılan birimi Units değilse, düzelt
+                if correct_uom and correct_uom != units_uom:
+                    # Kategori uyumluluğunu kontrol et
+                    if correct_uom.category_id != units_uom.category_id:
+                        line.write({'product_uom': correct_uom.id})
+                        stats['fixed'] += 1
+                        
+                        _logger.info(
+                            f"UOM düzeltildi - PO: {line.order_id.name}, "
+                            f"Ürün: {line.product_id.name}, "
+                            f"Eski: {units_uom.name}, Yeni: {correct_uom.name}"
+                        )
+                    else:
+                        stats['skipped'] += 1
+                else:
+                    stats['skipped'] += 1
+                    
+            except Exception as e:
+                _logger.error(
+                    f"UOM düzeltme hatası - Satır {line.id} (PO: {line.order_id.name}): {str(e)}",
+                    exc_info=True
+                )
+                stats['skipped'] += 1
+        
+        _logger.info(
+            f"UOM düzeltmesi tamamlandı - Kontrol edilen: {stats['checked']}, "
+            f"Düzeltilen: {stats['fixed']}, Atlanan: {stats['skipped']}"
+        )
+        
+        return stats
+
     def _show_import_result(self, stats):
         """Import sonucunu göster"""
         message = _(
@@ -991,6 +1066,17 @@ class ImportHistoricalPOWizard(models.TransientModel):
             stats['created_lines'],
             stats['skipped']
         )
+        
+        # UOM düzeltme bilgisi ekle
+        if stats.get('uom_checked'):
+            message += _(
+                "\nUOM Düzeltmesi:\n"
+                "  - Kontrol Edilen: %d\n"
+                "  - Düzeltilen: %d\n"
+            ) % (
+                stats['uom_checked'],
+                stats.get('uom_fixed', 0)
+            )
         
         if stats['errors']:
             message += _("\n\nHatalar (%d):\n") % len(stats['errors'])

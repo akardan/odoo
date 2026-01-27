@@ -126,8 +126,8 @@
                                             </div>
                                             
                                             <!-- Line description (includes approved manufacturer info) -->
-                                            <div t-if="line.name" class="mt-2 text-muted fst-italic" style="font-size: 0.9em; white-space: pre-line;">
-                                                <t t-esc="line.name"/>
+                                            <div t-if="line.tender_line_id and line.tender_line_id.name" class="mt-2 text-muted fst-italic" style="font-size: 0.9em; white-space: pre-line;">
+                                                <t t-esc="line.tender_line_id.name"/>
                                             </div>
                                             
                                             <!-- Purchase Description field (initially hidden) -->
