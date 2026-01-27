@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Scenario Creation Wizard -->
+    <record id="view_tender_scenario_wizard_form" model="ir.ui.view">
+        <field name="name">ak.tender.scenario.wizard.form</field>
+        <field name="model">ak.tender.scenario.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Yeni Senaryo Oluştur">
+                <sheet>
+                    <group>
+                        <group string="Temel Bilgiler">
+                            <field name="tender_id" readonly="1"/>
+                            <field name="name" placeholder="Örn: Chamada Prestige 5⭐ - HB"/>
+                            <field name="scenario_type"/>
+                            <field name="is_mandatory"/>
+                        </group>
+                        <group string="Lokasyon ve Otel">
+                            <field name="location_id"/>
+                            <field name="hotel_partner_id"/>
+                            <field name="meal_plan"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group string="Katılımcı Bilgileri">
+                            <field name="person_count"/>
+                            <field name="vip_count"/>
+                        </group>
+                    </group>
+                    
+                    <group string="Tarih Seçenekleri">
+                        <field name="add_dates"/>
+                    </group>
+                    
+                    <field name="date_option_ids">
+                        <list editable="bottom">
+                            <field name="date_start"/>
+                            <field name="date_end"/>
+                            <field name="season_type"/>
+                            <field name="cost_multiplier"/>
+                            <field name="estimated_total_cost" widget="monetary"/>
+                            <field name="is_preferred" widget="boolean_toggle"/>
+                            <field name="notes"/>
+                            <field name="currency_id" invisible="1"/>
+                        </list>
+                    </field>
+                </sheet>
+                <footer>
+                    <button string="Oluştur" name="action_create_scenario" type="object" class="btn-primary"/>
+                    <button string="İptal" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Scenario Elimination Wizard -->
+    <record id="view_tender_scenario_eliminate_wizard_form" model="ir.ui.view">
+        <field name="name">ak.tender.scenario.eliminate.wizard.form</field>
+        <field name="model">ak.tender.scenario.eliminate.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Senaryo Eleme">
+                <sheet>
+                    <group>
+                        <field name="scenario_id" readonly="1"/>
+                        <field name="elimination_reason" placeholder="Eleme gerekçesini yazın..."/>
+                    </group>
+                </sheet>
+                <footer>
+                    <button string="Elenle" name="action_eliminate" type="object" class="btn-danger"/>
+                    <button string="İptal" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Next Round Wizard -->
+    <record id="view_tender_next_round_wizard_form" model="ir.ui.view">
+        <field name="name">ak.tender.next.round.wizard.form</field>
+        <field name="model">ak.tender.next.round.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Sonraki Turu Başlat">
+                <sheet>
+                    <group>
+                        <group string="Tur Bilgileri">
+                            <field name="tender_id" readonly="1"/>
+                            <field name="next_round" readonly="1"/>
+                            <field name="deadline_days"/>
+                        </group>
+                        <group string="Davet Ayarları">
+                            <field name="invite_all_suppliers"/>
+                        </group>
+                    </group>
+                    
+                    <group string="Kısa Listedeki Senaryolar">
+                        <field name="shortlisted_scenario_ids" nolabel="1">
+                            <list>
+                                <field name="name"/>
+                                <field name="scenario_type"/>
+                                <field name="hotel_partner_id"/>
+                                <field name="best_npv_offer" widget="monetary"/>
+                                <field name="best_npv_partner_id"/>
+                            </list>
+                        </field>
+                    </group>
+                    
+                    <group>
+                        <field name="notes" placeholder="Tedarikçilere gönderilecek ek notlar..."/>
+                    </group>
+                </sheet>
+                <footer>
+                    <button string="Turu Başlat" name="action_start_round" type="object" class="btn-primary"/>
+                    <button string="İptal" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+</odoo>

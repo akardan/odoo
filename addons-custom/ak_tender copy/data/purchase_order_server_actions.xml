@@ -1,0 +1,218 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Server Action: Kilitli PO'ları Draft'a Çevir -->
+        <record id="action_server_set_po_to_draft" model="ir.actions.server">
+            <field name="name">Kilitli PO'ları Draft'a Çevir</field>
+            <field name="model_id" ref="purchase.model_purchase_order"/>
+            <field name="binding_model_id" ref="purchase.model_purchase_order"/>
+            <field name="binding_view_types">list,form</field>
+            <field name="state">code</field>
+            <field name="code">
+# Seçili siparişleri draft'a çevir
+success_count = 0
+error_count = 0
+errors = []
+
+for order in records:
+    try:
+        if order.state in ('purchase', 'done'):
+            # Kilitli siparişi draft'a çevir
+            order.button_draft()
+            success_count += 1
+        elif order.state == 'draft':
+            # Zaten draft
+            success_count += 1
+        else:
+            # Diğer durumlar (cancel, sent, to approve)
+            errors.append(f"{order.name}: Durum '{order.state}' - draft'a çevrilemez")
+            error_count += 1
+    except Exception as e:
+        errors.append(f"{order.name}: {str(e)}")
+        error_count += 1
+
+# Sonuç mesajı
+if errors:
+    error_msg = "\n".join(errors)
+    raise UserError(f"Başarılı: {success_count}\nHatalı: {error_count}\n\nHatalar:\n{error_msg}")
+else:
+    raise UserError(f"Tamamlandı!\n\n{success_count} sipariş draft durumuna çevrildi.")
+            </field>
+        </record>
+
+        <!-- Server Action: PO'ları İptal Et -->
+        <record id="action_server_cancel_po" model="ir.actions.server">
+            <field name="name">Siparişleri İptal Et</field>
+            <field name="model_id" ref="purchase.model_purchase_order"/>
+            <field name="binding_model_id" ref="purchase.model_purchase_order"/>
+            <field name="binding_view_types">list,form</field>
+            <field name="state">code</field>
+            <field name="code">
+# Seçili siparişleri iptal et
+success_count = 0
+error_count = 0
+errors = []
+details = []
+
+for order in records:
+    try:
+        order_info = f"{order.name} (Durum: {order.state})"
+        
+        if order.state == 'cancel':
+            # Zaten iptal
+            details.append(f"✓ {order_info} - Zaten iptal")
+            success_count += 1
+        else:
+            # Önce draft'a çevir (eğer kilitliyse)
+            if order.state in ('purchase', 'done'):
+                try:
+                    order.sudo().button_draft()
+                    details.append(f"✓ {order.name} - Draft'a çevrildi")
+                except Exception as e:
+                    details.append(f"⚠ {order.name} - Draft'a çevrilemedi: {str(e)}")
+            
+            # State'i direkt cancel yap (sudo ile)
+            old_state = order.state
+            order.sudo().write({'state': 'cancel', 'mail_reminder_confirmed': False})
+            
+            # Transaction'ı commit et (değişikliği kalıcı yap)
+            env.cr.commit()
+            
+            # Kontrol: Gerçekten iptal oldu mu?
+            order.invalidate_recordset(['state'])
+            new_state = order.state
+            
+            if new_state == 'cancel':
+                details.append(f"✓ {order.name} - İptal edildi ({old_state} → {new_state})")
+                success_count += 1
+            else:
+                errors.append(f"{order.name} - İptal BAŞARISIZ! ({old_state} → {new_state})")
+                error_count += 1
+    except Exception as e:
+        error_msg = f"{order.name}: {str(e)}"
+        errors.append(error_msg)
+        details.append(f"✗ {error_msg}")
+        error_count += 1
+
+# Sonuç mesajı
+result_msg = f"Başarılı: {success_count}\nHatalı: {error_count}\n\n"
+
+if details[:20]:  # İlk 20 detayı göster
+    result_msg += "Detaylar:\n" + "\n".join(details[:20])
+    if len(details) > 20:
+        result_msg += f"\n... ve {len(details) - 20} işlem daha"
+
+if errors:
+    result_msg += "\n\nHATALAR:\n" + "\n".join(errors)
+
+raise UserError(result_msg)
+            </field>
+        </record>
+
+        <!-- Server Action: PO'ları İptal Et ve Sil -->
+        <record id="action_server_cancel_and_delete_po" model="ir.actions.server">
+            <field name="name">Siparişleri İptal Et ve Sil</field>
+            <field name="model_id" ref="purchase.model_purchase_order"/>
+            <field name="binding_model_id" ref="purchase.model_purchase_order"/>
+            <field name="binding_view_types">list,form</field>
+            <field name="state">code</field>
+            <field name="code">
+# Seçili siparişleri iptal et ve sil
+success_count = 0
+error_count = 0
+errors = []
+order_names = []
+
+for order in records:
+    try:
+        order_name = order.name
+        order_names.append(order_name)
+        
+        # Önce iptal et (eğer iptal değilse)
+        if order.state != 'cancel':
+            order.button_cancel()
+        
+        # Sonra sil
+        order.unlink()
+        success_count += 1
+    except Exception as e:
+        errors.append(f"{order_name}: {str(e)}")
+        error_count += 1
+
+# Sonuç mesajı
+if errors:
+    error_msg = "\n".join(errors)
+    raise UserError(f"Başarılı: {success_count}\nHatalı: {error_count}\n\nHatalar:\n{error_msg}")
+else:
+    deleted_orders = ", ".join(order_names[:10])
+    if len(order_names) > 10:
+        deleted_orders += f"... ve {len(order_names) - 10} sipariş daha"
+    raise UserError(f"Tamamlandı!\n\n{success_count} sipariş iptal edilip silindi:\n{deleted_orders}")
+            </field>
+        </record>
+
+        <!-- Server Action: Ürünleri ve İlişkili Stock Move'ları Sil -->
+        <record id="action_server_delete_products_with_moves" model="ir.actions.server">
+            <field name="name">Ürünleri ve Stock Move'ları Sil</field>
+            <field name="model_id" ref="product.model_product_template"/>
+            <field name="binding_model_id" ref="product.model_product_template"/>
+            <field name="binding_view_types">list,form</field>
+            <field name="state">code</field>
+            <field name="code">
+# Seçili ürünleri ve ilişkili stock move'ları sil
+success_count = 0
+error_count = 0
+errors = []
+details = []
+
+StockMove = env['stock.move'].sudo()
+
+for template in records:
+    try:
+        template_name = f"[{template.default_code or ''}] {template.name}".strip()
+        
+        # Template'e ait tüm varyantları bul
+        products = template.product_variant_ids
+        total_moves = 0
+        
+        for product in products:
+            # Bu ürüne ait tüm stock move'ları bul
+            moves = StockMove.search([('product_id', '=', product.id)])
+            if moves:
+                total_moves += len(moves)
+                moves.unlink()
+        
+        if total_moves > 0:
+            details.append(f"✓ {template_name} - {total_moves} stock move silindi")
+        
+        # Template'i sil (varyantlar da silinir)
+        template.sudo().unlink()
+        
+        # Transaction'ı commit et
+        env.cr.commit()
+        
+        details.append(f"✓ {template_name} - Ürün silindi")
+        success_count += 1
+        
+    except Exception as e:
+        error_msg = f"{template_name}: {str(e)}"
+        errors.append(error_msg)
+        details.append(f"✗ {error_msg}")
+        error_count += 1
+
+# Sonuç mesajı
+result_msg = f"Başarılı: {success_count}\nHatalı: {error_count}\n\n"
+
+if details[:30]:  # İlk 30 detayı göster
+    result_msg += "Detaylar:\n" + "\n".join(details[:30])
+    if len(details) > 30:
+        result_msg += f"\n... ve {len(details) - 30} işlem daha"
+
+if errors:
+    result_msg += "\n\nHATALAR:\n" + "\n".join(errors)
+
+raise UserError(result_msg)
+            </field>
+        </record>
+    </data>
+</odoo>

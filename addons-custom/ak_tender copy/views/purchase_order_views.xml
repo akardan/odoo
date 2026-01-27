@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- ===================== -->
+        <!-- FORM VIEWS           -->
+        <!-- ===================== -->
+        
+        <!-- Inherited Form View for Purchase Order -->
+        <record id="purchase_order_form_tender" model="ir.ui.view">
+            <field name="name">purchase.order.form.tender</field>
+            <field name="model">purchase.order</field>
+            <field name="inherit_id" ref="purchase.purchase_order_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='partner_ref']" position="after">
+                    <field name="tender_id" readonly="1" force_save="1"/>
+                    <field name="tender_round"  readonly="1" invisible="tender_id == False"/>
+                </xpath>
+                <xpath expr="//field[@name='tax_totals']" position="after">
+                    <field name="payment_term_id" string="Ödeme Koşulları" invisible="tender_id == False"/>
+                    <field name="total_npv" widget="monetary" options="{'currency_field': 'currency_id'}" string="Toplam NPV" invisible="tender_id == False" class="oe_subtotal_footer_separator"/>
+                </xpath>
+                <xpath expr="//field[@name='order_line']//field[@name='product_id']" position="before">
+                    <field name="tender_line_id" readonly="1" optional="show"/>
+                </xpath>
+                <xpath expr="//field[@name='order_line']//field[@name='product_qty']" position="before">
+                    <field name="alt_materials" readonly="1" optional="show"/>
+                </xpath>
+                <xpath expr="//field[@name='order_line']//field[@name='price_unit']" position="replace">
+                    <field name="line_price_unit" string="Birim Fiyat"/>
+                    <field name="line_currency_id" groups="base.group_multi_currency" optional="show"/>
+                    <field name="price_unit" string="Birim Fiyat (PO Currency)" readonly="1" optional="show"/>
+                </xpath>
+                <xpath expr="//field[@name='order_line']//field[@name='price_subtotal']" position="after">
+                    <field name="npv_value" widget="monetary" options="{'currency_field': 'tender_line_currency_id'}" string="NPV" optional="show" groups="ak_tender.group_tender_manager"/>
+                    <field name="tender_line_currency_id" invisible="1"/>
+                    <field name="system_selection" string="S.S." optional="show"/>
+                    <field name="user_selection" string="K.S." optional="show"/>
+                    <!-- <field name="warranty_period" string="Garanti (Ay)" optional="hide"/> -->
+                    <field name="expiry_date" optional="show" invisible="not parent.tender_id"/>
+                </xpath>
+                
+                <xpath expr="//notebook" position="inside">
+                    <page string="İhale Bilgileri" name="tender_info" invisible="tender_id == False">
+                        <group>
+                            <group>
+                                <field name="location_dest_id"/>
+                                <field name="guarantee_period" invisible="tender_id.tender_type in ['direct', 'indirect']"/>
+                            </group>
+                            <group>
+                                <field name="offer_status"/>
+                            </group>
+                        </group>
+                    </page>
+                </xpath>
+            </field>
+        </record>
+
+        <!-- ===================== -->
+        <!-- TREE VIEWS           -->
+        <!-- ===================== -->
+        
+        <!-- Inherited Tree View for Purchase Order -->
+        <record id="purchase_order_tree_tender" model="ir.ui.view">
+            <field name="name">purchase.order.tree.tender</field>
+            <field name="model">purchase.order</field>
+            <field name="inherit_id" ref="purchase.purchase_order_view_tree"/>
+            <field name="arch" type="xml">
+                <!-- Add offer status indicator at the beginning -->
+                <xpath expr="//field[@name='name']" position="before">
+                    <field name="offer_status" widget="badge" optional="show"/>
+                </xpath>
+                
+                <!-- Add new fields -->
+                <xpath expr="//field[@name='name']" position="after">
+                    <field name="tender_id" optional="show"/>
+                    <field name="tender_round" string="Teklif Turu" optional="show"/>
+                </xpath>
+              
+                <xpath expr="//field[@name='amount_untaxed']" position="after">
+                    <field name="payment_term_id" string="Ödeme Koşulları" optional="show"/>
+                    <field name="total_npv" widget="monetary" options="{'currency_field': 'currency_id'}" string="Toplam NPV" sum="Toplam" optional="show"/>
+                </xpath>
+                <xpath expr="//field[@name='amount_total']" position="after">
+                    <field name="system_selection" string="S.S." optional="show"/>
+                    <field name="user_selection" string="K.S."  optional="show"/>
+                </xpath>            
+            </field>
+        </record>
+        
+        <!-- Inherited KPIs Tree View for Purchase Order -->
+        <record id="purchase_order_kpis_tree_tender" model="ir.ui.view">
+            <field name="name">purchase.order.kpis.tree.tender</field>
+            <field name="model">purchase.order</field>
+            <field name="inherit_id" ref="purchase.purchase_order_kpis_tree"/>
+            <field name="arch" type="xml">
+                <!-- Add new fields -->
+                <xpath expr="//field[@name='name']" position="after">
+                    <field name="tender_id" optional="show"/>
+                    <field name="tender_round" string="Teklif Turu" optional="show"/>
+                </xpath>
+              
+                <xpath expr="//field[@name='amount_untaxed']" position="after">
+                    <field name="payment_term_id" string="Ödeme Koşulları" optional="show"/>
+                    <field name="total_npv" widget="monetary" options="{'currency_field': 'currency_id'}" string="Toplam NPV" sum="Toplam" optional="show"/>
+                </xpath>
+                <xpath expr="//field[@name='amount_total']" position="after">
+                    <field name="system_selection" string="S.S." optional="show"/>
+                    <field name="user_selection" string="K.S."  optional="show"/>
+                </xpath>
+            </field>
+        </record>
+
+        <!-- ===================== -->
+        <!-- SEARCH VIEWS         -->
+        <!-- ===================== -->
+        
+        <!-- Inherited Search View for Purchase Order -->
+        <record id="purchase_order_search_tender" model="ir.ui.view">
+            <field name="name">purchase.order.search.tender</field>
+            <field name="model">purchase.order</field>
+            <field name="inherit_id" ref="purchase.view_purchase_order_filter"/>
+            <field name="arch" type="xml">
+                <!-- Add tender fields to search -->
+                <xpath expr="//field[@name='partner_id']" position="after">
+                    <field name="tender_id"/>
+                    <field name="tender_round"/>
+                    <field name="payment_term_id"/>
+                    <field name="total_npv"/>
+                </xpath>
+                
+                <!-- Add filters -->
+                <xpath expr="//filter[@name='activities_exception']" position="after">
+                    <separator/>
+                    <filter string="Sıfır Olmayan Teklifler" name="non_zero_amount" domain="[('amount_total', '>', 0)]"/>
+                </xpath>
+                
+                <!-- Add grouping by tender -->
+                <xpath expr="//filter[@name='order_date']" position="after">
+                    <filter name="group_by_tender" string="İhale" context="{'group_by': 'tender_id'}"/>
+                    <filter name="group_by_tender_round" string="Teklif Turu" context="{'group_by': 'tender_round'}"/>
+                    <filter name="group_by_payment_term" string="Ödeme Koşulları" context="{'group_by': 'payment_term_id'}"/>
+                </xpath>
+            </field>
+        </record>
+
+    </data>
+</odoo>
+

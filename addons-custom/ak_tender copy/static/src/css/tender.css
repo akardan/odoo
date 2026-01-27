@@ -1,0 +1,185 @@
+/* Custom CSS for ak_tender module */
+
+/* Tender Type Colors */
+.o_tender_type_direct {
+    color: #007bff !important; /* Primary blue */
+    border-color: #007bff !important;
+}
+
+.o_tender_type_indirect {
+    color: #28a745 !important; /* Success green */
+    border-color: #28a745 !important;
+}
+
+.o_tender_type_mice {
+    color: #6f42c1 !important; /* Purple */
+    border-color: #6f42c1 !important;
+}
+
+.o_tender_type_promotion {
+    color: #ffc107 !important; /* Warning yellow */
+    border-color: #ffc107 !important;
+}
+
+/* Background colors with opacity */
+.o_tender_type_direct_bg {
+    background-color: rgba(0, 123, 255, 0.1) !important;
+}
+
+.o_tender_type_indirect_bg {
+    background-color: rgba(40, 167, 69, 0.1) !important;
+}
+
+.o_tender_type_mice_bg {
+    background-color: rgba(111, 66, 193, 0.1) !important;
+}
+
+.o_tender_type_promotion_bg {
+    background-color: rgba(255, 193, 7, 0.1) !important;
+}
+
+/* Kanban card styling based on tender type */
+.o_kanban_record.o_tender_type_direct {
+    border-left: 5px solid #007bff !important;
+}
+
+.o_kanban_record.o_tender_type_indirect {
+    border-left: 5px solid #28a745 !important;
+}
+
+.o_kanban_record.o_tender_type_mice {
+    border-left: 5px solid #6f42c1 !important;
+}
+
+.o_kanban_record.o_tender_type_promotion {
+    border-left: 5px solid #ffc107 !important;
+}
+
+/* Icons for tender types */
+.o_tender_type_icon {
+    margin-right: 5px;
+}
+
+/* Form header styling */
+.o_tender_header {
+    height: 8px;
+    width: 100%;
+    margin-bottom: 15px;
+    border-radius: 2px;
+}
+
+.o_tender_header.o_tender_type_direct {
+    background-color: #007bff;
+}
+
+.o_tender_header.o_tender_type_indirect {
+    background-color: #28a745;
+}
+
+.o_tender_header.o_tender_type_mice {
+    background-color: #6f42c1;
+}
+
+.o_tender_header.o_tender_type_promotion {
+    background-color: #ffc107;
+}
+
+/* Hover effects for kanban cards */
+.o_kanban_record:hover .o_tender_type_direct_bg {
+    background-color: rgba(0, 123, 255, 0.2) !important;
+}
+
+.o_kanban_record:hover .o_tender_type_indirect_bg {
+    background-color: rgba(40, 167, 69, 0.2) !important;
+}
+
+.o_kanban_record:hover .o_tender_type_mice_bg {
+    background-color: rgba(111, 66, 193, 0.2) !important;
+}
+
+.o_kanban_record:hover .o_tender_type_promotion_bg {
+    background-color: rgba(255, 193, 7, 0.2) !important;
+}
+
+/* Tender kanban card minimum height */
+.o_tender_kanban .o_kanban_record {
+    min-height: 180px;
+    transition: all 0.3s ease;
+}
+
+/* Make "Teklifler" tab bold and red - targeting data-highlight attribute */
+.nav-item a[data-highlight="1"],
+.o_notebook .nav-link[data-highlight="1"],
+.o_notebook_headers .nav-item a[data-highlight="1"],
+.o_notebook ul.nav li a[data-highlight="1"],
+.o_notebook .nav-tabs .nav-link[data-highlight="1"],
+li.nav-item a.nav-link[data-highlight="1"],
+/* Also keep the original selectors */
+.nav-item a[data-name="tender_results_evaluation"],
+.o_notebook .nav-link[data-name="tender_results_evaluation"],
+.o_notebook_headers .nav-item a[href="#notebook_page_tender_results_evaluation"],
+.o_notebook ul.nav li a[data-section="tender_results_evaluation"],
+.o_notebook .nav-tabs .nav-link[data-name="tender_results_evaluation"],
+li.nav-item a.nav-link[data-name="tender_results_evaluation"] {
+    font-weight: bold !important;
+    color: red !important;
+}
+
+/* Offer Status Indicators - Circular badges using decoration classes */
+
+/* Make badge circular for offer_status field */
+.o_list_table td[name="offer_status"] .badge {
+    width: 18px;
+    height: 18px;
+    border-radius: 50% !important;
+    padding: 0 !important;
+    font-size: 0 !important;
+    min-width: 18px !important;
+    display: inline-block !important;
+    line-height: 18px !important;
+}
+
+/* Gray circle for not_submitted (decoration-secondary) */
+.o_list_table td[name="offer_status"] .badge.text-bg-secondary {
+    background-color: #6c757d !important;
+}
+
+/* Green circle for submitted (decoration-success) */
+.o_list_table td[name="offer_status"] .badge.text-bg-success {
+    background-color: #28a745 !important;
+}
+
+/* Make badge circular for offer_submission_status field */
+.o_list_table td[name="offer_submission_status"] .badge {
+    width: 18px;
+    height: 18px;
+    border-radius: 50% !important;
+    padding: 0 !important;
+    font-size: 0 !important;
+    min-width: 18px !important;
+    display: inline-block !important;
+    line-height: 18px !important;
+}
+
+/* Gray circle for none (decoration-secondary) */
+.o_list_table td[name="offer_submission_status"] .badge.text-bg-secondary {
+    background-color: #6c757d !important;
+}
+
+/* Yellow circle for partial (decoration-warning) */
+.o_list_table td[name="offer_submission_status"] .badge.text-bg-warning {
+    background-color: #ffc107 !important;
+}
+
+/* Green circle for all (decoration-success) */
+.o_list_table td[name="offer_submission_status"] .badge.text-bg-success {
+    background-color: #28a745 !important;
+}
+
+/* Hover effect for all status badges */
+.o_list_table td[name="offer_status"] .badge:hover,
+.o_list_table td[name="offer_submission_status"] .badge:hover {
+    transform: scale(1.3);
+    transition: transform 0.2s ease;
+    cursor: help;
+}

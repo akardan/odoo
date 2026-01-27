@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="view_tender_transfer_lines_wizard_form" model="ir.ui.view">
+            <field name="name">ak.tender.transfer.lines.wizard.form</field>
+            <field name="model">ak.tender.transfer.lines.wizard</field>
+            <field name="arch" type="xml">
+                <form string="İhaleden Kalem Aktarma">
+                    <sheet>
+                        <group>
+                            <field name="tender_id" invisible="1"/>
+                            <field name="source_tender_id" options="{'no_create': True}"/>
+                        </group>
+                        <group string="Aktarılacak Kalemler" invisible="not source_tender_id">
+                            <field name="tender_line_ids" nolabel="1" options="{'no_create': True}">
+                                <list>
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="product_id"/>
+                                    <field name="name"/>
+                                    <field name="quantity"/>
+                                    <field name="uom_id"/>
+                                    <field name="target_price"/>
+                                    <field name="currency_id"/>
+                                </list>
+                            </field>
+                        </group>
+                    </sheet>
+                    <footer>
+                        <button name="action_transfer_lines" string="Kalemleri Aktar" type="object" class="btn-primary" invisible="not tender_line_ids"/>
+                        <button string="İptal" class="btn-secondary" special="cancel"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_tender_transfer_lines_wizard" model="ir.actions.act_window">
+            <field name="name">İhaleden Kalem Aktarma</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">ak.tender.transfer.lines.wizard</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+        </record>
+    </data>
+</odoo>

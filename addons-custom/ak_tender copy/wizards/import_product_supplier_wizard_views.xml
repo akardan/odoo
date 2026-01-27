@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Ürün ve Tedarikçi/Üretici İmport Wizard Form -->
+    <record id="view_import_product_supplier_wizard_form" model="ir.ui.view">
+        <field name="name">import.product.supplier.wizard.form</field>
+        <field name="model">import.product.supplier.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Ürün ve Tedarikçi/Üretici İmport">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="excel_file" filename="file_name" widget="binary"/>
+                            <field name="file_name" invisible="1"/>
+                            <field name="import_tag" placeholder="Onaylı_Tedarikçi_20240122_120000"/>
+                        </group>
+                        <group>
+                            <field name="update_existing"/>
+                        </group>
+                    </group>
+                    
+                    <group string="İmport Seçenekleri">
+                        <group>
+                            <field name="create_products"/>
+                            <field name="create_partners"/>
+                        </group>
+                        <group>
+                            <field name="create_supplier_info"/>
+                        </group>
+                    </group>
+                    
+                    <notebook>
+                        <page string="Yardım">
+                            <group>
+                                <div class="alert alert-info" role="alert">
+                                    <h4>Excel Dosyası Formatı</h4>
+                                    <p>Excel dosyanız aşağıdaki sütunları içermelidir:</p>
+                                    <ul>
+                                        <li><strong>Sütun A (0):</strong> Malzeme Tipi (örn: YARDIMCI)</li>
+                                        <li><strong>Sütun B (1):</strong> Malzeme No (ürün kodu)</li>
+                                        <li><strong>Sütun C (2):</strong> Malzeme Adı</li>
+                                        <li><strong>Sütun D (3):</strong> Sinonim İsim</li>
+                                        <li><strong>Sütun E (4):</strong> Onaylı Tedarikçi No/Ad (format: kod-isim)</li>
+                                        <li><strong>Sütun F (5):</strong> Onaylı Üretici No/Ad (format: kod-isim)</li>
+                                        <li><strong>Sütun G (6):</strong> (Boş bırakılabilir)</li>
+                                        <li><strong>Sütun H (7):</strong> Onaylı (A = Onaylı)</li>
+                                    </ul>
+                                    <p><strong>Not:</strong> İlk 2 satır başlık olarak atlanacaktır.</p>
+                                    <p><strong>Örnek Tedarikçi/Üretici Formatı:</strong> 100271-Yener Gıda ve End Kimya San.</p>
+                                    <p><strong>İmport Etiketi:</strong> Oluşturulan tüm partner ve ürünlere bu etiket eklenecektir. Bu sayede import edilen kayıtları kolayca bulup silebilirsiniz.</p>
+                                </div>
+                            </group>
+                        </page>
+                        
+                        <page string="İşlem Detayları">
+                            <group>
+                                <div class="alert alert-warning" role="alert">
+                                    <h4>İmport İşlemi</h4>
+                                    <p>Bu wizard aşağıdaki işlemleri gerçekleştirir:</p>
+                                    <ol>
+                                        <li><strong>Partnerler:</strong> Tedarikçi ve üreticiler res.partner modeline eklenir</li>
+                                        <li><strong>Ürünler:</strong> Ürünler product.template modeline eklenir</li>
+                                        <li><strong>İlişkiler:</strong> Ürün-tedarikçi/üretici ilişkileri product.supplierinfo modeline eklenir</li>
+                                    </ol>
+                                    <p><strong>Önemli:</strong> Her ürün için birden fazla tedarikçi ve üretici tanımlanabilir.</p>
+                                    <p><strong>Partner Tipi:</strong> Tedarikçi ve üretici ayrımı product.supplierinfo kaydında partner_type alanında tutulur.</p>
+                                </div>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <footer>
+                    <button name="action_import_product_suppliers" string="İmport Et" type="object" class="btn-primary"/>
+                    <button string="İptal" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Wizard Action -->
+    <record id="action_import_product_supplier_wizard" model="ir.actions.act_window">
+        <field name="name">Ürün ve Tedarikçi/Üretici İmport</field>
+        <field name="res_model">import.product.supplier.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="binding_model_id" ref="product.model_product_template"/>
+    </record>
+
+    <!-- Menu Item -->
+    <menuitem id="menu_import_product_supplier_wizard"
+              name="Ürün ve Tedarikçi/Üretici İmport"
+              parent="purchase.menu_purchase_config"
+              action="action_import_product_supplier_wizard"
+              sequence="100"/>
+
+</odoo>
