@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from . import add_supplier_wizard
 from . import bulk_purchase_wizard
+from . import purchase_order_ai  # Import AI mixin first
 from . import purchase_order
 from . import purchase_order_line
 from . import product
