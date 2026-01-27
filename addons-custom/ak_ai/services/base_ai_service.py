@@ -143,7 +143,7 @@ tender = env['ak.tender'].browse(record_id)
 for tender_line in tender.tender_lines:
     # İlişkili kaydın detayına in
     prod_cat = tender_line.product_id.categ_id.name
-    print(f"{tender_line.product_id.name} ({prod_cat}) - {tender_line.quantity}")
+    print(f"{{tender_line.product_id.name}} ({{prod_cat}}) - {{tender_line.quantity}}")
 ```
 
 MODEL VE ALAN ÖĞRENME (SCHEMA DISCOVERY):
@@ -223,17 +223,47 @@ Her zaman yardımcı, güvenli ve kullanıcı dostu ol! [EXECUTE_CODE] bloğunu 
             def safe_default(obj):
                 """Safely convert objects to string, handling errors"""
                 try:
+                    # Check if it's an Odoo recordset
+                    if hasattr(obj, '_name') and hasattr(obj, 'ids'):
+                        # It's a recordset, return safe representation
+                        try:
+                            return f"<recordset {obj._name} ({len(obj)})>"
+                        except:
+                            return "<recordset>"
                     # Try to get a string representation
                     return str(obj)
                 except NameError as ne:
-                    # This catches "name 'name' is not defined" errors
-                    _logger.warning(f"NameError converting {type(obj).__name__} to string: {ne}")
-                    return f"<{type(obj).__name__}>"
+                    # This catches "name 'tender_line' is not defined" errors
+                    _logger.warning(f"NameError converting object to string: {ne}")
+                    try:
+                        return f"<{type(obj).__name__}>"
+                    except:
+                        return "<object with NameError>"
+                except AttributeError as ae:
+                    _logger.debug(f"AttributeError converting object to string: {ae}")
+                    try:
+                        return f"<{type(obj).__name__}>"
+                    except:
+                        return "<object with AttributeError>"
                 except Exception as e:
-                    _logger.debug(f"Error converting {type(obj).__name__} to string: {e}")
-                    return f"<{type(obj).__name__} object>"
+                    _logger.debug(f"Error converting object to string: {e}")
+                    try:
+                        return f"<{type(obj).__name__} object>"
+                    except:
+                        return "<unknown object>"
             
-            formatted = json.dumps(optimized_context, ensure_ascii=False, indent=2, default=safe_default)
+            try:
+                formatted = json.dumps(optimized_context, ensure_ascii=False, indent=2, default=safe_default)
+            except (NameError, AttributeError) as e:
+                _logger.error(f"NameError/AttributeError during JSON serialization: {e}", exc_info=True)
+                # Try again with a simpler context
+                simple_context = {
+                    'model': optimized_context.get('model', 'unknown'),
+                    'id': optimized_context.get('id', 0),
+                    'display_name': optimized_context.get('display_name', 'unknown'),
+                    'error': f'Context serialization error: {str(e)}'
+                }
+                formatted = json.dumps(simple_context, ensure_ascii=False, indent=2)
             # Use string concatenation to avoid f-string formatting issues with curly braces in JSON
             return "```json\n" + formatted + "\n```\n\nYukarıdaki JSON verisi kayıtın BÜTÜN bilgilerini içeriyor. Bu datayı DOĞRUDAN kullanarak cevap ver!"
         except NameError as ne:

@@ -155,7 +155,7 @@ class AkAiServiceOpenRouter(models.Model):
             return ai_response
             
         except Exception as e:
-            _logger.error(f"OpenRouter API error: {e}")
+            _logger.error(f"OpenRouter API error: {e}", exc_info=True)
             # Return the error message directly so it can be seen in the UI
             return f"🤖 **KAI Notu:** Bir hata oluştu.\n\nHata detayı: {str(e)}"
     

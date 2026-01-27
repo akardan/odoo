@@ -148,53 +148,86 @@ class AkAiConversation(models.Model):
                         # Include detailed data for first few records
                         lines_data = []
                         # Limit to first 50 records to avoid huge context
-                        for line in value[:50]:
-                            try:
-                                line_info = {'id': line.id, 'display_name': line.display_name}
-                                # Extract basic fields from related record
-                                for lf_name, lf in line._fields.items():
-                                    if lf_name.startswith('_') or lf.type in ('binary', 'reference'):
-                                        continue
-                                    if lf_name in ['id', 'display_name', 'create_uid', 'write_uid', 'create_date', 'write_date']:
-                                        continue
+                        try:
+                            for line in value[:50]:
+                                try:
+                                    line_info = {'id': line.id, 'display_name': line.display_name}
+                                except (NameError, AttributeError) as ne:
+                                    _logger.warning(f"NameError/AttributeError accessing line in {field_name}: {ne}")
+                                    continue
+                                
+                                try:
+                                    # Extract basic fields from related record
                                     try:
-                                        lv = line[lf_name]
-                                        if lv is False and lf.type != 'boolean':
-                                            continue
-                                        
-                                        # Handle nested x2many - provide summary only
-                                        if lf.type in ('one2many', 'many2many'):
-                                            line_info[lf_name] = {
-                                                'count': len(lv),
-                                                'model': getattr(lv, '_name', 'unknown')
-                                            }
-                                            continue
-
-                                        if lf.type in ('char', 'text', 'html', 'selection'):
-                                            line_info[lf_name] = lv
-                                        elif lf.type in ('integer', 'float', 'monetary'):
-                                            line_info[lf_name] = lv
-                                        elif lf.type == 'boolean':
-                                            line_info[lf_name] = lv
-                                        elif lf.type in ('date', 'datetime'):
-                                            line_info[lf_name] = lv.isoformat() if lv else None
-                                        elif lf.type == 'many2one':
-                                            line_info[lf_name] = {
-                                                'id': lv.id, 
-                                                'name': lv.display_name,
-                                                'model': getattr(lv, '_name', 'unknown')
-                                            } if lv else None
-                                    except Exception:
+                                        line_fields = line._fields.items()
+                                    except (NameError, AttributeError) as ne:
+                                        _logger.warning(f"Cannot access _fields for line in {field_name}: {ne}")
+                                        lines_data.append(line_info)
                                         continue
-                                lines_data.append(line_info)
-                            except Exception:
-                                continue
-                        
-                        field_data[field_name] = {
-                            'count': len(value),
-                            'items': lines_data,
-                            'has_more': len(value) > 50
-                        }
+                                    
+                                    for lf_name, lf in line_fields:
+                                        if lf_name.startswith('_') or lf.type in ('binary', 'reference'):
+                                            continue
+                                        if lf_name in ['id', 'display_name', 'create_uid', 'write_uid', 'create_date', 'write_date']:
+                                            continue
+                                        try:
+                                            lv = line[lf_name]
+                                            if lv is False and lf.type != 'boolean':
+                                                continue
+                                            
+                                            # Handle nested x2many - provide summary only
+                                            if lf.type in ('one2many', 'many2many'):
+                                                line_info[lf_name] = {
+                                                    'count': len(lv),
+                                                    'model': getattr(lv, '_name', 'unknown')
+                                                }
+                                                continue
+
+                                            if lf.type in ('char', 'text', 'html', 'selection'):
+                                                line_info[lf_name] = lv
+                                            elif lf.type in ('integer', 'float', 'monetary'):
+                                                line_info[lf_name] = lv
+                                            elif lf.type == 'boolean':
+                                                line_info[lf_name] = lv
+                                            elif lf.type in ('date', 'datetime'):
+                                                line_info[lf_name] = lv.isoformat() if lv else None
+                                            elif lf.type == 'many2one':
+                                                try:
+                                                    line_info[lf_name] = {
+                                                        'id': lv.id,
+                                                        'name': lv.display_name,
+                                                        'model': lv._name if lv else 'unknown'
+                                                    } if lv else None
+                                                except (NameError, AttributeError) as ne:
+                                                    _logger.debug(f"Error accessing many2one field {lf_name}: {ne}")
+                                                    line_info[lf_name] = {'id': lv.id if lv else None, 'name': 'Error accessing field'}
+                                        except (NameError, AttributeError) as ne:
+                                            _logger.debug(f"NameError/AttributeError reading line field {lf_name}: {ne}")
+                                            continue
+                                        except Exception as e:
+                                            _logger.debug(f"Error reading line field {lf_name}: {e}")
+                                            continue
+                                    
+                                    lines_data.append(line_info)
+                                except (NameError, AttributeError) as ne:
+                                    _logger.warning(f"NameError/AttributeError processing line in {field_name}: {ne}")
+                                    continue
+                                except Exception as e:
+                                    _logger.debug(f"Error processing line in {field_name}: {e}")
+                                    continue
+                            
+                            field_data[field_name] = {
+                                'count': len(value),
+                                'items': lines_data,
+                                'has_more': len(value) > 50
+                            }
+                        except (NameError, AttributeError) as ne:
+                            _logger.error(f"NameError/AttributeError in one2many/many2many field {field_name}: {ne}")
+                            field_data[field_name] = {
+                                'count': 0,
+                                'items': [],
+                                'error': f'Error accessing field: {str(ne)}'
+                            }
                 except Exception as e:
                     # Log field-level errors but continue
                     _logger.debug(f"Error reading field {field_name} on {record._name}: {e}")
