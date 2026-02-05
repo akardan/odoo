@@ -1,3 +1,10 @@
+-- MATERIALIZED VIEW VERSION
+-- Bu dosya view_dashboard_detail.sql dosyasından otomatik oluşturulmuştur
+-- Refresh için: REFRESH MATERIALIZED VIEW CONCURRENTLY view_dashboard_detail;
+
+DROP VIEW IF EXISTS public.view_dashboard_detail CASCADE;
+DROP MATERIALIZED VIEW IF EXISTS public.view_dashboard_detail CASCADE;
+
 -- ============================================================================
 -- VIEW 2: DETAYLI ÜRÜN BAZLI DASHBOARD
 -- ============================================================================
@@ -15,7 +22,7 @@ WHERE ihale_kodu ='İHALE-2025-0084'
 
 DROP VIEW IF EXISTS view_dashboard_detail CASCADE;
 
-CREATE VIEW view_dashboard_detail AS
+CREATE MATERIALIZED VIEW view_dashboard_detail AS
 SELECT
     -- ============================================================================
     -- ÜRÜN BAZLI BİLGİLER / PRODUCT-LEVEL INFORMATION
@@ -310,27 +317,8 @@ SELECT
     -- MEVCUT TUR FİYATLAR (Current Round)
     -- ============================================================================
     
-    -- Mevcut Tur Birim Fiyat (önce purchase/done onaylı, sonra purchase/done tümü, sonra onaylı, sonra tümü)
+    -- Mevcut Tur Birim Fiyat (önce purchase/done, yoksa en düşük teklif)
     COALESCE(
-        -- 1. Purchase/Done state'inde onaylı tedarikçilerden en düşük
-        (
-            SELECT MIN(pol2.price_unit * (1 - COALESCE(pol2.discount, 0) / 100.0))
-            FROM purchase_order po2
-            JOIN purchase_order_line pol2 ON pol2.order_id = po2.id
-            WHERE po2.tender_id = t.id
-            AND pol2.product_id = tl.product_id
-            AND po2.tender_round = t.tender_round
-            AND po2.state IN ('purchase', 'done')
-            AND pol2.price_unit > 0
-            AND EXISTS (
-                SELECT 1
-                FROM product_supplierinfo psi
-                WHERE psi.partner_id = po2.partner_id
-                AND (psi.product_id = tl.product_id OR psi.product_tmpl_id = pp.product_tmpl_id)
-                AND psi.is_approved = true
-            )
-        ),
-        -- 2. Purchase/Done state'inde tüm tedarikçilerden en düşük
         (
             SELECT MIN(pol2.price_unit * (1 - COALESCE(pol2.discount, 0) / 100.0))
             FROM purchase_order po2
@@ -341,24 +329,6 @@ SELECT
             AND po2.state IN ('purchase', 'done')
             AND pol2.price_unit > 0
         ),
-        -- 3. Mevcut turdaki onaylı tedarikçilerden en düşük
-        (
-            SELECT MIN(pol2.price_unit * (1 - COALESCE(pol2.discount, 0) / 100.0))
-            FROM purchase_order po2
-            JOIN purchase_order_line pol2 ON pol2.order_id = po2.id
-            WHERE po2.tender_id = t.id
-            AND pol2.product_id = tl.product_id
-            AND po2.tender_round = t.tender_round
-            AND pol2.price_unit > 0
-            AND EXISTS (
-                SELECT 1
-                FROM product_supplierinfo psi
-                WHERE psi.partner_id = po2.partner_id
-                AND (psi.product_id = tl.product_id OR psi.product_tmpl_id = pp.product_tmpl_id)
-                AND psi.is_approved = true
-            )
-        ),
-        -- 4. Mevcut turdaki tüm tedarikçilerden en düşük
         (
             SELECT MIN(pol2.price_unit * (1 - COALESCE(pol2.discount, 0) / 100.0))
             FROM purchase_order po2
@@ -371,50 +341,7 @@ SELECT
         0
     ) as mevcut_tur_birim_fiyat,
     
-    -- Mevcut Tur Birim Fiyat TL (önce purchase/done onaylı, sonra purchase/done tümü, sonra onaylı, sonra tümü)
     COALESCE(
-        -- 1. Purchase/Done state'inde onaylı tedarikçilerden en düşük (TL)
-        (
-            SELECT MIN(pol2.price_unit * (1 - COALESCE(pol2.discount, 0) / 100.0) *
-                CASE WHEN po_curr.name = 'TRY' THEN 1.0
-                     ELSE COALESCE(cr_try.rate, 1.0) / COALESCE(cr.rate, 1.0)
-                END)
-            FROM purchase_order po2
-            JOIN purchase_order_line pol2 ON pol2.order_id = po2.id
-            JOIN res_currency po_curr ON po2.currency_id = po_curr.id
-            LEFT JOIN LATERAL (
-                SELECT rate
-                FROM res_currency_rate
-                WHERE currency_id = po2.currency_id
-                AND (company_id = po2.company_id OR company_id IS NULL)
-                AND name <= CURRENT_DATE
-                ORDER BY name DESC
-                LIMIT 1
-            ) cr ON true
-            LEFT JOIN LATERAL (
-                SELECT rate
-                FROM res_currency_rate cr_t
-                JOIN res_company comp ON comp.id = COALESCE(po2.company_id, 1)
-                WHERE cr_t.currency_id = comp.currency_id
-                AND (cr_t.company_id = po2.company_id OR cr_t.company_id IS NULL)
-                AND cr_t.name <= CURRENT_DATE
-                ORDER BY cr_t.name DESC
-                LIMIT 1
-            ) cr_try ON true
-            WHERE po2.tender_id = t.id
-            AND pol2.product_id = tl.product_id
-            AND po2.tender_round = t.tender_round
-            AND po2.state IN ('purchase', 'done')
-            AND pol2.price_unit > 0
-            AND EXISTS (
-                SELECT 1
-                FROM product_supplierinfo psi
-                WHERE psi.partner_id = po2.partner_id
-                AND (psi.product_id = tl.product_id OR psi.product_tmpl_id = pp.product_tmpl_id)
-                AND psi.is_approved = true
-            )
-        ),
-        -- 2. Purchase/Done state'inde tüm tedarikçilerden en düşük (TL)
         (
             SELECT MIN(pol2.price_unit * (1 - COALESCE(pol2.discount, 0) / 100.0) *
                 CASE WHEN po_curr.name = 'TRY' THEN 1.0
@@ -448,47 +375,6 @@ SELECT
             AND po2.state IN ('purchase', 'done')
             AND pol2.price_unit > 0
         ),
-        -- 3. Mevcut turdaki onaylı tedarikçilerden en düşük (TL)
-        (
-            SELECT MIN(pol2.price_unit * (1 - COALESCE(pol2.discount, 0) / 100.0) *
-                CASE WHEN po_curr.name = 'TRY' THEN 1.0
-                     ELSE COALESCE(cr_try.rate, 1.0) / COALESCE(cr.rate, 1.0)
-                END)
-            FROM purchase_order po2
-            JOIN purchase_order_line pol2 ON pol2.order_id = po2.id
-            JOIN res_currency po_curr ON po2.currency_id = po_curr.id
-            LEFT JOIN LATERAL (
-                SELECT rate
-                FROM res_currency_rate
-                WHERE currency_id = po2.currency_id
-                AND (company_id = po2.company_id OR company_id IS NULL)
-                AND name <= CURRENT_DATE
-                ORDER BY name DESC
-                LIMIT 1
-            ) cr ON true
-            LEFT JOIN LATERAL (
-                SELECT rate
-                FROM res_currency_rate cr_t
-                JOIN res_company comp ON comp.id = COALESCE(po2.company_id, 1)
-                WHERE cr_t.currency_id = comp.currency_id
-                AND (cr_t.company_id = po2.company_id OR cr_t.company_id IS NULL)
-                AND cr_t.name <= CURRENT_DATE
-                ORDER BY cr_t.name DESC
-                LIMIT 1
-            ) cr_try ON true
-            WHERE po2.tender_id = t.id
-            AND pol2.product_id = tl.product_id
-            AND po2.tender_round = t.tender_round
-            AND pol2.price_unit > 0
-            AND EXISTS (
-                SELECT 1
-                FROM product_supplierinfo psi
-                WHERE psi.partner_id = po2.partner_id
-                AND (psi.product_id = tl.product_id OR psi.product_tmpl_id = pp.product_tmpl_id)
-                AND psi.is_approved = true
-            )
-        ),
-        -- 4. Mevcut turdaki tüm tedarikçilerden en düşük (TL)
         (
             SELECT MIN(pol2.price_unit * (1 - COALESCE(pol2.discount, 0) / 100.0) *
                 CASE WHEN po_curr.name = 'TRY' THEN 1.0
@@ -524,27 +410,8 @@ SELECT
         0
     ) as mevcut_tur_birim_fiyat_tl,
     
-    -- Mevcut Tur Toplam Fiyat (önce purchase/done onaylı, sonra purchase/done tümü, sonra onaylı, sonra tümü)
+    -- Mevcut Tur Toplam Fiyat (önce purchase/done, yoksa en düşük teklif)
     COALESCE(
-        -- 1. Purchase/Done state'inde onaylı tedarikçilerden en düşük
-        (
-            SELECT MIN(pol2.price_subtotal)
-            FROM purchase_order po2
-            JOIN purchase_order_line pol2 ON pol2.order_id = po2.id
-            WHERE po2.tender_id = t.id
-            AND pol2.product_id = tl.product_id
-            AND po2.tender_round = t.tender_round
-            AND po2.state IN ('purchase', 'done')
-            AND pol2.price_unit > 0
-            AND EXISTS (
-                SELECT 1
-                FROM product_supplierinfo psi
-                WHERE psi.partner_id = po2.partner_id
-                AND (psi.product_id = tl.product_id OR psi.product_tmpl_id = pp.product_tmpl_id)
-                AND psi.is_approved = true
-            )
-        ),
-        -- 2. Purchase/Done state'inde tüm tedarikçilerden en düşük
         (
             SELECT MIN(pol2.price_subtotal)
             FROM purchase_order po2
@@ -555,24 +422,6 @@ SELECT
             AND po2.state IN ('purchase', 'done')
             AND pol2.price_unit > 0
         ),
-        -- 3. Mevcut turdaki onaylı tedarikçilerden en düşük
-        (
-            SELECT MIN(pol2.price_subtotal)
-            FROM purchase_order po2
-            JOIN purchase_order_line pol2 ON pol2.order_id = po2.id
-            WHERE po2.tender_id = t.id
-            AND pol2.product_id = tl.product_id
-            AND po2.tender_round = t.tender_round
-            AND pol2.price_unit > 0
-            AND EXISTS (
-                SELECT 1
-                FROM product_supplierinfo psi
-                WHERE psi.partner_id = po2.partner_id
-                AND (psi.product_id = tl.product_id OR psi.product_tmpl_id = pp.product_tmpl_id)
-                AND psi.is_approved = true
-            )
-        ),
-        -- 4. Mevcut turdaki tüm tedarikçilerden en düşük
         (
             SELECT MIN(pol2.price_subtotal)
             FROM purchase_order po2
@@ -585,50 +434,7 @@ SELECT
         0
     ) as mevcut_tur_toplam_fiyat,
     
-    -- Mevcut Tur Toplam Fiyat TL (önce purchase/done onaylı, sonra purchase/done tümü, sonra onaylı, sonra tümü)
     COALESCE(
-        -- 1. Purchase/Done state'inde onaylı tedarikçilerden en düşük (TL)
-        (
-            SELECT MIN(pol2.price_subtotal *
-                CASE WHEN po_curr.name = 'TRY' THEN 1.0
-                     ELSE COALESCE(cr_try.rate, 1.0) / COALESCE(cr.rate, 1.0)
-                END)
-            FROM purchase_order po2
-            JOIN purchase_order_line pol2 ON pol2.order_id = po2.id
-            JOIN res_currency po_curr ON po2.currency_id = po_curr.id
-            LEFT JOIN LATERAL (
-                SELECT rate
-                FROM res_currency_rate
-                WHERE currency_id = po2.currency_id
-                AND (company_id = po2.company_id OR company_id IS NULL)
-                AND name <= CURRENT_DATE
-                ORDER BY name DESC
-                LIMIT 1
-            ) cr ON true
-            LEFT JOIN LATERAL (
-                SELECT rate
-                FROM res_currency_rate cr_t
-                JOIN res_company comp ON comp.id = COALESCE(po2.company_id, 1)
-                WHERE cr_t.currency_id = comp.currency_id
-                AND (cr_t.company_id = po2.company_id OR cr_t.company_id IS NULL)
-                AND cr_t.name <= CURRENT_DATE
-                ORDER BY cr_t.name DESC
-                LIMIT 1
-            ) cr_try ON true
-            WHERE po2.tender_id = t.id
-            AND pol2.product_id = tl.product_id
-            AND po2.tender_round = t.tender_round
-            AND po2.state IN ('purchase', 'done')
-            AND pol2.price_unit > 0
-            AND EXISTS (
-                SELECT 1
-                FROM product_supplierinfo psi
-                WHERE psi.partner_id = po2.partner_id
-                AND (psi.product_id = tl.product_id OR psi.product_tmpl_id = pp.product_tmpl_id)
-                AND psi.is_approved = true
-            )
-        ),
-        -- 2. Purchase/Done state'inde tüm tedarikçilerden en düşük (TL)
         (
             SELECT MIN(pol2.price_subtotal *
                 CASE WHEN po_curr.name = 'TRY' THEN 1.0
@@ -662,47 +468,6 @@ SELECT
             AND po2.state IN ('purchase', 'done')
             AND pol2.price_unit > 0
         ),
-        -- 3. Mevcut turdaki onaylı tedarikçilerden en düşük (TL)
-        (
-            SELECT MIN(pol2.price_subtotal *
-                CASE WHEN po_curr.name = 'TRY' THEN 1.0
-                     ELSE COALESCE(cr_try.rate, 1.0) / COALESCE(cr.rate, 1.0)
-                END)
-            FROM purchase_order po2
-            JOIN purchase_order_line pol2 ON pol2.order_id = po2.id
-            JOIN res_currency po_curr ON po2.currency_id = po_curr.id
-            LEFT JOIN LATERAL (
-                SELECT rate
-                FROM res_currency_rate
-                WHERE currency_id = po2.currency_id
-                AND (company_id = po2.company_id OR company_id IS NULL)
-                AND name <= CURRENT_DATE
-                ORDER BY name DESC
-                LIMIT 1
-            ) cr ON true
-            LEFT JOIN LATERAL (
-                SELECT rate
-                FROM res_currency_rate cr_t
-                JOIN res_company comp ON comp.id = COALESCE(po2.company_id, 1)
-                WHERE cr_t.currency_id = comp.currency_id
-                AND (cr_t.company_id = po2.company_id OR cr_t.company_id IS NULL)
-                AND cr_t.name <= CURRENT_DATE
-                ORDER BY cr_t.name DESC
-                LIMIT 1
-            ) cr_try ON true
-            WHERE po2.tender_id = t.id
-            AND pol2.product_id = tl.product_id
-            AND po2.tender_round = t.tender_round
-            AND pol2.price_unit > 0
-            AND EXISTS (
-                SELECT 1
-                FROM product_supplierinfo psi
-                WHERE psi.partner_id = po2.partner_id
-                AND (psi.product_id = tl.product_id OR psi.product_tmpl_id = pp.product_tmpl_id)
-                AND psi.is_approved = true
-            )
-        ),
-        -- 4. Mevcut turdaki tüm tedarikçilerden en düşük (TL)
         (
             SELECT MIN(pol2.price_subtotal *
                 CASE WHEN po_curr.name = 'TRY' THEN 1.0
