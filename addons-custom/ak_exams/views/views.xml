@@ -48,6 +48,7 @@
         <field name="inherit_id" ref="sales_team.crm_team_view_tree"/>
         <field name="arch" type="xml">
             <field name="name" position="after">
+                <field name="parent_id" string="Parent Team" optional="show"/>
                 <field name="external_id" optional="hide"/>
             </field>
         </field>

@@ -1,4 +1,4 @@
-from odoo import http
+from odoo import http, fields
 from odoo.http import request
 import json
 import logging
@@ -124,3 +124,65 @@ class SurveySecurityController(http.Controller):
                 'detect_tab_switching': survey.detect_tab_switching,
             }
         }
+    
+    @http.route('/survey/security/screenshot', type='json', auth='public', website=True)
+    def save_security_screenshot(self):
+        """
+        Endpoint to save screenshot captured during security violation
+        """
+        try:
+            raw_body = request.httprequest.data.decode('utf-8')
+            payload = json.loads(raw_body)
+            _logger.info("Screenshot upload request received")
+        except Exception as e:
+            _logger.error("Error decoding/parsing screenshot payload: %s", e)
+            return {'success': False, 'error': 'Invalid JSON payload'}
+        
+        access_token = payload.get('access_token')
+        screenshot_data = payload.get('screenshot_data')
+        violation_type = payload.get('violation_type', 'unknown')
+        
+        if not access_token or not screenshot_data:
+            _logger.warning("Screenshot upload missing required parameters")
+            return {'success': False, 'error': 'Missing required parameters'}
+        
+        user_input = request.env['survey.user_input'].sudo().search([
+            ('access_token', '=', access_token)
+        ], limit=1)
+        
+        if not user_input:
+            _logger.warning("Screenshot upload with invalid access_token: %s", access_token)
+            return {'success': False, 'error': 'Invalid access token'}
+        
+        try:
+            # Remove data URL prefix if present
+            if ',' in screenshot_data:
+                screenshot_data = screenshot_data.split(',')[1]
+            
+            # Create attachment for the screenshot
+            attachment = request.env['ir.attachment'].sudo().create({
+                'name': f'security_screenshot_{violation_type}_{user_input.id}_{fields.Datetime.now().strftime("%Y%m%d_%H%M%S")}.png',
+                'type': 'binary',
+                'datas': screenshot_data,
+                'res_model': 'survey.user_input',
+                'res_id': user_input.id,
+                'description': f'Security violation screenshot - Type: {violation_type}',
+            })
+            
+            _logger.info(
+                'Security screenshot saved for User Input ID: %s, Violation: %s, Attachment ID: %s',
+                user_input.id, violation_type, attachment.id
+            )
+            
+            return {
+                'success': True,
+                'message': 'Screenshot saved successfully',
+                'attachment_id': attachment.id
+            }
+            
+        except Exception as e:
+            _logger.error(
+                "Error saving security screenshot for User Input ID %s: %s",
+                user_input.id, str(e), exc_info=True
+            )
+            return {'success': False, 'error': 'Failed to save screenshot'}

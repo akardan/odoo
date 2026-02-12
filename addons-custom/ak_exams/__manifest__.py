@@ -34,8 +34,10 @@
         'security/groups.xml',
         'security/survey_security.xml',
         'security/survey_question_poll_security.xml',
+        'security/crm_team_security.xml',
         'data/survey_question_poll_category_data.xml',
         'data/ir_default_data.xml',
+        'data/res_users_server_actions.xml',
         'views/views.xml',
         'views/templates.xml',
         'views/survey_exam_features_view.xml',
@@ -55,7 +57,10 @@
     'assets': {
         'web.assets_frontend': [
             'ak_exams/static/src/scss/ak_exams_survey.scss',
+            'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js',
             'ak_exams/static/src/js/survey_security_minimal.js',
+            'ak_exams/static/src/js/survey_screen_recording_detection.js',
+            'ak_exams/static/src/js/survey_form_extension.js',
         ],
         'web.assets_backend': [
         ],

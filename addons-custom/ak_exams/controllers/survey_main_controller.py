@@ -10,89 +10,45 @@ class SurveyExtension(Survey):
         user_input = request.env['survey.user_input'].sudo().search([('access_token', '=', access_token)], limit=1)
         survey = user_input.survey_id if user_input else None
 
-        if survey and user_input and user_input.start_datetime:
+        # Check time limits BEFORE calling parent
+        if survey and user_input and user_input.state == 'in_progress' and user_input.start_datetime:
             from datetime import datetime
             import pytz
             
-            # TODO: Remove DEBUG logs after verification
-            # DEBUG: Log initial state
-            logging.getLogger(__name__).warning(
-                f"TIME CHECK - Survey: {survey.id}, User Input: {user_input.id}\n"
-                f"  - is_time_limited: {survey.is_time_limited}\n"
-                f"  - time_limit: {survey.time_limit}\n"
-                f"  - start_datetime: {user_input.start_datetime}\n"
-                f"  - end_date: {survey.end_date}"
-            )
+            # Get current time
+            now_utc = datetime.now(pytz.UTC)
             
-            # Check if time limit exceeded
+            # Ensure start_datetime is timezone-aware
+            start_dt = user_input.start_datetime
+            if start_dt.tzinfo is None:
+                start_dt = pytz.UTC.localize(start_dt)
+            
+            # Calculate elapsed time since participant started
+            time_elapsed_minutes = (now_utc - start_dt).total_seconds() / 60
+            
+            # CHECK 1: Individual time limit (from participant's start time)
             if survey.is_time_limited and survey.time_limit > 0:
-                # FIX: Use UTC-aware datetime to match start_datetime timezone
-                now_utc = datetime.now(pytz.UTC)
-                start_dt = user_input.start_datetime
-                
-                # Ensure start_dt is timezone-aware (convert if naive)
-                if start_dt.tzinfo is None:
-                    start_dt = pytz.UTC.localize(start_dt)
-                
-                time_elapsed = (now_utc - start_dt).total_seconds() / 60
-                
-                logging.getLogger(__name__).warning(
-                    f"TIME LIMIT CHECK:\n"
-                    f"  - datetime.now(pytz.UTC): {now_utc}\n"
-                    f"  - start_datetime: {start_dt} (tzinfo: {getattr(start_dt, 'tzinfo', 'N/A')})\n"
-                    f"  - time_elapsed (minutes): {time_elapsed:.2f}\n"
-                    f"  - time_limit (minutes): {survey.time_limit}"
-                )
-                
-                # Also check end_date if set
-                if survey.end_date:
-                    now_utc = datetime.now(pytz.UTC)
-                    end_date_utc = pytz.UTC.localize(survey.end_date) if survey.end_date.tzinfo is None else survey.end_date
-                    time_remaining_minutes = (end_date_utc - now_utc).total_seconds() / 60
-                    
+                if time_elapsed_minutes > survey.time_limit:
                     logging.getLogger(__name__).warning(
-                        f"END DATE CHECK:\n"
-                        f"  - now_utc: {now_utc}\n"
-                        f"  - end_date_utc: {end_date_utc}\n"
-                        f"  - time_remaining_minutes: {time_remaining_minutes:.2f}"
+                        f"TIME LIMIT EXCEEDED! User {user_input.id} exceeded {survey.time_limit} min limit - marking as done"
                     )
-                    
-                    # Use the shorter of the two limits
-                    effective_limit = min(survey.time_limit, time_remaining_minutes) if time_remaining_minutes > 0 else survey.time_limit
-                else:
-                    effective_limit = survey.time_limit
-                
-                logging.getLogger(__name__).warning(
-                    f"  - effective_limit (minutes): {effective_limit}\n"
-                    f"  - Will expire: {time_elapsed > effective_limit}"
-                )
-                
-                if time_elapsed > effective_limit:
-                    # Time limit exceeded - mark survey as done
-                    logging.getLogger(__name__).error(
-                        f"TIME LIMIT EXCEEDED! Closing exam for user_input {user_input.id}"
-                    )
+                    # Mark as done
                     user_input.sudo().write({'state': 'done'})
-                    return {
-                        'error': 'time_expired',
-                        'error_message': 'Süreniz doldu. Sınav otomatik olarak sonlandırıldı.'
-                    }
+                    # Return as tuple: (correct_answers, question_html) - same format as Odoo
+                    return {}, self._prepare_question_html(survey, user_input, **post)
             
-            # Check if end_date passed
+            # CHECK 2: Global end date (survey closes for everyone)
             if survey.end_date:
-                now_utc = datetime.now(pytz.UTC)
                 end_date_utc = pytz.UTC.localize(survey.end_date) if survey.end_date.tzinfo is None else survey.end_date
                 
                 if now_utc > end_date_utc:
-                    # Survey end date passed - mark as done
-                    logging.getLogger(__name__).error(
-                        f"EXAM END DATE PASSED! Closing exam for user_input {user_input.id}"
+                    logging.getLogger(__name__).warning(
+                        f"EXAM END DATE PASSED! User {user_input.id} - Survey closed at {end_date_utc} - marking as done"
                     )
+                    # Mark as done
                     user_input.sudo().write({'state': 'done'})
-                    return {
-                        'error': 'exam_closed',
-                        'error_message': 'Sınav süresi sona erdi. Sınav otomatik olarak sonlandırıldı.'
-                    }
+                    # Return as tuple: (correct_answers, question_html) - same format as Odoo
+                    return {}, self._prepare_question_html(survey, user_input, **post)
 
         # REMOVED: Session Timeout Logic - This was causing premature exam closure
         # The session_timeout_minutes field is kept for potential future use, but the check is disabled
@@ -193,8 +149,8 @@ class SurveyExtension(Survey):
                     randomized_data[str(question.id)] = answer_ids
                 answer_sudo.randomized_question_ids = json.dumps(randomized_data)
 
-        # Check if survey has end_date and is time limited
-        if survey_sudo.end_date and survey_sudo.is_time_limited and answer_sudo.state == 'in_progress':
+        # Check if survey has end_date and is time limited for JS timer - calculate remaining time and pass to template
+        if (survey_sudo.end_date or survey_sudo.is_time_limited) and answer_sudo.state == 'in_progress':
             from datetime import datetime
             import pytz
             

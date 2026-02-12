@@ -75,8 +75,8 @@
                         <field name="category_question_count_ids" nolabel="1">
                             <list editable="bottom">
                                 <field name="category_id"/>
-                                <field name="total_questions" readonly="1"/>
-                                <field name="questions_to_ask"/>
+                                <field name="total_questions" readonly="1" sum="Total Questions"/>
+                                <field name="questions_to_ask" sum="Total To Ask"/>
                             </list>
                         </field>
                     </group>

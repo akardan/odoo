@@ -321,9 +321,11 @@ class SurveyParticipantImportWizard(models.TransientModel):
                 'DANONE ID': 'external_id',
                 'ID': 'external_id',
                 'FIRST&LAST NAME': 'name',
+                'Tam İsim': 'name',
                 'NAME': 'name',
                 'AD SOYAD': 'name',
                 'BUSINESS E-MAIL': 'email',
+                'İş E-Posta': 'email',
                 'EMAIL': 'email',
                 'E-POSTA': 'email',
                 'DEPARTMENT': 'department',
@@ -332,19 +334,23 @@ class SurveyParticipantImportWizard(models.TransientModel):
                 'TELEFON': 'phone',
                 'TAKIM': 'team',
                 'TEAM': 'team',
+                'Grup': 'team',
                 'BÖLGE': 'region',
                 'REGION': 'region',
             }
         else:  # BM sheet
             header_mapping = {
                 'FIRST&LAST NAME': 'name',
+                'Tam İsim': 'name',
                 'NAME': 'name',
                 'AD SOYAD': 'name',
                 'BUSINESS E-MAIL': 'email',
+                'İş E-Posta': 'email',
                 'EMAIL': 'email',
                 'E-POSTA': 'email',
                 'DEPARTMENT': 'department',
                 'DEPARTMAN': 'department',
+                'Grup': 'team',
                 'PHONE': 'phone',
                 'TELEFON': 'phone',
                 'BÖLGE': 'region',
@@ -420,7 +426,7 @@ class SurveyParticipantImportWizard(models.TransientModel):
                     'email': email,
                     'lang': 'tr_TR',
                     'company_id': self.env.company.id,
-                    'groups_id': [(6, 0, [self.env.ref('base.group_user').id, self.env.ref('ak_exams.group_nutricia_exams_participants').id])]
+                    'groups_id': [(6, 0, [self.env.ref('base.group_portal').id, self.env.ref('ak_exams.group_nutricia_exams_participants').id])]
                 }
                 
                 if partner:
@@ -449,28 +455,28 @@ class SurveyParticipantImportWizard(models.TransientModel):
             if phone: vals['phone'] = phone
             if external_id: vals['external_id'] = str(external_id)
             
-            # Ensure user has the participant group and is internal user
+            # Ensure user has the participant group and is portal user
             group_participant = self.env.ref('ak_exams.group_nutricia_exams_participants')
-            group_internal = self.env.ref('base.group_user')
             group_portal = self.env.ref('base.group_portal')
+            group_internal = self.env.ref('base.group_user')
             group_public = self.env.ref('base.group_public')
             
-            # Remove portal and public groups first
+            # Remove internal and public groups first
             groups_to_remove = []
-            if group_portal.id in user.groups_id.ids:
-                groups_to_remove.append(group_portal.id)
+            if group_internal.id in user.groups_id.ids:
+                groups_to_remove.append(group_internal.id)
             if group_public.id in user.groups_id.ids:
                 groups_to_remove.append(group_public.id)
                 
             if groups_to_remove:
                 vals['groups_id'] = [(3, gid) for gid in groups_to_remove]
                 
-            # Add required groups
+            # Add required groups (portal + participant)
             groups_to_add = []
             if group_participant.id not in user.groups_id.ids:
                 groups_to_add.append(group_participant.id)
-            if group_internal.id not in user.groups_id.ids:
-                groups_to_add.append(group_internal.id)
+            if group_portal.id not in user.groups_id.ids:
+                groups_to_add.append(group_portal.id)
                 
             if groups_to_add:
                 if 'groups_id' in vals:

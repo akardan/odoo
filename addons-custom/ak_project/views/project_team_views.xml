@@ -67,6 +67,7 @@
         <field name="arch" type="xml">
             <list string="Project Team">
                 <field name="name" string="Project Team"/>
+                <field name="parent_id" string="Parent Team" optional="show"/>
                 <field name="user_id"/>
             </list>
         </field>

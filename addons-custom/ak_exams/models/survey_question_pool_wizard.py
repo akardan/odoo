@@ -17,12 +17,13 @@ class SurveyQuestionPoolWizard(models.TransientModel):
     job_position_id = fields.Many2one(
         'hr.job',
         string=_('Role'),
-        domain="[('active', '=', True)]"
+        domain="[('active', '=', True), '|', ('company_id', '=', False), ('company_id', '=', company_id)]"
     )
     
     category_id = fields.Many2one(
         'survey.question.poll.category',
-        string=_('Category')
+        string=_('Category'),
+        domain="[('active', '=', True), '|', ('company_id', '=', False), ('company_id', '=', company_id)]"
     )
     
     company_id = fields.Many2one(
