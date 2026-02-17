@@ -570,7 +570,8 @@
                       decoration-info="workflow_current_state_id.code in ('first_tender_round', 'new_tender_round', 'evaluation') or tender_type == 'mice'"
                       decoration-muted="workflow_current_state_id.code in ('cancel', 'cancelled', 'rejected')"
                       decoration-primary="tender_type == 'direct'"
-                      decoration-warning="tender_type == 'promotion'">
+                      decoration-warning="tender_type == 'promotion'"
+                      default_order="start_date desc">
                     <field name="offer_submission_status" column_invisible="1"/>
                     <field name="is_in_offer_collection" column_invisible="1"/>
                     <field name="code"/>
@@ -658,7 +659,7 @@
             <field name="name">ak.tender.kanban</field>
             <field name="model">ak.tender</field>
             <field name="arch" type="xml">
-                <kanban default_group_by="workflow_state_name" class="o_kanban_dashboard o_tender_kanban" edit="false" sample="1" group_create="false" group_delete="false" group_edit="false" groups_limit="10" expand_groups="true" load_more_on_reload="true">
+                <kanban default_group_by="workflow_state_name" default_order="start_date desc" class="o_kanban_dashboard o_tender_kanban" edit="false" sample="1" group_create="false" group_delete="false" group_edit="false" groups_limit="10" expand_groups="true" load_more_on_reload="true">
                     <field name="id"/>
                     <field name="workflow_current_state_id"/>
                     <field name="workflow_state_name"/>
