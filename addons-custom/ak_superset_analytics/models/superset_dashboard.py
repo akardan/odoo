@@ -25,6 +25,8 @@ class SupersetDashboard(models.Model):
     superset_url = fields.Char('Superset URL', required=True, default='http://localhost:8088')
     jwt_secret = fields.Char('JWT Secret Key', required=True)
     active = fields.Boolean('Active', default=True)
+    company_id = fields.Many2one('res.company', string='Company', required=True,
+                                  default=lambda self: self.env.company)
     allowed_groups = fields.Many2many('res.groups', string='Allowed Groups')
     
     # Superset user credentials

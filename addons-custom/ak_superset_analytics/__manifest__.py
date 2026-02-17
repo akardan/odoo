@@ -21,6 +21,7 @@
     'depends': ['base', 'web'],
     'data': [
         'security/ir.model.access.csv',
+        'security/superset_dashboard_security.xml',
         'views/superset_dashboard_views.xml',
         'views/menu_items.xml',
     ],
