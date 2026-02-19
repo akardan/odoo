@@ -332,9 +332,9 @@ class AkAiConversation(models.Model):
     
     def add_message(self, content, message_type='user'):
         """Programmatic method to send message in conversation"""
-        
-        # Check user access
-        if self.user_id != self.env.user:
+
+        # Check user access - discuss channels are shared, allow all members
+        if self.integration_type != 'discuss' and self.user_id != self.env.user:
             raise AccessError(_('You can only send messages in your own conversations'))
         
         message = self.env['ak_ai.message'].create({
@@ -344,10 +344,11 @@ class AkAiConversation(models.Model):
             'user_id': self.env.user.id,
         })
         
-        # If user message, trigger AI response
+        # If user message, trigger AI response and return it
         if message_type == 'user':
-            self._generate_ai_response(message)
-            
+            ai_response = self._generate_ai_response(message)
+            return ai_response
+
         return message
     
     def _generate_ai_response(self, user_message):
@@ -355,6 +356,8 @@ class AkAiConversation(models.Model):
         max_retries = 5
         retry_count = 0
         last_error = None
+        response_meta = {}
+        response_content = ''
         
         while retry_count < max_retries:
             try:
@@ -399,27 +402,31 @@ class AkAiConversation(models.Model):
                     current_prompt = "Önceki kod çalıştırma hatası: " + str(last_error) + "\n\nLütfen kodu düzeltip tekrar dene.\n\nKullanıcı isteği: " + str(user_message.content)
 
                 # Generate response using AI service
-                response_content = ai_service.generate_response(
+                ai_result = ai_service.generate_response(
                     user_message=current_prompt,
                     context=context
                 )
-                
+
+                # Extract response content and metadata from dict
+                response_content = ai_result.get('content', '') if isinstance(ai_result, dict) else ai_result
+                response_meta = ai_result if isinstance(ai_result, dict) else {}
+
                 # Check for credit error in response
                 if "Insufficient credits" in response_content or "402" in response_content:
                     response_content = "🤖 **KAI Notu:** OpenRouter kredisi tükenmiş görünüyor. Lütfen sistem yöneticisine haber verin."
                     break # Don't retry credit errors
-                
+
                 # Check if response contains code to execute
                 import re
                 code_match = re.search(r'\[EXECUTE_CODE\](.*?)\[/EXECUTE_CODE\]', response_content, re.DOTALL)
-                
+
                 if code_match:
                     code = code_match.group(1).strip()
                     _logger.info(f"Auto-executing code attempt {retry_count + 1}")
-                    
+
                     # Execute code
                     exec_result = self.execute_python_code(code)
-                    
+
                     if exec_result.get('success'):
                         # Code executed successfully!
                         # Append the code and result to the response content
@@ -454,13 +461,20 @@ class AkAiConversation(models.Model):
                 msg = 'Üzgünüm, 5 denemeden sonra hala hata alıyorum. Lütfen tekrar deneyin.\n\nSon hata detayı: ' + str(last_error)
             response_content = msg
 
-        # Create AI message
-        ai_message = self.env['ak_ai.message'].create({
+        # Create AI message with token metadata
+        ai_message_vals = {
             'conversation_id': self.id,
             'content': response_content,
             'message_type': 'assistant',
             'user_id': self.env.user.id,
-        })
+        }
+        if response_meta:
+            ai_message_vals.update({
+                'tokens_used': response_meta.get('tokens_used', 0),
+                'response_time': response_meta.get('response_time', 0),
+                'ai_model': response_meta.get('model', ''),
+            })
+        ai_message = self.env['ak_ai.message'].create(ai_message_vals)
         
         return ai_message
     

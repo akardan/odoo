@@ -143,15 +143,38 @@ Record Name: {record_context.get('display_name', '')}
                     break
             
             if not latest_message:
-                return "No response from assistant."
-                
+                return {
+                    'content': "No response from assistant.",
+                    'tokens_used': 0,
+                    'tokens_input': 0,
+                    'tokens_output': 0,
+                    'response_time': time.time() - start_time if 'start_time' in dir() else 0,
+                    'cost': 0.0,
+                    'model': assistant_config.get_model_name(),
+                }
+
             # Extract text content
             content_parts = []
             for content in latest_message['content']:
                 if content['type'] == 'text':
                     content_parts.append(content['text']['value'])
-            
-            return "\n".join(content_parts)
+
+            ai_response = "\n".join(content_parts)
+
+            # Extract token usage from run status
+            tokens_input = run_status.get('usage', {}).get('prompt_tokens', 0) if isinstance(run_status, dict) else 0
+            tokens_output = run_status.get('usage', {}).get('completion_tokens', 0) if isinstance(run_status, dict) else 0
+            tokens_used = tokens_input + tokens_output
+
+            return {
+                'content': ai_response,
+                'tokens_used': tokens_used,
+                'tokens_input': tokens_input,
+                'tokens_output': tokens_output,
+                'response_time': 0,
+                'cost': 0.0,
+                'model': assistant_config.get_model_name(),
+            }
 
         except Exception as e:
             _logger.error(f"Error retrieving response: {e}")

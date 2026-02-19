@@ -77,14 +77,6 @@ Yardım için: Herhangi bir ekranda F1 tuşuna basın veya sağ üst köşedeki 
             <field name="tags">sorun,çözüm,hata,yardım</field>
         </record>
 
-        <!-- KAI Discuss Channel -->
-        <record id="channel_kai_assistant" model="discuss.channel">
-            <field name="name">KAI Assistant</field>
-            <field name="channel_type">channel</field>
-            <field name="is_ai_channel">True</field>
-            <field name="description">KAI - Kardan AI Assistant ile sohbet kanali. Sorularinizi dogal dilde sorun.</field>
-        </record>
-
         <!-- Server Action to Execute AI Code -->
         <record id="action_execute_code" model="ir.actions.server">
             <field name="name">KAI: Kodu Çalıştır</field>
@@ -120,5 +112,10 @@ if env.context.get('conversation_id'):
             </field>
         </record>
         
+    </data>
+
+    <!-- KAI Discuss Channel - noupdate=0 ensures creation on update too -->
+    <data noupdate="0">
+        <function model="discuss.channel" name="ensure_ai_channel"/>
     </data>
 </odoo>

@@ -124,40 +124,56 @@ class AkAiServiceOpenRouter(models.Model):
             )
             
             ai_response = response.choices[0].message.content
-            
+
             # Extract token usage and cost
             tokens_input = response.usage.prompt_tokens if response.usage else 0
             tokens_output = response.usage.completion_tokens if response.usage else 0
             tokens_used = response.usage.total_tokens if response.usage else 0
-            
+
             # OpenRouter often provides cost in the response
             cost = 0.0
             if hasattr(response, 'cost'):
                 cost = response.cost
             elif response.usage and hasattr(response.usage, 'cost'):
                 cost = response.usage.cost
-            
+
             response_time = time.time() - start_time
-            
+
             # Validate response for security
             self._validate_response(ai_response)
-            
+
             # Log interaction
             self._log_interaction(
-                user_message, ai_response, context, 
-                tokens_used=tokens_used, 
+                user_message, ai_response, context,
+                tokens_used=tokens_used,
                 response_time=response_time,
                 tokens_input=tokens_input,
                 tokens_output=tokens_output,
                 cost=cost
             )
-            
-            return ai_response
+
+            return {
+                'content': ai_response,
+                'tokens_used': tokens_used,
+                'tokens_input': tokens_input,
+                'tokens_output': tokens_output,
+                'response_time': response_time,
+                'cost': cost,
+                'model': assistant.get_model_name(),
+            }
             
         except Exception as e:
             _logger.error(f"OpenRouter API error: {e}", exc_info=True)
             # Return the error message directly so it can be seen in the UI
-            return f"🤖 **KAI Notu:** Bir hata oluştu.\n\nHata detayı: {str(e)}"
+            return {
+                'content': f"🤖 **KAI Notu:** Bir hata oluştu.\n\nHata detayı: {str(e)}",
+                'tokens_used': 0,
+                'tokens_input': 0,
+                'tokens_output': 0,
+                'response_time': time.time() - start_time,
+                'cost': 0.0,
+                'model': assistant.get_model_name(),
+            }
     
     def _build_messages(self, user_message, context):
         """Build message array for OpenRouter (OpenAI-compatible format)"""

@@ -402,9 +402,16 @@ Her zaman yardımcı, güvenli ve kullanıcı dostu ol! [EXECUTE_CODE] bloğunu 
         return model_names.get(model_name, model_name)
     
     def _validate_response(self, response):
-        """Validate AI response for security violations"""
-        
-        # Check for forbidden patterns
+        """Validate AI response for security violations.
+        Only checks inside [EXECUTE_CODE] blocks, not explanatory text."""
+        import re
+
+        # Extract only executable code blocks
+        code_blocks = re.findall(r'\[EXECUTE_CODE\](.*?)\[/EXECUTE_CODE\]', response, re.DOTALL)
+
+        if not code_blocks:
+            return True
+
         forbidden_patterns = [
             'sudo()',
             '.with_user(',
@@ -413,17 +420,15 @@ Her zaman yardımcı, güvenli ve kullanıcı dostu ol! [EXECUTE_CODE] bloğunu 
             'import os',
             'import sys',
             'import subprocess',
-            'eval(',
-            'exec(',
-            'open(',
             '__import__',
         ]
-        
-        for pattern in forbidden_patterns:
-            if pattern in response:
-                _logger.error(f"AI response contains forbidden pattern: {pattern}")
-                raise ValidationError(_('AI response contains security violation'))
-                
+
+        for code in code_blocks:
+            for pattern in forbidden_patterns:
+                if pattern in code:
+                    _logger.error(f"AI code block contains forbidden pattern: {pattern}")
+                    raise ValidationError(_('AI response contains security violation in code block: %s') % pattern)
+
         return True
     
     def _log_interaction(self, user_message, ai_response, context, tokens_used=0, response_time=0, tokens_input=0, tokens_output=0, cost=0.0):

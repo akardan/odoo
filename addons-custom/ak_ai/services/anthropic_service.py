@@ -90,19 +90,35 @@ class AkAiServiceAnthropic(models.Model):
             
             # Log interaction
             self._log_interaction(
-                user_message, ai_response, context, 
-                tokens_used=tokens_used, 
+                user_message, ai_response, context,
+                tokens_used=tokens_used,
                 response_time=response_time,
                 tokens_input=tokens_input,
                 tokens_output=tokens_output,
                 cost=cost
             )
-            
-            return ai_response
-            
+
+            return {
+                'content': ai_response,
+                'tokens_used': tokens_used,
+                'tokens_input': tokens_input,
+                'tokens_output': tokens_output,
+                'response_time': response_time,
+                'cost': cost,
+                'model': assistant.get_model_name(),
+            }
+
         except Exception as e:
             _logger.error(f"Anthropic API error: {e}")
-            return _('Üzgünüm, bir hata oluştu. Lütfen tekrar deneyin.')
+            return {
+                'content': _('Üzgünüm, bir hata oluştu. Lütfen tekrar deneyin.'),
+                'tokens_used': 0,
+                'tokens_input': 0,
+                'tokens_output': 0,
+                'response_time': time.time() - start_time,
+                'cost': 0.0,
+                'model': assistant.get_model_name() if assistant else '',
+            }
     
     def _build_messages(self, user_message, context):
         """Build message array for Anthropic (no system role in messages)"""
