@@ -113,3 +113,55 @@ body, table, td, th, div, span, p, h1, h2, h3, h4, h5, h6 {
     background-color: #52c41a;
     color: white;
 }
+
+@media print {
+    /* Ensure the page div and comparison table are fully visible */
+    .page {
+        overflow: visible !important;
+        height: auto !important;
+        max-height: none !important;
+    }
+
+    /* Hide interactive buttons in print */
+    button,
+    .btn {
+        display: none !important;
+    }
+
+    /* Hide Odoo navbar, breadcrumb etc. */
+    .o_main_navbar,
+    .o_breadcrumb,
+    .o_cp_buttons,
+    .o_control_panel {
+        display: none !important;
+    }
+
+    /* Ensure table is fully visible without scrolling */
+    .comparison-table {
+        width: 100% !important;
+        overflow: visible !important;
+        page-break-inside: auto;
+    }
+
+    .comparison-table thead {
+        display: table-header-group;
+    }
+
+    .comparison-table tbody {
+        display: table-row-group;
+        overflow: visible !important;
+        height: auto !important;
+    }
+
+    .comparison-table tr {
+        page-break-inside: avoid;
+        page-break-after: auto;
+    }
+
+    /* Prevent any container from clipping the table */
+    body, html, .o_content, .o_view_controller, .o_report_in_client {
+        overflow: visible !important;
+        height: auto !important;
+        max-height: none !important;
+    }
+}

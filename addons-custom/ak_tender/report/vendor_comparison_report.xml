@@ -821,7 +821,28 @@
                             },
 
 
+                            printReport: function() {
+                                // Open the report as a standalone page in a new tab so Chrome
+                                // can print all content (iframe clipping issue fix)
+                                var baseUrl = window.location.href.split('?')[0];
+                                var printUrl = baseUrl + '?print=1&t=' + Date.now();
+                                window.open(printUrl, '_blank');
+                            },
+
                         };
+
+                        // Auto-print when ?print=1 is in URL (triggered by printReport button)
+                        (function() {
+                            var params = new URLSearchParams(window.location.search);
+                            if (params.get('print') === '1') {
+                                window.addEventListener('load', function() {
+                                    setTimeout(function() { window.print(); }, 1500);
+                                });
+                                if (document.readyState === 'complete') {
+                                    setTimeout(function() { window.print(); }, 1500);
+                                }
+                            }
+                        })();
 
                         // Initialize when DOM is loaded
                         document.addEventListener('DOMContentLoaded', function() {
@@ -871,6 +892,9 @@
                                     <span class="selection-badge system-badge">S</span> Sistem Seçimi
                                     <span class="selection-badge user-badge ml-2">K</span> Kullanıcı Seçimi
                                 </div>
+                                <button type="button" class="btn btn-sm btn-secondary" onclick="window.VendorComparison.printReport()" title="Raporu yazdırmak için yeni sekmede aç" style="margin-right: 5px;">
+                                    <i class="fa fa-print"></i> Yazdır
+                                </button>
                                 <button type="button" class="btn btn-sm btn-secondary" onclick="window.VendorComparison.exportToExcel()" title="Raporu Excel'e Aktar" style="margin-right: 5px;">
                                     <i class="fa fa-file-excel-o"></i> Excel'e Aktar
                                 </button>
@@ -921,10 +945,8 @@
                                     
                                 </tr>
                             </table>
-                            
-                            
-                            </div>
-                            
+
+
                             <!-- Comparison Table -->
                             <table class="table table-bordered comparison-table mt-0" t-att-data-tender-id="o.id" t-att-data-tender-state="o.workflow_current_state_id.code">
                                 <thead>
@@ -1719,6 +1741,7 @@
                             
                             <div class="mt-3" style="text-align: right;">
                             </div>
+                    </div><!-- /page -->
                 </t>
             </t>
         </template>
