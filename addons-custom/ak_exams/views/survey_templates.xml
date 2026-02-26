@@ -102,6 +102,28 @@
         </xpath>
     </template>
 
+    <!-- Make navigation buttons larger for tablet/iPad with emojis -->
+    <template id="survey_navigation_large_buttons" name="Survey: Navigation Large Buttons" inherit_id="survey.survey_navigation">
+        <!-- Replace the previous button icon with emoji -->
+        <xpath expr="//button[@name='button_submit']/i" position="replace">
+            <span style="font-size: 2rem;">⬅️</span>
+        </xpath>
+        
+        <!-- Add styling to previous button - no extra padding, just the emoji size -->
+        <xpath expr="//button[@name='button_submit']" position="attributes">
+            <attribute name="class">btn border-0 p-0 shadow-none o_survey_navigation_submit</attribute>
+        </xpath>
+        
+        <!-- Replace the next button icon with emoji -->
+        <xpath expr="//button[hasclass('o_survey_navigation_submit')][not(@name)]/i" position="replace">
+            <span style="font-size: 2rem;">➡️</span>
+        </xpath>
+        
+        <!-- Add styling to next button - no extra padding, just the emoji size -->
+        <xpath expr="//button[hasclass('o_survey_navigation_submit')][not(@name)]" position="attributes">
+            <attribute name="class">btn border-0 p-0 shadow-none o_survey_navigation_submit</attribute>
+        </xpath>
+    </template>
 
 </data>
 </odoo>
