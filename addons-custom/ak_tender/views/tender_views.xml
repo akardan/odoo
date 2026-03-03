@@ -308,6 +308,10 @@
                                     <field name="target_price" widget="monetary" options="{'currency_field': 'currency_id'}"
                                            readonly="[('workflow_current_state_id.code', 'not in', ['first_tender_round', 'target_price_set'])]"/>
                                     <field name="winning_order_ids" widget="many2many_tags" readonly="1" />
+                                    <field name="winning_total_amount" widget="monetary" options="{'currency_field': 'currency_id'}"
+                                           readonly="1"/>
+                                    <field name="winning_total_npv" widget="monetary" options="{'currency_field': 'currency_id'}"
+                                           readonly="1"/>
                                 </group>
                                 
                                 
@@ -320,7 +324,7 @@
                                 </div>
                                 
                                 <!-- NPV Hesaplama Alanları -->
-                                <div>
+                                <!-- <div>
                                     <h4 class="mt-3 mb-2">NPV Hesaplama Ayarları</h4>
                                     <group>
                                         <field name="npv_rate" />
@@ -331,7 +335,7 @@
                                         <p><strong>Bilgi:</strong> NPV (Net Bugünkü Değer) hesaplaması için kullanılacak oranı belirleyebilirsiniz.</p>
                                         <p>NPV Oranı, gelecekteki nakit akışlarının bugünkü değerini hesaplamak için kullanılır.</p>
                                     </div>
-                                </div>
+                                </div> -->
                                 
                                 <!-- Direkt İhale Özellikleri -->
                                 <div invisible="tender_type != 'direct'">

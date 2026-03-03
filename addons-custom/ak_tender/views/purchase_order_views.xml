@@ -76,14 +76,25 @@
                     <field name="tender_round" string="Teklif Turu" optional="show"/>
                 </xpath>
               
+                <!-- Override amount_untaxed to remove sum aggregation -->
+                <xpath expr="//field[@name='amount_untaxed']" position="replace">
+                    <field name="amount_untaxed" widget="monetary" optional="show"/>
+                </xpath>
+                
                 <xpath expr="//field[@name='amount_untaxed']" position="after">
                     <field name="payment_term_id" string="Ödeme Koşulları" optional="show"/>
-                    <field name="total_npv" widget="monetary" options="{'currency_field': 'currency_id'}" string="Toplam NPV" sum="Toplam" optional="show"/>
+                    <field name="total_npv" widget="monetary" options="{'currency_field': 'currency_id'}" string="Toplam NPV" optional="show"/>
                 </xpath>
+                
+                <!-- Override amount_total to remove sum aggregation -->
+                <xpath expr="//field[@name='amount_total']" position="replace">
+                    <field name="amount_total" widget="monetary" optional="show"/>
+                </xpath>
+                
                 <xpath expr="//field[@name='amount_total']" position="after">
                     <field name="system_selection" string="S.S." optional="show"/>
                     <field name="user_selection" string="K.S."  optional="show"/>
-                </xpath>            
+                </xpath>
             </field>
         </record>
         
@@ -99,10 +110,21 @@
                     <field name="tender_round" string="Teklif Turu" optional="show"/>
                 </xpath>
               
+                <!-- Override amount_untaxed to remove sum aggregation -->
+                <xpath expr="//field[@name='amount_untaxed']" position="replace">
+                    <field name="amount_untaxed" widget="monetary" optional="show"/>
+                </xpath>
+                
                 <xpath expr="//field[@name='amount_untaxed']" position="after">
                     <field name="payment_term_id" string="Ödeme Koşulları" optional="show"/>
-                    <field name="total_npv" widget="monetary" options="{'currency_field': 'currency_id'}" string="Toplam NPV" sum="Toplam" optional="show"/>
+                    <field name="total_npv" widget="monetary" options="{'currency_field': 'currency_id'}" string="Toplam NPV" optional="show"/>
                 </xpath>
+                
+                <!-- Override amount_total to remove sum aggregation -->
+                <xpath expr="//field[@name='amount_total']" position="replace">
+                    <field name="amount_total" widget="monetary" optional="show"/>
+                </xpath>
+                
                 <xpath expr="//field[@name='amount_total']" position="after">
                     <field name="system_selection" string="S.S." optional="show"/>
                     <field name="user_selection" string="K.S."  optional="show"/>

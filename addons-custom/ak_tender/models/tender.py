@@ -919,6 +919,56 @@ class AkTender(models.Model):
             if record.winning_order_ids:
                 winning_partners |= record.winning_order_ids.mapped('partner_id')
             record.winning_supplier_ids = winning_partners
+    
+    # Kazanan Tekliflerin Toplam Tutarı ve NPV'si
+    winning_total_amount = fields.Monetary(
+        string=_('Kazanan Teklifler Toplam Tutar'),
+        currency_field='currency_id',
+        compute='_compute_winning_totals',
+        store=True,
+        help=_("Kazanan tekliflerin toplam tutarı (vergi hariç)")
+    )
+    
+    winning_total_npv = fields.Monetary(
+        string=_('Kazanan Teklifler Toplam NPV'),
+        currency_field='currency_id',
+        compute='_compute_winning_totals',
+        store=True,
+        help=_("Kazanan tekliflerin toplam NPV değeri")
+    )
+    
+    @api.depends('winning_order_ids', 'winning_order_ids.amount_untaxed', 'winning_order_ids.total_npv', 'winning_order_ids.currency_id')
+    def _compute_winning_totals(self):
+        """Kazanan tekliflerin toplam tutarını ve NPV'sini hesapla"""
+        for record in self:
+            total_amount = 0.0
+            total_npv = 0.0
+            tender_currency = record.currency_id
+            
+            for po in record.winning_order_ids:
+                # Para birimi dönüşümü ile toplam tutarı hesapla
+                if po.currency_id != tender_currency:
+                    converted_amount = record._convert_currency_two_stage(
+                        po.amount_untaxed,
+                        po.currency_id,
+                        tender_currency
+                    )
+                    total_amount += converted_amount
+                    
+                    # NPV için de dönüşüm yap
+                    if po.total_npv:
+                        converted_npv = record._convert_currency_two_stage(
+                            po.total_npv,
+                            po.currency_id,
+                            tender_currency
+                        )
+                        total_npv += converted_npv
+                else:
+                    total_amount += po.amount_untaxed
+                    total_npv += po.total_npv if po.total_npv else 0.0
+            
+            record.winning_total_amount = total_amount
+            record.winning_total_npv = total_npv
 
     # İhale Sonuçları (One2many ilişki)
     purchase_order_ids = fields.One2many('purchase.order', 'tender_id', string=_('Teklifler (SAT)'))

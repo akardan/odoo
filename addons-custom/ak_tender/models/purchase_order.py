@@ -36,11 +36,16 @@ class PurchaseOrder(models.Model):
         help=_("İhale için varsayılan teslim yeri.")
     )
     offer_date = fields.Datetime(string='Teklif Tarihi', default=fields.Datetime.now, readonly=True)
-    tender_round = fields.Integer(string='Teklif Turu', default=1, help="Bu teklifin hangi turda sunulduğu (1, 2, 3...).")
+    tender_round = fields.Integer(string='Teklif Turu', default=1, group_operator='min', help="Bu teklifin hangi turda sunulduğu (1, 2, 3...).")
     guarantee_period = fields.Char(string='Garanti Süresi', help="Tedarikçinin sunduğu garanti süresi (örn: 2 Yıl).")
     # NPV calculation fields
     total_npv = fields.Monetary(string='Toplam NPV Değeri', currency_field='currency_id',
-                               help="Tüm satırların NPV değerlerinin toplamı.", readonly=True)
+                               help="Tüm satırların NPV değerlerinin toplamı.", readonly=True, group_operator='min')
+    
+    # Override standard fields to change group_operator from sum to min
+    amount_untaxed = fields.Monetary(group_operator='min')
+    amount_total = fields.Monetary(group_operator='min')
+    
     is_readonly = fields.Boolean(compute='_compute_is_readonly', store=False)
     tender_allow_edit = fields.Boolean(
         string='Düzenlenebilir mi?',
