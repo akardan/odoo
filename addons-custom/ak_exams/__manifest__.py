@@ -61,6 +61,7 @@
             'ak_exams/static/src/js/survey_security_minimal.js',
             'ak_exams/static/src/js/survey_screen_recording_detection.js',
             'ak_exams/static/src/js/survey_form_extension.js',
+            'ak_exams/static/src/js/survey_swipe_navigation.js',
         ],
         'web.assets_backend': [
         ],
