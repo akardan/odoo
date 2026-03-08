@@ -95,6 +95,11 @@
                             type="object"
                             class="btn-secondary"
                             invisible="scenario_type != 'region'"/>
+                    <button name="action_copy_scenario"
+                            string="Kopyala"
+                            type="object"
+                            class="btn-secondary"
+                            icon="fa-copy"/>
                     <field name="scenario_status"
                            widget="statusbar"
                            statusbar_visible="active,shortlisted,awarded"/>
@@ -230,8 +235,13 @@
                         <page string="İhale Kalemleri"
                               name="lines"
                               invisible="scenario_type == 'region'">
-                            <field name="line_ids">
-                                <list>
+                            <field name="line_ids"
+                                   context="{
+                                       'default_scenario_id': id,
+                                       'default_tender_id': tender_id,
+                                       'default_tender_type': 'mice'
+                                   }">
+                                <list editable="bottom">
                                     <field name="sequence" widget="handle"/>
                                     <field name="product_id"/>
                                     <field name="name"/>
@@ -239,6 +249,8 @@
                                     <field name="quantity"/>
                                     <field name="days"/>
                                     <field name="uom_id"/>
+                                    <field name="mice_room_type" optional="hide"/>
+                                    <field name="mice_meal_plan" optional="hide"/>
                                     <field name="currency_id" column_invisible="1"/>
                                     <field name="target_price"
                                            widget="monetary"
@@ -246,6 +258,7 @@
                                     <field name="computed_target_total"
                                            widget="monetary"
                                            options="{'currency_field': 'currency_id'}"
+                                           readonly="1"
                                            sum="Toplam"/>
                                 </list>
                             </field>

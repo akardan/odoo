@@ -42,6 +42,7 @@
         # Görünümler
         'views/tender_scenario_views.xml',
         'views/tender_mice_views.xml',
+        'views/portal_mice_templates.xml',
 
         # Sihirbazlar
         'wizards/tender_scenario_wizard_views.xml',
