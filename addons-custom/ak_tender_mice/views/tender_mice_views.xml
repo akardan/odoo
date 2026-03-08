@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ============================================================ -->
+    <!-- ak.tender form view — MICE Uzantısı                          -->
+    <!-- ak_tender.ak_tender_view_form üzerine inherit                -->
+    <!-- ============================================================ -->
+
+    <!-- 1. Button Box'a Senaryo sayacı butonu ekle -->
+    <record id="view_tender_form_mice_button_box" model="ir.ui.view">
+        <field name="name">ak.tender.form.mice.button_box</field>
+        <field name="model">ak.tender</field>
+        <field name="inherit_id" ref="ak_tender.ak_tender_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_view_scenarios"
+                        type="object"
+                        class="oe_stat_button"
+                        icon="fa-sitemap"
+                        invisible="tender_type != 'mice'">
+                    <field name="scenario_count"
+                           widget="statinfo"
+                           string="Senaryolar"/>
+                </button>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- 2. Ana grup'tan sonra MICE Bilgileri ve Senaryo İstatistikleri paneli -->
+    <record id="view_tender_form_mice_info_panel" model="ir.ui.view">
+        <field name="name">ak.tender.form.mice.info_panel</field>
+        <field name="model">ak.tender</field>
+        <field name="inherit_id" ref="ak_tender.ak_tender_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet/group" position="after">
+                <group invisible="tender_type != 'mice'"
+                       class="o_mice_info_panel">
+                    <group name="mice_event_info" string="MICE Etkinlik Bilgileri">
+                        <field name="total_person_count"
+                               readonly="not workflow_allow_edit"/>
+                        <field name="vip_person_count"
+                               readonly="not workflow_allow_edit"/>
+                    </group>
+                    <group name="scenario_stats" string="Senaryo Durumu">
+                        <field name="total_scenarios" readonly="1"/>
+                        <field name="shortlisted_scenarios" readonly="1"/>
+                        <field name="eliminated_scenarios" readonly="1"/>
+                        <field name="awarded_scenarios" readonly="1"/>
+                    </group>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- 3. Notebook'a Senaryolar sekmesi ekle -->
+    <record id="view_tender_form_mice_scenarios_tab" model="ir.ui.view">
+        <field name="name">ak.tender.form.mice.scenarios_tab</field>
+        <field name="model">ak.tender</field>
+        <field name="inherit_id" ref="ak_tender.ak_tender_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook" position="inside">
+                <page string="Senaryolar" name="mice_scenarios"
+                      invisible="tender_type != 'mice'">
+
+                    <!-- Aksiyon butonları -->
+                    <div class="d-flex gap-2 mb-3">
+                        <button name="action_create_scenario"
+                                string="Yeni Senaryo"
+                                type="object"
+                                class="btn btn-primary"
+                                invisible="not workflow_allow_edit"/>
+                        <button name="action_start_next_round"
+                                string="Sonraki Turu Başlat"
+                                type="object"
+                                class="btn btn-success"
+                                invisible="shortlisted_scenarios == 0"/>
+                    </div>
+
+                    <!-- Senaryo listesi -->
+                    <field name="scenario_ids"
+                           nolabel="1"
+                           context="{'default_tender_id': id}">
+                        <list decoration-success="scenario_status == 'awarded'"
+                              decoration-info="scenario_status == 'shortlisted'"
+                              decoration-muted="scenario_status == 'eliminated'"
+                              default_order="sequence">
+                            <field name="sequence" widget="handle"/>
+                            <field name="name"/>
+                            <field name="scenario_type"/>
+                            <field name="parent_id" optional="show"/>
+                            <field name="location_id"/>
+                            <field name="hotel_partner_id"/>
+                            <field name="meal_plan"/>
+                            <field name="date_option_count" string="Tarihler"/>
+                            <field name="line_count" string="Kalemler"/>
+                            <field name="currency_id" column_invisible="1"/>
+                            <field name="total_target_price"
+                                   widget="monetary"
+                                   options="{'currency_field': 'currency_id'}"/>
+                            <field name="best_npv_offer"
+                                   widget="monetary"
+                                   options="{'currency_field': 'currency_id'}"/>
+                            <field name="best_npv_partner_id"/>
+                            <field name="scenario_status"
+                                   widget="badge"
+                                   decoration-success="scenario_status == 'awarded'"
+                                   decoration-info="scenario_status == 'shortlisted'"
+                                   decoration-warning="scenario_status == 'active'"
+                                   decoration-danger="scenario_status == 'eliminated'"/>
+                            <field name="is_mandatory" widget="boolean_toggle"/>
+                            <field name="is_shortlisted" column_invisible="1"/>
+                            <button name="action_add_to_shortlist"
+                                    string="Kısa Liste"
+                                    type="object"
+                                    icon="fa-star"
+                                    title="Kısa listeye ekle"
+                                    invisible="is_shortlisted or scenario_status == 'eliminated'"/>
+                            <button name="action_eliminate_scenario"
+                                    string="Ele"
+                                    type="object"
+                                    icon="fa-times"
+                                    title="Senaryoyu ele"
+                                    invisible="scenario_status in ['eliminated', 'awarded']"/>
+                            <button name="action_view_comparison"
+                                    string="Karşılaştır"
+                                    type="object"
+                                    icon="fa-bar-chart"
+                                    title="Teklif karşılaştırma"/>
+                        </list>
+                    </field>
+
+                    <p class="text-muted mt-2">
+                        <i class="fa fa-info-circle me-1"/>
+                        Bölge senaryosu oluşturun (Antalya, Kıbrıs), ardından
+                        bölge altına otel senaryoları ve tarih seçenekleri ekleyin.
+                    </p>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- 4. İhale Kalemleri listesine MICE alanları ekle -->
+    <record id="view_tender_form_mice_line_fields" model="ir.ui.view">
+        <field name="name">ak.tender.form.mice.line_fields</field>
+        <field name="model">ak.tender</field>
+        <field name="inherit_id" ref="ak_tender.ak_tender_view_form"/>
+        <field name="arch" type="xml">
+            <!-- Ürün adından sonra senaryo ve satır tipi kolonlarını ekle -->
+            <xpath expr="//field[@name='tender_lines']/list/field[@name='product_template_id']"
+                   position="after">
+                <field name="scenario_id"
+                       optional="show"
+                       column_invisible="parent.tender_type != 'mice'"
+                       options="{'no_create': True}"
+                       domain="[('tender_id', '=', parent.id)]"/>
+                <field name="line_type"
+                       optional="show"
+                       column_invisible="parent.tender_type != 'mice'"/>
+                <field name="mice_room_type"
+                       optional="hide"
+                       column_invisible="parent.tender_type != 'mice'"/>
+                <field name="mice_meal_plan"
+                       optional="hide"
+                       column_invisible="parent.tender_type != 'mice'"/>
+                <field name="computed_target_total"
+                       widget="monetary"
+                       options="{'currency_field': 'currency_id'}"
+                       optional="show"
+                       column_invisible="parent.tender_type != 'mice'"
+                       readonly="1"
+                       string="MICE Toplam"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- ============================================================ -->
+    <!-- purchase.order.line views — MICE Senaryo ve NPV alanları     -->
+    <!-- npv_value: ak_tender'da zaten mevcut (purchase_order_line)   -->
+    <!-- ============================================================ -->
+    <record id="view_purchase_order_line_mice_extension" model="ir.ui.view">
+        <field name="name">purchase.order.line.mice.extension</field>
+        <field name="model">purchase.order.line</field>
+        <field name="inherit_id" ref="purchase.purchase_order_line_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//list" position="inside">
+                <!-- MICE'a özgü alanlar (ak_tender_mice extension) -->
+                <field name="scenario_id"
+                       optional="hide"
+                       string="Senaryo"/>
+                <field name="scenario_date_id"
+                       optional="hide"
+                       string="Tarih Seçeneği"/>
+                <field name="is_package_price"
+                       optional="hide"
+                       string="Paket Fiyat"
+                       widget="boolean_toggle"/>
+                <!-- npv_value: ak_tender'dan geliyor (purchase_order_line.py) -->
+                <field name="npv_value"
+                       widget="monetary"
+                       options="{'currency_field': 'tender_line_currency_id'}"
+                       optional="hide"
+                       string="NPV Değeri"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

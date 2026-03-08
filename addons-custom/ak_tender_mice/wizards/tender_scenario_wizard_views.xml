@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ============================================================ -->
+    <!-- 1. Senaryo Oluşturma Sihirbazı                               -->
+    <!-- ============================================================ -->
+    <record id="view_tender_scenario_wizard_form" model="ir.ui.view">
+        <field name="name">ak.tender.scenario.wizard.form</field>
+        <field name="model">ak.tender.scenario.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Yeni Senaryo Oluştur">
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name" string="Senaryo Adı"/>
+                        <h1>
+                            <field name="name"
+                                   placeholder="Örn: Antalya veya Titanic Beach 5★ — HB"/>
+                        </h1>
+                    </div>
+
+                    <group>
+                        <group string="Temel Bilgiler">
+                            <field name="tender_id" readonly="1"/>
+                            <field name="scenario_type"/>
+                            <field name="parent_id"
+                                   invisible="scenario_type == 'region'"
+                                   options="{'no_create': True}"/>
+                            <field name="is_mandatory"/>
+                        </group>
+                        <group string="Lokasyon ve Otel"
+                               invisible="scenario_type == 'region'">
+                            <field name="location_id"/>
+                            <field name="hotel_partner_id"
+                                   options="{'no_create': True}"/>
+                            <field name="meal_plan"/>
+                        </group>
+                    </group>
+
+                    <!-- Lokasyon tipi için sadece bölge bilgisi -->
+                    <group string="Lokasyon"
+                           invisible="scenario_type != 'region'">
+                        <field name="location_id"/>
+                    </group>
+
+                    <group string="Katılımcı Bilgileri"
+                           invisible="scenario_type == 'region'">
+                        <group>
+                            <field name="person_count"/>
+                            <field name="vip_count"/>
+                        </group>
+                    </group>
+
+                    <!-- Tarih Seçenekleri -->
+                    <group string="Tarih Seçenekleri"
+                           invisible="scenario_type == 'region'">
+                        <field name="add_dates" nolabel="1"
+                               widget="boolean_toggle"/>
+                    </group>
+
+                    <field name="date_option_ids"
+                           invisible="not add_dates or scenario_type == 'region'">
+                        <list editable="bottom">
+                            <field name="date_start"/>
+                            <field name="date_end"/>
+                            <field name="season_type"/>
+                            <field name="cost_multiplier"/>
+                            <field name="estimated_total_cost"
+                                   widget="monetary"
+                                   options="{'currency_field': 'currency_id'}"/>
+                            <field name="is_preferred" widget="boolean_toggle"/>
+                            <field name="notes"/>
+                            <field name="currency_id" column_invisible="1"/>
+                        </list>
+                    </field>
+                </sheet>
+                <footer>
+                    <button string="Oluştur"
+                            name="action_create_scenario"
+                            type="object"
+                            class="btn-primary"/>
+                    <button string="İptal"
+                            class="btn-secondary"
+                            special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- ============================================================ -->
+    <!-- 2. Senaryo Eleme Sihirbazı                                   -->
+    <!-- ============================================================ -->
+    <record id="view_tender_scenario_eliminate_wizard_form" model="ir.ui.view">
+        <field name="name">ak.tender.scenario.eliminate.wizard.form</field>
+        <field name="model">ak.tender.scenario.eliminate.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Senaryo Eleme">
+                <sheet>
+                    <div class="alert alert-warning" role="alert">
+                        <strong>Uyarı:</strong> Bu senaryo kalıcı olarak elenmiş
+                        olarak işaretlenecektir.
+                    </div>
+                    <group>
+                        <field name="scenario_id" readonly="1"/>
+                        <field name="elimination_reason"
+                               placeholder="Eleme gerekçesini yazın... (fiyat yüksek, kapasite yetersiz, lokasyon uygun değil vb.)"
+                               widget="text"/>
+                    </group>
+                </sheet>
+                <footer>
+                    <button string="Elenle"
+                            name="action_eliminate"
+                            type="object"
+                            class="btn-danger"/>
+                    <button string="İptal"
+                            class="btn-secondary"
+                            special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- ============================================================ -->
+    <!-- 3. Sonraki Tur Sihirbazı                                     -->
+    <!-- ============================================================ -->
+    <record id="view_tender_next_round_wizard_form" model="ir.ui.view">
+        <field name="name">ak.tender.next.round.wizard.form</field>
+        <field name="model">ak.tender.next.round.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Sonraki Turu Başlat">
+                <sheet>
+                    <div class="oe_title">
+                        <h2>Tur <field name="next_round" readonly="1"/> Başlatılıyor</h2>
+                    </div>
+                    <group>
+                        <group string="Tur Bilgileri">
+                            <field name="tender_id" readonly="1"/>
+                            <field name="deadline_days"/>
+                            <field name="invite_all_suppliers"/>
+                        </group>
+                    </group>
+
+                    <group string="Kısa Listedeki Senaryolar (Yeni Turda Teklif Alınacak)">
+                        <field name="shortlisted_scenario_ids" nolabel="1">
+                            <list>
+                                <field name="name"/>
+                                <field name="scenario_type"/>
+                                <field name="location_id"/>
+                                <field name="hotel_partner_id"/>
+                                <field name="best_npv_offer"
+                                       widget="monetary"
+                                       options="{'currency_field': 'currency_id'}"/>
+                                <field name="best_npv_partner_id"/>
+                                <field name="currency_id" column_invisible="1"/>
+                            </list>
+                        </field>
+                    </group>
+
+                    <group string="Tedarikçiye Notlar">
+                        <field name="notes"
+                               nolabel="1"
+                               placeholder="Tedarikçilere iletilecek ek notlar, fiyat beklentisi..."
+                               widget="text"/>
+                    </group>
+                </sheet>
+                <footer>
+                    <button string="Turu Başlat"
+                            name="action_start_round"
+                            type="object"
+                            class="btn-primary"/>
+                    <button string="İptal"
+                            class="btn-secondary"
+                            special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+</odoo>
