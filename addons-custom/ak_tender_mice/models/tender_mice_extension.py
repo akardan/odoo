@@ -273,12 +273,34 @@ class AkTenderLine(models.Model):
 
     @api.onchange('line_type')
     def _onchange_line_type(self):
-        """Satır tipi değiştiğinde uygun UoM otomatik ayarla."""
+        """Satır tipi değiştiğinde uygun UoM otomatik ayarla.
+        Türkçe UoM adı aramak yerine 'Time' veya 'Unit' kategorisi üzerinden arar.
+        """
         if self.line_type == 'accommodation':
-            uom = self.env['uom.uom'].search([('name', 'ilike', 'Gece')], limit=1)
+            # Konaklama için: zaman/gün kategorisinde day/gece UoM ara
+            uom = self.env['uom.uom'].search(
+                [('category_id.name', 'in', ['Time', 'Zaman', 'Days'])],
+                limit=1
+            )
+            if not uom:
+                # Kategori bulunamazsa isimle ara (yedek)
+                uom = self.env['uom.uom'].search(
+                    [('name', 'in', ['day(s)', 'Days', 'Gece', 'Day'])],
+                    limit=1
+                )
             if uom:
                 self.uom_id = uom
         elif self.line_type in ('meal', 'service'):
-            uom = self.env['uom.uom'].search([('name', 'ilike', 'Kişi')], limit=1)
+            # Kişi için: birim/adet kategorisinde ara
+            uom = self.env['uom.uom'].search(
+                [('category_id.name', 'in', ['Unit(s)', 'Units', 'Birim'])],
+                limit=1
+            )
+            if not uom:
+                # Yedek: isimle ara
+                uom = self.env['uom.uom'].search(
+                    [('name', 'in', ['Unit(s)', 'Units', 'Kişi', 'Person'])],
+                    limit=1
+                )
             if uom:
                 self.uom_id = uom

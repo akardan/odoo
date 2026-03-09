@@ -272,29 +272,53 @@ class TenderNextRoundWizard(models.TransientModel):
     )
 
     def action_start_round(self):
-        """Yeni turu başlat: tender_round arttır."""
+        """Yeni turu başlat: tender_round arttır, yeni PO'lar oluştur."""
         self.ensure_one()
 
         if not self.shortlisted_scenario_ids:
             raise UserError(_('Kısa listeye alınmış senaryo seçmelisiniz!'))
 
-        # Tender turunu güncelle
-        self.tender_id.write({'tender_round': self.next_round})
+        tender = self.tender_id
 
         # Kısa listeden çıkmış senaryoları aktif duruma geri al
-        # (sadece kısa listede kalanlar bu turda aktif)
-        all_scenarios = self.tender_id.scenario_ids.filtered(
+        all_scenarios = tender.scenario_ids.filtered(
             lambda s: s.scenario_status not in ('eliminated', 'awarded')
         )
         non_shortlisted = all_scenarios - self.shortlisted_scenario_ids
         non_shortlisted.write({'is_shortlisted': False, 'scenario_status': 'active'})
+
+        # Tender round'unu doğrudan güncelle (base increment_tender_round()
+        # mevcut turda PO gerektirdiğinden wizard bağlamında direkt yazıyoruz)
+        tender.write({
+            'tender_round': self.next_round,
+            'all_offers_notification_sent': False,
+        })
+
+        # Yeni tur için tedarikçi bazlı PO'lar oluştur
+        try:
+            tender.create_purchase_orders_for_suppliers()
+        except Exception as e:
+            # PO oluşturma hatası kritik değil, uyarı göster
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'title': _('Tur %s Başlatıldı (Uyarı)') % self.next_round,
+                    'message': _(
+                        '%s senaryo için Tur %s başlatıldı. '
+                        'Ancak PO oluşturulurken bir sorun oluştu: %s'
+                    ) % (len(self.shortlisted_scenario_ids), self.next_round, str(e)),
+                    'type': 'warning',
+                    'sticky': True,
+                },
+            }
 
         return {
             'type': 'ir.actions.client',
             'tag': 'display_notification',
             'params': {
                 'title': _('Tur %s Başlatıldı') % self.next_round,
-                'message': _('%s senaryo için Tur %s başlatıldı.') % (
+                'message': _('%s senaryo için Tur %s başlatıldı. Yeni tedarikçi teklifleri oluşturuldu.') % (
                     len(self.shortlisted_scenario_ids),
                     self.next_round
                 ),

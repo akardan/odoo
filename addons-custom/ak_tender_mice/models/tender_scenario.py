@@ -222,19 +222,19 @@ class AkTenderScenario(models.Model):
     # ===== TUR BAZLI EN İYİ TEKLİFLER =====
     best_offer_round_1 = fields.Monetary(
         compute='_compute_best_offers',
-        store=True,
+        store=False,
         string=_('Tur 1 En İyi Teklif'),
         currency_field='currency_id'
     )
     best_offer_round_2 = fields.Monetary(
         compute='_compute_best_offers',
-        store=True,
+        store=False,
         string=_('Tur 2 En İyi Teklif'),
         currency_field='currency_id'
     )
     improvement_percentage = fields.Float(
         compute='_compute_improvement',
-        store=True,
+        store=False,
         string=_('İyileştirme %'),
         help=_('Tur 2 vs Tur 1 fiyat iyileştirmesi')
     )
@@ -242,7 +242,7 @@ class AkTenderScenario(models.Model):
     # ===== NPV BAZLI EN İYİ TEKLİF =====
     best_npv_offer = fields.Monetary(
         compute='_compute_best_npv_offer',
-        store=True,
+        store=False,
         string=_('En İyi NPV Teklif'),
         currency_field='currency_id',
         help=_('NPV bazında en düşük teklif (vade iskontosu dahil)')
@@ -250,7 +250,7 @@ class AkTenderScenario(models.Model):
     best_npv_partner_id = fields.Many2one(
         'res.partner',
         compute='_compute_best_npv_offer',
-        store=True,
+        store=False,
         string=_('En İyi NPV Tedarikçi')
     )
 
@@ -466,6 +466,37 @@ class AkTenderScenario(models.Model):
                 'default_tender_id': self.tender_id.id,
                 'default_parent_id': self.id,
             },
+        }
+
+    # ===== KOPYALAMA =====
+
+    def copy(self, default=None):
+        """Senaryo kopyala: tarih seçenekleri ve adı 'Kopya' öneki ile."""
+        self.ensure_one()
+        default = dict(default or {})
+        default.setdefault('name', _('%s (Kopya)') % self.name)
+        default.setdefault('scenario_status', 'active')
+        default.setdefault('is_shortlisted', False)
+        default.setdefault('shortlist_round', 0)
+        default.setdefault('shortlist_date', False)
+        default.setdefault('shortlist_by', False)
+        default.setdefault('elimination_reason', False)
+        new_scenario = super().copy(default)
+        for date_opt in self.date_option_ids:
+            date_opt.copy({'scenario_id': new_scenario.id})
+        return new_scenario
+
+    def action_copy_scenario(self):
+        """Senaryoyu kopyala ve yeni senaryoyu forma aç."""
+        self.ensure_one()
+        new_scenario = self.copy()
+        return {
+            'name': _('Senaryo: %s') % new_scenario.name,
+            'type': 'ir.actions.act_window',
+            'res_model': 'ak.tender.scenario',
+            'res_id': new_scenario.id,
+            'view_mode': 'form',
+            'target': 'current',
         }
 
     # ===== ONCHANGE =====
