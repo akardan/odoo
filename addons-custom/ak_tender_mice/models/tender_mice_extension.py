@@ -23,6 +23,15 @@ class AkTender(models.Model):
             "Her senaryo bir lokasyon-otel paketi ve tarih seçenekleri içerir."
         )
     )
+    
+    # Sadece ilk seviye senaryolar (Bölge/Lokasyon)
+    root_scenario_ids = fields.One2many(
+        'ak.tender.scenario',
+        'tender_id',
+        string=_('Ana Senaryolar'),
+        domain=[('parent_id', '=', False)],
+        help=_("Sadece üst seviye (bölge) senaryolar.")
+    )
     scenario_count = fields.Integer(
         compute='_compute_scenario_count',
         string=_('Senaryo Sayısı')

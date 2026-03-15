@@ -2,6 +2,9 @@ id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_mice_scenario_requester,ak.tender.scenario requester,ak_tender_mice.model_ak_tender_scenario,ak_tender.group_tender_requester,1,0,0,0
 access_mice_scenario_user,ak.tender.scenario user,ak_tender_mice.model_ak_tender_scenario,ak_tender.group_tender_user,1,1,1,1
 access_mice_scenario_manager,ak.tender.scenario manager,ak_tender_mice.model_ak_tender_scenario,ak_tender.group_tender_manager,1,1,1,1
+access_mice_scenario_line_requester,ak.tender.scenario.line requester,ak_tender_mice.model_ak_tender_scenario_line,ak_tender.group_tender_requester,1,0,0,0
+access_mice_scenario_line_user,ak.tender.scenario.line user,ak_tender_mice.model_ak_tender_scenario_line,ak_tender.group_tender_user,1,1,1,1
+access_mice_scenario_line_manager,ak.tender.scenario.line manager,ak_tender_mice.model_ak_tender_scenario_line,ak_tender.group_tender_manager,1,1,1,1
 access_mice_scenario_date_requester,ak.tender.scenario.date requester,ak_tender_mice.model_ak_tender_scenario_date,ak_tender.group_tender_requester,1,0,0,0
 access_mice_scenario_date_user,ak.tender.scenario.date user,ak_tender_mice.model_ak_tender_scenario_date,ak_tender.group_tender_user,1,1,1,1
 access_mice_scenario_date_manager,ak.tender.scenario.date manager,ak_tender_mice.model_ak_tender_scenario_date,ak_tender.group_tender_manager,1,1,1,1
@@ -9,3 +12,4 @@ access_mice_scenario_wizard_user,ak.tender.scenario.wizard user,ak_tender_mice.m
 access_mice_scenario_wizard_date_user,ak.tender.scenario.wizard.date user,ak_tender_mice.model_ak_tender_scenario_wizard_date,ak_tender.group_tender_user,1,1,1,1
 access_mice_scenario_eliminate_wizard_user,ak.tender.scenario.eliminate.wizard user,ak_tender_mice.model_ak_tender_scenario_eliminate_wizard,ak_tender.group_tender_user,1,1,1,1
 access_mice_next_round_wizard_user,ak.tender.next.round.wizard user,ak_tender_mice.model_ak_tender_next_round_wizard,ak_tender.group_tender_user,1,1,1,1
+access_mice_add_packages_wizard_user,ak.tender.add.packages.wizard user,ak_tender_mice.model_ak_tender_add_packages_wizard,ak_tender.group_tender_user,1,1,1,1

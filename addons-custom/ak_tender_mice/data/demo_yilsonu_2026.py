@@ -189,12 +189,16 @@ def create_mice_tender():
         print(f'  UYARI: Bu isimde ihale zaten mevcut (ID: {existing.id}). Yeni ihale oluşturuluyor...')
 
     # En temel zorunlu alanlarla oluştur (workflow gereksinimlerine göre ayarla)
+    from datetime import datetime, timedelta
+    now = datetime.now()
     tender_vals = {
         'name': '2026 Yılsonu Toplantısı — MICE İhalesi',
         'tender_type': 'mice',
         'currency_id': try_currency.id,
         'total_person_count': 112,
         'vip_person_count': 2,
+        'start_date': now,
+        'end_date': now + timedelta(days=30),
     }
     # Opsiyonel alanlar — mevcut alanlar varsa ekle
     try:

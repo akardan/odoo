@@ -52,13 +52,27 @@
         </field>
     </record>
 
+    <!-- ============================================================ -->
+    <!-- İhale Kalemleri sekmesini MICE tipinde gizle                 -->
+    <!-- ============================================================ -->
+    <record id="view_tender_form_hide_lines_for_mice" model="ir.ui.view">
+        <field name="name">ak.tender.form.hide.lines.mice</field>
+        <field name="model">ak.tender</field>
+        <field name="inherit_id" ref="ak_tender.ak_tender_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='tender_lines']" position="attributes">
+                <attribute name="invisible">tender_type == 'mice'</attribute>
+            </xpath>
+        </field>
+    </record>
+    
     <!-- 3. Notebook'a Senaryolar sekmesi ekle -->
     <record id="view_tender_form_mice_scenarios_tab" model="ir.ui.view">
         <field name="name">ak.tender.form.mice.scenarios_tab</field>
         <field name="model">ak.tender</field>
         <field name="inherit_id" ref="ak_tender.ak_tender_view_form"/>
         <field name="arch" type="xml">
-            <xpath expr="//notebook" position="inside">
+            <xpath expr="//page[@name='tender_lines']" position="before">
                 <page string="Senaryolar" name="mice_scenarios"
                       invisible="tender_type != 'mice'">
 
@@ -76,57 +90,197 @@
                                 invisible="shortlisted_scenarios == 0"/>
                     </div>
 
-                    <!-- Senaryo listesi -->
-                    <field name="scenario_ids"
+                    <!-- Senaryo kanban view - Sadece ilk seviye (Bölge/Lokasyon) senaryolar -->
+                    <field name="root_scenario_ids"
                            nolabel="1"
-                           context="{'default_tender_id': id}">
-                        <list decoration-success="scenario_status == 'awarded'"
-                              decoration-info="scenario_status == 'shortlisted'"
-                              decoration-muted="scenario_status == 'eliminated'"
-                              default_order="sequence">
-                            <field name="sequence" widget="handle"/>
+                           mode="kanban"
+                           context="{'default_tender_id': id, 'default_scenario_type': 'region'}">
+                        <kanban class="ak_scenario_kanban">
+                            <field name="sequence"/>
                             <field name="name"/>
                             <field name="scenario_type"/>
-                            <field name="parent_id" optional="show"/>
+                            <field name="parent_id"/>
                             <field name="location_id"/>
                             <field name="hotel_partner_id"/>
                             <field name="meal_plan"/>
-                            <field name="date_option_count" string="Tarihler"/>
-                            <field name="line_count" string="Kalemler"/>
-                            <field name="currency_id" column_invisible="1"/>
-                            <field name="total_target_price"
-                                   widget="monetary"
-                                   options="{'currency_field': 'currency_id'}"/>
-                            <field name="best_npv_offer"
-                                   widget="monetary"
-                                   options="{'currency_field': 'currency_id'}"/>
+                            <field name="person_count"/>
+                            <field name="vip_count"/>
+                            <field name="line_count"/>
+                            <field name="scenario_line_count"/>
+                            <field name="date_option_count"/>
+                            <field name="child_count"/>
+                            <field name="currency_id"/>
+                            <field name="total_target_price"/>
+                            <field name="best_npv_offer"/>
                             <field name="best_npv_partner_id"/>
-                            <field name="scenario_status"
-                                   widget="badge"
-                                   decoration-success="scenario_status == 'awarded'"
-                                   decoration-info="scenario_status == 'shortlisted'"
-                                   decoration-warning="scenario_status == 'active'"
-                                   decoration-danger="scenario_status == 'eliminated'"/>
-                            <field name="is_mandatory" widget="boolean_toggle"/>
-                            <field name="is_shortlisted" column_invisible="1"/>
-                            <button name="action_add_to_shortlist"
-                                    string="Kısa Liste"
-                                    type="object"
-                                    icon="fa-star"
-                                    title="Kısa listeye ekle"
-                                    invisible="is_shortlisted or scenario_status == 'eliminated'"/>
-                            <button name="action_eliminate_scenario"
-                                    string="Ele"
-                                    type="object"
-                                    icon="fa-times"
-                                    title="Senaryoyu ele"
-                                    invisible="scenario_status in ['eliminated', 'awarded']"/>
-                            <button name="action_view_comparison"
-                                    string="Karşılaştır"
-                                    type="object"
-                                    icon="fa-bar-chart"
-                                    title="Teklif karşılaştırma"/>
-                        </list>
+                            <field name="scenario_status"/>
+                            <field name="is_mandatory"/>
+                            <field name="is_shortlisted"/>
+                            <field name="kanban_date_summary"/>
+                            <field name="kanban_line_summary"/>
+                            <field name="kanban_child_summary"/>
+                            <field name="scenario_line_ids"/>
+                            <field name="child_ids"/>
+                            <templates>
+                                <t t-name="kanban-box">
+                                    <div class="oe_kanban_global_click mb-3 shadow-sm" style="width: 100%; min-height: 700px; border: 1px solid #dee2e6; border-radius: 8px; background: white; padding: 16px; box-sizing: border-box;">
+                                        <!-- Başlık Bölümü -->
+                                        <div class="o_kanban_record_top mb-3 pb-2 border-bottom">
+                                            <div class="o_kanban_record_headings">
+                                                <strong class="o_kanban_record_title" style="font-size: 1.15em;">
+                                                    Senaryo: <field name="name"/>
+                                                </strong>
+                                                <div class="o_kanban_record_subtitle text-muted mt-1">
+                                                    <span class="badge text-bg-info me-1">
+                                                        <field name="scenario_type"/>
+                                                    </span>
+                                                    <t t-if="record.parent_id.raw_value">
+                                                        <span class="badge text-bg-secondary me-1">
+                                                            ← <field name="parent_id"/>
+                                                        </span>
+                                                    </t>
+                                                    <t t-if="record.is_mandatory.raw_value">
+                                                        <span class="badge text-bg-warning me-1">Zorunlu</span>
+                                                    </t>
+                                                    <!-- Durum badge'i -->
+                                                    <t t-if="record.scenario_status.raw_value == 'active'">
+                                                        <span class="badge text-bg-primary me-1">Aktif</span>
+                                                    </t>
+                                                    <t t-elif="record.scenario_status.raw_value == 'shortlisted'">
+                                                        <span class="badge text-bg-success me-1">Kısa Listede</span>
+                                                    </t>
+                                                    <t t-elif="record.scenario_status.raw_value == 'eliminated'">
+                                                        <span class="badge text-bg-danger me-1">Elendi</span>
+                                                    </t>
+                                                    <t t-elif="record.scenario_status.raw_value == 'awarded'">
+                                                        <span class="badge me-1" style="background-color:#ffc107; color:#000;">🏆 Kazanan</span>
+                                                    </t>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Ana Bilgiler -->
+                                        <div class="o_kanban_record_body mb-3">
+                                            <div class="row g-2 mb-3">
+                                                <t t-if="record.hotel_partner_id.raw_value">
+                                                    <div class="col-12">
+                                                        <i class="fa fa-building text-primary me-1"/>
+                                                        <strong><field name="hotel_partner_id"/></strong>
+                                                    </div>
+                                                </t>
+                                                <t t-if="record.location_id.raw_value">
+                                                    <div class="col-12">
+                                                        <i class="fa fa-map-marker text-danger me-1"/>
+                                                        <field name="location_id"/>
+                                                    </div>
+                                                </t>
+                                                <t t-if="record.meal_plan.raw_value">
+                                                    <div class="col-6">
+                                                        <i class="fa fa-cutlery text-success me-1"/>
+                                                        <field name="meal_plan"/>
+                                                    </div>
+                                                </t>
+                                                <t t-if="record.person_count.raw_value">
+                                                    <div class="col-6">
+                                                        <i class="fa fa-users text-info me-1"/>
+                                                        <field name="person_count"/> kişi
+                                                        <t t-if="record.vip_count.raw_value">
+                                                            (<field name="vip_count"/> VIP)
+                                                        </t>
+                                                    </div>
+                                                </t>
+                                            </div>
+
+                                            <!-- Alternatif Tarihler -->
+                                            <t t-if="record.date_option_count.raw_value > 0">
+                                                <div class="mb-3 p-2 bg-light border-start border-4 border-primary">
+                                                    <div class="mb-2">
+                                                        <strong class="text-primary">
+                                                            <i class="fa fa-calendar me-1"/>
+                                                            Alternatif Tarihler (<t t-esc="record.date_option_count.raw_value"/>)
+                                                        </strong>
+                                                    </div>
+                                                    <div class="ms-2">
+                                                        <field name="kanban_date_summary" widget="html"/>
+                                                    </div>
+                                                </div>
+                                            </t>
+
+                                            <!-- Hizmetler -->
+                                            <t t-if="record.scenario_line_count.raw_value > 0">
+                                                <div class="mb-3 p-2 bg-light border-start border-4 border-success">
+                                                    <div class="mb-2">
+                                                        <strong class="text-success">
+                                                            <i class="fa fa-tasks me-1"/>
+                                                            Hizmetler (<t t-esc="record.scenario_line_count.raw_value"/>)
+                                                        </strong>
+                                                    </div>
+                                                    <div class="ms-2">
+                                                        <table class="table table-sm table-borderless mb-0">
+                                                            <t t-foreach="record.scenario_line_ids.raw_value" t-as="line">
+                                                                <tr>
+                                                                    <td class="text-start ps-0">
+                                                                        <i class="fa fa-circle-o text-success me-1" style="font-size: 0.7em;"/>
+                                                                        <t t-esc="line.name"/>
+                                                                    </td>
+                                                                    <td class="text-end pe-0">
+                                                                        <span class="badge text-bg-light">
+                                                                            <t t-esc="line.quantity"/> <t t-esc="line.uom_id and line.uom_id[1] or ''"/>
+                                                                        </span>
+                                                                    </td>
+                                                                </tr>
+                                                            </t>
+                                                        </table>
+                                                    </div>
+                                                </div>
+                                            </t>
+
+                                            <!-- Alt Senaryolar -->
+                                            <t t-if="record.child_count.raw_value > 0">
+                                                <div class="mb-3 p-2 bg-light border-start border-4 border-warning">
+                                                    <div class="ms-2">
+                                                        <field name="kanban_child_summary" widget="html"/>
+                                                    </div>
+                                                </div>
+                                            </t>
+                                        </div>
+
+                                        <!-- Alt Bilgiler ve Fiyatlar -->
+                                        <div class="o_kanban_record_bottom mt-3 pt-3 border-top">
+                                            <div class="row g-2">
+                                                <div class="col-6">
+                                                    <div class="mb-2">
+                                                        <small class="text-muted d-block">Hedef Fiyat:</small>
+                                                        <strong class="text-primary" style="font-size: 1.1em;">
+                                                            <field name="total_target_price"
+                                                                   widget="monetary"
+                                                                   options="{'currency_field': 'currency_id'}"/>
+                                                        </strong>
+                                                    </div>
+                                                </div>
+                                                <div class="col-6 text-end">
+                                                    <t t-if="record.best_npv_offer.raw_value">
+                                                        <div class="mb-2">
+                                                            <small class="text-muted d-block">En İyi Teklif:</small>
+                                                            <strong class="text-success" style="font-size: 1.1em;">
+                                                                <field name="best_npv_offer"
+                                                                       widget="monetary"
+                                                                       options="{'currency_field': 'currency_id'}"/>
+                                                            </strong>
+                                                            <t t-if="record.best_npv_partner_id.raw_value">
+                                                                <div class="small text-muted">
+                                                                    <field name="best_npv_partner_id"/>
+                                                                </div>
+                                                            </t>
+                                                        </div>
+                                                    </t>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </t>
+                            </templates>
+                        </kanban>
                     </field>
 
                     <p class="text-muted mt-2">
@@ -151,16 +305,20 @@
                 <field name="scenario_id"
                        optional="show"
                        column_invisible="parent.tender_type != 'mice'"
-                       options="{'no_create': True}"
-                       domain="[('tender_id', '=', parent.id)]"/>
+                       domain="[('tender_id', '=', parent.id)]"
+                       context="{
+                           'default_tender_id': parent.id,
+                           'default_scenario_type': 'region'
+                       }"/>
                 <field name="line_type"
                        optional="show"
                        column_invisible="parent.tender_type != 'mice'"/>
+                <!-- MICE: varsayılan görünür -->
                 <field name="mice_room_type"
-                       optional="hide"
+                       optional="show"
                        column_invisible="parent.tender_type != 'mice'"/>
                 <field name="mice_meal_plan"
-                       optional="hide"
+                       optional="show"
                        column_invisible="parent.tender_type != 'mice'"/>
                 <field name="computed_target_total"
                        widget="monetary"
@@ -170,6 +328,81 @@
                        readonly="1"
                        string="MICE Toplam"/>
             </xpath>
+        </field>
+    </record>
+
+    <!-- ============================================================ -->
+    <!-- ak.tender.line — MICE Kalem Form View (Dialog)               -->
+    <!-- Satırda Düzenle butonu veya form_view_ref context'i ile açılır -->
+    <!-- ============================================================ -->
+    <record id="view_tender_line_mice_form" model="ir.ui.view">
+        <field name="name">ak.tender.line.mice.form</field>
+        <field name="model">ak.tender.line</field>
+        <field name="arch" type="xml">
+            <form string="MICE İhale Kalemi">
+                <sheet>
+                    <group>
+                        <group string="Hizmet Bilgileri">
+                            <field name="line_type" required="1"/>
+                            <field name="name"
+                                   placeholder="Otomatik oluşur — isterseniz override edin"/>
+                            <field name="scenario_id"
+                                   readonly="1"
+                                   options="{'no_create': True}"/>
+                        </group>
+                        <group string="Miktar ve Süre">
+                            <field name="quantity"/>
+                            <field name="days"/>
+                            <field name="uom_id"
+                                   options="{'no_create': True}"/>
+                            <field name="product_id"
+                                   optional="hide"
+                                   options="{'no_create': True}"/>
+                        </group>
+                    </group>
+
+                    <!-- Konaklama detayları — sadece accommodation/package tipinde görünür -->
+                    <group string="Konaklama Detayları"
+                           invisible="line_type not in ('accommodation', 'package')">
+                        <group>
+                            <field name="mice_room_type"/>
+                            <field name="mice_meal_plan"/>
+                            <field name="mice_view_type"/>
+                        </group>
+                        <group>
+                            <field name="mice_amenities"
+                                   placeholder="WiFi, Havuz, Spa, Butler, Minibar"/>
+                        </group>
+                    </group>
+
+                    <!-- Fiyatlandırma -->
+                    <group string="Fiyatlandırma">
+                        <group>
+                            <field name="currency_id"
+                                   options="{'no_create': True}"/>
+                            <field name="target_price"
+                                   widget="monetary"
+                                   options="{'currency_field': 'currency_id'}"
+                                   string="Hedef Birim Fiyat"/>
+                        </group>
+                        <group>
+                            <field name="computed_target_total"
+                                   widget="monetary"
+                                   options="{'currency_field': 'currency_id'}"
+                                   readonly="1"
+                                   string="Toplam (Miktar × Gün × Fiyat)"/>
+                        </group>
+                    </group>
+
+                    <!-- Özel istekler — tüm tipler için -->
+                    <group string="Tedarikçiye Özel İstekler ve Notlar">
+                        <field name="mice_special_requests"
+                               nolabel="1"
+                               widget="text"
+                               placeholder="Tedarikçiye iletilecek özel talepler: oda yakınlığı, ikram, teknik gereksinimler..."/>
+                    </group>
+                </sheet>
+            </form>
         </field>
     </record>
 

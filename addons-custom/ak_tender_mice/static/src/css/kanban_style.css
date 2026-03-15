@@ -1,0 +1,17 @@
+/* ak_tender_mice — Senaryo Kanban Kartları 3 Kolon */
+
+/* Kanban renderer'ı 3 kolonlu grid yap */
+.ak_scenario_kanban .o_kanban_renderer {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 16px;
+}
+
+/* Her kart wrapper'ı ~3 kolon genişliğinde */
+.ak_scenario_kanban .o_kanban_record {
+    width: calc(33.33% - 11px) !important;
+    max-width: calc(33.33% - 11px) !important;
+    flex: 0 0 calc(33.33% - 11px) !important;
+    margin: 0 !important;
+}

@@ -41,15 +41,23 @@
 
         # Görünümler
         'views/tender_scenario_views.xml',
+        'views/tender_scenario_line_views.xml',
         'views/tender_mice_views.xml',
         'views/portal_mice_templates.xml',
 
         # Sihirbazlar
         'wizards/tender_scenario_wizard_views.xml',
+        'wizards/add_packages_wizard_views.xml',
 
         # Menü — her zaman en son
         'views/menu.xml',
     ],
+
+    'assets': {
+        'web.assets_backend': [
+            'ak_tender_mice/static/src/css/kanban_style.css',
+        ],
+    },
 
     'installable': True,
     'application': False,
