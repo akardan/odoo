@@ -243,5 +243,549 @@
             ]"/>
         </record>
 
+        <!-- Yeni Sorular: Yakın Dönem Tarih, Jeopolitik, Yeraltı Kaynakları, Tarım, İlaç, Sanayi, Teknoloji -->
+
+        <record id="survey_question_poll_21" model="survey.question.poll">
+            <field name="name">Arap Baharı hangi ülkede başlamıştır? (2010-2011)</field>
+            <field name="category_id" ref="survey_question_poll_category_test"/>
+            <field name="company_id" model="res.company" search="[('name', '=', 'Numil-Danone')]"/>
+            <field name="option_ids" eval="[
+                (0, 0, {'name': 'Mısır'}),
+                (0, 0, {'name': 'Tunus', 'is_correct': True, 'answer_score': 1}),
+                (0, 0, {'name': 'Libya'}),
+                (0, 0, {'name': 'Suriye'})
+            ]"/>
+        </record>
+
+        <record id="survey_question_poll_22" model="survey.question.poll">
+            <field name="name">Taliban'ın Afganistan'ın kontrolünü yeniden ele geçirdiği yıl hangisidir?</field>
+            <field name="category_id" ref="survey_question_poll_category_test"/>
+            <field name="company_id" model="res.company" search="[('name', '=', 'Numil-Danone')]"/>
+            <field name="option_ids" eval="[
+                (0, 0, {'name': '2019'}),
+                (0, 0, {'name': '2020'}),
+                (0, 0, {'name': '2021', 'is_correct': True, 'answer_score': 1}),
+                (0, 0, {'name': '2022'})
+            ]"/>
+        </record>
+
+        <record id="survey_question_poll_23" model="survey.question.poll">
+            <field name="name">Rusya'nın Ukrayna'ya tam ölçekli askeri saldırı başlattığı tarih hangisidir?</field>
+            <field name="category_id" ref="survey_question_poll_category_test"/>
+            <field name="company_id" model="res.company" search="[('name', '=', 'Numil-Danone')]"/>
+            <field name="option_ids" eval="[
+                (0, 0, {'name': '14 Şubat 2022'}),
+                (0, 0, {'name': '24 Şubat 2022', 'is_correct': True, 'answer_score': 1}),
+                (0, 0, {'name': '1 Mart 2022'}),
+                (0, 0, {'name': '24 Şubat 2021'})
+            ]"/>
+        </record>
+
+        <record id="survey_question_poll_24" model="survey.question.poll">
+            <field name="name">İngiltere'nin AB'den ayrılmasına ilişkin Brexit referandumu hangi yılda gerçekleşmiştir?</field>
+            <field name="category_id" ref="survey_question_poll_category_test"/>
+            <field name="company_id" model="res.company" search="[('name', '=', 'Numil-Danone')]"/>
+            <field name="option_ids" eval="[
+                (0, 0, {'name': '2014'}),
+                (0, 0, {'name': '2015'}),
+                (0, 0, {'name': '2016', 'is_correct': True, 'answer_score': 1}),
+                (0, 0, {'name': '2017'})
+            ]"/>
+        </record>
+
+        <record id="survey_question_poll_25" model="survey.question.poll">
+            <field name="name">Küresel iklim değişikliğiyle mücadelede imzalanan Paris Anlaşması hangi yıl yürürlüğe girmiştir?</field>
+            <field name="category_id" ref="survey_question_poll_category_test"/>
+            <field name="company_id" model="res.company" search="[('name', '=', 'Numil-Danone')]"/>
+            <field name="option_ids" eval="[
+                (0, 0, {'name': '2015'}),
+                (0, 0, {'name': '2016', 'is_correct': True, 'answer_score': 1}),
+                (0, 0, {'name': '2017'}),
+                (0, 0, {'name': '2018'})
+            ]"/>
+        </record>
+
+        <record id="survey_question_poll_26" model="survey.question.poll">
+            <field name="name">AUKUS savunma ittifakı hangi üç ülkeyi kapsamaktadır?</field>
+            <field name="category_id" ref="survey_question_poll_category_test"/>
+            <field name="company_id" model="res.company" search="[('name', '=', 'Numil-Danone')]"/>
+            <field name="option_ids" eval="[
+                (0, 0, {'name': 'ABD, İngiltere, Kanada'}),
+                (0, 0, {'name': 'ABD, İngiltere, Avustralya', 'is_correct': True, 'answer_score': 1}),
+                (0, 0, {'name': 'ABD, Avustralya, Yeni Zelanda'}),
+                (0, 0, {'name': 'İngiltere, Avustralya, Japonya'})
+            ]"/>
+        </record>
+
+        <record id="survey_question_poll_27" model="survey.question.poll">
+            <field name="name">BM Güvenlik Konseyi'nin kaç daimi üyesi bulunmaktadır?</field>
+            <field name="category_id" ref="survey_question_poll_category_test"/>
+            <field name="company_id" model="res.company" search="[('name', '=', 'Numil-Danone')]"/>
+            <field name="option_ids" eval="[
+                (0, 0, {'name': '3'}),
+                (0, 0, {'name': '4'}),
+                (0, 0, {'name': '5', 'is_correct': True, 'answer_score': 1}),
+                (0, 0, {'name': '6'})
+            ]"/>
+        </record>
+
+        <record id="survey_question_poll_28" model="survey.question.poll">
+            <field name="name">Güney Çin Denizi'ndeki toprak anlaşmazlığında hak iddiasında BULUNMAYAN ülke hangisidir?</field>
+            <field name="category_id" ref="survey_question_poll_category_test"/>
+            <field name="company_id" model="res.company" search="[('name', '=', 'Numil-Danone')]"/>
+            <field name="option_ids" eval="[
+                (0, 0, {'name': 'Çin'}),
+                (0, 0, {'name': 'Vietnam'}),
+                (0, 0, {'name': 'Japonya (Doğu Çin Denizi)'}),
+                (0, 0, {'name': 'Hindistan', 'is_correct': True, 'answer_score': 1})
+            ]"/>
+        </record>
+
+        <record id="survey_question_poll_29" model="survey.question.poll">
+            <field name="name">Dünya lityum rezervlerinin büyük çoğunluğu hangi ülkede bulunmaktadır?</field>
+            <field name="category_id" ref="survey_question_poll_category_test"/>
+            <field name="company_id" model="res.company" search="[('name', '=', 'Numil-Danone')]"/>
+            <field name="option_ids" eval="[
+                (0, 0, {'name': 'Avustralya'}),
+                (0, 0, {'name': 'Arjantin'}),
+                (0, 0, {'name': 'Bolivya', 'is_correct': True, 'answer_score': 1}),
+                (0, 0, {'name': 'Şili'})
+            ]"/>
+        </record>
+
+        <record id="survey_question_poll_30" model="survey.question.poll">
+            <field name="name">Türkiye dünya bor rezervlerinin yaklaşık yüzde kaçına sahiptir?</field>
+            <field name="category_id" ref="survey_question_poll_category_test"/>
+            <field name="company_id" model="res.company" search="[('name', '=', 'Numil-Danone')]"/>
+            <field name="option_ids" eval="[
+                (0, 0, {'name': '%20'}),
+                (0, 0, {'name': '%40'}),
+                (0, 0, {'name': '%73', 'is_correct': True, 'answer_score': 1}),
+                (0, 0, {'name': '%90'})
+            ]"/>
+        </record>
+
+        <record id="survey_question_poll_31" model="survey.question.poll">
+            <field name="name">OPEC+ grubu içinde en fazla petrol üreten ülke hangisidir?</field>
+            <field name="category_id" ref="survey_question_poll_category_test"/>
+            <field name="company_id" model="res.company" search="[('name', '=', 'Numil-Danone')]"/>
+            <field name="option_ids" eval="[
+                (0, 0, {'name': 'Suudi Arabistan', 'is_correct': True, 'answer_score': 1}),
+                (0, 0, {'name': 'Rusya'}),
+                (0, 0, {'name': 'İran'}),
+                (0, 0, {'name': 'BAE'})
+            ]"/>
+        </record>
+
+        <record id="survey_question_poll_32" model="survey.question.poll">
+            <field name="name">Dünyanın kanıtlanmış en büyük doğal gaz rezervlerine sahip ülkesi hangisidir?</field>
+            <field name="category_id" ref="survey_question_poll_category_test"/>
+            <field name="company_id" model="res.company" search="[('name', '=', 'Numil-Danone')]"/>
+            <field name="option_ids" eval="[
+                (0, 0, {'name': 'Rusya', 'is_correct': True, 'answer_score': 1}),
+                (0, 0, {'name': 'İran'}),
+                (0, 0, {'name': 'Katar'}),
+                (0, 0, {'name': 'ABD'})
+            ]"/>
+        </record>
+
+        <record id="survey_question_poll_33" model="survey.question.poll">
+            <field name="name">Nadir toprak elementleri (rare earth) üretiminde dünya liderliğini elinde bulunduran ülke hangisidir?</field>
+            <field name="category_id" ref="survey_question_poll_category_test"/>
+            <field name="company_id" model="res.company" search="[('name', '=', 'Numil-Danone')]"/>
+            <field name="option_ids" eval="[
+                (0, 0, {'name': 'ABD'}),
+                (0, 0, {'name': 'Avustralya'}),
+                (0, 0, {'name': 'Çin', 'is_correct': True, 'answer_score': 1}),
+                (0, 0, {'name': 'Rusya'})
+            ]"/>
+        </record>
+
+        <record id="survey_question_poll_34" model="survey.question.poll">
+            <field name="name">Türkiye dünya fındık üretiminde hangi sırada yer almaktadır?</field>
+            <field name="category_id" ref="survey_question_poll_category_test"/>
+            <field name="company_id" model="res.company" search="[('name', '=', 'Numil-Danone')]"/>
+            <field name="option_ids" eval="[
+                (0, 0, {'name': '1. Sıra (yaklaşık %70 pay)', 'is_correct': True, 'answer_score': 1}),
+                (0, 0, {'name': '2. Sıra'}),
+                (0, 0, {'name': '3. Sıra'}),
+                (0, 0, {'name': '5. Sıra'})
+            ]"/>
+        </record>
+
+        <record id="survey_question_poll_35" model="survey.question.poll">
+            <field name="name">Toprak kullanmadan besin çözeltisiyle bitki yetiştirme yöntemine ne ad verilir?</field>
+            <field name="category_id" ref="survey_question_poll_category_test"/>
+            <field name="company_id" model="res.company" search="[('name', '=', 'Numil-Danone')]"/>
+            <field name="option_ids" eval="[
+                (0, 0, {'name': 'Akuaponik'}),
+                (0, 0, {'name': 'Hidroponik', 'is_correct': True, 'answer_score': 1}),
+                (0, 0, {'name': 'Aeroponik'}),
+                (0, 0, {'name': 'Vermikompost'})
+            ]"/>
+        </record>
+
+        <record id="survey_question_poll_36" model="survey.question.poll">
+            <field name="name">Türkiye tarımsal üretimde dünya genelinde ihracatı en yüksek olan kuru meyve hangisidir?</field>
+            <field name="category_id" ref="survey_question_poll_category_test"/>
+            <field name="company_id" model="res.company" search="[('name', '=', 'Numil-Danone')]"/>
+            <field name="option_ids" eval="[
+                (0, 0, {'name': 'Kuru Kayısı', 'is_correct': True, 'answer_score': 1}),
+                (0, 0, {'name': 'Kuru Üzüm'}),
+                (0, 0, {'name': 'Kuru İncir'}),
+                (0, 0, {'name': 'Antep Fıstığı'})
+            ]"/>
+        </record>
+
+        <record id="survey_question_poll_37" model="survey.question.poll">
+            <field name="name">mRNA teknolojisini temel alan COVID-19 aşısını ilk geliştiren iş birliği hangisidir?</field>
+            <field name="category_id" ref="survey_question_poll_category_test"/>
+            <field name="company_id" model="res.company" search="[('name', '=', 'Numil-Danone')]"/>
+            <field name="option_ids" eval="[
+                (0, 0, {'name': 'AstraZeneca - Oxford'}),
+                (0, 0, {'name': 'Johnson &amp; Johnson'}),
+                (0, 0, {'name': 'BioNTech - Pfizer', 'is_correct': True, 'answer_score': 1}),
+                (0, 0, {'name': 'Moderna'})
+            ]"/>
+        </record>
+
+        <record id="survey_question_poll_38" model="survey.question.poll">
+            <field name="name">GLP-1 reseptör agonistleri (örn. semaglutid) öncelikli olarak hangi hastalıkların tedavisinde kullanılmaktadır?</field>
+            <field name="category_id" ref="survey_question_poll_category_test"/>
+            <field name="company_id" model="res.company" search="[('name', '=', 'Numil-Danone')]"/>
+            <field name="option_ids" eval="[
+                (0, 0, {'name': 'Kalp yetmezliği ve tansiyon'}),
+                (0, 0, {'name': 'Tip 2 diyabet ve obezite', 'is_correct': True, 'answer_score': 1}),
+                (0, 0, {'name': 'Alzheimer ve Parkinson'}),
+                (0, 0, {'name': 'Romatoid artrit ve MS'}),
+            ]"/>
+        </record>
+
+        <record id="survey_question_poll_39" model="survey.question.poll">
+            <field name="name">Penisilin'i keşfeden bilim insanı kimdir?</field>
+            <field name="category_id" ref="survey_question_poll_category_test"/>
+            <field name="company_id" model="res.company" search="[('name', '=', 'Numil-Danone')]"/>
+            <field name="option_ids" eval="[
+                (0, 0, {'name': 'Louis Pasteur'}),
+                (0, 0, {'name': 'Alexander Fleming', 'is_correct': True, 'answer_score': 1}),
+                (0, 0, {'name': 'Robert Koch'}),
+                (0, 0, {'name': 'Paul Ehrlich'})
+            ]"/>
+        </record>
+
+        <record id="survey_question_poll_40" model="survey.question.poll">
+            <field name="name">Dünya çelik üretiminde birinci sıraya sahip ülke hangisidir?</field>
+            <field name="category_id" ref="survey_question_poll_category_test"/>
+            <field name="company_id" model="res.company" search="[('name', '=', 'Numil-Danone')]"/>
+            <field name="option_ids" eval="[
+                (0, 0, {'name': 'Japonya'}),
+                (0, 0, {'name': 'Hindistan'}),
+                (0, 0, {'name': 'Çin', 'is_correct': True, 'answer_score': 1}),
+                (0, 0, {'name': 'ABD'})
+            ]"/>
+        </record>
+
+        <record id="survey_question_poll_41" model="survey.question.poll">
+            <field name="name">Yarı iletken (çip) üretiminde en gelişmiş teknolojiye ve pazar payına sahip ülke hangisidir?</field>
+            <field name="category_id" ref="survey_question_poll_category_test"/>
+            <field name="company_id" model="res.company" search="[('name', '=', 'Numil-Danone')]"/>
+            <field name="option_ids" eval="[
+                (0, 0, {'name': 'Güney Kore'}),
+                (0, 0, {'name': 'Japonya'}),
+                (0, 0, {'name': 'Tayvan', 'is_correct': True, 'answer_score': 1}),
+                (0, 0, {'name': 'ABD'})
+            ]"/>
+        </record>
+
+        <record id="survey_question_poll_42" model="survey.question.poll">
+            <field name="name">Elektrikli araç bataryalarında enerji yoğunluğu en yüksek teknoloji hangisidir?</field>
+            <field name="category_id" ref="survey_question_poll_category_test"/>
+            <field name="company_id" model="res.company" search="[('name', '=', 'Numil-Danone')]"/>
+            <field name="option_ids" eval="[
+                (0, 0, {'name': 'Kurşun-asit'}),
+                (0, 0, {'name': 'Nikel-metal hidrür (NiMH)'}),
+                (0, 0, {'name': 'Lityum iyon (Li-ion)', 'is_correct': True, 'answer_score': 1}),
+                (0, 0, {'name': 'Katı hal (solid-state)'})
+            ]"/>
+        </record>
+
+        <record id="survey_question_poll_43" model="survey.question.poll">
+            <field name="name">ChatGPT'yi geliştiren yapay zeka araştırma kuruluşu hangisidir?</field>
+            <field name="category_id" ref="survey_question_poll_category_test"/>
+            <field name="company_id" model="res.company" search="[('name', '=', 'Numil-Danone')]"/>
+            <field name="option_ids" eval="[
+                (0, 0, {'name': 'Google DeepMind'}),
+                (0, 0, {'name': 'Meta AI'}),
+                (0, 0, {'name': 'OpenAI', 'is_correct': True, 'answer_score': 1}),
+                (0, 0, {'name': 'Anthropic'})
+            ]"/>
+        </record>
+
+        <record id="survey_question_poll_44" model="survey.question.poll">
+            <field name="name">Büyük dil modellerinin (LLM) temelini oluşturan "Attention is All You Need" makalesiyle tanıtılan mimari hangisidir?</field>
+            <field name="category_id" ref="survey_question_poll_category_test"/>
+            <field name="company_id" model="res.company" search="[('name', '=', 'Numil-Danone')]"/>
+            <field name="option_ids" eval="[
+                (0, 0, {'name': 'LSTM'}),
+                (0, 0, {'name': 'Transformer', 'is_correct': True, 'answer_score': 1}),
+                (0, 0, {'name': 'Konvolüsyonel Sinir Ağı (CNN)'}),
+                (0, 0, {'name': 'GAN (Üretken Çekişmeli Ağ)'})
+            ]"/>
+        </record>
+
+        <record id="survey_question_poll_45" model="survey.question.poll">
+            <field name="name">5G teknolojisinde yüksek bant genişliği sağlamak için kullanılan yüksek frekanslı spektrum bandı hangisidir?</field>
+            <field name="category_id" ref="survey_question_poll_category_test"/>
+            <field name="company_id" model="res.company" search="[('name', '=', 'Numil-Danone')]"/>
+            <field name="option_ids" eval="[
+                (0, 0, {'name': 'Sub-1 GHz'}),
+                (0, 0, {'name': '2.4 GHz Wi-Fi bandı'}),
+                (0, 0, {'name': 'mmWave (milimetre dalga, 24-100 GHz)', 'is_correct': True, 'answer_score': 1}),
+                (0, 0, {'name': 'UHF (300 MHz - 3 GHz)'})
+            ]"/>
+        </record>
+
+        <record id="survey_question_poll_46" model="survey.question.poll">
+            <field name="name">Blockchain teknolojisinde değiştirilemeyen kayıtların güvenliğini sağlayan kriptografik yapı hangisidir?</field>
+            <field name="category_id" ref="survey_question_poll_category_test"/>
+            <field name="company_id" model="res.company" search="[('name', '=', 'Numil-Danone')]"/>
+            <field name="option_ids" eval="[
+                (0, 0, {'name': 'Simetrik şifreleme (AES)'}),
+                (0, 0, {'name': 'Kriptografik hash fonksiyonu (SHA-256)', 'is_correct': True, 'answer_score': 1}),
+                (0, 0, {'name': 'Açık anahtar altyapısı (PKI)'}),
+                (0, 0, {'name': 'SSL/TLS sertifikaları'})
+            ]"/>
+        </record>
+
+        <record id="survey_question_poll_47" model="survey.question.poll">
+            <field name="name">Kuantum bilgisayarların klasik bilgisayarlardan üstün olduğu temel prensip hangisidir?</field>
+            <field name="category_id" ref="survey_question_poll_category_test"/>
+            <field name="company_id" model="res.company" search="[('name', '=', 'Numil-Danone')]"/>
+            <field name="option_ids" eval="[
+                (0, 0, {'name': 'Daha hızlı transistörler kullanmaları'}),
+                (0, 0, {'name': 'Büyük RAM kapasitesi'}),
+                (0, 0, {'name': 'Kuantum süperpozisyonu ve dolanıklık ile aynı anda çok sayıda hesaplama yapabilmeleri', 'is_correct': True, 'answer_score': 1}),
+                (0, 0, {'name': 'Çok çekirdekli işlem mimarisi'})
+            ]"/>
+        </record>
+
+        <record id="survey_question_poll_48" model="survey.question.poll">
+            <field name="name">İnsansız hava araçlarının (drone) konum belirleme ve navigasyonunda birincil olarak hangi teknoloji kullanılır?</field>
+            <field name="category_id" ref="survey_question_poll_category_test"/>
+            <field name="company_id" model="res.company" search="[('name', '=', 'Numil-Danone')]"/>
+            <field name="option_ids" eval="[
+                (0, 0, {'name': 'RFID'}),
+                (0, 0, {'name': 'GNSS / GPS', 'is_correct': True, 'answer_score': 1}),
+                (0, 0, {'name': 'NFC'}),
+                (0, 0, {'name': 'Bluetooth LE'})
+            ]"/>
+        </record>
+
+        <record id="survey_question_poll_49" model="survey.question.poll">
+            <field name="name">DSÖ (WHO), COVID-19 salgınını resmi olarak pandemi ilan ettiği tarih hangisidir?</field>
+            <field name="category_id" ref="survey_question_poll_category_test"/>
+            <field name="company_id" model="res.company" search="[('name', '=', 'Numil-Danone')]"/>
+            <field name="option_ids" eval="[
+                (0, 0, {'name': 'Ocak 2020'}),
+                (0, 0, {'name': 'Şubat 2020'}),
+                (0, 0, {'name': 'Mart 2020', 'is_correct': True, 'answer_score': 1}),
+                (0, 0, {'name': 'Nisan 2020'})
+            ]"/>
+        </record>
+
+        <record id="survey_question_poll_50" model="survey.question.poll">
+            <field name="name">Türkiye'nin tahıl üretiminde (buğday) en önemli tarım bölgesi hangisidir?</field>
+            <field name="category_id" ref="survey_question_poll_category_test"/>
+            <field name="company_id" model="res.company" search="[('name', '=', 'Numil-Danone')]"/>
+            <field name="option_ids" eval="[
+                (0, 0, {'name': 'Ege Bölgesi'}),
+                (0, 0, {'name': 'İç Anadolu Bölgesi', 'is_correct': True, 'answer_score': 1}),
+                (0, 0, {'name': 'Karadeniz Bölgesi'}),
+                (0, 0, {'name': 'Akdeniz Bölgesi'})
+            ]"/>
+        </record>
+
+        <!-- Popüler Bilim Soruları (Kolay) -->
+
+        <record id="survey_question_poll_51" model="survey.question.poll">
+            <field name="name">Işığın boşluktaki hızı yaklaşık kaç km/s'dir?</field>
+            <field name="category_id" ref="survey_question_poll_category_test"/>
+            <field name="company_id" model="res.company" search="[('name', '=', 'Numil-Danone')]"/>
+            <field name="option_ids" eval="[
+                (0, 0, {'name': '100.000 km/s'}),
+                (0, 0, {'name': '200.000 km/s'}),
+                (0, 0, {'name': '300.000 km/s', 'is_correct': True, 'answer_score': 1}),
+                (0, 0, {'name': '500.000 km/s'})
+            ]"/>
+        </record>
+
+        <record id="survey_question_poll_52" model="survey.question.poll">
+            <field name="name">Su molekülünün kimyasal formülü nedir?</field>
+            <field name="category_id" ref="survey_question_poll_category_test"/>
+            <field name="company_id" model="res.company" search="[('name', '=', 'Numil-Danone')]"/>
+            <field name="option_ids" eval="[
+                (0, 0, {'name': 'CO2'}),
+                (0, 0, {'name': 'NaCl'}),
+                (0, 0, {'name': 'H2O', 'is_correct': True, 'answer_score': 1}),
+                (0, 0, {'name': 'O2'})
+            ]"/>
+        </record>
+
+        <record id="survey_question_poll_53" model="survey.question.poll">
+            <field name="name">Güneş sistemimizdeki en büyük gezegen hangisidir?</field>
+            <field name="category_id" ref="survey_question_poll_category_test"/>
+            <field name="company_id" model="res.company" search="[('name', '=', 'Numil-Danone')]"/>
+            <field name="option_ids" eval="[
+                (0, 0, {'name': 'Satürn'}),
+                (0, 0, {'name': 'Jüpiter', 'is_correct': True, 'answer_score': 1}),
+                (0, 0, {'name': 'Neptün'}),
+                (0, 0, {'name': 'Uranüs'})
+            ]"/>
+        </record>
+
+        <record id="survey_question_poll_54" model="survey.question.poll">
+            <field name="name">İnsan vücudunda kaç kemik bulunmaktadır (yetişkin)?</field>
+            <field name="category_id" ref="survey_question_poll_category_test"/>
+            <field name="company_id" model="res.company" search="[('name', '=', 'Numil-Danone')]"/>
+            <field name="option_ids" eval="[
+                (0, 0, {'name': '106'}),
+                (0, 0, {'name': '156'}),
+                (0, 0, {'name': '206', 'is_correct': True, 'answer_score': 1}),
+                (0, 0, {'name': '256'})
+            ]"/>
+        </record>
+
+        <record id="survey_question_poll_55" model="survey.question.poll">
+            <field name="name">Yerçekimi kuvvetinin keşfi ile ilişkilendirilen bilim insanı kimdir?</field>
+            <field name="category_id" ref="survey_question_poll_category_test"/>
+            <field name="company_id" model="res.company" search="[('name', '=', 'Numil-Danone')]"/>
+            <field name="option_ids" eval="[
+                (0, 0, {'name': 'Galileo Galilei'}),
+                (0, 0, {'name': 'Albert Einstein'}),
+                (0, 0, {'name': 'Isaac Newton', 'is_correct': True, 'answer_score': 1}),
+                (0, 0, {'name': 'Nikola Tesla'})
+            ]"/>
+        </record>
+
+        <record id="survey_question_poll_56" model="survey.question.poll">
+            <field name="name">DNA'nın çift sarmal yapısını ilk kez tanımlayan bilim insanları kimlerdir?</field>
+            <field name="category_id" ref="survey_question_poll_category_test"/>
+            <field name="company_id" model="res.company" search="[('name', '=', 'Numil-Danone')]"/>
+            <field name="option_ids" eval="[
+                (0, 0, {'name': 'Pasteur ve Koch'}),
+                (0, 0, {'name': 'Watson ve Crick', 'is_correct': True, 'answer_score': 1}),
+                (0, 0, {'name': 'Darwin ve Mendel'}),
+                (0, 0, {'name': 'Curie ve Rutherford'})
+            ]"/>
+        </record>
+
+        <record id="survey_question_poll_57" model="survey.question.poll">
+            <field name="name">Periyodik tabloda en hafif element hangisidir?</field>
+            <field name="category_id" ref="survey_question_poll_category_test"/>
+            <field name="company_id" model="res.company" search="[('name', '=', 'Numil-Danone')]"/>
+            <field name="option_ids" eval="[
+                (0, 0, {'name': 'Helyum'}),
+                (0, 0, {'name': 'Oksijen'}),
+                (0, 0, {'name': 'Hidrojen', 'is_correct': True, 'answer_score': 1}),
+                (0, 0, {'name': 'Lityum'})
+            ]"/>
+        </record>
+
+        <record id="survey_question_poll_58" model="survey.question.poll">
+            <field name="name">Dünya'nın Güneş etrafındaki bir tam turunu tamamlaması ne kadar sürer?</field>
+            <field name="category_id" ref="survey_question_poll_category_test"/>
+            <field name="company_id" model="res.company" search="[('name', '=', 'Numil-Danone')]"/>
+            <field name="option_ids" eval="[
+                (0, 0, {'name': '24 saat'}),
+                (0, 0, {'name': '30 gün'}),
+                (0, 0, {'name': '365,25 gün', 'is_correct': True, 'answer_score': 1}),
+                (0, 0, {'name': '400 gün'})
+            ]"/>
+        </record>
+
+        <record id="survey_question_poll_59" model="survey.question.poll">
+            <field name="name">Fotosentez sırasında bitkiler hangi gazı serbest bırakır?</field>
+            <field name="category_id" ref="survey_question_poll_category_test"/>
+            <field name="company_id" model="res.company" search="[('name', '=', 'Numil-Danone')]"/>
+            <field name="option_ids" eval="[
+                (0, 0, {'name': 'Karbondioksit (CO2)'}),
+                (0, 0, {'name': 'Azot (N2)'}),
+                (0, 0, {'name': 'Oksijen (O2)', 'is_correct': True, 'answer_score': 1}),
+                (0, 0, {'name': 'Hidrojen (H2)'})
+            ]"/>
+        </record>
+
+        <record id="survey_question_poll_60" model="survey.question.poll">
+            <field name="name">Elektriği ileten maddelere ne ad verilir?</field>
+            <field name="category_id" ref="survey_question_poll_category_test"/>
+            <field name="company_id" model="res.company" search="[('name', '=', 'Numil-Danone')]"/>
+            <field name="option_ids" eval="[
+                (0, 0, {'name': 'İzolatör'}),
+                (0, 0, {'name': 'İletken', 'is_correct': True, 'answer_score': 1}),
+                (0, 0, {'name': 'Yarı iletken'}),
+                (0, 0, {'name': 'Dielektrik'})
+            ]"/>
+        </record>
+
+        <record id="survey_question_poll_61" model="survey.question.poll">
+            <field name="name">Ses dalgaları en hızlı hangi ortamda yayılır?</field>
+            <field name="category_id" ref="survey_question_poll_category_test"/>
+            <field name="company_id" model="res.company" search="[('name', '=', 'Numil-Danone')]"/>
+            <field name="option_ids" eval="[
+                (0, 0, {'name': 'Hava'}),
+                (0, 0, {'name': 'Su'}),
+                (0, 0, {'name': 'Katı maddeler (çelik vb.)', 'is_correct': True, 'answer_score': 1}),
+                (0, 0, {'name': 'Vakum'})
+            ]"/>
+        </record>
+
+        <record id="survey_question_poll_62" model="survey.question.poll">
+            <field name="name">Evrenin oluşumunu açıklayan teorinin adı nedir?</field>
+            <field name="category_id" ref="survey_question_poll_category_test"/>
+            <field name="company_id" model="res.company" search="[('name', '=', 'Numil-Danone')]"/>
+            <field name="option_ids" eval="[
+                (0, 0, {'name': 'Karadelik Teorisi'}),
+                (0, 0, {'name': 'Kuantum Teorisi'}),
+                (0, 0, {'name': 'Büyük Patlama (Big Bang) Teorisi', 'is_correct': True, 'answer_score': 1}),
+                (0, 0, {'name': 'Görelilik Teorisi'})
+            ]"/>
+        </record>
+
+        <record id="survey_question_poll_63" model="survey.question.poll">
+            <field name="name">İnsan vücudundaki en büyük iç organ hangisidir?</field>
+            <field name="category_id" ref="survey_question_poll_category_test"/>
+            <field name="company_id" model="res.company" search="[('name', '=', 'Numil-Danone')]"/>
+            <field name="option_ids" eval="[
+                (0, 0, {'name': 'Kalp'}),
+                (0, 0, {'name': 'Böbrek'}),
+                (0, 0, {'name': 'Karaciğer', 'is_correct': True, 'answer_score': 1}),
+                (0, 0, {'name': 'Akciğer'})
+            ]"/>
+        </record>
+
+        <record id="survey_question_poll_64" model="survey.question.poll">
+            <field name="name">Elma asidik mi bazik mi bir meyvedir?</field>
+            <field name="category_id" ref="survey_question_poll_category_test"/>
+            <field name="company_id" model="res.company" search="[('name', '=', 'Numil-Danone')]"/>
+            <field name="option_ids" eval="[
+                (0, 0, {'name': 'Bazik (pH > 7)'}),
+                (0, 0, {'name': 'Nötr (pH = 7)'}),
+                (0, 0, {'name': 'Asidik (pH &lt; 7)', 'is_correct': True, 'answer_score': 1}),
+                (0, 0, {'name': 'pH değeri yoktur'})
+            ]"/>
+        </record>
+
+        <record id="survey_question_poll_65" model="survey.question.poll">
+            <field name="name">Ay'da yerçekimi Dünya'ya göre yaklaşık kaç kat daha azdır?</field>
+            <field name="category_id" ref="survey_question_poll_category_test"/>
+            <field name="company_id" model="res.company" search="[('name', '=', 'Numil-Danone')]"/>
+            <field name="option_ids" eval="[
+                (0, 0, {'name': '2 kat'}),
+                (0, 0, {'name': '4 kat'}),
+                (0, 0, {'name': '6 kat', 'is_correct': True, 'answer_score': 1}),
+                (0, 0, {'name': '10 kat'})
+            ]"/>
+        </record>
+
     </data>
 </odoo>
