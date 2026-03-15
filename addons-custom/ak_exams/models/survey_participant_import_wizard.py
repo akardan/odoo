@@ -174,15 +174,18 @@ class SurveyParticipantImportWizard(models.TransientModel):
         
         header_mapping = {
             'FIRST&LAST NAME': 'name',
+            'TAM İSİM': 'name',
             'NAME': 'name',
             'AD SOYAD': 'name',
             'BUSINESS E-MAIL': 'email',
+            'İŞ E-POSTA': 'email',
             'EMAIL': 'email',
             'E-POSTA': 'email',
             'DANONE ID': 'external_id',
             'ID': 'external_id',
             'TAKIM': 'team',
             'TEAM': 'team',
+            'GRUP': 'team',
             'BÖLGE': 'region',
             'REGION': 'region',
         }
@@ -321,11 +324,11 @@ class SurveyParticipantImportWizard(models.TransientModel):
                 'DANONE ID': 'external_id',
                 'ID': 'external_id',
                 'FIRST&LAST NAME': 'name',
-                'Tam İsim': 'name',
+                'TAM İSİM': 'name',
                 'NAME': 'name',
                 'AD SOYAD': 'name',
                 'BUSINESS E-MAIL': 'email',
-                'İş E-Posta': 'email',
+                'İŞ E-POSTA': 'email',
                 'EMAIL': 'email',
                 'E-POSTA': 'email',
                 'DEPARTMENT': 'department',
@@ -334,23 +337,23 @@ class SurveyParticipantImportWizard(models.TransientModel):
                 'TELEFON': 'phone',
                 'TAKIM': 'team',
                 'TEAM': 'team',
-                'Grup': 'team',
+                'GRUP': 'team',
                 'BÖLGE': 'region',
                 'REGION': 'region',
             }
         else:  # BM sheet
             header_mapping = {
                 'FIRST&LAST NAME': 'name',
-                'Tam İsim': 'name',
+                'TAM İSİM': 'name',
                 'NAME': 'name',
                 'AD SOYAD': 'name',
                 'BUSINESS E-MAIL': 'email',
-                'İş E-Posta': 'email',
+                'İŞ E-POSTA': 'email',
                 'EMAIL': 'email',
                 'E-POSTA': 'email',
                 'DEPARTMENT': 'department',
                 'DEPARTMAN': 'department',
-                'Grup': 'team',
+                'GRUP': 'team',
                 'PHONE': 'phone',
                 'TELEFON': 'phone',
                 'BÖLGE': 'region',
@@ -568,16 +571,21 @@ class SurveyParticipantImportWizard(models.TransientModel):
                     if user and region_team.user_id != user:
                         region_team.write({'user_id': user.id})
 
-            # Assign user to team (Region Team)
-            target_team = region_team
+            # Assign user to team (Region Team, fallback to Group Team)
+            target_team = region_team or group_team
             if target_team:
-                # Add user as member of the team
-                if user.id not in target_team.member_ids.ids:
-                    target_team.write({'member_ids': [(4, user.id)]})
-                
-                # Also set as sale_team_id on user if available (standard Odoo behavior often links these)
-                if hasattr(user, 'sale_team_id'):
-                    user.write({'sale_team_id': target_team.id})
+                # Add user as member via crm.team.member (Odoo 18 uses One2many, not Many2many)
+                CrmTeamMember = self.env['crm.team.member']
+                existing_member = CrmTeamMember.search([
+                    ('crm_team_id', '=', target_team.id),
+                    ('user_id', '=', user.id)
+                ], limit=1)
+                if not existing_member:
+                    CrmTeamMember.create({
+                        'crm_team_id': target_team.id,
+                        'user_id': user.id,
+                    })
+                    _logger.info(f"Added user {user.login} to team {target_team.name}")
             
             # Assign user to department based on sheet type
             if sheet.title == 'BM':
