@@ -29,15 +29,22 @@ class TenderScenarioWizard(models.TransientModel):
         required=True,
         help=_("Örn: 'Antalya' veya 'Titanic Beach 5★ — HB'")
     )
-    scenario_type = fields.Selection([
-        ('region', _('Bölge / Lokasyon')),
-        ('location_hotel', _('Lokasyon-Otel Paketi')),
-        ('transfer', _('Transfer Paketi')),
-        ('meal', _('Yemek Paketi')),
-        ('technical', _('Teknik Paket')),
-        ('flight', _('Uçuş Paketi')),
-        ('custom', _('Özel Paket')),
-    ], string=_('Senaryo Tipi'), default='location_hotel', required=True)
+    scenario_type_id = fields.Many2one(
+        'ak.tender.scenario.type',
+        string=_('Senaryo Tipi'),
+        required=True,
+    )
+    # Geriye dönük uyumluluk: onchange ve invisible koşulları kod bazlı çalışmaya devam eder
+    scenario_type = fields.Char(
+        related='scenario_type_id.code',
+        string=_('Senaryo Tipi Kodu'),
+        readonly=True,
+    )
+    type_is_root = fields.Boolean(
+        related='scenario_type_id.is_root',
+        string=_('Kök Tip mi?'),
+        readonly=True,
+    )
 
     is_mandatory = fields.Boolean(
         string=_('Zorunlu Senaryo'),
@@ -48,9 +55,9 @@ class TenderScenarioWizard(models.TransientModel):
     # ===== HİYERARŞİ =====
     parent_id = fields.Many2one(
         'ak.tender.scenario',
-        string=_('Üst Senaryo (Bölge)'),
-        domain="[('tender_id', '=', tender_id), ('scenario_type', '=', 'region')]",
-        help=_("Bölge senaryosu seçin. Otel bu bölgeye eklenecek.")
+        string=_('Üst Senaryo'),
+        domain="[('tender_id', '=', tender_id), ('type_is_root', '=', True)]",
+        help=_("Üst senaryo seçin. Yeni senaryo bu senaryonun altına eklenecek.")
     )
 
     # ===== LOKASYON VE OTEL =====
@@ -94,10 +101,24 @@ class TenderScenarioWizard(models.TransientModel):
     )
 
     # ===== COMPUTED =====
-    @api.onchange('scenario_type')
+    @api.model
+    def default_get(self, fields_list):
+        res = super().default_get(fields_list)
+        if 'scenario_type_id' not in res:
+            code = self.env.context.get('default_scenario_type')
+            ScenarioType = self.env['ak.tender.scenario.type']
+            if code:
+                stype = ScenarioType.search([('code', '=', code)], limit=1)
+            else:
+                stype = ScenarioType.search([('is_default', '=', True)], limit=1)
+            if stype:
+                res['scenario_type_id'] = stype.id
+        return res
+
+    @api.onchange('scenario_type_id')
     def _onchange_scenario_type(self):
-        """Bölge tipinde hotel ve tarih alanlarını zorunlu değil yap."""
-        if self.scenario_type == 'region':
+        """Kök tipte hotel ve tarih alanlarını temizle."""
+        if self.scenario_type_id and self.scenario_type_id.is_root:
             self.hotel_partner_id = False
             self.meal_plan = False
             self.add_dates = False
@@ -123,7 +144,7 @@ class TenderScenarioWizard(models.TransientModel):
         vals = {
             'tender_id': self.tender_id.id,
             'name': self.name,
-            'scenario_type': self.scenario_type,
+            'scenario_type_id': self.scenario_type_id.id if self.scenario_type_id else False,
             'parent_id': self.parent_id.id if self.parent_id else False,
             'location_id': self.location_id.id if self.location_id else False,
             'hotel_partner_id': self.hotel_partner_id.id if self.hotel_partner_id else False,

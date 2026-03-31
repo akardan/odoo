@@ -22,25 +22,16 @@
                     <group>
                         <group string="Ortak Bilgiler">
                             <field name="tender_id" readonly="1" options="{'no_open': True}"/>
+                            <field name="parent_scenario_type_id" readonly="1" options="{'no_open': True}"/>
                             <field name="location_id" options="{'no_create': True}"/>
                             <field name="person_count"/>
                         </group>
                     </group>
 
-                    <separator string="Eklenecek Paketler"/>
-                    <group>
-                        <group string="Temel Paketler">
-                            <field name="add_flight" widget="boolean_toggle"/>
-                            <field name="add_transfer" widget="boolean_toggle"/>
-                            <field name="add_location_hotel" widget="boolean_toggle"/>
-                        </group>
-                        <group string="Ek Paketler">
-                            <field name="add_technical" widget="boolean_toggle"/>
-                            <field name="add_meal" widget="boolean_toggle"/>
-                            <field name="add_tour" widget="boolean_toggle"/>
-                            <field name="add_custom" widget="boolean_toggle"/>
-                        </group>
-                    </group>
+                    <separator string="Eklenecek Paket Tipleri"/>
+                    <field name="selected_type_ids" widget="many2many_tags"
+                           options="{'no_create': True, 'no_open': True}"
+                           domain="[('is_root', '=', False), ('active', '=', True)]"/>
 
                     <div class="alert alert-info mt-3" role="alert">
                         <i class="fa fa-info-circle me-2"/>

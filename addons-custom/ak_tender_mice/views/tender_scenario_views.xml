@@ -14,7 +14,9 @@
                   decoration-muted="scenario_status == 'eliminated'">
                 <field name="sequence" widget="handle"/>
                 <field name="name"/>
-                <field name="scenario_type"/>
+                <field name="scenario_type_id"/>
+                <field name="type_is_root" column_invisible="1"/>
+                <field name="type_can_have_children" column_invisible="1"/>
                 <field name="parent_id" optional="show"/>
                 <field name="level" optional="hide"/>
                 <field name="location_id"/>
@@ -94,7 +96,7 @@
                             string="Alt Senaryo Ekle"
                             type="object"
                             class="btn-secondary"
-                            invisible="scenario_type not in ('region', 'location_hotel')"/>
+                            invisible="not type_can_have_children"/>
                     <button name="action_copy_scenario"
                             string="Kopyala"
                             type="object"
@@ -110,28 +112,28 @@
                                 type="object"
                                 class="oe_stat_button"
                                 icon="fa-tasks"
-                                invisible="scenario_type == 'region'">
+                                invisible="type_is_root">
                             <field name="scenario_line_count" widget="statinfo" string="Senaryo Kalemleri"/>
                         </button>
                         <button name="action_view_lines"
                                 type="object"
                                 class="oe_stat_button"
                                 icon="fa-list"
-                                invisible="scenario_type == 'region'">
+                                invisible="type_is_root">
                             <field name="line_count" widget="statinfo" string="İhale Kalemleri"/>
                         </button>
                         <button name="action_view_children"
                                 type="object"
                                 class="oe_stat_button"
                                 icon="fa-sitemap"
-                                invisible="scenario_type not in ('region', 'location_hotel')">
+                                invisible="not type_can_have_children">
                             <field name="child_count" widget="statinfo" string="Paketler"/>
                         </button>
                         <button name="action_view_comparison"
                                 type="object"
                                 class="oe_stat_button"
                                 icon="fa-balance-scale"
-                                invisible="scenario_type == 'region'">
+                                invisible="type_is_root">
                             <span class="o_stat_text">Teklifler</span>
                         </button>
                     </div>
@@ -145,11 +147,13 @@
 
                     <group>
                         <group name="basic_info" string="Temel Bilgiler">
+                            <field name="type_is_root" invisible="1"/>
+                            <field name="type_can_have_children" invisible="1"/>
                             <field name="tender_id" readonly="1"/>
                             <field name="parent_id"
                                    options="{'no_create': True}"
-                                   invisible="scenario_type == 'region'"/>
-                            <field name="scenario_type"/>
+                                   invisible="type_is_root"/>
+                            <field name="scenario_type_id" options="{'no_create': True}"/>
                             <field name="sequence"/>
                             <field name="is_mandatory"/>
                             <field name="scenario_source"/>
@@ -161,13 +165,13 @@
                             <field name="country_id" readonly="1"/>
                             <field name="hotel_partner_id"
                                    options="{'no_create': True}"
-                                   invisible="scenario_type == 'region'"/>
+                                   invisible="type_is_root"/>
                             <field name="meal_plan"
-                                   invisible="scenario_type == 'region'"/>
+                                   invisible="type_is_root"/>
                             <field name="person_count"
-                                   invisible="scenario_type == 'region'"/>
+                                   invisible="type_is_root"/>
                             <field name="vip_count"
-                                   invisible="scenario_type == 'region'"/>
+                                   invisible="type_is_root"/>
                         </group>
                     </group>
 
@@ -176,7 +180,7 @@
                         <!-- Alt Senaryolar (Bölge ve Otel tipinde) -->
                         <page string="Paketler / Alt Senaryolar"
                               name="children"
-                              invisible="scenario_type not in ('region', 'location_hotel')">
+                              invisible="not type_can_have_children">
                             <field name="child_ids">
                                 <list decoration-success="scenario_status == 'awarded'"
                                       decoration-info="scenario_status == 'shortlisted'"
@@ -214,7 +218,7 @@
                         <!-- Tarih Seçenekleri (Otel tipinde) -->
                         <page string="Tarih Seçenekleri"
                               name="dates"
-                              invisible="scenario_type == 'region'">
+                              invisible="type_is_root">
                             <field name="date_option_ids">
                                 <list editable="bottom">
                                     <field name="sequence" widget="handle"/>
@@ -245,7 +249,7 @@
                         <!-- Senaryo Kalemleri (Planlama) -->
                         <page string="Senaryo Kalemleri"
                               name="scenario_lines"
-                              invisible="scenario_type == 'region'">
+                              invisible="type_is_root">
 
                             <p class="text-muted mb-2">
                                 <i class="fa fa-info-circle me-1"/>
@@ -261,16 +265,52 @@
                                       decoration-info="line_type == 'accommodation'"
                                       decoration-warning="line_type == 'flight'">
                                     <field name="sequence" widget="handle"/>
+
+                                    <!-- Satır tipi — her zaman görünür, ilk sütun -->
                                     <field name="line_type" required="1"/>
+
+                                    <!-- Konaklama alanları -->
+                                    <field name="mice_room_type"
+                                           optional="show"
+                                           invisible="line_type not in ('accommodation', 'package')"/>
+                                    <field name="mice_meal_plan"
+                                           optional="show"
+                                           invisible="line_type not in ('accommodation', 'meal', 'package')"/>
+                                    <field name="mice_view_type"
+                                           optional="hide"
+                                           invisible="line_type not in ('accommodation', 'package')"/>
+
+                                    <!-- Transfer alanları -->
+                                    <field name="transfer_type"
+                                           optional="show"
+                                           invisible="line_type != 'transfer'"/>
+                                    <field name="vehicle_type"
+                                           optional="hide"
+                                           invisible="line_type != 'transfer'"/>
+
+                                    <!-- Yemek/F&B alanları -->
+                                    <field name="meal_type"
+                                           optional="show"
+                                           invisible="line_type != 'meal'"/>
+                                    <field name="menu_type"
+                                           optional="hide"
+                                           invisible="line_type != 'meal'"/>
+
+                                    <!-- Teknik hizmet alanları -->
+                                    <field name="technical_service_type"
+                                           optional="show"
+                                           invisible="line_type != 'technical'"/>
+
+                                    <!-- Açıklama ve genel alanlar -->
                                     <field name="name"/>
                                     <field name="product_id" optional="hide"/>
-                                    <field name="mice_room_type" optional="show"/>
-                                    <field name="mice_meal_plan" optional="show"/>
                                     <field name="quantity"/>
                                     <field name="days"/>
                                     <field name="uom_id" optional="show" groups="uom.group_uom"/>
                                     <field name="currency_id" column_invisible="1"/>
-                                    <field name="target_price" widget="monetary" options="{'currency_field': 'currency_id'}"/>
+                                    <field name="target_price"
+                                           widget="monetary"
+                                           options="{'currency_field': 'currency_id'}"/>
                                     <field name="computed_target_total"
                                            widget="monetary"
                                            options="{'currency_field': 'currency_id'}"
@@ -360,7 +400,7 @@
                         <!-- Fiyatlandırma ve Teklifler -->
                         <page string="Fiyatlandırma ve Teklifler"
                               name="pricing"
-                              invisible="scenario_type == 'region'">
+                              invisible="type_is_root">
                             <group>
                                 <group string="Hedef Fiyatlar">
                                     <field name="currency_id" invisible="1"/>
@@ -429,7 +469,7 @@
                     default_group_by="scenario_status"
                     records_draggable="false">
                 <field name="name"/>
-                <field name="scenario_type"/>
+                <field name="scenario_type_id"/>
                 <field name="parent_id"/>
                 <field name="hotel_partner_id"/>
                 <field name="location_id"/>
@@ -460,7 +500,7 @@
                                     </strong>
                                     <div class="o_kanban_record_subtitle text-muted mt-1">
                                         <span class="badge text-bg-info me-1">
-                                            <field name="scenario_type"/>
+                                            <field name="scenario_type_id"/>
                                         </span>
                                         <t t-if="record.parent_id.raw_value">
                                             <span class="badge text-bg-secondary me-1">
@@ -666,6 +706,95 @@
                 MICE ihaleleri için bölge, otel ve tarih kombinasyonlarını
                 senaryo olarak tanımlayın.
             </p>
+        </field>
+    </record>
+
+    <!-- ============================================================ -->
+    <!-- ak.tender.scenario.type — List View                          -->
+    <!-- ============================================================ -->
+    <record id="view_scenario_type_list" model="ir.ui.view">
+        <field name="name">ak.tender.scenario.type.list</field>
+        <field name="model">ak.tender.scenario.type</field>
+        <field name="arch" type="xml">
+            <list string="Senaryo Tipleri">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="code"/>
+                <field name="parent_id"/>
+                <field name="can_have_children" widget="boolean_toggle"/>
+                <field name="is_root" widget="boolean_toggle"/>
+                <field name="is_default" widget="boolean_toggle"/>
+                <field name="active" widget="boolean_toggle"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ============================================================ -->
+    <!-- ak.tender.scenario.type — Form View                          -->
+    <!-- ============================================================ -->
+    <record id="view_scenario_type_form" model="ir.ui.view">
+        <field name="name">ak.tender.scenario.type.form</field>
+        <field name="model">ak.tender.scenario.type</field>
+        <field name="arch" type="xml">
+            <form string="Senaryo Tipi">
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1><field name="name" placeholder="Tip adı..."/></h1>
+                    </div>
+                    <group>
+                        <group string="Temel Bilgiler">
+                            <field name="code"/>
+                            <field name="sequence"/>
+                            <field name="parent_id" options="{'no_create': True}"/>
+                            <field name="active"/>
+                            <field name="color" widget="color_picker"/>
+                        </group>
+                        <group string="Davranış">
+                            <field name="is_root" widget="boolean_toggle"/>
+                            <field name="can_have_children" widget="boolean_toggle"/>
+                            <field name="is_default" widget="boolean_toggle"/>
+                            <field name="show_hotel_fields" widget="boolean_toggle"/>
+                            <field name="show_pricing_fields" widget="boolean_toggle"/>
+                        </group>
+                    </group>
+                    <group string="İzin Verilen Alt Tipler">
+                        <p class="text-muted" invisible="can_have_children">
+                            Bu tip alt paket alamaz (can_have_children kapalı).
+                        </p>
+                        <field name="allowed_child_type_ids"
+                               widget="many2many_tags"
+                               invisible="not can_have_children"
+                               options="{'no_create': True}"/>
+                        <p class="text-muted" invisible="not can_have_children or allowed_child_type_ids">
+                            Boş bırakılırsa tüm aktif tipler (kök hariç) alt paket olarak eklenebilir.
+                        </p>
+                    </group>
+                    <group string="Alt Tipler" invisible="not child_ids">
+                        <field name="child_ids" nolabel="1">
+                            <list>
+                                <field name="name"/>
+                                <field name="code"/>
+                                <field name="can_have_children" widget="boolean_toggle"/>
+                                <field name="is_default" widget="boolean_toggle"/>
+                            </list>
+                        </field>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- ============================================================ -->
+    <!-- ak.tender.scenario.type — Action                             -->
+    <!-- ============================================================ -->
+    <record id="action_scenario_type" model="ir.actions.act_window">
+        <field name="name">Senaryo Tipleri</field>
+        <field name="res_model">ak.tender.scenario.type</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Yeni senaryo tipi oluşturun</p>
+            <p>MICE senaryo tiplerini ve alt paket ilişkilerini buradan yönetin.</p>
         </field>
     </record>
 

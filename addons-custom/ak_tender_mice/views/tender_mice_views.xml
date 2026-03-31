@@ -98,7 +98,7 @@
                         <kanban class="ak_scenario_kanban">
                             <field name="sequence"/>
                             <field name="name"/>
-                            <field name="scenario_type"/>
+                            <field name="scenario_type_id"/>
                             <field name="parent_id"/>
                             <field name="location_id"/>
                             <field name="hotel_partner_id"/>
@@ -132,7 +132,7 @@
                                                 </strong>
                                                 <div class="o_kanban_record_subtitle text-muted mt-1">
                                                     <span class="badge text-bg-info me-1">
-                                                        <field name="scenario_type"/>
+                                                        <field name="scenario_type_id"/>
                                                     </span>
                                                     <t t-if="record.parent_id.raw_value">
                                                         <span class="badge text-bg-secondary me-1">
@@ -216,21 +216,7 @@
                                                         </strong>
                                                     </div>
                                                     <div class="ms-2">
-                                                        <table class="table table-sm table-borderless mb-0">
-                                                            <t t-foreach="record.scenario_line_ids.raw_value" t-as="line">
-                                                                <tr>
-                                                                    <td class="text-start ps-0">
-                                                                        <i class="fa fa-circle-o text-success me-1" style="font-size: 0.7em;"/>
-                                                                        <t t-esc="line.name"/>
-                                                                    </td>
-                                                                    <td class="text-end pe-0">
-                                                                        <span class="badge text-bg-light">
-                                                                            <t t-esc="line.quantity"/> <t t-esc="line.uom_id and line.uom_id[1] or ''"/>
-                                                                        </span>
-                                                                    </td>
-                                                                </tr>
-                                                            </t>
-                                                        </table>
+                                                        <field name="kanban_line_summary" widget="html"/>
                                                     </div>
                                                 </div>
                                             </t>

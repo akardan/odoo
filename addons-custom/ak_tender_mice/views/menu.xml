@@ -21,4 +21,11 @@
               action="ak_tender.ak_tender_action"
               sequence="20"/>
 
+    <!-- Senaryo Tipleri Yönetimi -->
+    <menuitem id="menu_mice_scenario_types"
+              name="Senaryo Tipleri"
+              parent="menu_mice_root"
+              action="action_scenario_type"
+              sequence="30"/>
+
 </odoo>

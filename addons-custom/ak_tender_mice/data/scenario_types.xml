@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+    <!--
+        MICE Senaryo Tipleri — Başlangıç Verisi
+        noupdate="1": Kurulum sonrası kullanıcı değişiklikleri korunur.
+
+        Hiyerarşi:
+            region              → Lokasyon / Bölge (kök)
+              location_hotel    → Otel Paketi
+                flight          → Uçuş Paketi
+                transfer        → Transfer Paketi
+                meal            → Yemek Paketi
+                technical       → Teknik Paket
+                custom          → Özel Paket
+    -->
+
+    <!-- ============================================================ -->
+    <!-- KÖK TİP — Lokasyon / Bölge                                  -->
+    <!-- ============================================================ -->
+    <record id="scenario_type_region" model="ak.tender.scenario.type">
+        <field name="name">Lokasyon</field>
+        <field name="code">region</field>
+        <field name="sequence">10</field>
+        <field name="is_root" eval="True"/>
+        <field name="can_have_children" eval="True"/>
+        <field name="show_hotel_fields" eval="False"/>
+        <field name="show_pricing_fields" eval="False"/>
+        <field name="is_default" eval="False"/>
+        <field name="color">0</field>
+    </record>
+
+    <!-- ============================================================ -->
+    <!-- SEVİYE 1 — Otel Paketi (region altına girer)                 -->
+    <!-- ============================================================ -->
+    <record id="scenario_type_location_hotel" model="ak.tender.scenario.type">
+        <field name="name">Otel Paketi</field>
+        <field name="code">location_hotel</field>
+        <field name="sequence">20</field>
+        <field name="parent_id" ref="scenario_type_region"/>
+        <field name="is_root" eval="False"/>
+        <field name="can_have_children" eval="True"/>
+        <field name="show_hotel_fields" eval="True"/>
+        <field name="show_pricing_fields" eval="True"/>
+        <field name="is_default" eval="True"/>
+        <field name="color">4</field>
+    </record>
+
+    <!-- ============================================================ -->
+    <!-- SEVİYE 2 — Alt Paketler (location_hotel altına girer)        -->
+    <!-- ============================================================ -->
+    <record id="scenario_type_flight" model="ak.tender.scenario.type">
+        <field name="name">Uçuş Paketi</field>
+        <field name="code">flight</field>
+        <field name="sequence">30</field>
+        <field name="parent_id" ref="scenario_type_location_hotel"/>
+        <field name="is_root" eval="False"/>
+        <field name="can_have_children" eval="False"/>
+        <field name="show_hotel_fields" eval="False"/>
+        <field name="show_pricing_fields" eval="True"/>
+        <field name="is_default" eval="False"/>
+        <field name="color">6</field>
+    </record>
+
+    <record id="scenario_type_transfer" model="ak.tender.scenario.type">
+        <field name="name">Transfer Paketi</field>
+        <field name="code">transfer</field>
+        <field name="sequence">40</field>
+        <field name="parent_id" ref="scenario_type_location_hotel"/>
+        <field name="is_root" eval="False"/>
+        <field name="can_have_children" eval="False"/>
+        <field name="show_hotel_fields" eval="False"/>
+        <field name="show_pricing_fields" eval="True"/>
+        <field name="is_default" eval="False"/>
+        <field name="color">2</field>
+    </record>
+
+    <record id="scenario_type_meal" model="ak.tender.scenario.type">
+        <field name="name">Yemek Paketi</field>
+        <field name="code">meal</field>
+        <field name="sequence">50</field>
+        <field name="parent_id" ref="scenario_type_location_hotel"/>
+        <field name="is_root" eval="False"/>
+        <field name="can_have_children" eval="False"/>
+        <field name="show_hotel_fields" eval="False"/>
+        <field name="show_pricing_fields" eval="True"/>
+        <field name="is_default" eval="False"/>
+        <field name="color">3</field>
+    </record>
+
+    <record id="scenario_type_technical" model="ak.tender.scenario.type">
+        <field name="name">Teknik Paket</field>
+        <field name="code">technical</field>
+        <field name="sequence">60</field>
+        <field name="parent_id" ref="scenario_type_location_hotel"/>
+        <field name="is_root" eval="False"/>
+        <field name="can_have_children" eval="False"/>
+        <field name="show_hotel_fields" eval="False"/>
+        <field name="show_pricing_fields" eval="True"/>
+        <field name="is_default" eval="False"/>
+        <field name="color">5</field>
+    </record>
+
+    <record id="scenario_type_custom" model="ak.tender.scenario.type">
+        <field name="name">Özel Paket</field>
+        <field name="code">custom</field>
+        <field name="sequence">70</field>
+        <field name="parent_id" ref="scenario_type_location_hotel"/>
+        <field name="is_root" eval="False"/>
+        <field name="can_have_children" eval="True"/>
+        <field name="show_hotel_fields" eval="False"/>
+        <field name="show_pricing_fields" eval="True"/>
+        <field name="is_default" eval="False"/>
+        <field name="color">1</field>
+    </record>
+
+    <!-- ============================================================ -->
+    <!-- allowed_child_type_ids — Bölge sadece Otel Paketi içerebilir -->
+    <!-- ============================================================ -->
+    <record id="scenario_type_region" model="ak.tender.scenario.type">
+        <field name="allowed_child_type_ids" eval="[(6, 0, [ref('scenario_type_location_hotel')])]"/>
+    </record>
+
+    <!-- Otel Paketi tüm alt paketleri içerebilir (flight, transfer, meal, technical, custom) -->
+    <record id="scenario_type_location_hotel" model="ak.tender.scenario.type">
+        <field name="allowed_child_type_ids" eval="[(6, 0, [
+            ref('scenario_type_flight'),
+            ref('scenario_type_transfer'),
+            ref('scenario_type_meal'),
+            ref('scenario_type_technical'),
+            ref('scenario_type_custom'),
+        ])]"/>
+    </record>
+
+</odoo>

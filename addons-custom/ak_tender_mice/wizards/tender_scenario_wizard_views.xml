@@ -21,14 +21,16 @@
                     <group>
                         <group string="Temel Bilgiler">
                             <field name="tender_id" readonly="1"/>
-                            <field name="scenario_type"/>
+                            <field name="scenario_type_id" options="{'no_create': True}"/>
+                            <field name="scenario_type" invisible="1"/>
+                            <field name="type_is_root" invisible="1"/>
                             <field name="parent_id"
-                                   invisible="scenario_type == 'region'"
+                                   invisible="type_is_root"
                                    options="{'no_create': True}"/>
                             <field name="is_mandatory"/>
                         </group>
                         <group string="Lokasyon ve Otel"
-                               invisible="scenario_type == 'region'">
+                               invisible="type_is_root">
                             <field name="location_id"/>
                             <field name="hotel_partner_id"
                                    options="{'no_create': True}"/>
@@ -36,14 +38,14 @@
                         </group>
                     </group>
 
-                    <!-- Lokasyon tipi için sadece bölge bilgisi -->
+                    <!-- Kök tip için sadece bölge bilgisi -->
                     <group string="Lokasyon"
-                           invisible="scenario_type != 'region'">
+                           invisible="not type_is_root">
                         <field name="location_id"/>
                     </group>
 
                     <group string="Katılımcı Bilgileri"
-                           invisible="scenario_type == 'region'">
+                           invisible="type_is_root">
                         <group>
                             <field name="person_count"/>
                             <field name="vip_count"/>
@@ -52,13 +54,13 @@
 
                     <!-- Tarih Seçenekleri -->
                     <group string="Tarih Seçenekleri"
-                           invisible="scenario_type == 'region'">
+                           invisible="type_is_root">
                         <field name="add_dates" nolabel="1"
                                widget="boolean_toggle"/>
                     </group>
 
                     <field name="date_option_ids"
-                           invisible="not add_dates or scenario_type == 'region'">
+                           invisible="not add_dates or type_is_root">
                         <list editable="bottom">
                             <field name="date_start"/>
                             <field name="date_end"/>
@@ -143,7 +145,7 @@
                         <field name="shortlisted_scenario_ids" nolabel="1">
                             <list>
                                 <field name="name"/>
-                                <field name="scenario_type"/>
+                                <field name="scenario_type_id"/>
                                 <field name="location_id"/>
                                 <field name="hotel_partner_id"/>
                                 <field name="best_npv_offer"

@@ -218,20 +218,24 @@ def create_mice_tender():
     # SENARYO OLUŞTURMA YARDIMCISI
     # ============================================================
 
+    ScenarioType = env['ak.tender.scenario.type']
+
     def create_scenario(name, scenario_type, parent_id=False, location_id=False,
                         hotel_partner_id=False, meal_plan='fb', person_count=112,
                         vip_count=2, is_mandatory=True):
         """Senaryo oluştur."""
+        stype = ScenarioType.search([('code', '=', scenario_type)], limit=1)
+        is_root = stype.is_root if stype else False
         vals = {
             'tender_id': tender.id,
             'name': name,
-            'scenario_type': scenario_type,
+            'scenario_type_id': stype.id if stype else False,
             'parent_id': parent_id.id if parent_id else False,
             'location_id': location_id.id if location_id else False,
             'hotel_partner_id': hotel_partner_id.id if hotel_partner_id else False,
-            'meal_plan': meal_plan if scenario_type != 'region' else False,
-            'person_count': person_count if scenario_type != 'region' else 0,
-            'vip_count': vip_count if scenario_type != 'region' else 0,
+            'meal_plan': meal_plan if not is_root else False,
+            'person_count': person_count if not is_root else 0,
+            'vip_count': vip_count if not is_root else 0,
             'is_mandatory': is_mandatory,
             'scenario_source': 'buyer',
             'scenario_status': 'active',

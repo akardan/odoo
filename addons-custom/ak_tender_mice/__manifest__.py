@@ -27,7 +27,7 @@
     'author': "Kardan.Digital",
     'website': "https://kardan.digital",
     'category': 'Purchases',
-    'version': '1.0',
+    'version': '1.1',
     'sequence': -224,
 
     # ak_tender'a bağımlı — ak_tender kuruluysa otomatik görünür
@@ -38,6 +38,9 @@
         'security/security_groups.xml',
         'security/security_rules.xml',
         'security/ir.model.access.csv',
+
+        # Seed data — model kurulduktan sonra yüklenir
+        'data/scenario_types.xml',
 
         # Görünümler
         'views/tender_scenario_views.xml',

@@ -10,24 +10,44 @@
         <field name="arch" type="xml">
             <list string="Senaryo Kalemleri" editable="bottom">
                 <field name="sequence" widget="handle"/>
+
+                <!-- Satır tipi — her zaman görünür, ilk sütun -->
                 <field name="line_type"/>
+
+                <!-- Konaklama alanları -->
+                <field name="mice_room_type" optional="show"
+                       invisible="line_type not in ('accommodation', 'package')"/>
+                <field name="mice_meal_plan" optional="show"
+                       invisible="line_type not in ('accommodation', 'meal', 'package')"/>
+                <field name="mice_view_type" optional="hide"
+                       invisible="line_type not in ('accommodation', 'package')"/>
+
+                <!-- Transfer alanları -->
+                <field name="transfer_type" optional="show"
+                       invisible="line_type != 'transfer'"/>
+                <field name="vehicle_type" optional="hide"
+                       invisible="line_type != 'transfer'"/>
+
+                <!-- Yemek/F&B alanları -->
+                <field name="meal_type" optional="show"
+                       invisible="line_type != 'meal'"/>
+                <field name="menu_type" optional="hide"
+                       invisible="line_type != 'meal'"/>
+
+                <!-- Teknik hizmet alanları -->
+                <field name="technical_service_type" optional="show"
+                       invisible="line_type != 'technical'"/>
+
+                <!-- Açıklama ve genel alanlar -->
                 <field name="name"/>
                 <field name="product_id" optional="hide"/>
                 <field name="quantity"/>
                 <field name="uom_id" groups="uom.group_uom"/>
                 <field name="days"/>
-                <field name="mice_room_type" optional="show" column_invisible="parent.line_type != 'accommodation'"/>
-                <field name="mice_view_type" optional="hide" column_invisible="parent.line_type != 'accommodation'"/>
-                <field name="mice_meal_plan" optional="show"/>
-                <field name="transfer_type" optional="show" column_invisible="parent.line_type != 'transfer'"/>
-                <field name="vehicle_type" optional="hide" column_invisible="parent.line_type != 'transfer'"/>
-                <field name="meal_type" optional="show" column_invisible="parent.line_type != 'meal'"/>
-                <field name="menu_type" optional="hide" column_invisible="parent.line_type != 'meal'"/>
-                <field name="technical_service_type" optional="show" column_invisible="parent.line_type != 'technical'"/>
                 <field name="currency_id" column_invisible="1"/>
                 <field name="target_price" widget="monetary" options="{'currency_field': 'currency_id'}"/>
-                <field name="computed_target_total" 
-                       widget="monetary" 
+                <field name="computed_target_total"
+                       widget="monetary"
                        options="{'currency_field': 'currency_id'}"
                        sum="Toplam"/>
                 <field name="line_summary" optional="show"/>

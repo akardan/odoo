@@ -13,3 +13,6 @@ access_mice_scenario_wizard_date_user,ak.tender.scenario.wizard.date user,ak_ten
 access_mice_scenario_eliminate_wizard_user,ak.tender.scenario.eliminate.wizard user,ak_tender_mice.model_ak_tender_scenario_eliminate_wizard,ak_tender.group_tender_user,1,1,1,1
 access_mice_next_round_wizard_user,ak.tender.next.round.wizard user,ak_tender_mice.model_ak_tender_next_round_wizard,ak_tender.group_tender_user,1,1,1,1
 access_mice_add_packages_wizard_user,ak.tender.add.packages.wizard user,ak_tender_mice.model_ak_tender_add_packages_wizard,ak_tender.group_tender_user,1,1,1,1
+access_mice_scenario_type_requester,ak.tender.scenario.type requester,ak_tender_mice.model_ak_tender_scenario_type,ak_tender.group_tender_requester,1,0,0,0
+access_mice_scenario_type_user,ak.tender.scenario.type user,ak_tender_mice.model_ak_tender_scenario_type,ak_tender.group_tender_user,1,0,0,0
+access_mice_scenario_type_manager,ak.tender.scenario.type manager,ak_tender_mice.model_ak_tender_scenario_type,ak_tender.group_tender_manager,1,1,1,1

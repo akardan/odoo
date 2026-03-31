@@ -79,15 +79,33 @@ class AkTenderScenario(models.Model):
     sequence = fields.Integer(default=10, string=_('Sıra'))
     active = fields.Boolean(default=True, string=_('Aktif'), tracking=True)
 
-    scenario_type = fields.Selection([
-        ('region', _('Lokasyon')),
-        ('location_hotel', _('Otel Paketi')),
-        ('transfer', _('Transfer Paketi')),
-        ('meal', _('Yemek Paketi')),
-        ('technical', _('Teknik Paket')),
-        ('flight', _('Uçuş Paketi')),
-        ('custom', _('Özel Paket')),
-    ], string=_('Senaryo Tipi'), default='location_hotel', tracking=True)
+    scenario_type_id = fields.Many2one(
+        'ak.tender.scenario.type',
+        string=_('Senaryo Tipi'),
+        ondelete='restrict',
+        tracking=True,
+        index=True,
+    )
+    # Geriye dönük uyumluluk: domain'lerde, lambda'larda ve invisible koşullarında
+    # ('region', 'location_hotel' gibi string değerlerle) çalışmaya devam eder.
+    scenario_type = fields.Char(
+        related='scenario_type_id.code',
+        string=_('Senaryo Tipi Kodu'),
+        store=True,
+        readonly=True,
+    )
+
+    # View invisible koşulları için boolean yardımcı alanlar
+    type_is_root = fields.Boolean(
+        related='scenario_type_id.is_root',
+        string=_('Kök Tip mi?'),
+        store=True,
+    )
+    type_can_have_children = fields.Boolean(
+        related='scenario_type_id.can_have_children',
+        string=_('Alt Paket Eklenebilir mi?'),
+        store=True,
+    )
 
     # ===== LOKASYON VE OTEL =====
     location_id = fields.Many2one(
@@ -272,16 +290,19 @@ class AkTenderScenario(models.Model):
     # ===== KANBAN DISPLAY FIELDS =====
     kanban_date_summary = fields.Html(
         compute='_compute_kanban_summaries',
+        sanitize=False,
         string=_('Tarih Özeti (Kanban)'),
         help=_('Kanban kartında gösterilecek tarih özeti')
     )
     kanban_line_summary = fields.Html(
         compute='_compute_kanban_summaries',
+        sanitize=False,
         string=_('Kalem Özeti (Kanban)'),
         help=_('Kanban kartında gösterilecek senaryo kalem özeti')
     )
     kanban_child_summary = fields.Html(
         compute='_compute_kanban_summaries',
+        sanitize=False,
         string=_('Alt Senaryo Özeti (Kanban)'),
         help=_('Kanban kartında gösterilecek alt senaryo özeti')
     )
@@ -297,21 +318,61 @@ class AkTenderScenario(models.Model):
             return ''
         
         lines = scenario.scenario_line_ids.sorted('sequence')
+        line_type_icons = {
+            'accommodation': 'fa-bed',
+            'meal': 'fa-cutlery',
+            'transfer': 'fa-bus',
+            'technical': 'fa-cogs',
+            'flight': 'fa-plane',
+            'service': 'fa-wrench',
+            'package': 'fa-cube',
+            'custom': 'fa-star',
+        }
+        line_type_labels = {
+            'accommodation': 'Konaklama',
+            'meal': 'Yemek/F&B',
+            'transfer': 'Transfer',
+            'technical': 'Teknik',
+            'flight': 'Uçuş',
+            'service': 'Hizmet',
+            'package': 'Paket',
+            'custom': 'Diğer',
+        }
         line_items = []
         for line in lines:
-            try:
-                _logger.info('KANBAN LINE ITEM | scenario=%s | line=%s qty=%s uom=%s',
-                             scenario.name, line.name, line.quantity, line.uom_id.name if line.uom_id else 'N/A')
-                uom_name = line.uom_id.name if line.uom_id else ''
-                qty_text = f'{line.quantity:.0f}' if line.quantity else '0'
-                qty_badge = f'<span class="badge text-bg-light">{qty_text} {uom_name}</span>'
-                line_items.append(f'<div class="d-flex justify-content-between mb-1" style="font-size: {font_size * 0.9}em;"><span><i class="fa fa-circle-o text-success me-1" style="font-size: 0.6em;"></i>{line.name or "Adsız"}</span><span>{qty_badge}</span></div>')
-            except Exception as e:
-                _logger.error('KANBAN LINE ERROR | scenario=%s | line=%s | error=%s', scenario.name, line.name, e)
-                line_items.append(f'<div class="mb-1" style="font-size: {font_size * 0.9}em;"><i class="fa fa-circle-o text-success me-1" style="font-size: 0.6em;"></i>{line.name or "Adsız"}</div>')
-        
-        _logger.info('KANBAN LINES | scenario=%s | generated %s line items', scenario.name, len(line_items))
-        return f'<div class="mb-2"><small class="text-muted"><i class="fa fa-tasks me-1"></i>Hizmetler ({len(line_items)}):</small><div class="mt-1">{"".join(line_items)}</div></div>'
+            icon = line_type_icons.get(line.line_type, 'fa-check-square-o')
+            type_label = line_type_labels.get(line.line_type, line.line_type or '')
+            display_name = line.name or f'Kalem #{line.sequence}'
+            qty_info = f'{int(line.quantity)} kişi' if line.quantity else ''
+
+            # Tip'e özgü ek bilgiler
+            type_extras = []
+            if line.line_type in ('accommodation', 'package'):
+                if line.mice_room_type:
+                    type_extras.append(dict(line._fields['mice_room_type'].selection).get(line.mice_room_type, line.mice_room_type))
+                if line.mice_meal_plan:
+                    type_extras.append(dict(line._fields['mice_meal_plan'].selection).get(line.mice_meal_plan, line.mice_meal_plan))
+            elif line.line_type == 'transfer':
+                if line.transfer_type:
+                    type_extras.append(dict(line._fields['transfer_type'].selection).get(line.transfer_type, line.transfer_type))
+            elif line.line_type == 'meal':
+                if line.meal_type:
+                    type_extras.append(dict(line._fields['meal_type'].selection).get(line.meal_type, line.meal_type))
+            elif line.line_type == 'technical':
+                if line.technical_service_type:
+                    type_extras.append(dict(line._fields['technical_service_type'].selection).get(line.technical_service_type, line.technical_service_type))
+
+            extra_parts = list(filter(None, [qty_info] + type_extras))
+            extra_str = f' <span style="color:#6c757d;">({", ".join(extra_parts)})</span>' if extra_parts else ''
+            type_badge = f'<span style="display:inline-block;background:#6c757d;color:#fff;border-radius:3px;padding:0 4px;font-size:0.8em;margin-right:4px;">{type_label}</span>'
+            line_items.append(
+                f'<div style="margin-bottom:3px;font-size:{font_size * 0.9}em;">'
+                f'<i class="fa {icon}" style="color:#198754;margin-right:4px;"></i>'
+                f'{type_badge}{display_name}{extra_str}'
+                f'</div>'
+            )
+
+        return f'<div class="mb-2"><small style="color:#6c757d;"><i class="fa fa-tasks" style="margin-right:4px;"></i>Hizmetler ({len(line_items)}):</small><div style="margin-top:4px;">{"".join(line_items)}</div></div>'
 
     def _get_scenario_dates_html(self, scenario, font_size):
         """Senaryo tarih seçeneklerini HTML olarak döndür."""
@@ -333,8 +394,8 @@ class AkTenderScenario(models.Model):
     def _get_scenario_header_html(self, scenario, level, font_size):
         """Senaryo başlığını HTML olarak döndür."""
         hotel_name = scenario.hotel_partner_id.name if scenario.hotel_partner_id else scenario.name
-        scenario_type = dict(scenario._fields["scenario_type"]._description_selection(self.env)).get(scenario.scenario_type, "") if scenario.scenario_type else ""
-        type_badge = f'<span class="badge text-bg-info ms-1" style="font-size: {font_size * 0.75}em;">{scenario_type}</span>' if scenario_type else ''
+        scenario_type_label = scenario.scenario_type_id.name if scenario.scenario_type_id else ""
+        type_badge = f'<span class="badge text-bg-info ms-1" style="font-size: {font_size * 0.75}em;">{scenario_type_label}</span>' if scenario_type_label else ''
         icon = 'fa-angle-right' if level == 1 else 'fa-angle-double-right' if level == 2 else 'fa-caret-right'
 
         # Durum badge'i
@@ -381,17 +442,71 @@ class AkTenderScenario(models.Model):
             line_html = ''
             if scenario.scenario_line_ids:
                 lines = scenario.scenario_line_ids.sorted('sequence')
+                line_type_icons = {
+                    'accommodation': 'fa-bed',
+                    'meal': 'fa-cutlery',
+                    'transfer': 'fa-bus',
+                    'technical': 'fa-cogs',
+                    'flight': 'fa-plane',
+                    'service': 'fa-wrench',
+                    'package': 'fa-cube',
+                    'custom': 'fa-star',
+                }
+                line_type_labels = {
+                    'accommodation': 'Konaklama',
+                    'meal': 'Yemek/F&B',
+                    'transfer': 'Transfer',
+                    'technical': 'Teknik',
+                    'flight': 'Uçuş',
+                    'service': 'Hizmet',
+                    'package': 'Paket',
+                    'custom': 'Diğer',
+                }
                 line_items = []
                 for line in lines:
-                    line_type_icons = {'accommodation': 'fa-bed', 'meal': 'fa-cutlery', 'transfer': 'fa-bus', 'technical': 'fa-cogs', 'flight': 'fa-plane', 'service': 'fa-wrench', 'package': 'fa-cube'}
                     icon = line_type_icons.get(line.line_type, 'fa-check-square-o')
-                    display_name = line.line_summary or line.name or f'Kalem #{line.sequence}'
+                    type_label = line_type_labels.get(line.line_type, line.line_type or '')
+                    display_name = line.name or f'Kalem #{line.sequence}'
                     qty_info = f'{int(line.quantity)} kişi' if line.quantity else ''
                     days_info = f'{int(line.days)} gün' if line.days and line.days > 1 else ''
-                    extra_info = ' × '.join(filter(None, [qty_info, days_info]))
-                    if extra_info:
-                        extra_info = f' <span class="text-muted">({extra_info})</span>'
-                    line_items.append(f'<div class="mb-1 small"><i class="fa {icon} me-1 text-success"></i>{display_name}{extra_info}</div>')
+
+                    # Tip'e özgü ek bilgiler
+                    type_extras = []
+                    if line.line_type in ('accommodation', 'package'):
+                        if line.mice_room_type:
+                            type_extras.append(dict(line._fields['mice_room_type'].selection).get(line.mice_room_type, line.mice_room_type))
+                        if line.mice_meal_plan:
+                            type_extras.append(dict(line._fields['mice_meal_plan'].selection).get(line.mice_meal_plan, line.mice_meal_plan))
+                    elif line.line_type == 'transfer':
+                        if line.transfer_type:
+                            type_extras.append(dict(line._fields['transfer_type'].selection).get(line.transfer_type, line.transfer_type))
+                        if line.vehicle_type:
+                            type_extras.append(dict(line._fields['vehicle_type'].selection).get(line.vehicle_type, line.vehicle_type))
+                    elif line.line_type == 'meal':
+                        if line.meal_type:
+                            type_extras.append(dict(line._fields['meal_type'].selection).get(line.meal_type, line.meal_type))
+                    elif line.line_type == 'technical':
+                        if line.technical_service_type:
+                            type_extras.append(dict(line._fields['technical_service_type'].selection).get(line.technical_service_type, line.technical_service_type))
+
+                    extra_parts = list(filter(None, [qty_info, days_info] + type_extras))
+                    extra_str = ''
+                    if extra_parts:
+                        extra_str = f' <span style="color:#6c757d;font-size:0.85em;">({", ".join(extra_parts)})</span>'
+
+                    type_badge = (
+                        f'<span style="display:inline-block;background:#6c757d;color:#fff;'
+                        f'border-radius:3px;padding:0 4px;font-size:0.75em;margin-right:4px;">'
+                        f'{type_label}</span>'
+                    )
+                    line_items.append(
+                        f'<div style="margin-bottom:3px;font-size:0.875em;">'
+                        f'<i class="fa {icon}" style="color:#198754;margin-right:4px;"></i>'
+                        f'{type_badge}'
+                        f'{display_name}'
+                        f'{extra_str}'
+                        f'</div>'
+                    )
                 line_html = ''.join(line_items)
             scenario.kanban_line_summary = line_html
 
@@ -577,6 +692,24 @@ class AkTenderScenario(models.Model):
                     _("Üst senaryo aynı ihaleye ait olmalıdır: %s") % scenario.tender_id.name
                 )
 
+    # ===== DEFAULT GET =====
+
+    @api.model
+    def default_get(self, fields_list):
+        """Context'teki default_scenario_type (code string) → scenario_type_id'ye çevir.
+        Kod verilmemişse is_default=True olan tipi varsayılan seç."""
+        res = super().default_get(fields_list)
+        if 'scenario_type_id' not in res:
+            ScenarioType = self.env['ak.tender.scenario.type']
+            code = self.env.context.get('default_scenario_type')
+            if code:
+                stype = ScenarioType.search([('code', '=', code)], limit=1)
+            else:
+                stype = ScenarioType.search([('is_default', '=', True)], limit=1)
+            if stype:
+                res['scenario_type_id'] = stype.id
+        return res
+
     # ===== ACTIONS =====
 
     def action_add_to_shortlist(self):
@@ -676,7 +809,7 @@ class AkTenderScenario(models.Model):
                 'default_tender_id': self.tender_id.id,
                 'default_parent_id': self.id,
                 'default_location_id': self.location_id.id if self.location_id else False,
-                'default_scenario_type': 'location_hotel',
+                'default_scenario_type': 'location_hotel',  # default_get bunu scenario_type_id'ye çevirir
             },
         }
 
