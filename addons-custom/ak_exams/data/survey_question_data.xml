@@ -94,7 +94,7 @@
             <field name="option_ids" eval="[
                 (0, 0, {'name': 'Erciyes Dağı'}),
                 (0, 0, {'name': 'Süphan Dağı'}),
-                (0, 0, {'name': 'Ağrı Dağı (Ararat)', 'is_correct': True, 'answer_score': 1}),
+                (0, 0, {'name': 'Ağrı Dağı', 'is_correct': True, 'answer_score': 1}),
                 (0, 0, {'name': 'Uludağ'})
             ]"/>
         </record>
