@@ -62,23 +62,12 @@ IPAD_DEVICES = [
     },
 ]
 
-# URL / içerik bazlı hata belirteçleri
+# SADECE bizim özel hata şablonumuzdan gelen mesajlar — JS bundle'da ASLA geçmez.
+# Genel İngilizce kelimeler ('forbidden', 'page not found', 'internal server error' vb.)
+# minified JS asset'lerinde false-positive ürettiği için buraya EKLEME.
 ERROR_KEYWORDS = [
-    # Türkçe
     'bu sınav henüz başlamamıştır',
     'bu sınav sona ermiştir',
-    'erişim reddedildi',
-    'sayfa bulunamadı',
-    'bir hata oluştu',
-    'yetkiniz yok',
-    # İngilizce
-    'access denied',
-    'forbidden',
-    'page not found',
-    'error occurred',
-    '404',
-    '500',
-    'internal server error',
 ]
 
 # Sunucu tarafından oturum kapatılma belirteçleri
@@ -132,24 +121,52 @@ class ExamTester:
         Sayfanın mevcut durumunu döndürür:
           'completed'  — Sınav başarıyla tamamlandı
           'terminated' — Sunucu oturumu kapattı (güvenlik ihlali vb.)
-          'error'      — Hata sayfası (kapalı sınav, 404, erişim yok)
+          'error'      — Hata sayfası (kapalı sınav)
           'active'     — Normal sınav sayfası devam ediyor
+
+        Tasarım kararı: hata tespiti SADECE bizim özel error şablonumuzdaki
+        kelimelere dayalı yapılır. Genel İngilizce kelimeler ('forbidden',
+        'page not found' vb.) Odoo'nun minified JS bundle'larında geçtiği için
+        kullanılmaz (false-positive üretir).
+
+        Aktif sınav tespiti POZİTİF: sınav elementleri DOM'da varsa 'active'.
         """
         url = page.url
+
+        # URL bazlı tamamlanma
         if any(x in url for x in ('/print', '/results', '/done')):
             return 'completed'
 
         content = self._get_content_lower(page)
 
+        # Tamamlanma keyword'leri
         if any(k in content for k in COMPLETED_KEYWORDS):
             return 'completed'
 
+        # Sunucu tarafından sonlandırma
         if any(k in content for k in TERMINATED_KEYWORDS):
             return 'terminated'
 
+        # Bizim özel hata şablonumuz (survey_date_error) — JS'de ASLA geçmez
         if any(k in content for k in ERROR_KEYWORDS):
             return 'error'
 
+        # Pozitif kontrol: sınav DOM elementleri var mı?
+        # Varsa kesinlikle active — yoksa da active say (unknown durum için güvenli taraf)
+        try:
+            has_survey = page.query_selector(
+                '.o_survey_form, .o_survey_main, '
+                'button[value="start"], button:has-text("Başla"), '
+                'label.o_survey_choice_btn, input[name][type="radio"], '
+                'button[type="submit"]'
+            ) is not None
+            if has_survey:
+                return 'active'
+        except Exception:
+            pass
+
+        # Survey elementi yok ama bilinen hata da yok — unknown, active say
+        # (false-positive ile sınavı kapatmak yerine devam et)
         return 'active'
 
     # ------------------------------------------------------------------
@@ -427,11 +444,20 @@ class ExamTester:
                 logger.error(f"Sınav sayfası açma hatası: {e}")
                 return 'error'
 
-        # Hata / kapalı sınav kontrolü
+        # URL redirect kontrolü — survey URL'inden tamamen uzaklaştıysak sorun var
+        # Not: /en/survey/... gibi dil prefix'li redirect normaldir, sorun değil
+        final_url = page.url
+        if '/survey/' not in final_url and self.survey_token not in final_url:
+            logger.warning(
+                f"Survey URL'den beklenmedik yönlendirme → {final_url[:120]}"
+            )
+            # Yine de devam et — sayfa içeriğine bak
+
+        # İçerik bazlı durum kontrolü
         state = self._check_page_state(page)
         if state == 'error':
-            content_snippet = self._get_content_lower(page)[:200]
-            logger.warning(f"Sınav erişilemez durumda: {content_snippet}")
+            # Sadece bizim özel hata şablonumuz eşleştiyse kapat
+            logger.warning(f"Sınav kapalı (özel hata şablonu tespit edildi)")
             return 'closed'
 
         if state == 'completed':
