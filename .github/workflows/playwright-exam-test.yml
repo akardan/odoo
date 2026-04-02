@@ -19,9 +19,9 @@ on:
         default: '50'
         type: string
       parallel_count:
-        description: 'Paralel çalışacak kullanıcı sayısı'
+        description: 'Paralel çalışacak kullanıcı sayısı (GitHub Actions için max 10 önerilir)'
         required: false
-        default: '50'
+        default: '10'
         type: string
   # İsteğe bağlı: Schedule ile otomatik çalıştırma
   # schedule:
@@ -57,7 +57,7 @@ jobs:
           SURVEY_TOKEN: ${{ github.event.inputs.survey_token || secrets.SURVEY_TOKEN }}
           BASE_URL: ${{ github.event.inputs.base_url || 'https://digipharma.com.tr' }}
           USER_COUNT: ${{ github.event.inputs.user_count || '50' }}
-          PARALLEL: ${{ github.event.inputs.parallel_count || '50' }}
+          PARALLEL: ${{ github.event.inputs.parallel_count || '10' }}
           HEADLESS: 'true'
         run: |
           cd addons-custom/ak_exams/tests/load_test
