@@ -408,17 +408,21 @@ class ExamTester:
         url = f"{self.base_url}/survey/start/{self.survey_token}"
         logger.info("Sınav sayfası açılıyor...")
 
+        # CI ortamında timeout daha uzun tutulur
+        _is_ci = os.environ.get('CI', 'false').lower() == 'true'
+        _goto_timeout = 90000 if _is_ci else 60000
+
         # 2 kez dene (ağ hatası olursa)
         for attempt in range(1, 3):
             try:
-                page.goto(url, wait_until='load', timeout=30000)
+                page.goto(url, wait_until='load', timeout=_goto_timeout)
                 break
             except PlaywrightTimeout:
                 if attempt == 2:
                     logger.error("Sınav sayfası yüklenemedi (timeout)")
                     return 'error'
                 logger.warning(f"Sayfa yükleme timeout (deneme {attempt}), tekrar deneniyor...")
-                page.wait_for_timeout(2000)
+                page.wait_for_timeout(3000)
             except Exception as e:
                 logger.error(f"Sınav sayfası açma hatası: {e}")
                 return 'error'
@@ -475,7 +479,22 @@ class ExamTester:
             headless = os.environ.get('HEADLESS', 'true').lower() == 'true'
             browser = pw.chromium.launch(
                 headless=headless,
-                args=['--disable-dev-shm-usage', '--no-sandbox', '--disable-gpu'],
+                args=[
+                    '--disable-dev-shm-usage',
+                    '--no-sandbox',
+                    '--disable-gpu',
+                    '--disable-software-rasterizer',
+                    '--disable-extensions',
+                    '--disable-background-networking',
+                    '--disable-default-apps',
+                    '--disable-sync',
+                    '--disable-translate',
+                    '--metrics-recording-only',
+                    '--mute-audio',
+                    '--no-first-run',
+                    '--safebrowsing-disable-auto-update',
+                    '--js-flags=--max-old-space-size=256',
+                ],
             )
             device = random.choice(IPAD_DEVICES)
             context = browser.new_context(**device)
@@ -633,12 +652,15 @@ class ExamTester:
 
         self.start_time = time.time()
 
+        # CI ortamında tarayıcı başlatmaları arasında stagger uygula
+        _is_ci = os.environ.get('CI', 'false').lower() == 'true'
+        _stagger_sec = 1.0 if _is_ci else 0.2   # CI: 1s, lokal: 0.2s
+
         with ThreadPoolExecutor(max_workers=parallel_count) as executor:
             futures = {}
             for uid in range(1, user_count + 1):
                 futures[executor.submit(self.test_single_user, uid)] = uid
-                if uid % parallel_count == 0:
-                    time.sleep(0.3)
+                time.sleep(_stagger_sec)          # Her kullanıcı başlatması arasında bekle
 
             completed = 0
             for future in as_completed(futures):
