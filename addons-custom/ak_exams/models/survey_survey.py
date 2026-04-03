@@ -1605,60 +1605,77 @@ class SurveyUserInput(models.Model):
         """
         Log a security violation, increment its counter, apply penalty, and check limits.
         Returns True if the survey was terminated as a result, False otherwise.
+
+        Atomic SQL UPDATE kullanır — ORM read-modify-write yerine DB'de tek adımda
+        artırım yaparak concurrent write (SERIALIZATION_FAILURE) sorununu ortadan kaldırır.
         """
         self.ensure_one()
         if self.state != 'in_progress':
-            return False # Cannot log violations for already completed/terminated surveys
+            return False
 
-        vals_to_write = {}
+        # İhlal türüne göre hangi sütunun artırılacağını belirle
+        column_map = {
+            'fullscreen_exit':      'fullscreen_violation_count',
+            'tab_switch':           'tab_switch_violation_count',
+            'devtools_attempt':     'devtools_attempt_count',
+            'print_screen_attempt': 'print_screen_attempt_count',
+        }
+        column = column_map.get(violation_type)
+
         current_penalty = self._get_penalty_for_violation(violation_type)
-        new_accumulated_penalty = self.accumulated_penalty_points + current_penalty
+        max_penalty = self.survey_id.sudo().max_total_penalty_points if current_penalty > 0 else 0
 
-        if violation_type == 'fullscreen_exit':
-            vals_to_write['fullscreen_violation_count'] = self.fullscreen_violation_count + 1
-        elif violation_type == 'tab_switch':
-            vals_to_write['tab_switch_violation_count'] = self.tab_switch_violation_count + 1
-        elif violation_type == 'devtools_attempt':
-            vals_to_write['devtools_attempt_count'] = self.devtools_attempt_count + 1
-        elif violation_type == 'print_screen_attempt':
-            vals_to_write['print_screen_attempt_count'] = self.print_screen_attempt_count + 1
+        # Tek bir atomic UPDATE: sayaçları artır, güncel değerleri döndür
+        if column:
+            self.env.cr.execute("""
+                UPDATE survey_user_input
+                SET {col} = {col} + 1,
+                    total_security_violations = total_security_violations + 1,
+                    accumulated_penalty_points = CASE
+                        WHEN %(penalty)s > 0 AND %(max_penalty)s > 0
+                            THEN LEAST(accumulated_penalty_points + %(penalty)s, %(max_penalty)s)
+                        WHEN %(penalty)s > 0
+                            THEN accumulated_penalty_points + %(penalty)s
+                        ELSE accumulated_penalty_points
+                    END,
+                    write_date = NOW() AT TIME ZONE 'UTC',
+                    write_uid  = %(uid)s
+                WHERE id = %(id)s
+                RETURNING {col}, total_security_violations, accumulated_penalty_points
+            """.format(col=column), {
+                'penalty':     current_penalty,
+                'max_penalty': max_penalty,
+                'uid':         self.env.uid,
+                'id':          self.id,
+            })
         else:
-            # For unknown types, or generic violations if you keep the old field
-            # self.security_violations += 1 # This field is now computed
-            pass
-        
-        if current_penalty > 0:
-            max_penalty = self.survey_id.sudo().max_total_penalty_points
-            if max_penalty > 0 and new_accumulated_penalty > max_penalty:
-                new_accumulated_penalty = max_penalty
-            vals_to_write['accumulated_penalty_points'] = new_accumulated_penalty
-        
-        # Note: The 'note' field was removed as it doesn't exist on the base survey.user_input model.
-        # If detailed textual logging per violation on the user_input record is needed,
-        # a 'note' or similar Text field should be added to the SurveyUserInput model extension.
-        # For now, we rely on the specific violation counters and accumulated penalty points.
-        
-        # Calculate total violations manually (no longer a computed field)
-        updated_total_violations = sum([
-            vals_to_write.get('fullscreen_violation_count', self.fullscreen_violation_count),
-            vals_to_write.get('tab_switch_violation_count', self.tab_switch_violation_count),
-            vals_to_write.get('devtools_attempt_count', self.devtools_attempt_count),
-            vals_to_write.get('print_screen_attempt_count', self.print_screen_attempt_count),
-        ])
-        
-        # Add total_security_violations to the write values
-        vals_to_write['total_security_violations'] = updated_total_violations
-        
-        self.write(vals_to_write) # Write accumulated changes in single write operation
+            # Bilinmeyen ihlal türü — sadece toplam sayacı artır
+            self.env.cr.execute("""
+                UPDATE survey_user_input
+                SET total_security_violations = total_security_violations + 1,
+                    write_date = NOW() AT TIME ZONE 'UTC',
+                    write_uid  = %(uid)s
+                WHERE id = %(id)s
+                RETURNING total_security_violations, accumulated_penalty_points
+            """, {'uid': self.env.uid, 'id': self.id})
+
+        row = self.env.cr.fetchone()
+        if not row:
+            return False
+
+        updated_total_violations   = row[1] if column else row[0]
+        updated_accumulated_penalty = row[2] if column else row[1]
+
+        # ORM cache'ini temizle — bir sonraki okumada DB'den güncel değer gelsin
+        self.invalidate_recordset()
 
         max_allowed = self.survey_id.sudo().max_total_violations_allowed
         if max_allowed > 0 and updated_total_violations >= max_allowed:
-            if self.state == 'in_progress': # Double check state before terminating
-                _logger.warning(f"Survey (User Input ID: {self.id}) auto-submitted due to security violations. Total violations: {updated_total_violations}/{max_allowed}. State set to 'done'.")
-                self.write({
-                    'state': 'done',
-                    'is_terminated': True
-                })
-                return True # Survey terminated
-        
-        return False # Survey not terminated by this violation
+            _logger.warning(
+                "Survey (User Input ID: %s) auto-submitted due to security violations. "
+                "Total: %s/%s", self.id, updated_total_violations, max_allowed
+            )
+            self.write({'state': 'done', 'is_terminated': True})
+            return True
+
+        return False

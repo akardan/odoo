@@ -58,5 +58,7 @@ class SurveyQuestionPollImportWizard(models.TransientModel):
             return result
         except Exception as e:
             # Delete the temporary record if there's an error
-            temp_poll.unlink()
+            # (rollback inside import_from_excel may have already removed it)
+            if temp_poll.exists():
+                temp_poll.unlink()
             raise

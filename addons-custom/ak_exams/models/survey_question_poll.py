@@ -227,16 +227,17 @@ class SurveyQuestionPoll(models.Model):
                         category = sub_category # Use sub category as the main category for the question
                         stats['categories_created'] += 1
 
-                # Check if poll already exists to prevent duplication
+                # Check if poll already exists (including archived) to prevent duplication
+                PollAll = Poll.with_context(active_test=False)
                 existing_poll = False
                 if category:
-                    existing_poll = Poll.search([
+                    existing_poll = PollAll.search([
                         ('name', '=', question_text),
                         ('category_id', '=', category.id),
                         ('company_id', '=', current_poll_company_id)
                     ], limit=1)
                 else:
-                    existing_poll = Poll.search([
+                    existing_poll = PollAll.search([
                         ('name', '=', question_text),
                         ('company_id', '=', current_poll_company_id)
                     ], limit=1)
@@ -264,11 +265,15 @@ class SurveyQuestionPoll(models.Model):
                     # Update existing poll
                     # First, remove existing options
                     existing_poll.option_ids.unlink()
-                    
+
                     # Then add new options
                     for opt_data in options_data:
                         PollOption.create(dict(poll_id=existing_poll.id, **opt_data))
-                    
+
+                    # Activate if not active
+                    if not existing_poll.active:
+                        existing_poll.active = True
+
                     stats['updated'] += 1
                 else:
                     # Create new poll

@@ -47,50 +47,57 @@ class SurveySecurityController(http.Controller):
             user_input.survey_id.title, user_input.id, access_token, event_type, json.dumps(event_data or {})
         )
 
+        VALID_MODEL_VIOLATION_TYPES = {
+            'fullscreen_exit',
+            'tab_switch',
+            'devtools_attempt',
+            'print_screen_attempt',
+            'copy_paste_attempt',
+        }
+
+        if event_type not in VALID_MODEL_VIOLATION_TYPES:
+            _logger.warning(
+                "Invalid or unknown security event_type '%s' received for User Input ID: %s.",
+                event_type, user_input.id,
+            )
+            return {'success': False, 'error': f'Invalid event_type: {event_type}'}
+
+        # Ayrı bir cursor kullan: survey submit ile aynı transaction'ı paylaşmadığı için
+        # REPEATABLE READ snapshot çakışması (could not serialize access due to concurrent update)
+        # yaşanmaz. Her violation write kendi fresh transaction'ında commit edilir.
+        user_input_id = user_input.id
         try:
-            # JavaScript sends event_types that should directly match model violation_types
-            # Define valid model violation types to check against
-            VALID_MODEL_VIOLATION_TYPES = {
-                'fullscreen_exit',
-                'tab_switch',
-                'devtools_attempt',
-                'print_screen_attempt',
-                'copy_paste_attempt'
-                # Add any other distinct violation types the model's log_security_violation handles
-            }
-
-            model_violation_type = event_type # Directly use event_type from JS
-
-            if model_violation_type not in VALID_MODEL_VIOLATION_TYPES:
-                _logger.warning(
-                    "Invalid or unknown security event_type '%s' received for User Input ID: %s. Expected one of %s.",
-                    event_type, user_input.id, VALID_MODEL_VIOLATION_TYPES
-                )
-                return {'success': False, 'error': f'Invalid event_type: {event_type}'}
-
-            result = user_input.log_security_violation(violation_type=model_violation_type)
-            
-            _logger.info("Violation log result for User Input ID %s (True if terminated, False otherwise): %s", user_input.id, result)
-
-            if result is True: # Survey was terminated by the model
-                return {
-                    'success': True,
-                    'action': 'terminate',
-                    'message': 'Survey has been terminated due to security violations.'
-                }
-            else: # Violation logged, survey not terminated
-                return {
-                    'success': True,
-                    'action': 'logged',
-                    'message': 'Security violation logged.'
-                }
-
+            with request.env.registry.cursor() as new_cr:
+                # READ COMMITTED: eş zamanlı iki UPDATE birbirini bekler, çakışmaz.
+                # Odoo varsayılanı REPEATABLE READ olduğundan burada açıkça set ediyoruz.
+                new_cr.execute("SET TRANSACTION ISOLATION LEVEL READ COMMITTED")
+                new_env = request.env(cr=new_cr)
+                ui = new_env['survey.user_input'].sudo().browse(user_input_id)
+                result = ui.log_security_violation(violation_type=event_type)
+                new_cr.commit()
         except Exception as e:
             _logger.error(
                 "Error processing security event for User Input ID %s: %s",
-                user_input.id, str(e), exc_info=True
+                user_input_id, str(e), exc_info=True,
             )
             return {'success': False, 'error': 'Internal server error while processing event.'}
+
+        _logger.info(
+            "Violation log result for User Input ID %s (True if terminated, False otherwise): %s",
+            user_input_id, result,
+        )
+
+        if result is True:
+            return {
+                'success': True,
+                'action': 'terminate',
+                'message': 'Survey has been terminated due to security violations.',
+            }
+        return {
+            'success': True,
+            'action': 'logged',
+            'message': 'Security violation logged.',
+        }
 
     @http.route('/survey/security/check', type='json', auth='public', website=True)
     def check_security_requirements(self, **post):

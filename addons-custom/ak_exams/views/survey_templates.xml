@@ -87,18 +87,21 @@
     </template>
 
     <template id="survey_fill_form_done" inherit_id="survey.survey_fill_form_done">
-        <xpath expr="//t[@t-call='survey.survey_button_retake']" position="replace">
-            <t t-if="survey.survey_type != 'assessment' or survey.is_attempts_limited">
-                <t t-call="survey.survey_button_retake"/>
-            </t>
-        </xpath>
         <xpath expr="//a[hasclass('o_survey_review')]" position="replace">
-            <t t-if="survey.survey_type != 'assessment'">
+            <t t-if="survey.survey_type != 'assessment' or survey.scoring_type in ['scoring_with_answers', 'scoring_with_answers_after_page']">
                 <a role="button" class="o_survey_review btn btn-secondary btn-lg"
                     t-att-href="'/survey/print/%s?answer_token=%s&amp;review=True' % (survey.access_token, answer.access_token)">
                     Review your answers
                 </a>
             </t>
+        </xpath>
+    </template>
+
+    <!-- Assessment sınavlarında "Denemeleri Sınırla" seçili değilse retake butonu gösterilmez.
+         Bu override survey_button_retake'i her çağrıldığı yerde (done ekranı + print/review sayfası) etkiler. -->
+    <template id="survey_button_retake_assessment" inherit_id="survey.survey_button_retake">
+        <xpath expr="//div" position="attributes">
+            <attribute name="t-if">not answer.is_session_answer and not (survey.certification and answer.scoring_success) and (survey.survey_type != 'assessment' or survey.is_attempts_limited)</attribute>
         </xpath>
     </template>
 

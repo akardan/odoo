@@ -112,9 +112,21 @@ class SurveyExtension(Survey):
             if survey_sudo.end_date:
                 end_date_utc = pytz.UTC.localize(survey_sudo.end_date) if survey_sudo.end_date.tzinfo is None else survey_sudo.end_date
                 end_date_company = end_date_utc.astimezone(tz)
-                
+
                 if now_company > end_date_company:
-                    # Survey has ended
+                    # Katılımcının tamamlanmış cevabı varsa ve scoring_type sonuç göstermeye izin veriyorsa
+                    # direkt review sayfasına yönlendir
+                    answer_token = post.get('answer_token')
+                    if answer_token:
+                        answer_sudo = request.env['survey.user_input'].sudo().search([
+                            ('access_token', '=', answer_token),
+                            ('survey_id', '=', survey_sudo.id),
+                            ('state', '=', 'done'),
+                        ], limit=1)
+                        if answer_sudo and survey_sudo.scoring_type in ['scoring_with_answers', 'scoring_with_answers_after_page']:
+                            return request.redirect('/survey/print/%s?answer_token=%s&review=True' % (
+                                survey_sudo.access_token, answer_sudo.access_token))
+                    # Sonuç gösterimi yoksa veya cevap bulunamadıysa hata sayfası göster
                     return request.render('ak_exams.survey_date_error', {
                         'survey': survey_sudo,
                         'error_message': 'Bu sınav sona ermiştir. Bitiş tarihi: %s' % end_date_company.strftime('%d-%m-%Y %H:%M')
