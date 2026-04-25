@@ -26,3 +26,6 @@
 [submodule "addons-custom/ak_crm"]
 	path = addons-custom/ak_crm
 	url = https://github.com/akardan/ak_crm.git
+[submodule "addons-custom/ak_branding"]
+	path = addons-custom/ak_branding
+	url = https://github.com/akardan/branding.git
