@@ -29,3 +29,6 @@
 [submodule "addons-custom/ak_branding"]
 	path = addons-custom/ak_branding
 	url = https://github.com/akardan/branding.git
+[submodule "addons-custom/ak_eKT"]
+	path = addons-custom/ak_eKT
+	url = https://github.com/akardan/ekt.git

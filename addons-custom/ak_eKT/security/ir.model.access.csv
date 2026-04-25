@@ -1,9 +1,0 @@
-id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_digital_prospectus_user,digital.prospectus user,model_digital_prospectus,ak_eKT.group_prospectus_user,1,1,1,0
-access_digital_prospectus_manager,digital.prospectus manager,model_digital_prospectus,ak_eKT.group_prospectus_manager,1,1,1,1
-access_digital_service_package_user,digital.service.package user,model_digital_service_package,ak_eKT.group_prospectus_user,1,0,0,0
-access_digital_service_package_manager,digital.service.package manager,model_digital_service_package,ak_eKT.group_prospectus_manager,1,1,1,1
-access_prospectus_usage_analytics_user,prospectus.usage.analytics user,model_prospectus_usage_analytics,ak_eKT.group_prospectus_user,1,0,0,0
-access_prospectus_usage_analytics_manager,prospectus.usage.analytics manager,model_prospectus_usage_analytics,ak_eKT.group_prospectus_manager,1,1,1,1
-access_digital_customer_subscription_user,digital.customer.subscription user,model_digital_customer_subscription,ak_eKT.group_prospectus_user,1,1,1,0
-access_digital_customer_subscription_manager,digital.customer.subscription manager,model_digital_customer_subscription,ak_eKT.group_prospectus_manager,1,1,1,1
