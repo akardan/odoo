@@ -7,3 +7,6 @@
 [submodule "addons-custom/ak_tender"]
 	path = addons-custom/ak_tender
 	url = https://github.com/akardan/tender.git
+[submodule "addons-custom/ak_rpt"]
+	path = addons-custom/ak_rpt
+	url = https://github.com/akardan/rpt.git
