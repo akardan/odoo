@@ -46,5 +46,46 @@
             <field name="perm_unlink" eval="True"/>
         </record>
 
+        <!-- ============================================================ -->
+        <!-- ak.tender.scenario — Tedarikçi erişimi (tüm senaryoları görür ama değiştiremez) -->
+        <!-- ============================================================ -->
+        <record id="rule_scenario_supplier_all" model="ir.rule">
+            <field name="name">MICE Senaryo: Tedarikçi Tüm Senaryoları Görür</field>
+            <field name="model_id" ref="ak_tender_mice.model_ak_tender_scenario"/>
+            <field name="groups" eval="[(4, ref('ak_tender_mice.group_tender_supplier'))]"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+
+        <!-- ============================================================ -->
+        <!-- ak.tender.scenario.offer — Tedarikçi sadece kendi tekliflerini görür/düzenler -->
+        <!-- ============================================================ -->
+        <record id="rule_offer_supplier_own" model="ir.rule">
+            <field name="name">MICE Teklif: Tedarikçi Sadece Kendi Teklifini Görür</field>
+            <field name="model_id" ref="ak_tender_mice.model_ak_tender_scenario_offer"/>
+            <field name="groups" eval="[(4, ref('ak_tender_mice.group_tender_supplier'))]"/>
+            <field name="domain_force">[('partner_id', '=', user.partner_id.id)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+
+        <!-- ak.tender.scenario.offer — Manager / User: tüm tekliflere erişir -->
+        <record id="rule_offer_manager_all" model="ir.rule">
+            <field name="name">MICE Teklif: Yönetici/Kullanıcı Tüm Tekliflere Erişir</field>
+            <field name="model_id" ref="ak_tender_mice.model_ak_tender_scenario_offer"/>
+            <field name="groups" eval="[(4, ref('ak_tender.group_tender_manager')),
+                                        (4, ref('ak_tender.group_tender_user'))]"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+        </record>
+
     </data>
 </odoo>

@@ -14,7 +14,7 @@ class AkTenderScenarioDate(models.Model):
         - 9-11 Kasım (Yüksek Sezon) → 35.000 €
 
     Tedarikçiler hangi tarih için teklif verdiklerini
-    purchase.order.line.scenario_date_id ile belirtirler.
+    ak.tender.scenario.offer.date_option_id ile belirtirler.
     """
     _name = 'ak.tender.scenario.date'
     _description = 'Senaryo Alternatif Tarihleri'
@@ -125,21 +125,24 @@ class AkTenderScenarioDate(models.Model):
                 record.days = 0
 
     def _compute_best_offer(self):
-        """Bu tarih seçeneği için en iyi teklifi hesapla."""
+        """Bu tarih seçeneği için en iyi teklifi offer_ids üzerinden hesapla."""
         for date_option in self:
-            po_lines = self.env['purchase.order.line'].search([
-                ('scenario_date_id', '=', date_option.id),
-                ('order_id.state', 'in', ['draft', 'sent', 'to approve', 'purchase', 'done'])
+            offers = self.env['ak.tender.scenario.offer'].search([
+                ('date_option_id', '=', date_option.id),
+                ('state', 'in', ['submitted', 'accepted']),
+                ('round', '>', 0),
             ])
-            if po_lines:
-                partner_totals = {}
-                for line in po_lines:
-                    pid = line.order_id.partner_id.id
-                    if pid not in partner_totals:
-                        partner_totals[pid] = {'total': 0.0, 'partner': line.order_id.partner_id}
-                    partner_totals[pid]['total'] += line.price_subtotal
-                if partner_totals:
-                    best = min(partner_totals.values(), key=lambda x: x['total'])
+            if offers:
+                by_partner = {}
+                for offer in offers:
+                    if not offer.partner_id:
+                        continue
+                    pid = offer.partner_id.id
+                    if pid not in by_partner:
+                        by_partner[pid] = {'total': 0.0, 'partner': offer.partner_id}
+                    by_partner[pid]['total'] += offer.quote_price
+                if by_partner:
+                    best = min(by_partner.values(), key=lambda x: x['total'])
                     date_option.best_offer_amount = best['total']
                     date_option.best_offer_partner_id = best['partner']
                 else:
@@ -150,14 +153,14 @@ class AkTenderScenarioDate(models.Model):
                 date_option.best_offer_partner_id = False
 
     def _compute_offer_count(self):
-        """Bu tarih için benzersiz tedarikçi teklif sayısı."""
+        """Bu tarih seçeneği için benzersiz tedarikçi teklif sayısı."""
         for date_option in self:
-            po_lines = self.env['purchase.order.line'].search([
-                ('scenario_date_id', '=', date_option.id),
-                ('order_id.state', 'in', ['draft', 'sent', 'to approve', 'purchase', 'done'])
+            offers = self.env['ak.tender.scenario.offer'].search([
+                ('date_option_id', '=', date_option.id),
+                ('state', 'in', ['submitted', 'accepted']),
+                ('round', '>', 0),
             ])
-            unique_partners = po_lines.mapped('order_id.partner_id')
-            date_option.offer_count = len(unique_partners)
+            date_option.offer_count = len(offers.mapped('partner_id'))
 
     # ===== CONSTRAINTS =====
     @api.constrains('date_start', 'date_end')
@@ -173,8 +176,12 @@ class AkTenderScenarioDate(models.Model):
         return {
             'name': _('%s — Teklifler') % self.name,
             'type': 'ir.actions.act_window',
-            'res_model': 'purchase.order.line',
-            'view_mode': 'list',
-            'domain': [('scenario_date_id', '=', self.id)],
-            'context': {'group_by': 'order_id'},
+            'res_model': 'ak.tender.scenario.offer',
+            'view_mode': 'list,form',
+            'domain': [('date_option_id', '=', self.id)],
+            'context': {
+                'default_date_option_id': self.id,
+                'default_scenario_id': self.scenario_id.id,
+                'group_by': 'round',
+            },
         }

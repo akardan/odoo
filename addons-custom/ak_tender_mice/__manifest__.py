@@ -45,6 +45,7 @@
         # Görünümler
         'views/tender_scenario_views.xml',
         'views/tender_scenario_line_views.xml',
+        'views/tender_scenario_offer_views.xml',
         'views/tender_mice_views.xml',
         'views/portal_mice_templates.xml',
 

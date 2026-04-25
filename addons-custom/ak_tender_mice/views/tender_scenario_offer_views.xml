@@ -1,0 +1,225 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ============================================================ -->
+    <!-- ak.tender.scenario.offer — LIST VIEW                         -->
+    <!-- ============================================================ -->
+    <record id="view_scenario_offer_list" model="ir.ui.view">
+        <field name="name">ak.tender.scenario.offer.list</field>
+        <field name="model">ak.tender.scenario.offer</field>
+        <field name="arch" type="xml">
+            <list string="Teklifler"
+                  editable="bottom"
+                  decoration-success="state == 'accepted'"
+                  decoration-danger="state == 'rejected'"
+                  decoration-muted="state == 'draft'"
+                  decoration-info="state == 'submitted'">
+                <!-- Tur -->
+                <field name="round" string="Tur" width="60"/>
+
+                <!-- Tedarikçi -->
+                <field name="partner_id"
+                       options="{'no_create': True}"/>
+
+                <!-- Senaryo Kalemi -->
+                <field name="scenario_line_id"
+                       optional="show"
+                       options="{'no_create': True}"
+                       domain="[('scenario_id', '=', scenario_id)]"/>
+                <field name="line_type"
+                       widget="badge"
+                       optional="show"/>
+
+                <!-- Tarih Seçeneği -->
+                <field name="date_option_id"
+                       optional="show"
+                       options="{'no_create': True}"
+                       domain="[('scenario_id', '=', scenario_id)]"/>
+
+                <!-- Fiyat & Miktar -->
+                <field name="currency_id" column_invisible="1"/>
+                <field name="quote_price"
+                       widget="monetary"
+                       options="{'currency_field': 'currency_id'}"
+                       sum="Toplam Teklif"/>
+                <field name="quote_qty" optional="show"/>
+                <field name="realized_price"
+                       widget="monetary"
+                       options="{'currency_field': 'currency_id'}"
+                       optional="show"/>
+                <field name="realized_qty" optional="show"/>
+
+                <!-- Durum -->
+                <field name="state"
+                       widget="badge"
+                       decoration-success="state == 'accepted'"
+                       decoration-danger="state == 'rejected'"
+                       decoration-info="state == 'submitted'"
+                       decoration-muted="state == 'draft'"/>
+                <field name="submission_date" optional="show"/>
+
+                <!-- Eylem butonları -->
+                <button name="action_submit"
+                        string="Gönder"
+                        type="object"
+                        icon="fa-paper-plane"
+                        invisible="state != 'draft'"
+                        title="Teklifi gönderildi olarak işaretle"/>
+                <button name="action_accept"
+                        string="Kabul"
+                        type="object"
+                        icon="fa-check"
+                        invisible="state != 'submitted'"
+                        title="Teklifi kabul et"/>
+                <button name="action_reject"
+                        string="Red"
+                        type="object"
+                        icon="fa-times"
+                        invisible="state not in ('draft', 'submitted')"
+                        title="Teklifi reddet"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ============================================================ -->
+    <!-- ak.tender.scenario.offer — FORM VIEW                         -->
+    <!-- ============================================================ -->
+    <record id="view_scenario_offer_form" model="ir.ui.view">
+        <field name="name">ak.tender.scenario.offer.form</field>
+        <field name="model">ak.tender.scenario.offer</field>
+        <field name="arch" type="xml">
+            <form string="Senaryo Teklifi">
+                <header>
+                    <button name="action_submit"
+                            string="Gönder"
+                            type="object"
+                            class="oe_highlight"
+                            invisible="state != 'draft'"/>
+                    <button name="action_accept"
+                            string="Kabul Et"
+                            type="object"
+                            class="btn-success"
+                            invisible="state != 'submitted'"/>
+                    <button name="action_reject"
+                            string="Reddet"
+                            type="object"
+                            class="btn-danger"
+                            invisible="state not in ('draft', 'submitted')"/>
+                    <button name="action_reset_draft"
+                            string="Taslağa Al"
+                            type="object"
+                            class="btn-secondary"
+                            invisible="state == 'draft'"/>
+                    <field name="state"
+                           widget="statusbar"
+                           statusbar_visible="draft,submitted,accepted"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group string="Senaryo Bilgileri">
+                            <field name="scenario_id"
+                                   options="{'no_create': True}"
+                                   readonly="id"/>
+                            <field name="tender_id" readonly="1"/>
+                            <field name="scenario_line_id"
+                                   options="{'no_create': True}"
+                                   domain="[('scenario_id', '=', scenario_id)]"/>
+                            <field name="date_option_id"
+                                   options="{'no_create': True}"
+                                   domain="[('scenario_id', '=', scenario_id)]"/>
+                        </group>
+                        <group string="Tur ve Tedarikçi">
+                            <field name="round"/>
+                            <field name="partner_id"
+                                   options="{'no_create': True}"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group string="Teklif">
+                            <field name="currency_id" invisible="1"/>
+                            <field name="quote_price"
+                                   widget="monetary"
+                                   options="{'currency_field': 'currency_id'}"/>
+                            <field name="quote_qty"/>
+                        </group>
+                        <group string="Gerçekleşen">
+                            <field name="realized_price"
+                                   widget="monetary"
+                                   options="{'currency_field': 'currency_id'}"/>
+                            <field name="realized_qty"/>
+                        </group>
+                    </group>
+                    <group string="Gönderim">
+                        <field name="submission_date" readonly="1"/>
+                    </group>
+                    <notebook>
+                        <page string="Notlar" name="notes">
+                            <field name="notes" placeholder="Teklif notları, özel koşullar..."/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- ============================================================ -->
+    <!-- ak.tender.scenario.offer — SEARCH VIEW                       -->
+    <!-- ============================================================ -->
+    <record id="view_scenario_offer_search" model="ir.ui.view">
+        <field name="name">ak.tender.scenario.offer.search</field>
+        <field name="model">ak.tender.scenario.offer</field>
+        <field name="arch" type="xml">
+            <search string="Teklif Ara">
+                <field name="scenario_id"/>
+                <field name="partner_id"/>
+                <field name="tender_id"/>
+                <separator/>
+                <filter string="Plan Turu" name="plan_round"
+                        domain="[('round', '=', 0)]"/>
+                <filter string="Teklif Turları" name="offer_rounds"
+                        domain="[('round', '>', 0)]"/>
+                <separator/>
+                <filter string="Taslak" name="draft"
+                        domain="[('state', '=', 'draft')]"/>
+                <filter string="Gönderilmiş" name="submitted"
+                        domain="[('state', '=', 'submitted')]"/>
+                <filter string="Kabul Edilmiş" name="accepted"
+                        domain="[('state', '=', 'accepted')]"/>
+                <filter string="Reddedilmiş" name="rejected"
+                        domain="[('state', '=', 'rejected')]"/>
+                <separator/>
+                <group string="Grupla">
+                    <filter string="Tura Göre" name="group_round"
+                            context="{'group_by': 'round'}"/>
+                    <filter string="Tedarikçiye Göre" name="group_partner"
+                            context="{'group_by': 'partner_id'}"/>
+                    <filter string="Senaryoya Göre" name="group_scenario"
+                            context="{'group_by': 'scenario_id'}"/>
+                    <filter string="İhaleye Göre" name="group_tender"
+                            context="{'group_by': 'tender_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- ============================================================ -->
+    <!-- ak.tender.scenario.offer — ACTION                            -->
+    <!-- ============================================================ -->
+    <record id="action_scenario_offer" model="ir.actions.act_window">
+        <field name="name">Senaryo Teklifleri</field>
+        <field name="res_model">ak.tender.scenario.offer</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_scenario_offer_search"/>
+        <field name="context">{'search_default_offer_rounds': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Henüz teklif girilmemiş
+            </p>
+            <p>
+                Senaryo bazında tedarikçi tekliflerini buradan girebilirsiniz.
+                Tur 0 = Plan/Bütçe, Tur 1+ = Tedarikçi teklifleri.
+            </p>
+        </field>
+    </record>
+
+</odoo>

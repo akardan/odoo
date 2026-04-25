@@ -2,13 +2,19 @@
 <odoo>
     <data>
         <!--
-            ak_tender_mice kendi güvenlik grubu tanımlamaz.
-            ak_tender'ın mevcut gruplarını kullanır:
-                - group_tender_requester  →  Read-only senaryo görüntüleme
-                - group_tender_user       →  Senaryo CRUD
-                - group_tender_manager    →  Tam yetki (miras ile group_tender_user içerir)
-
-            İleride MICE-özel roller gerekirse buraya eklenecektir.
+            ak_tender_mice güvenlik grupları:
+                - group_tender_supplier   →  Tedarikçi: sadece kendi tekliflerini görebilir/düzenleyebilir
+                - group_tender_requester  →  Read-only senaryo görüntüleme  (ak_tender'dan)
+                - group_tender_user       →  Senaryo CRUD                   (ak_tender'dan)
+                - group_tender_manager    →  Tam yetki                      (ak_tender'dan)
         -->
+
+        <!-- MICE Tedarikçi Grubu: portal gerektirmez, dahili kullanıcı -->
+        <record id="group_tender_supplier" model="res.groups">
+            <field name="name">MICE Tedarikçi</field>
+            <field name="category_id" ref="ak_tender.module_category_tender"/>
+            <field name="comment">MICE ihale tedarikçileri; sadece kendilerine ait teklif satırlarını görebilir ve düzenleyebilir.</field>
+        </record>
+
     </data>
 </odoo>

@@ -129,12 +129,12 @@
                                 invisible="not type_can_have_children">
                             <field name="child_count" widget="statinfo" string="Paketler"/>
                         </button>
-                        <button name="action_view_comparison"
+                        <button name="action_view_offers"
                                 type="object"
                                 class="oe_stat_button"
-                                icon="fa-balance-scale"
+                                icon="fa-tag"
                                 invisible="type_is_root">
-                            <span class="o_stat_text">Teklifler</span>
+                            <field name="offer_count" widget="statinfo" string="Teklifler"/>
                         </button>
                     </div>
 
@@ -397,6 +397,77 @@
                             </group>
                         </page>
 
+                        <!-- Teklifler -->
+                        <page string="Teklifler"
+                              name="offers"
+                              invisible="type_is_root">
+                            <p class="text-muted mb-2">
+                                <i class="fa fa-info-circle me-1"/>
+                                <b>Tur 0</b> = Plan/Bütçe (alıcı tarafından),
+                                <b>Tur 1+</b> = Tedarikçi teklif turları.
+                                Her teklif = Senaryo + Tarih Seçeneği + Tur + Tedarikçi kombinasyonuna özeldir.
+                            </p>
+                            <field name="offer_ids"
+                                   context="{
+                                       'default_scenario_id': id,
+                                       'search_default_offer_rounds': 1
+                                   }">
+                                <list editable="bottom"
+                                      decoration-success="state == 'accepted'"
+                                      decoration-danger="state == 'rejected'"
+                                      decoration-muted="state == 'draft'"
+                                      decoration-info="state == 'submitted'">
+                                    <field name="round" string="Tur" width="60"/>
+                                    <field name="partner_id"
+                                           options="{'no_create': True}"/>
+                                    <field name="scenario_line_id"
+                                           optional="show"
+                                           options="{'no_create': True}"
+                                           domain="[('scenario_id', '=', parent.id)]"/>
+                                    <field name="line_type"
+                                           widget="badge"
+                                           optional="show"/>
+                                    <field name="date_option_id"
+                                           optional="show"
+                                           options="{'no_create': True}"
+                                           domain="[('scenario_id', '=', parent.id)]"/>
+                                    <field name="currency_id" column_invisible="1"/>
+                                    <field name="quote_price"
+                                           widget="monetary"
+                                           options="{'currency_field': 'currency_id'}"
+                                           sum="Toplam Teklif"/>
+                                    <field name="quote_qty" optional="show"/>
+                                    <field name="realized_price"
+                                           widget="monetary"
+                                           options="{'currency_field': 'currency_id'}"
+                                           optional="show"/>
+                                    <field name="realized_qty" optional="show"/>
+                                    <field name="state"
+                                           widget="badge"
+                                           decoration-success="state == 'accepted'"
+                                           decoration-danger="state == 'rejected'"
+                                           decoration-info="state == 'submitted'"
+                                           decoration-muted="state == 'draft'"/>
+                                    <field name="submission_date" optional="show"/>
+                                    <button name="action_submit"
+                                            string="Gönder"
+                                            type="object"
+                                            icon="fa-paper-plane"
+                                            invisible="state != 'draft'"/>
+                                    <button name="action_accept"
+                                            string="Kabul"
+                                            type="object"
+                                            icon="fa-check"
+                                            invisible="state != 'submitted'"/>
+                                    <button name="action_reject"
+                                            string="Red"
+                                            type="object"
+                                            icon="fa-times"
+                                            invisible="state not in ('draft', 'submitted')"/>
+                                </list>
+                            </field>
+                        </page>
+
                         <!-- Fiyatlandırma ve Teklifler -->
                         <page string="Fiyatlandırma ve Teklifler"
                               name="pricing"
@@ -412,15 +483,17 @@
                                     <field name="best_offer_round_1"
                                            widget="monetary"
                                            options="{'currency_field': 'currency_id'}"/>
+                                    <field name="best_offer_round_1_partner_id"/>
                                     <field name="best_offer_round_2"
                                            widget="monetary"
                                            options="{'currency_field': 'currency_id'}"/>
+                                    <field name="best_offer_round_2_partner_id"/>
                                     <field name="improvement_percentage"
                                            widget="percentage"/>
                                 </group>
                             </group>
                             <group>
-                                <group string="NPV Bazlı En İyi Teklif">
+                                <group string="En İyi Güncel Teklif">
                                     <field name="best_npv_offer"
                                            widget="monetary"
                                            options="{'currency_field': 'currency_id'}"/>
@@ -489,6 +562,11 @@
                 <field name="kanban_date_summary"/>
                 <field name="kanban_line_summary"/>
                 <field name="kanban_child_summary"/>
+                <field name="offer_count"/>
+                <field name="best_offer_round_1"/>
+                <field name="best_offer_round_1_partner_id"/>
+                <field name="best_offer_round_2"/>
+                <field name="best_offer_round_2_partner_id"/>
                 <templates>
                     <t t-name="kanban-box">
                         <div class="oe_kanban_global_click mb-3 shadow-sm" style="min-width: 500px; min-height: 350px; border: 1px solid #dee2e6; border-radius: 8px; background: white; padding: 16px;">
@@ -605,6 +683,38 @@
                                         </div>
                                     </div>
                                 </t>
+
+                                <!-- Teklifler Özeti -->
+                                <t t-if="record.offer_count.raw_value > 0">
+                                    <div class="mb-2 p-2 bg-light border-start border-4 border-danger">
+                                        <div class="mb-1">
+                                            <strong class="text-danger">
+                                                <i class="fa fa-tag me-1"/>
+                                                Teklifler (<t t-esc="record.offer_count.raw_value"/>)
+                                            </strong>
+                                        </div>
+                                        <div class="ms-2 small">
+                                            <t t-if="record.best_offer_round_1.raw_value">
+                                                <div>
+                                                    <span class="text-muted">T1: </span>
+                                                    <strong><field name="best_offer_round_1" widget="monetary" options="{'currency_field': 'currency_id'}"/></strong>
+                                                    <t t-if="record.best_offer_round_1_partner_id.raw_value">
+                                                        <span class="text-muted ms-1">— <field name="best_offer_round_1_partner_id"/></span>
+                                                    </t>
+                                                </div>
+                                            </t>
+                                            <t t-if="record.best_offer_round_2.raw_value">
+                                                <div>
+                                                    <span class="text-muted">T2: </span>
+                                                    <strong><field name="best_offer_round_2" widget="monetary" options="{'currency_field': 'currency_id'}"/></strong>
+                                                    <t t-if="record.best_offer_round_2_partner_id.raw_value">
+                                                        <span class="text-muted ms-1">— <field name="best_offer_round_2_partner_id"/></span>
+                                                    </t>
+                                                </div>
+                                            </t>
+                                        </div>
+                                    </div>
+                                </t>
                             </div>
 
                             <!-- Alt Bilgiler ve Fiyatlar -->
@@ -638,6 +748,115 @@
                                         </t>
                                     </div>
                                 </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- ============================================================ -->
+    <!-- ak.tender.scenario — TEDARİKÇİ FİYAT GİRİŞ KANBAN           -->
+    <!-- ============================================================ -->
+    <record id="view_scenario_offer_entry_kanban" model="ir.ui.view">
+        <field name="name">ak.tender.scenario.offer.entry.kanban</field>
+        <field name="model">ak.tender.scenario</field>
+        <field name="arch" type="xml">
+            <kanban records_draggable="false">
+                <field name="name"/>
+                <field name="scenario_type_id"/>
+                <field name="parent_id"/>
+                <field name="hotel_partner_id"/>
+                <field name="location_id"/>
+                <field name="meal_plan"/>
+                <field name="person_count"/>
+                <field name="scenario_status"/>
+                <field name="offer_count"/>
+                <field name="currency_id"/>
+                <field name="total_target_price"/>
+                <field name="kanban_date_summary"/>
+                <field name="kanban_offer_entry_html"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_global_click mb-3 shadow-sm"
+                             style="min-width:480px;border:1px solid #dee2e6;border-radius:8px;background:white;padding:14px;">
+
+                            <!-- Başlık -->
+                            <div class="o_kanban_record_top mb-2 pb-2 border-bottom d-flex justify-content-between align-items-start">
+                                <div>
+                                    <strong class="o_kanban_record_title" style="font-size:1.1em;">
+                                        <field name="name"/>
+                                    </strong>
+                                    <div class="mt-1">
+                                        <span class="badge text-bg-info me-1">
+                                            <field name="scenario_type_id"/>
+                                        </span>
+                                        <t t-if="record.parent_id.raw_value">
+                                            <span class="badge text-bg-secondary me-1">
+                                                ← <field name="parent_id"/>
+                                            </span>
+                                        </t>
+                                    </div>
+                                </div>
+                                <div class="text-end">
+                                    <span class="badge text-bg-warning">
+                                        <i class="fa fa-tag me-1"/>
+                                        <t t-esc="record.offer_count.raw_value"/> Teklif
+                                    </span>
+                                </div>
+                            </div>
+
+                            <!-- Otel / Lokasyon -->
+                            <div class="mb-2 small">
+                                <t t-if="record.hotel_partner_id.raw_value">
+                                    <div><i class="fa fa-building text-primary me-1"/>
+                                        <strong><field name="hotel_partner_id"/></strong>
+                                    </div>
+                                </t>
+                                <t t-if="record.location_id.raw_value">
+                                    <div><i class="fa fa-map-marker text-danger me-1"/>
+                                        <field name="location_id"/>
+                                        <t t-if="record.meal_plan.raw_value">
+                                            · <field name="meal_plan"/>
+                                        </t>
+                                        <t t-if="record.person_count.raw_value">
+                                            · <field name="person_count"/> kişi
+                                        </t>
+                                    </div>
+                                </t>
+                            </div>
+
+                            <!-- Tarih Seçenekleri -->
+                            <t t-if="record.kanban_date_summary.raw_value">
+                                <div class="mb-2 p-2 bg-light border-start border-3 border-primary small">
+                                    <strong class="text-primary">
+                                        <i class="fa fa-calendar me-1"/>Tarihler:
+                                    </strong>
+                                    <field name="kanban_date_summary" widget="html"/>
+                                </div>
+                            </t>
+
+                            <!-- Teklif Giriş Tablosu -->
+                            <div class="mb-2">
+                                <field name="kanban_offer_entry_html" widget="html"/>
+                            </div>
+
+                            <!-- Alt Bilgi -->
+                            <div class="mt-2 pt-2 border-top d-flex justify-content-between align-items-center small">
+                                <div>
+                                    <span class="text-muted">Hedef:</span>
+                                    <strong class="text-primary ms-1">
+                                        <field name="total_target_price" widget="monetary"
+                                               options="{'currency_field': 'currency_id'}"/>
+                                    </strong>
+                                </div>
+                                <button name="action_view_offers"
+                                        type="object"
+                                        class="btn btn-sm btn-outline-primary"
+                                        title="Bu senaryonun tekliflerini düzenle">
+                                    <i class="fa fa-pencil me-1"/>Fiyat Gir / Düzenle
+                                </button>
                             </div>
                         </div>
                     </t>

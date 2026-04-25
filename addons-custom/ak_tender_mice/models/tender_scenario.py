@@ -185,6 +185,18 @@ class AkTenderScenario(models.Model):
         string=_('İhale Kalem Sayısı')
     )
 
+    # ===== TEKLİFLER =====
+    offer_ids = fields.One2many(
+        'ak.tender.scenario.offer',
+        'scenario_id',
+        string=_('Teklifler'),
+        help=_("Bu senaryo için alınan tedarikçi teklifleri (PO/PR bağımsız)")
+    )
+    offer_count = fields.Integer(
+        compute='_compute_offer_count',
+        string=_('Teklif Sayısı')
+    )
+
     # ===== FİYATLANDIRMA =====
     currency_id = fields.Many2one(
         related='tender_id.currency_id',
@@ -259,11 +271,23 @@ class AkTenderScenario(models.Model):
         string=_('Tur 1 En İyi Teklif'),
         currency_field='currency_id'
     )
+    best_offer_round_1_partner_id = fields.Many2one(
+        'res.partner',
+        compute='_compute_best_offers',
+        store=False,
+        string=_('Tur 1 En İyi Tedarikçi')
+    )
     best_offer_round_2 = fields.Monetary(
         compute='_compute_best_offers',
         store=False,
         string=_('Tur 2 En İyi Teklif'),
         currency_field='currency_id'
+    )
+    best_offer_round_2_partner_id = fields.Many2one(
+        'res.partner',
+        compute='_compute_best_offers',
+        store=False,
+        string=_('Tur 2 En İyi Tedarikçi')
     )
     improvement_percentage = fields.Float(
         compute='_compute_improvement',
@@ -272,19 +296,19 @@ class AkTenderScenario(models.Model):
         help=_('Tur 2 vs Tur 1 fiyat iyileştirmesi')
     )
 
-    # ===== NPV BAZLI EN İYİ TEKLİF =====
+    # ===== EN İYİ TEKLİF (tüm aktif turlar) =====
     best_npv_offer = fields.Monetary(
         compute='_compute_best_npv_offer',
         store=False,
-        string=_('En İyi NPV Teklif'),
+        string=_('En İyi Teklif'),
         currency_field='currency_id',
-        help=_('NPV bazında en düşük teklif (vade iskontosu dahil)')
+        help=_('Gönderilmiş/kabul edilmiş teklifler arasındaki en düşük fiyat')
     )
     best_npv_partner_id = fields.Many2one(
         'res.partner',
         compute='_compute_best_npv_offer',
         store=False,
-        string=_('En İyi NPV Tedarikçi')
+        string=_('En İyi Teklif Tedarikçisi')
     )
 
     # ===== KANBAN DISPLAY FIELDS =====
@@ -305,6 +329,12 @@ class AkTenderScenario(models.Model):
         sanitize=False,
         string=_('Alt Senaryo Özeti (Kanban)'),
         help=_('Kanban kartında gösterilecek alt senaryo özeti')
+    )
+    kanban_offer_entry_html = fields.Html(
+        compute='_compute_kanban_offer_entry_html',
+        sanitize=False,
+        string=_('Teklif Giriş Özeti (Kanban)'),
+        help=_('Tedarikçi fiyat giriş kanbanında gösterilecek offer tablosu')
     )
 
     # ===== COMPUTED METHODS =====
@@ -417,6 +447,7 @@ class AkTenderScenario(models.Model):
         'date_option_ids', 'date_option_ids.season_type', 'date_option_ids.is_preferred',
         'scenario_line_ids', 'child_ids',
         'scenario_status', 'is_mandatory', 'is_shortlisted',
+        'offer_ids', 'offer_ids.state', 'offer_ids.quote_price', 'offer_ids.partner_id',
     )
     def _compute_kanban_summaries(self):
         """Kanban kartı için özet HTML'leri oluştur - 5 Seviye Manuel."""
@@ -607,6 +638,11 @@ class AkTenderScenario(models.Model):
         for scenario in self:
             scenario.line_count = len(scenario.line_ids)
 
+    @api.depends('offer_ids')
+    def _compute_offer_count(self):
+        for scenario in self:
+            scenario.offer_count = len(scenario.offer_ids)
+
     @api.depends('line_ids.computed_target_total')
     def _compute_total_target(self):
         for scenario in self:
@@ -614,27 +650,38 @@ class AkTenderScenario(models.Model):
                 scenario.line_ids.mapped('computed_target_total')
             )
 
-    @api.depends('line_ids')
+    @api.depends(
+        'offer_ids', 'offer_ids.round', 'offer_ids.quote_price',
+        'offer_ids.state', 'offer_ids.partner_id'
+    )
     def _compute_best_offers(self):
-        """Her tur için en düşük toplam teklifi hesapla."""
+        """Her tur için en düşük teklifi offer_ids üzerinden hesapla."""
         for scenario in self:
-            po_lines = self.env['purchase.order.line'].search([
-                ('tender_line_id.scenario_id', '=', scenario.id),
-                ('order_id.state', 'in', ['draft', 'sent', 'to approve', 'purchase', 'done'])
-            ])
+            active_offers = scenario.offer_ids.filtered(
+                lambda o: o.state in ('submitted', 'accepted')
+            )
 
             def _best_by_round(round_num):
-                lines = po_lines.filtered(lambda l: l.order_id.tender_round == round_num)
-                if not lines:
-                    return 0.0
-                partner_totals = {}
-                for line in lines:
-                    pid = line.order_id.partner_id.id
-                    partner_totals[pid] = partner_totals.get(pid, 0.0) + line.price_subtotal
-                return min(partner_totals.values()) if partner_totals else 0.0
+                """İlgili turdaki en iyi (en düşük fiyatlı) teklifi döndür."""
+                round_offers = active_offers.filtered(lambda o: o.round == round_num)
+                if not round_offers:
+                    return 0.0, False
+                # Tedarikçi başına toplam fiyat
+                by_partner = {}
+                for offer in round_offers:
+                    pid = offer.partner_id.id if offer.partner_id else 0
+                    if pid not in by_partner:
+                        by_partner[pid] = {'total': 0.0, 'partner': offer.partner_id}
+                    by_partner[pid]['total'] += offer.quote_price
+                best = min(by_partner.values(), key=lambda x: x['total'])
+                return best['total'], best['partner']
 
-            scenario.best_offer_round_1 = _best_by_round(1)
-            scenario.best_offer_round_2 = _best_by_round(2)
+            r1_price, r1_partner = _best_by_round(1)
+            r2_price, r2_partner = _best_by_round(2)
+            scenario.best_offer_round_1 = r1_price
+            scenario.best_offer_round_1_partner_id = r1_partner
+            scenario.best_offer_round_2 = r2_price
+            scenario.best_offer_round_2_partner_id = r2_partner
 
     @api.depends('best_offer_round_1', 'best_offer_round_2')
     def _compute_improvement(self):
@@ -646,30 +693,213 @@ class AkTenderScenario(models.Model):
             else:
                 scenario.improvement_percentage = 0.0
 
-    @api.depends('line_ids')
-    def _compute_best_npv_offer(self):
-        """NPV bazında en iyi teklifi bul."""
+    @api.depends(
+        'offer_ids', 'offer_ids.partner_id', 'offer_ids.round',
+        'offer_ids.quote_price', 'offer_ids.state',
+        'offer_ids.scenario_line_id', 'offer_ids.scenario_line_id.name',
+        'offer_ids.scenario_line_id.line_type',
+        'child_ids', 'child_ids.offer_ids',
+        'child_ids.scenario_line_ids',
+        'scenario_line_ids',
+    )
+    def _compute_kanban_offer_entry_html(self):
+        """
+        Teklif giriş kanbanı için senaryo ağacını HTML olarak render eder.
+        Tüm tedarikçilerin teklifleri gösterilir:
+          satır = senaryo kalemi, kolon = tedarikçi adı + fiyatı
+        """
+        line_type_labels = {
+            'accommodation': 'Konaklama', 'meal': 'Yemek/F&B',
+            'transfer': 'Transfer', 'technical': 'Teknik',
+            'flight': 'Uçuş', 'service': 'Hizmet',
+            'package': 'Paket', 'custom': 'Diğer',
+        }
+        state_colors = {
+            'draft': '#fff3cd', 'submitted': '#d1ecf1',
+            'accepted': '#d4edda', 'rejected': '#f8d7da',
+        }
+        status_colors_map = {
+            'active': '#0d6efd', 'shortlisted': '#198754',
+            'eliminated': '#dc3545', 'awarded': '#ffc107',
+        }
+
+        is_supplier = self.env.user.has_group('ak_tender_mice.group_tender_supplier')
+        current_partner = self.env.user.partner_id if is_supplier else None
+
         for scenario in self:
-            po_lines = self.env['purchase.order.line'].search([
-                ('tender_line_id.scenario_id', '=', scenario.id),
-                ('order_id.state', 'in', ['draft', 'sent', 'to approve', 'purchase', 'done'])
-            ])
-            if not po_lines:
+            html = scenario._render_offer_tree_html(partner=current_partner)
+            scenario.kanban_offer_entry_html = html or (
+                '<div style="color:#aaa;font-size:0.85em;">İçerik yok</div>'
+            )
+
+    # ===== OFFER AĞACI RENDER METODU =====
+
+    _OFFER_LINE_TYPE_LABELS = {
+        'accommodation': 'Konaklama', 'meal': 'Yemek/F&B',
+        'transfer': 'Transfer', 'technical': 'Teknik',
+        'flight': 'Uçuş', 'service': 'Hizmet',
+        'package': 'Paket', 'custom': 'Diğer',
+    }
+    _OFFER_STATE_COLORS = {
+        'draft': '#fff3cd', 'submitted': '#d1ecf1',
+        'accepted': '#d4edda', 'rejected': '#f8d7da',
+    }
+    _OFFER_STATUS_COLORS = {
+        'active': '#0d6efd', 'shortlisted': '#198754',
+        'eliminated': '#dc3545', 'awarded': '#ffc107',
+    }
+
+    def _fmt_offer_price(self, offer):
+        """Fiyatı formatlar; fiyat yoksa tire döner."""
+        if not offer or not offer.quote_price:
+            return '<span style="color:#aaa;">—</span>'
+        sym = offer.currency_id.symbol or ''
+        bg = self._OFFER_STATE_COLORS.get(offer.state, '')
+        style = f'background:{bg};padding:0 3px;border-radius:2px;' if bg else ''
+        return f'<span style="{style}font-weight:600;">{offer.quote_price:,.0f} {sym}</span>'
+
+    def _render_offer_tree_html(self, partner=None, indent_px=0):
+        """
+        Bu senaryonun kalemlerini + alt senaryolarını HTML olarak render eder.
+
+        :param partner: res.partner kaydı — sadece bu tedarikçinin kolonu gösterilir.
+                        None ise tüm tedarikçi kolonları gösterilir.
+        :param indent_px: sol girinti (px)
+        :return: HTML string
+        """
+        self.ensure_one()
+        parts = []
+
+        # --- Senaryo başlığı ---
+        hotel = self.hotel_partner_id.name or self.name
+        type_label = self.scenario_type_id.name or ''
+        type_badge = (
+            f'<span style="background:#17a2b8;color:#fff;border-radius:3px;'
+            f'padding:0 4px;font-size:0.78em;margin-right:4px;">{type_label}</span>'
+            if type_label else ''
+        )
+        s_color = self._OFFER_STATUS_COLORS.get(self.scenario_status, '#6c757d')
+        header = (
+            f'<div style="margin-left:{indent_px}px;margin-bottom:4px;'
+            f'border-left:3px solid {s_color};padding-left:6px;">'
+            f'<strong style="font-size:0.92em;">{type_badge}{hotel}</strong>'
+        )
+        if self.meal_plan:
+            meal_labels = dict(self._fields['meal_plan'].selection)
+            header += (
+                f' <span style="color:#6c757d;font-size:0.8em;">'
+                f'· {meal_labels.get(self.meal_plan, "")}</span>'
+            )
+        header += '</div>'
+        parts.append(header)
+
+        # --- Offer tablosu ---
+        all_offers = self.offer_ids.filtered(lambda o: o.round > 0)
+        if all_offers:
+            max_round = max(all_offers.mapped('round'), default=1)
+            round_offers = all_offers.filtered(lambda o: o.round == max_round)
+
+            if partner:
+                partners = round_offers.mapped('partner_id').filtered(
+                    lambda p: p.id == partner.id
+                ).sorted('name')
+            else:
+                partners = round_offers.mapped('partner_id').sorted('name')
+
+            if not partners:
+                parts.append(
+                    f'<div style="margin-left:{indent_px + 12}px;color:#aaa;'
+                    f'font-size:0.82em;margin-bottom:4px;">Henüz teklif yok</div>'
+                )
+            else:
+                all_lines = round_offers.mapped('scenario_line_id').filtered(bool).sorted('sequence')
+                has_package = round_offers.filtered(lambda o: not o.scenario_line_id)
+
+                offer_map = {}
+                for o in round_offers:
+                    key = (o.scenario_line_id.id if o.scenario_line_id else False, o.partner_id.id)
+                    offer_map[key] = o
+
+                th_partner = ''.join(
+                    f'<th style="padding:2px 5px;background:#495057;color:#fff;'
+                    f'text-align:right;white-space:nowrap;">{p.name}</th>'
+                    for p in partners
+                )
+                table = (
+                    f'<div style="margin-left:{indent_px + 12}px;margin-bottom:8px;overflow-x:auto;">'
+                    f'<table style="width:100%;border-collapse:collapse;font-size:0.83em;">'
+                    f'<thead><tr>'
+                    f'<th style="padding:2px 5px;background:#495057;color:#fff;text-align:left;">Kalem</th>'
+                    f'{th_partner}'
+                    f'</tr></thead><tbody>'
+                )
+
+                def _row(line_id, line_label):
+                    tds = ''.join(
+                        f'<td style="padding:2px 5px;text-align:right;">'
+                        f'{self._fmt_offer_price(offer_map.get((line_id, p.id)))}</td>'
+                        for p in partners
+                    )
+                    return f'<tr><td style="padding:2px 5px;">{line_label}</td>{tds}</tr>'
+
+                for line in all_lines:
+                    tl = self._OFFER_LINE_TYPE_LABELS.get(line.line_type, '')
+                    badge = (
+                        f'<span style="background:#6c757d;color:#fff;border-radius:3px;'
+                        f'padding:0 3px;font-size:0.75em;margin-right:3px;">{tl}</span>'
+                        if tl else ''
+                    )
+                    table += _row(line.id, f'{badge}{line.name or "(İsimsiz)"}')
+
+                if has_package:
+                    table += _row(False, '<em>Genel / Paket</em>')
+
+                table += '</tbody></table></div>'
+                parts.append(table)
+        elif not self.child_ids:
+            parts.append(
+                f'<div style="margin-left:{indent_px + 12}px;color:#aaa;'
+                f'font-size:0.82em;margin-bottom:4px;">Henüz teklif yok</div>'
+            )
+
+        # --- Alt senaryolar (recursive) ---
+        for child in self.child_ids.sorted('sequence'):
+            parts.append(child._render_offer_tree_html(partner=partner, indent_px=indent_px + 16))
+
+        return ''.join(parts)
+
+    @api.depends(
+        'offer_ids', 'offer_ids.quote_price',
+        'offer_ids.state', 'offer_ids.partner_id', 'offer_ids.round'
+    )
+    def _compute_best_npv_offer(self):
+        """Gönderilmiş/kabul edilmiş teklifler arasındaki en iyi fiyatı bul."""
+        for scenario in self:
+            active_offers = scenario.offer_ids.filtered(
+                lambda o: o.state in ('submitted', 'accepted') and o.round > 0
+            )
+            if not active_offers:
                 scenario.best_npv_offer = 0.0
                 scenario.best_npv_partner_id = False
                 continue
 
-            partner_npv = {}
-            for line in po_lines:
-                pid = line.order_id.partner_id.id
-                if pid not in partner_npv:
-                    partner_npv[pid] = {'total_npv': 0.0, 'partner': line.order_id.partner_id}
-                # ak_tender'daki mevcut npv_value alanını kullan
-                partner_npv[pid]['total_npv'] += (line.npv_value or line.price_subtotal or 0.0)
+            # Tedarikçi başına toplam teklif fiyatı (tüm aktif turlar dahil son tur alınır)
+            # En güncel turu bulmak için: en yüksek round numaralı teklifleri kullan
+            max_round = max(active_offers.mapped('round'), default=0)
+            latest_offers = active_offers.filtered(lambda o: o.round == max_round)
 
-            if partner_npv:
-                best = min(partner_npv.values(), key=lambda x: x['total_npv'])
-                scenario.best_npv_offer = best['total_npv']
+            by_partner = {}
+            for offer in latest_offers:
+                if not offer.partner_id:
+                    continue
+                pid = offer.partner_id.id
+                if pid not in by_partner:
+                    by_partner[pid] = {'total': 0.0, 'partner': offer.partner_id}
+                by_partner[pid]['total'] += offer.quote_price
+
+            if by_partner:
+                best = min(by_partner.values(), key=lambda x: x['total'])
+                scenario.best_npv_offer = best['total']
                 scenario.best_npv_partner_id = best['partner']
             else:
                 scenario.best_npv_offer = 0.0
@@ -756,15 +986,32 @@ class AkTenderScenario(models.Model):
         return True
 
     def action_view_comparison(self):
-        """Senaryo bazlı teklif karşılaştırma (purchase.order.line listesi)."""
+        """Senaryo bazlı teklif karşılaştırma (ak.tender.scenario.offer listesi)."""
         self.ensure_one()
         return {
-            'name': _('Karşılaştırma: %s') % self.name,
+            'name': _('Teklifler: %s') % self.name,
             'type': 'ir.actions.act_window',
-            'res_model': 'purchase.order.line',
-            'view_mode': 'list',
-            'domain': [('tender_line_id.scenario_id', '=', self.id)],
-            'context': {'group_by': 'order_id'},
+            'res_model': 'ak.tender.scenario.offer',
+            'view_mode': 'list,form',
+            'domain': [('scenario_id', '=', self.id)],
+            'context': {
+                'default_scenario_id': self.id,
+                'group_by': 'round',
+            },
+        }
+
+    def action_view_offers(self):
+        """Bu senaryonun tekliflerini listele."""
+        self.ensure_one()
+        return {
+            'name': _('Teklifler: %s') % self.name,
+            'type': 'ir.actions.act_window',
+            'res_model': 'ak.tender.scenario.offer',
+            'view_mode': 'list,form',
+            'domain': [('scenario_id', '=', self.id)],
+            'context': {
+                'default_scenario_id': self.id,
+            },
         }
 
     def action_view_scenario_lines(self):

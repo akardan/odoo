@@ -16,3 +16,11 @@ access_mice_add_packages_wizard_user,ak.tender.add.packages.wizard user,ak_tende
 access_mice_scenario_type_requester,ak.tender.scenario.type requester,ak_tender_mice.model_ak_tender_scenario_type,ak_tender.group_tender_requester,1,0,0,0
 access_mice_scenario_type_user,ak.tender.scenario.type user,ak_tender_mice.model_ak_tender_scenario_type,ak_tender.group_tender_user,1,0,0,0
 access_mice_scenario_type_manager,ak.tender.scenario.type manager,ak_tender_mice.model_ak_tender_scenario_type,ak_tender.group_tender_manager,1,1,1,1
+access_mice_scenario_offer_requester,ak.tender.scenario.offer requester,ak_tender_mice.model_ak_tender_scenario_offer,ak_tender.group_tender_requester,1,0,0,0
+access_mice_scenario_offer_user,ak.tender.scenario.offer user,ak_tender_mice.model_ak_tender_scenario_offer,ak_tender.group_tender_user,1,1,1,1
+access_mice_scenario_offer_manager,ak.tender.scenario.offer manager,ak_tender_mice.model_ak_tender_scenario_offer,ak_tender.group_tender_manager,1,1,1,1
+access_mice_scenario_offer_supplier,ak.tender.scenario.offer supplier,ak_tender_mice.model_ak_tender_scenario_offer,ak_tender_mice.group_tender_supplier,1,1,0,0
+access_mice_scenario_supplier,ak.tender.scenario supplier,ak_tender_mice.model_ak_tender_scenario,ak_tender_mice.group_tender_supplier,1,0,0,0
+access_mice_scenario_date_supplier,ak.tender.scenario.date supplier,ak_tender_mice.model_ak_tender_scenario_date,ak_tender_mice.group_tender_supplier,1,0,0,0
+access_mice_scenario_line_supplier,ak.tender.scenario.line supplier,ak_tender_mice.model_ak_tender_scenario_line,ak_tender_mice.group_tender_supplier,1,0,0,0
+access_mice_scenario_type_supplier,ak.tender.scenario.type supplier,ak_tender_mice.model_ak_tender_scenario_type,ak_tender_mice.group_tender_supplier,1,0,0,0
