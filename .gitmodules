@@ -16,3 +16,7 @@
 [submodule "addons-custom/ak_exams"]
 	path = addons-custom/ak_exams
 	url = https://github.com/akardan/exams.git
+[submodule "addons-custom/ak_ai"]
+	path = addons-custom/ak_ai
+	url = https://github.com/akardan/kai.git
+	branch = 18.0
