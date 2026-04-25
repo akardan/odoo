@@ -13,3 +13,6 @@
 [submodule "addons-custom/ak_paytr"]
 	path = addons-custom/ak_paytr
 	url = https://github.com/akardan/paytr.git
+[submodule "addons-custom/ak_exams"]
+	path = addons-custom/ak_exams
+	url = https://github.com/akardan/exams.git

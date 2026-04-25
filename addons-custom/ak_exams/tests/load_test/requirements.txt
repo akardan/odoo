@@ -1,9 +1,0 @@
-# Playwright Exam Load Test Requirements
-# ========================================
-# Bu dosya, test scriptini dışarıdan çalıştırmak için gerekli Python paketlerini içerir.
-
-# Playwright - Browser automation
-playwright>=1.40.0
-
-# HTTP Requests
-requests>=2.31.0

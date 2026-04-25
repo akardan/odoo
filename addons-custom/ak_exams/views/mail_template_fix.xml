@@ -1,6 +1,0 @@
-<odoo>
-    <data>
-        <template id="survey_mail_layout_fix" inherit_id="mail.layout" priority="99">
-        </template>
-    </data>
-</odoo>
