@@ -20,3 +20,6 @@
 	path = addons-custom/ak_ai
 	url = https://github.com/akardan/kai.git
 	branch = 18.0
+[submodule "addons-custom/ak_open_badges"]
+	path = addons-custom/ak_open_badges
+	url = https://github.com/akardan/open_badges.git
