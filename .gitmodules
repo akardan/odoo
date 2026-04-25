@@ -1,3 +1,6 @@
 [submodule "addons-custom/ak_workflow"]
 	path = addons-custom/ak_workflow
 	url = https://github.com/akardan/workflow.git
+[submodule "addons-custom/ak_tender_mice"]
+	path = addons-custom/ak_tender_mice
+	url = https://github.com/akardan/tender_mice.git
