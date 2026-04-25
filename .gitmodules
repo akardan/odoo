@@ -4,3 +4,6 @@
 [submodule "addons-custom/ak_tender_mice"]
 	path = addons-custom/ak_tender_mice
 	url = https://github.com/akardan/tender_mice.git
+[submodule "addons-custom/ak_tender"]
+	path = addons-custom/ak_tender
+	url = https://github.com/akardan/tender.git
