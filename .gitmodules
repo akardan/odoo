@@ -10,3 +10,6 @@
 [submodule "addons-custom/ak_rpt"]
 	path = addons-custom/ak_rpt
 	url = https://github.com/akardan/rpt.git
+[submodule "addons-custom/ak_paytr"]
+	path = addons-custom/ak_paytr
+	url = https://github.com/akardan/paytr.git
